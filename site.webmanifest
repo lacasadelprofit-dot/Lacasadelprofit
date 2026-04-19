@@ -1,0 +1,13 @@
+{
+  "name": "La Casa del Profit",
+  "short_name": "Casa del Profit",
+  "description": "Sistema de gestión holístico",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06060A",
+  "theme_color": "#C9A84C",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/apple-touch-icon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

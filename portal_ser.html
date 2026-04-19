@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mi Portal — La Casa del Profit</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#C9A84C">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -11,6 +16,7 @@
   --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;
   --text:#EDE5C8;--muted:#7A7260;
   --green:#3DAA6A;--red:#E05555;--blue:#5B9BD5;--or:#D4863A;
+  --purple:#9B82D4;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
@@ -26,13 +32,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .llogo p{color:var(--muted);font-size:12px;margin-top:4px;}
 .fg{margin-bottom:16px;}
 .fg label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
-.fg input{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;
-  color:var(--text);font-size:14px;outline:none;transition:border-color .2s;}
-.fg input:focus{border-color:var(--gold);}
-.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gd));border:none;
-  border-radius:10px;color:#050401;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:.5px;}
-.btn-login:hover{opacity:.9;}
-.btn-login:disabled{opacity:.5;cursor:not-allowed;}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);}
+.fg textarea{min-height:90px;resize:vertical;}
+.btn-main{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gd));border:none;
+  border-radius:10px;color:#050401;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:opacity .2s;}
+.btn-main:hover{opacity:.9;}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;}
 .err-msg{text-align:center;color:var(--red);font-size:12px;margin-top:12px;display:none;}
 
 /* ── LOADER ── */
@@ -43,36 +50,28 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 #loaderMsg{color:var(--gl);font-size:13px;letter-spacing:1px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── APP ── */
+/* ── APP (SESSIONS LIST) ── */
 #app{display:none;max-width:680px;margin:0 auto;padding:20px 16px 60px;}
-
 .p-header{text-align:center;padding:32px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:24px;}
 .p-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));
-  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#050401;
-  margin:0 auto 14px;}
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#050401;margin:0 auto 14px;}
 .p-name{font-size:20px;font-weight:700;color:var(--gl);}
-.p-sub{color:var(--muted);font-size:13px;margin-top:4px;}
+.p-sub{color:var(--muted);font-size:13px;margin-top:10px;line-height:1.7;max-width:420px;margin-left:auto;margin-right:auto;font-style:italic;}
 .btn-out{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);
   padding:6px 14px;font-size:12px;cursor:pointer;margin-top:12px;}
 .btn-out:hover{border-color:var(--red);color:var(--red);}
-
-/* ── SECTION TITLE ── */
-.sec-title{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:12px;
-  display:flex;align-items:center;gap:8px;}
-
-/* ── STATS ── */
+.sec-title{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
 .stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
 .stat-val{font-size:26px;font-weight:800;color:var(--gl);}
 .stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
 
-/* ── SESSION CARD ── */
-.ses-list{display:flex;flex-direction:column;gap:10px;}
-.ses-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;
-  display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;}
-.ses-card:hover{border-color:rgba(201,168,76,.3);}
-.ses-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
-  font-size:22px;flex-shrink:0;}
+/* ── SESSION CARDS ── */
+.ses-list{display:flex;flex-direction:column;gap:12px;}
+.ses-card{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden;}
+.ses-card:hover{border-color:rgba(201,168,76,.25);}
+.ses-main{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;padding:16px;}
+.ses-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
 .ses-tipo{font-size:14px;font-weight:600;color:var(--text);}
 .ses-meta{font-size:12px;color:var(--muted);margin-top:3px;}
 .ses-fac{font-size:11px;color:var(--gold);margin-top:4px;}
@@ -82,33 +81,71 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .b-rd{background:rgba(224,85,85,.15);color:#F08080;}
 .b-bl{background:rgba(91,155,213,.15);color:#8BBDE8;}
 .b-gy{background:rgba(122,114,96,.15);color:#9A9080;}
+.b-pu{background:rgba(155,130,212,.15);color:#C4AEFF;}
 
-/* ── FILTER ── */
+/* intake strip at bottom of session card */
+.ses-intake{border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.ses-intake.pending{background:rgba(201,168,76,.04);}
+.ses-intake.done{background:rgba(61,170,106,.04);}
+.btn-intake{padding:5px 14px;border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;border:none;transition:all .15s;}
+.btn-intake.pending{background:rgba(201,168,76,.15);color:var(--gl);border:1px solid rgba(201,168,76,.3);}
+.btn-intake.pending:hover{background:rgba(201,168,76,.25);}
+.btn-intake.done{background:rgba(61,170,106,.1);color:#5DD89A;border:1px solid rgba(61,170,106,.2);}
+.btn-intake.done:hover{background:rgba(61,170,106,.18);}
+
 .filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
 .fil{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
   border:1px solid var(--border);background:var(--card2);color:var(--muted);transition:all .15s;}
 .fil.active{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gl);}
-
-/* ── EMPTY ── */
 .empty{text-align:center;padding:48px 20px;color:var(--muted);}
 .empty .ei{font-size:40px;margin-bottom:10px;}
 
-/* ── MOBILE ── */
+/* ── INTAKE SCREEN ── */
+#intakeScreen{display:none;min-height:100vh;background:radial-gradient(ellipse at 30% 10%,#1A1400 0%,#06060A 65%);padding:20px 16px 60px;}
+.intake-wrap{max-width:580px;margin:0 auto;}
+.intake-topbar{display:flex;align-items:center;gap:12px;margin-bottom:24px;}
+.btn-back{background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--muted);
+  padding:8px 14px;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px;}
+.btn-back:hover{border-color:var(--gold);color:var(--gl);}
+.intake-hero{text-align:center;padding:8px 16px 28px;}
+.intake-hero .icon{font-size:44px;margin-bottom:12px;display:block;}
+.intake-hero h2{font-size:19px;font-weight:700;color:var(--gl);margin-bottom:8px;}
+.intake-hero .ses-pill{display:inline-flex;align-items:center;gap:6px;background:rgba(201,168,76,.12);
+  border:1px solid rgba(201,168,76,.25);border-radius:20px;padding:5px 14px;font-size:12px;color:var(--gl);margin-bottom:10px;}
+.intake-hero p{font-size:13px;color:var(--muted);line-height:1.75;max-width:420px;margin:0 auto;}
+.intake-card{background:var(--card);border:1px solid #2A2810;border-radius:18px;padding:24px 20px;margin-bottom:12px;}
+.intake-q{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.4;}
+.intake-q .qnum{color:var(--gold);font-weight:800;margin-right:6px;}
+.radio-group{display:flex;flex-direction:column;gap:8px;}
+.radio-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card2);
+  border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;}
+.radio-opt:hover{border-color:rgba(201,168,76,.4);}
+.radio-opt input[type=radio]{accent-color:var(--gold);width:16px;height:16px;flex-shrink:0;}
+.radio-opt label{font-size:13px;cursor:pointer;color:var(--text);}
+.radio-opt.selected{border-color:var(--gold);background:rgba(201,168,76,.08);}
+
+/* VIEW mode (respuestas ya completadas) */
+.intake-view-card{background:var(--card);border:1px solid #2A2810;border-radius:18px;padding:24px 20px;margin-bottom:12px;}
+.intake-view-card .iq-label{font-size:10px;color:var(--gold);text-transform:uppercase;letter-spacing:.8px;font-weight:700;margin-bottom:6px;}
+.intake-view-card .iq-val{font-size:14px;color:var(--text);line-height:1.65;}
+.intake-completed-banner{background:rgba(61,170,106,.1);border:1px solid rgba(61,170,106,.25);border-radius:14px;
+  padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;}
+
 @media(max-width:480px){
   .lbox{padding:32px 20px;}
-  .stats-row{grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stats-row{gap:8px;}
   .stat-val{font-size:20px;}
-  .ses-card{grid-template-columns:40px 1fr auto;gap:8px;}
+  .ses-main{grid-template-columns:40px 1fr auto;gap:8px;padding:12px;}
   .ses-icon{width:40px;height:40px;font-size:18px;}
+  .intake-card{padding:18px 14px;}
 }
 </style>
 </head>
 <body>
 
-<!-- LOADER -->
-<div id="loader" style="display:none;position:fixed;inset:0;background:rgba(6,6,10,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+<div id="loader">
   <div class="spinner"></div>
-  <p id="loaderMsg" style="color:var(--gl);font-size:13px;letter-spacing:1px">Cargando...</p>
+  <p id="loaderMsg">Cargando...</p>
 </div>
 
 <!-- LOGIN -->
@@ -123,28 +160,34 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <label>Tu email</label>
       <input type="email" id="liEmail" placeholder="tucorreo@email.com" autocomplete="email">
     </div>
-    <button class="btn-login" id="btnLogin" onclick="doLogin()">Ver mis sesiones</button>
+    <button class="btn-main" id="btnLogin" onclick="doLogin()">Ver mis sesiones</button>
     <p class="err-msg" id="errMsg">No encontramos ese email. Verificá que sea el mismo que le diste a Juan Cruz.</p>
   </div>
 </div>
 
-<!-- APP -->
+<!-- SESSIONS APP -->
 <div id="app">
-  <!-- Header -->
   <div class="p-header">
     <div class="p-avatar" id="avLetter">?</div>
     <div class="p-name" id="pName">—</div>
     <div class="p-sub" id="pSub">✨ La Casa del Profit</div>
     <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
   </div>
-
-  <!-- Stats -->
   <div class="stats-row" id="statsRow"></div>
-
-  <!-- Sessions -->
   <div class="sec-title">✨ Mis Sesiones</div>
   <div class="filter-row" id="filterRow"></div>
   <div class="ses-list" id="sesList"></div>
+</div>
+
+<!-- INTAKE SCREEN (form + view) -->
+<div id="intakeScreen">
+  <div class="intake-wrap">
+    <div class="intake-topbar">
+      <button class="btn-back" onclick="goBack()">← Volver</button>
+      <div style="font-size:13px;color:var(--muted)" id="intakeTopTitle"></div>
+    </div>
+    <div id="intakeContent"></div>
+  </div>
 </div>
 
 <script>
@@ -152,15 +195,16 @@ const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
-let curSer=null, allSessions=[], curFilter='todas';
+let curSer=null, allSessions=[], curFilter='todas', intakeSesActual=null;
+let radios={};
 
-function showLoader(m='Cargando...'){
-  document.getElementById('loaderMsg').textContent=m;
-  document.getElementById('loader').style.display='flex';
-}
+/* ── UTILS ── */
+function showLoader(m='Cargando...'){document.getElementById('loaderMsg').textContent=m;document.getElementById('loader').style.display='flex';}
 function hideLoader(){document.getElementById('loader').style.display='none';}
+function showOnly(id){['loginScreen','app','intakeScreen'].forEach(x=>document.getElementById(x).style.display=x===id?(id==='loginScreen'?'flex':'block'):'none');}
+function fDate(d){if(!d||d==='None')return'—';try{const[y,m,day]=d.split('-');return`${day}/${m}/${y}`;}catch{return d;}}
 
-/* ── AUTH ── */
+/* ── LOGIN ── */
 async function doLogin(){
   const email=document.getElementById('liEmail').value.trim().toLowerCase();
   const errEl=document.getElementById('errMsg');
@@ -170,13 +214,9 @@ async function doLogin(){
   btn.disabled=true;btn.textContent='Buscando...';
   showLoader('Buscando tu perfil...');
   try{
-    // Fetch all seres and find by email (JSONB search)
     const {data,error}=await _sb.from('seres').select('id,data');
     if(error)throw error;
-    const found=data?.find(r=>{
-      const e=(r.data?.email||'').toLowerCase().trim();
-      return e&&e===email;
-    });
+    const found=data?.find(r=>(r.data?.email||'').toLowerCase().trim()===email);
     if(!found){
       hideLoader();
       errEl.textContent='No encontramos ese email. Verificá que sea el mismo que le diste a Juan Cruz.';
@@ -185,10 +225,9 @@ async function doLogin(){
       return;
     }
     curSer={id:found.id,...found.data};
-    // Save to session storage so refresh keeps them logged in
     sessionStorage.setItem('lcdp_portal_ser',JSON.stringify(curSer));
     await loadSessions();
-    showApp();
+    showAppScreen();
   }catch(e){
     hideLoader();
     errEl.textContent='Error de conexión. Intentá de nuevo.';
@@ -199,17 +238,13 @@ async function doLogin(){
 
 function doLogout(){
   sessionStorage.removeItem('lcdp_portal_ser');
-  curSer=null;allSessions=[];curFilter='todas';
-  document.getElementById('app').style.display='none';
-  document.getElementById('loginScreen').style.display='flex';
+  curSer=null;allSessions=[];curFilter='todas';intakeSesActual=null;
+  showOnly('loginScreen');
   document.getElementById('liEmail').value='';
   document.getElementById('btnLogin').disabled=false;
   document.getElementById('btnLogin').textContent='Ver mis sesiones';
 }
-
-document.addEventListener('keydown',ev=>{
-  if(ev.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();
-});
+document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
 
 /* ── DATA ── */
 async function loadSessions(){
@@ -217,7 +252,6 @@ async function loadSessions(){
   try{
     const {data,error}=await _sb.from('sessions').select('id,data');
     if(error)throw error;
-    // Match by ser name (case-insensitive)
     const nombre=(curSer.nombre||'').toLowerCase().trim();
     allSessions=(data||[])
       .map(r=>({id:r.id,...r.data}))
@@ -227,10 +261,9 @@ async function loadSessions(){
   hideLoader();
 }
 
-/* ── RENDER ── */
-function showApp(){
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('app').style.display='block';
+/* ── APP SCREEN ── */
+function showAppScreen(){
+  showOnly('app');
   renderHeader();
   renderStats();
   renderFilters();
@@ -241,93 +274,276 @@ function renderHeader(){
   const n=curSer.nombre||'Ser';
   document.getElementById('pName').textContent=n;
   document.getElementById('avLetter').textContent=n.charAt(0).toUpperCase();
-  const prog=curSer.programa;
-  document.getElementById('pSub').textContent=prog?'🌟 '+prog:'✨ La Casa del Profit';
+  document.getElementById('pSub').textContent=curSer.programa?'🌟 '+curSer.programa:'Este espacio es para vos, para que puedas integrar lo vivido, ponerle palabras y dejar que tu energía se exprese. Todo lo que compartas será recibido con gratitud y presencia.';
 }
 
 function renderStats(){
-  const total=allSessions.length;
   const comp=allSessions.filter(s=>s.estado==='Completado'||!s.estado).length;
+  const conIntake=allSessions.filter(s=>s.intakeCompletado).length;
   const pend=allSessions.filter(s=>s.estado==='Pendiente').length;
   document.getElementById('statsRow').innerHTML=`
-    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-val">${allSessions.length}</div><div class="stat-lbl">Sesiones</div></div>
     <div class="stat-card"><div class="stat-val" style="color:var(--green)">${comp}</div><div class="stat-lbl">Completadas</div></div>
-    <div class="stat-card"><div class="stat-val" style="color:var(--or)">${pend}</div><div class="stat-lbl">Pendientes</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--purple)">${conIntake}</div><div class="stat-lbl">Integradas</div></div>
   `;
 }
 
 function renderFilters(){
   const estados=[...new Set(allSessions.map(s=>s.estado||'Completado'))];
-  const filtros=['todas',...estados];
-  document.getElementById('filterRow').innerHTML=filtros.map(f=>`
+  document.getElementById('filterRow').innerHTML=['todas',...estados].map(f=>`
     <button class="fil${curFilter===f?' active':''}" onclick="setFilter('${f}')">${f==='todas'?'Todas':f}</button>
   `).join('');
 }
-
 function setFilter(f){curFilter=f;renderFilters();renderSessions();}
 
-const TIPO_ICO={
-  'Barras de Access':'🌀','Sesión Profit':'✨','Proceso de Cuerpos':'💆',
-  'Bioexistencia':'🌿','Registros Akashicos':'📖','Reiki':'💎',
-  'Limpieza Energetica':'🌬️','Numerologia':'🔢','Coaching con Caballos':'🐴',
-  'Constelaciones':'⭐','Sesiones Pleyadianas':'🌌','Face Lift':'🌸',
-  'Clase Barras de Access':'🎓'
-};
-const TIPO_COL={
-  'Barras de Access':'#10B981','Sesión Profit':'#C9A84C','Proceso de Cuerpos':'#3B82F6',
-  'Bioexistencia':'#22C55E','Registros Akashicos':'#EC4899','Reiki':'#14B8A6',
-  'Limpieza Energetica':'#6366F1','Numerologia':'#F97316','Coaching con Caballos':'#D97706',
-  'Constelaciones':'#818CF8','Sesiones Pleyadianas':'#8B5CF6','Face Lift':'#EC4899',
-  'Clase Barras de Access':'#3DAA6A'
-};
+const TIPO_ICO={'Barras de Access':'🌀','Sesión Profit':'✨','Proceso de Cuerpos':'💆','Bioexistencia':'🌿','Registros Akashicos':'📖','Reiki':'💎','Limpieza Energetica':'🌬️','Numerologia':'🔢','Coaching con Caballos':'🐴','Constelaciones':'⭐','Sesiones Pleyadianas':'🌌','Face Lift':'🌸','Clase Barras de Access':'🎓','Ceremonias Hongos':'🍄','Sesiones Hongos':'🌿','Flores de Bach':'🌺','Viaje Sonoro':'🎵','Yoga':'🧘','Bufu Alvarius':'🐸'};
+const TIPO_COL={'Barras de Access':'#10B981','Sesión Profit':'#C9A84C','Proceso de Cuerpos':'#3B82F6','Bioexistencia':'#22C55E','Registros Akashicos':'#EC4899','Reiki':'#14B8A6','Limpieza Energetica':'#6366F1','Numerologia':'#F97316','Coaching con Caballos':'#D97706','Constelaciones':'#818CF8','Sesiones Pleyadianas':'#8B5CF6','Face Lift':'#EC4899','Clase Barras de Access':'#3DAA6A','Ceremonias Hongos':'#84CC16','Sesiones Hongos':'#16A34A','Flores de Bach':'#D97FC4','Viaje Sonoro':'#8B5CF6','Yoga':'#10B981','Bufu Alvarius':'#84CC16'};
 
 function estBadge(est){
   const e=est||'Completado';
-  if(e==='Completado')return `<span class="bdg b-gr">✓ Completado</span>`;
-  if(e==='Pendiente') return `<span class="bdg b-or">⏳ Pendiente</span>`;
-  if(e==='Cancelado') return `<span class="bdg b-rd">✗ Cancelado</span>`;
-  if(e==='Reprogramado')return `<span class="bdg b-bl">↺ Reprogramado</span>`;
-  return `<span class="bdg b-gy">${e}</span>`;
-}
-
-function fDate(d){
-  if(!d||d==='None')return '—';
-  try{const[y,m,day]=d.split('-');return `${day}/${m}/${y}`;}catch{return d;}
+  if(e==='Completado')return`<span class="bdg b-gr">✓ Completado</span>`;
+  if(e==='Pendiente')return`<span class="bdg b-or">⏳ Pendiente</span>`;
+  if(e==='Cancelado')return`<span class="bdg b-rd">✗ Cancelado</span>`;
+  return`<span class="bdg b-gy">${e}</span>`;
 }
 
 function renderSessions(){
-  const filtered=curFilter==='todas'
-    ?allSessions
-    :allSessions.filter(s=>(s.estado||'Completado')===curFilter);
-
+  const filtered=curFilter==='todas'?allSessions:allSessions.filter(s=>(s.estado||'Completado')===curFilter);
   if(!filtered.length){
-    document.getElementById('sesList').innerHTML=`
-      <div class="empty"><div class="ei">🌀</div>
-      <p>${curFilter==='todas'?'Aún no tenés sesiones registradas.':'No hay sesiones con este estado.'}</p></div>`;
+    document.getElementById('sesList').innerHTML=`<div class="empty"><div class="ei">🌀</div><p>${curFilter==='todas'?'Aún no tenés sesiones registradas.':'No hay sesiones con este estado.'}</p></div>`;
     return;
   }
-
+  const isComp=s=>s.estado==='Completado'||!s.estado;
   document.getElementById('sesList').innerHTML=filtered.map(s=>{
     const tipo=s.sesion||s.tipo||'Sesión';
     const ico=TIPO_ICO[tipo]||'✨';
     const col=TIPO_COL[tipo]||'#C9A84C';
-    const fac=s.facilitador?`<div class="ses-fac">👤 ${s.facilitador}</div>`:'';
-    const prog=s.programa?`· ${s.programa}`:'';
-    const mod=s.modalidad?`· ${s.modalidad}`:'';
-    return `
-    <div class="ses-card">
-      <div class="ses-icon" style="background:${col}22;color:${col}">${ico}</div>
-      <div>
-        <div class="ses-tipo">${tipo}</div>
-        <div class="ses-meta">📅 ${fDate(s.fecha)}${s.hora?' · '+s.hora:''}${prog}${mod}</div>
-        ${fac}
+    const comp=isComp(s);
+
+    // Intake strip only for completed sessions
+    let intakeStrip='';
+    if(comp){
+      if(s.intakeCompletado){
+        intakeStrip=`<div class="ses-intake done">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:15px">💫</span>
+            <span style="font-size:12px;color:#5DD89A;font-weight:600">Integración completada</span>
+            <span style="font-size:11px;color:var(--muted)">${s.intakeFecha?'· '+fDate(s.intakeFecha):''}</span>
+          </div>
+          <button class="btn-intake done" onclick="openIntake('${s.id}',true)">Ver →</button>
+        </div>`;
+      }else{
+        intakeStrip=`<div class="ses-intake pending">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:15px">📝</span>
+            <span style="font-size:12px;color:var(--gl);font-weight:600">Completar integración</span>
+            <span style="font-size:11px;color:var(--muted)">· opcional</span>
+          </div>
+          <button class="btn-intake pending" onclick="openIntake('${s.id}',false)">Completar →</button>
+        </div>`;
+      }
+    }
+
+    return`<div class="ses-card">
+      <div class="ses-main">
+        <div class="ses-icon" style="background:${col}22;color:${col}">${ico}</div>
+        <div>
+          <div class="ses-tipo">${tipo}</div>
+          <div class="ses-meta">📅 ${fDate(s.fecha)}${s.hora?' · '+s.hora:''}${s.programa?' · '+s.programa:''}${s.modalidad?' · '+s.modalidad:''}</div>
+          ${s.facilitador?`<div class="ses-fac">👤 ${s.facilitador}</div>`:''}
+        </div>
+        <div>${estBadge(s.estado)}</div>
       </div>
-      <div>${estBadge(s.estado)}</div>
+      ${intakeStrip}
     </div>`;
   }).join('');
 }
 
-/* ── AUTO-LOGIN from sessionStorage ── */
+/* ── INTAKE SCREEN ── */
+function goBack(){showAppScreen();}
+
+function openIntake(sesId, viewMode){
+  intakeSesActual=allSessions.find(s=>String(s.id)===String(sesId));
+  if(!intakeSesActual)return;
+  radios={};
+  document.getElementById('intakeTopTitle').textContent=intakeSesActual.sesion||intakeSesActual.tipo||'Sesión';
+  if(viewMode&&intakeSesActual.intakeCompletado){
+    renderIntakeView();
+  }else{
+    renderIntakeForm();
+  }
+  showOnly('intakeScreen');
+  window.scrollTo(0,0);
+}
+
+function renderIntakeView(){
+  const s=intakeSesActual;
+  const fields=[
+    {l:'¿Cómo te sentías antes?',v:s.intakeAntes},
+    {l:'¿Qué sentiste durante?',v:s.intakeDurante},
+    {l:'¿Qué notaste después?',v:s.intakeDespues},
+    {l:'Palabra o frase',v:s.intakePalabra},
+    {l:'¿Recomendarías?',v:s.intakeRecomienda},
+    {l:'Testimonio en redes',v:s.intakeTestimonio},
+    {l:'Info sobre próximos encuentros',v:s.intakeInfo},
+    {l:'Mensaje al facilitador',v:s.intakeMensaje},
+  ].filter(f=>f.v);
+
+  const tipo=s.sesion||s.tipo||'Sesión';
+  document.getElementById('intakeContent').innerHTML=`
+    <div class="intake-completed-banner">
+      <span style="font-size:24px">💫</span>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:#5DD89A">Integración completada</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${tipo} · ${fDate(s.intakeFecha||s.fecha)}</div>
+      </div>
+    </div>
+    ${fields.map(f=>`
+    <div class="intake-view-card">
+      <div class="iq-label">${f.l}</div>
+      <div class="iq-val">${f.v}</div>
+    </div>`).join('')}
+    <div style="text-align:center;margin-top:8px">
+      <button onclick="renderIntakeForm();document.getElementById('intakeContent').scrollIntoView()"
+        style="background:none;border:none;color:var(--muted);font-size:12px;cursor:pointer;text-decoration:underline">
+        ✏️ Editar respuestas
+      </button>
+    </div>`;
+}
+
+function renderIntakeForm(){
+  const s=intakeSesActual;
+  const tipo=s.sesion||s.tipo||'Sesión';
+  const ico=TIPO_ICO[tipo]||'✨';
+  // Reset radios from existing data
+  radios={
+    recomienda:s.intakeRecomienda||null,
+    testimonio:s.intakeTestimonio||null,
+    info:s.intakeInfo||null
+  };
+
+  document.getElementById('intakeContent').innerHTML=`
+    <div class="intake-hero">
+      <span class="icon">${ico}</span>
+      <div class="ses-pill">${tipo} · ${fDate(s.fecha)}</div>
+      <h2>Integración de la Experiencia</h2>
+      <p>Este espacio es para vos, para que puedas integrar lo vivido, ponerle palabras y dejar que tu energía se exprese. Todo lo que compartas será recibido con gratitud y presencia.</p>
+    </div>
+
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">1.</span>¿Cómo te sentías <strong>antes</strong> de la sesión? <span style="color:var(--gold)">*</span></div>
+      <textarea id="iAntes" placeholder="Describí tu estado emocional, físico, mental antes de la sesión...">${s.intakeAntes||''}</textarea>
+    </div>
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">2.</span>¿Qué sentiste <strong>durante</strong> la sesión? <span style="color:var(--gold)">*</span></div>
+      <textarea id="iDurante" placeholder="Emociones, sensaciones, imágenes, lo que surgió...">${s.intakeDurante||''}</textarea>
+    </div>
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">3.</span>¿Qué notaste <strong>después</strong>? Cambios, percepciones, sensaciones…</div>
+      <textarea id="iDespues" placeholder="¿Cómo te fuiste? ¿Qué cambió en las horas o días siguientes?">${s.intakeDespues||''}</textarea>
+    </div>
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">4.</span>¿Qué <strong>palabra o frase</strong> representa lo que viviste?</div>
+      <input type="text" id="iPalabra" placeholder="Una palabra, una frase, una imagen..." value="${s.intakePalabra||''}">
+    </div>
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">5.</span>¿Recomendarías esta experiencia?</div>
+      <div class="radio-group" id="rgRec">
+        ${radioOpt('rgRec','recomienda','Si','Sí',radios.recomienda==='Si')}
+        ${radioOpt('rgRec','recomienda','No','No',radios.recomienda==='No')}
+      </div>
+    </div>
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">6.</span>¿Querés que compartamos tu testimonio en redes?</div>
+      <div class="radio-group" id="rgTest">
+        ${radioOpt('rgTest','testimonio','Si con nombre','Sí, con mi nombre',radios.testimonio==='Si con nombre')}
+        ${radioOpt('rgTest','testimonio','Si anonimo','Sí, pero en forma anónima',radios.testimonio==='Si anonimo')}
+        ${radioOpt('rgTest','testimonio','No','No',radios.testimonio==='No')}
+      </div>
+    </div>
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">7.</span>¿Te gustaría recibir info sobre próximos encuentros o programas?</div>
+      <div class="radio-group" id="rgInfo">
+        ${radioOpt('rgInfo','info','WhatsApp','Sí, por WhatsApp',radios.info==='WhatsApp')}
+        ${radioOpt('rgInfo','info','Email','Sí, por Email',radios.info==='Email')}
+        ${radioOpt('rgInfo','info','No','No, gracias',radios.info==='No')}
+      </div>
+    </div>
+    <div class="intake-card">
+      <div class="intake-q"><span class="qnum">8.</span>¿Querés dejarle un mensaje al facilitador o a La Casa del Profit?</div>
+      <textarea id="iMensaje" placeholder="Cualquier cosa que quieras compartir...">${s.intakeMensaje||''}</textarea>
+    </div>
+
+    <p style="color:var(--red);font-size:12px;margin-bottom:12px;display:none;text-align:center" id="intakeErr">Completá al menos las primeras dos preguntas para continuar.</p>
+    <button class="btn-main" id="btnSubmitIntake" onclick="submitIntake()" style="margin-top:4px">Guardar integración ✨</button>
+    <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:14px;line-height:1.6">
+      Tus respuestas son confidenciales y solo las ve Juan Cruz.
+    </p>`;
+}
+
+function radioOpt(groupId, key, val, label, selected){
+  return`<div class="radio-opt${selected?' selected':''}" onclick="selectRadio('${groupId}','${key}','${val}',this)">
+    <input type="radio" name="${key}" value="${val}"${selected?' checked':''}>
+    <label>${label}</label>
+  </div>`;
+}
+function selectRadio(groupId,key,val,el){
+  radios[key]=val;
+  document.querySelectorAll('#'+groupId+' .radio-opt').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input').checked=true;
+}
+
+async function submitIntake(){
+  const antes=(document.getElementById('iAntes')?.value||'').trim();
+  const durante=(document.getElementById('iDurante')?.value||'').trim();
+  const errEl=document.getElementById('intakeErr');
+  if(!antes||!durante){errEl.style.display='block';window.scrollTo(0,200);return;}
+  errEl.style.display='none';
+
+  const btn=document.getElementById('btnSubmitIntake');
+  btn.disabled=true;btn.textContent='Guardando...';
+  showLoader('Guardando tu integración...');
+
+  const intakeData={
+    intakeCompletado:true,
+    intakeFecha:new Date().toISOString().split('T')[0],
+    intakeAntes:antes,
+    intakeDurante:durante,
+    intakeDespues:(document.getElementById('iDespues')?.value||'').trim(),
+    intakePalabra:(document.getElementById('iPalabra')?.value||'').trim(),
+    intakeRecomienda:radios.recomienda||'',
+    intakeTestimonio:radios.testimonio||'',
+    intakeInfo:radios.info||'',
+    intakeMensaje:(document.getElementById('iMensaje')?.value||'').trim()
+  };
+
+  // Update local session
+  Object.assign(intakeSesActual, intakeData);
+  const idx=allSessions.findIndex(s=>String(s.id)===String(intakeSesActual.id));
+  if(idx>=0)allSessions[idx]=intakeSesActual;
+
+  // Save via Netlify function
+  try{
+    await fetch('/api/save-intake',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        table:'sessions',
+        recordId:intakeSesActual.id,
+        intakeData,
+        fullData:intakeSesActual
+      })
+    });
+  }catch(e){console.warn('save-intake error:',e.message);}
+
+  hideLoader();
+  // Show view mode
+  renderIntakeView();
+  window.scrollTo(0,0);
+}
+
+/* ── AUTO-LOGIN ── */
 (async function(){
   const saved=sessionStorage.getItem('lcdp_portal_ser');
   if(saved){
@@ -335,7 +551,7 @@ function renderSessions(){
       curSer=JSON.parse(saved);
       showLoader('Cargando tus sesiones...');
       await loadSessions();
-      showApp();
+      showAppScreen();
     }catch(e){sessionStorage.removeItem('lcdp_portal_ser');}
   }
 })();

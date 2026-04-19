@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>La Casa del Profit</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#C9A84C">
+<meta property="og:title" content="La Casa del Profit">
+<meta property="og:description" content="Herramientas para #VivireNProfit — Sistema de gestión holístico">
+<meta property="og:image" content="/apple-touch-icon.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -276,6 +284,10 @@ select.fi:focus{border-color:var(--gold);}
     <div class="ni" onclick="nav('journey',this)"><span class="ico">🗺️</span><span>Journey</span></div>
     <div class="nl">Marketing</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
+    <div class="nl">Accesos rápidos</div>
+    <div class="ni" onclick="window.open('/portal_ser.html','_blank')" title="Abrir portal del ser en nueva pestaña"><span class="ico">💫</span><span>Portal del Ser</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
+    <div class="ni" onclick="window.open('/registro.html','_blank')" title="Abrir formulario público en nueva pestaña"><span class="ico">📋</span><span>Formulario registro</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
+    <div class="ni" onclick="window.open('/portal_programa.html','_blank')" title="Abrir portal de programas en nueva pestaña"><span class="ico">📚</span><span>Portal Programas</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
    </div>
    <div class="s-foot">
     <div class="uinfo">
@@ -357,13 +369,15 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- FACTURACIÓN -->
     <div id="sec-facturacion" class="sec">
-     <div class="invsm" id="invSm"></div>
+     <div class="kpi-grid" id="invSm" style="margin-bottom:18px"></div>
+     <div id="saldosPendientes"></div>
      <div class="tc">
+      <div class="th2"><h3>📋 Todas las Facturas</h3></div>
       <div class="filters">
        <input class="si" id="facSrch" placeholder="🔍 Buscar..." oninput="renderFact()">
        <select class="fi" id="facEst" onchange="renderFact()"><option value="">Todos</option><option value="pagado">Pagado</option><option value="pendiente">Pendiente</option></select>
       </div>
-      <table><thead><tr><th>#</th><th>Fecha</th><th>Ser</th><th>Servicio</th><th>Facilitador</th><th>Monto</th><th>Estado</th><th></th></tr></thead><tbody id="facBody"></tbody></table>
+      <table><thead><tr><th>#</th><th>Fecha</th><th>Ser</th><th>Servicio</th><th>Facilitador</th><th>Tipo</th><th>Método</th><th>Monto</th><th>Estado</th><th></th></tr></thead><tbody id="facBody"></tbody></table>
      </div>
     </div>
 
@@ -441,10 +455,12 @@ select.fi:focus{border-color:var(--gold);}
       <button class="tab-btn active" id="mktTabPub" onclick="setMktTab('pub')">📢 Publicidades</button>
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
       <button class="tab-btn" id="mktTabRet" onclick="setMktTab('ret')">🔄 Retención</button>
+      <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
      </div>
      <div id="mktPub"></div>
      <div id="mktConv" style="display:none"></div>
      <div id="mktRet" style="display:none"></div>
+     <div id="mktMeta" style="display:none"></div>
     </div>
 
    </div>
@@ -499,7 +515,26 @@ select.fi:focus{border-color:var(--gold);}
    <label for="nsPV">⭐ Es la primera vez de esta sesión para el ser</label>
   </div>
   <div class="fg"><label>Observaciones</label><textarea id="nsObs" placeholder="Notas sobre la sesión..."></textarea></div>
-  <div class="fg"><label>Monto (ARS)</label><input type="number" id="nsMonto" placeholder="0" min="0"></div>
+  <div class="fg"><label>Precio total (ARS)</label><input type="number" id="nsMonto" placeholder="0" min="0" oninput="calcSaldo()"></div>
+  <div class="fg">
+   <label style="display:flex;align-items:center;justify-content:space-between">
+    <span>Monto abonado (ARS)</span>
+    <span style="display:flex;gap:5px">
+     <button type="button" onclick="setPctPago(50)" style="padding:2px 8px;font-size:11px;font-weight:700;background:rgba(201,168,76,.15);border:1px solid var(--gold);border-radius:6px;color:var(--gl);cursor:pointer">50%</button>
+     <button type="button" onclick="setPctPago(100)" style="padding:2px 8px;font-size:11px;font-weight:700;background:rgba(61,170,106,.15);border:1px solid var(--green);border-radius:6px;color:#5DD89A;cursor:pointer">100%</button>
+    </span>
+   </label>
+   <input type="number" id="nsPagado" placeholder="0" min="0" oninput="calcSaldo()">
+  </div>
+  <div id="saldoInfo" style="margin-bottom:12px;font-size:13px;padding:8px 12px;border-radius:8px;display:none"></div>
+  <!-- Intake de esta sesión (solo lectura, aparece si fue completado desde el portal) -->
+  <div id="sesIntakeSection" style="display:none;border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
+   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <span style="font-size:13px;font-weight:700;color:var(--gl)">💫 Formulario de Integración del Ser</span>
+    <span class="bdg b-pu" style="font-size:10px">✓ Completado</span>
+   </div>
+   <div id="sesIntakeBody" style="display:flex;flex-direction:column;gap:8px;font-size:12px"></div>
+  </div>
   <div class="mf">
    <button class="btn btn-s" onclick="closeModal('moSes')">Cancelar</button>
    <button class="btn btn-p" onclick="saveSes()">Guardar Sesión</button>
@@ -536,6 +571,14 @@ select.fi:focus{border-color:var(--gold);}
   <div class="fg"><label>Origen / Cómo llegó</label><input type="text" id="srOrigen" placeholder="Instagram, publicidad, referido..."></div>
   <div class="fg"><label>Campaña de origen</label><select id="srCamp"><option value="">— Sin campaña —</option></select></div>
   <div class="fg"><label>Review / Testimonio</label><textarea id="srRev"></textarea></div>
+  <!-- INTAKE RESPONSES (solo en edición, si completó el formulario) -->
+  <div id="srIntakeSection" style="display:none;border-top:1px solid var(--border);margin-top:16px;padding-top:16px">
+   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+    <span style="font-size:13px;font-weight:700;color:var(--gl)">💫 Formulario de Integración</span>
+    <span class="bdg b-gr" style="font-size:10px">✓ Completado</span>
+   </div>
+   <div id="srIntakeBody" style="display:flex;flex-direction:column;gap:10px;font-size:12px"></div>
+  </div>
   <div class="mf">
    <button class="btn btn-s" onclick="closeModal('moSer')">Cancelar</button>
    <button class="btn btn-p" onclick="saveSer()">Guardar</button>
@@ -1031,8 +1074,25 @@ function nav(name,el){
 
 /* UTILS */
 function fd(d){if(!d||d==='None')return '—';try{const[y,m,day]=d.split('-');return `${day}/${m}/${y}`;}catch{return d;}}
+function setPctPago(pct){const tot=parseFloat(document.getElementById('nsMonto').value)||0;document.getElementById('nsPagado').value=Math.round(tot*pct/100);calcSaldo();}
+function calcSaldo(){
+  const tot=parseFloat(document.getElementById('nsMonto').value)||0;
+  const pag=parseFloat(document.getElementById('nsPagado').value);
+  const abonado=isNaN(pag)?tot:pag;
+  const saldo=tot-abonado;
+  const el=document.getElementById('saldoInfo');
+  if(!tot){el.style.display='none';return;}
+  el.style.display='block';
+  if(saldo>0){
+    el.style.background='rgba(212,134,58,.1)';el.style.border='1px solid rgba(212,134,58,.3)';el.style.color='var(--or)';
+    el.textContent='💸 Saldo pendiente: $'+saldo.toLocaleString('es-AR');
+  } else {
+    el.style.background='rgba(61,170,106,.1)';el.style.border='1px solid rgba(61,170,106,.3)';el.style.color='var(--green)';
+    el.textContent='✅ Pago completo';
+  }
+}
 function fc(n){if(!n)return '$0';if(n>=1e6)return '$'+(n/1e6).toFixed(1)+'M';if(n>=1e3)return '$'+(n/1e3).toFixed(0)+'K';return '$'+n.toLocaleString('es-AR');}
-function nid(a){return a.length?Math.max(...a.map(x=>x.id))+1:1;}
+function nid(a){return String(Date.now()+Math.floor(Math.random()*1000));}
 function toast(m,type){const t=document.createElement('div');const isErr=type==='err';t.style.cssText=`position:fixed;bottom:20px;right:20px;background:var(--card);border:1px solid ${isErr?'var(--red)':'var(--gold)'};border-radius:12px;padding:10px 18px;font-size:13px;color:${isErr?'var(--red)':'var(--gl)'};z-index:9999;box-shadow:0 0 20px rgba(201,168,76,.2),0 8px 24px rgba(0,0,0,.5);animation:slideIn .3s ease`;t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4000);}
 function bc(t){const m={'Barras de Access':'b-gr','Sesión Profit':'b-go','Proceso de Cuerpos':'b-bl','Bioexistencia':'b-pu','Registros Akashicos':'b-pk','Reiki':'b-tl','Limpieza Energetica':'b-bl','Numerologia':'b-go','Borra de cafe':'b-gy','Vibrando en Manada':'b-rd','Ceremonias Hongos':'b-gr','Sesiones Hongos':'b-gy','Coaching con Caballos':'b-go','Constelaciones':'b-pu','Face Lift':'b-pk','Sesión Entidades':'b-pu','Clase Barras de Access':'b-gr'};return m[t]||'b-gy';}
 function estCls(e){return{Completado:'b-gr',Confirmado:'b-bl',Pendiente:'b-go',Cancelado:'b-rd'}[e]||'b-gy';}
@@ -1243,22 +1303,39 @@ function renderSes(){
       <td style="font-size:12px">${s.facilitador}</td>
       <td style="font-size:12px;color:var(--muted)">${s.provincia||'—'}</td>
       <td><span class="bdg ${s.modalidad==='Online'?'b-bl':'b-go'}">${s.modalidad||'—'}</span></td>
-      <td><span class="bdg ${estCls(s.estado||'Completado')}">${s.estado||'Completado'}</span></td>
+      <td><span class="bdg ${estCls(s.estado||'Completado')}">${s.estado||'Completado'}</span>${s.intakeCompletado?'<div style="margin-top:3px"><span class="bdg b-pu" style="font-size:9px">💫 Integrado</span></div>':''}</td>
       <td style="max-width:140px;font-size:11px">
         ${s.programa?`<span style="display:block;margin-bottom:2px;padding:2px 6px;border-radius:8px;font-weight:600;font-size:10px;background:${programas.find(p=>p.nombre===s.programa)?programas.find(p=>p.nombre===s.programa).col+'22':'#4A3800'+'22'};color:${programas.find(p=>p.nombre===s.programa)?programas.find(p=>p.nombre===s.programa).col:'var(--gold)'}">${programas.find(p=>p.nombre===s.programa)?programas.find(p=>p.nombre===s.programa).ico:'📚'} ${s.programa}</span>`:''}
         <span style="color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block">${s.observacion||s.descripcion||'—'}</span>
       </td>
       <td style="white-space:nowrap">
-        <span style="font-size:10px;color:var(--muted)">#${s.id}</span>
-        <button class="btn btn-s btn-sm" title="Crear factura" onclick="createFactFromSes(${s.id})">💰</button>
-        <button class="btn btn-s btn-sm" onclick="openModal('ses',${s.id})">✏️</button>
-        <button class="btn btn-s btn-sm" onclick="delSes(${s.id})">🗑</button>
+        ${(s.monto||0)>0?`<div style="font-size:12px;font-weight:700;color:var(--gl)">$${(s.montoPagado||s.monto||0).toLocaleString('es-AR')}</div>${(s.saldoPendiente||0)>0?`<div style="font-size:10px;color:var(--or)">💸 Saldo $${s.saldoPendiente.toLocaleString('es-AR')}</div>`:''}`:'' }
+        ${(s.saldoPendiente||0)>0?`<button class="btn btn-sm" style="background:rgba(212,134,58,.2);border:1px solid var(--or);color:var(--or);margin-top:3px" title="Cobrar saldo pendiente" onclick="cobrarSaldo('${s.id}')">💵 Cobrar saldo</button>`:`<button class="btn btn-s btn-sm" title="Crear factura" onclick="createFactFromSes('${s.id}')">💰</button>`}
+        <button class="btn btn-s btn-sm" onclick="openModal('ses','${s.id}')">✏️</button>
+        <button class="btn btn-s btn-sm" onclick="delSes('${s.id}')">🗑</button>
       </td>
     </tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">Sin resultados</td></tr>';
   const pages=Math.ceil(tot/PPG);
   document.getElementById('sesPag').innerHTML=Array.from({length:pages},(_,i)=>`<button class="btn ${i===sesPage?'btn-p':'btn-s'} btn-sm" onclick="sesPage=${i};renderSes()">${i+1}</button>`).join('');
 }
-function delSes(id){if(confirm('¿Eliminar esta sesión?')){sessions=sessions.filter(s=>s.id!==id);save();renderSes();}}
+function delSes(id){if(confirm('¿Eliminar esta sesión?')){sessions=sessions.filter(s=>String(s.id)!==String(id));save();renderSes();}}
+function cobrarSaldo(id){
+  const s=sessions.find(x=>String(x.id)===String(id));
+  if(!s)return;
+  const saldo=Math.max(0,(s.monto||0)-(s.montoPagado!=null?s.montoPagado:(s.monto||0)));
+  if(!saldo){toast('Esta sesión no tiene saldo pendiente');return;}
+  if(!confirm(`¿Registrar el cobro del saldo de $${saldo.toLocaleString('es-AR')} para ${s.ser}?`))return;
+  // Crear factura por el saldo
+  facturas.push({id:nid(facturas),sesId:s.id,fecha:new Date().toISOString().split('T')[0],
+    ser:s.ser,servicio:s.sesion,facilitador:s.facilitador,
+    monto:saldo,estado:'pagado',tipo:'Saldo restante',
+    notas:'Cobro del saldo pendiente'});
+  // Marcar sesión como saldo cobrado
+  s.montoPagado=(s.montoPagado||0)+saldo;
+  s.saldoPendiente=0;
+  save();renderSes();
+  toast(`Saldo de $${saldo.toLocaleString('es-AR')} cobrado 💰`);
+}
 
 /* CALENDARIO */
 let calDate=new Date();
@@ -1298,10 +1375,36 @@ function renderFact(){
   const tot=facturas.reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
   const pag=facturas.filter(f=>f.estado==='pagado').reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
   const pen=facturas.filter(f=>f.estado==='pendiente').reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
+  // Calcular saldo dinámicamente: monto - montoPagado
+  // Si montoPagado no existe, se asume pago completo (sin saldo)
+  const getSaldo=s=>{
+    if(s.montoPagado==null)return 0; // sin campo = pago completo (vieja sesión)
+    return Math.max(0,(s.monto||0)-(s.montoPagado||0));
+  };
+  const saldosSes=sessions.filter(s=>getSaldo(s)>0);
+  const totSaldos=saldosSes.reduce((a,s)=>a+getSaldo(s),0);
   document.getElementById('invSm').innerHTML=`
     <div class="kc go"><div class="ki">💰</div><div class="kl">Total Facturado</div><div class="kv" style="font-size:22px">${fc(tot)}</div></div>
     <div class="kc gr"><div class="ki">✅</div><div class="kl">Cobrado</div><div class="kv" style="font-size:22px">${fc(pag)}</div></div>
-    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendiente</div><div class="kv" style="font-size:22px">${fc(pen)}</div></div>`;
+    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Facturas Pendientes</div><div class="kv" style="font-size:22px">${fc(pen)}</div></div>
+    <div class="kc or" style="border-top-color:var(--or)"><div class="ki">💸</div><div class="kl">Saldos por Cobrar</div><div class="kv" style="font-size:22px;color:var(--or)">${fc(totSaldos)}</div><div class="ks">${saldosSes.length} sesión${saldosSes.length!==1?'es':''}</div></div>`;
+  // ── Sección saldos pendientes ──────────────────────────────
+  const saldoHtml=saldosSes.length?`
+  <div class="tc" style="margin-bottom:18px">
+    <div class="th2"><h3>💸 Saldos Pendientes por Cobrar</h3></div>
+    <table><thead><tr><th>Fecha</th><th>Ser</th><th>Sesión</th><th>Precio total</th><th>Abonado</th><th>Saldo</th><th></th></tr></thead>
+    <tbody>${saldosSes.map(s=>`<tr>
+      <td>${fd(s.fecha)}</td>
+      <td><strong>${s.ser}</strong></td>
+      <td><span class="bdg b-go" style="font-size:10px">${s.sesion||s.tipo||'—'}</span></td>
+      <td style="color:var(--muted)">$${(s.monto||0).toLocaleString('es-AR')}</td>
+      <td style="color:var(--green)">$${(s.montoPagado||0).toLocaleString('es-AR')}</td>
+      <td style="font-weight:700;color:var(--or)">$${getSaldo(s).toLocaleString('es-AR')}</td>
+      <td><button class="btn btn-sm" style="background:rgba(212,134,58,.2);border:1px solid var(--or);color:var(--or)"
+        onclick="cobrarSaldoFact('${s.id}')">💵 Cobrar</button></td>
+    </tr>`).join('')}</tbody></table>
+  </div>`:``;
+  document.getElementById('saldosPendientes').innerHTML=saldoHtml;
   const srch=document.getElementById('facSrch').value.toLowerCase();
   const est=document.getElementById('facEst').value;
   const fil=facturas.filter(f=>{
@@ -1320,13 +1423,28 @@ function renderFact(){
       <td style="font-weight:700;color:var(--gl)">${f.moneda||'ARS'} ${parseFloat(f.monto||0).toLocaleString('es-AR')}</td>
       <td><span class="bdg ${f.estado==='pagado'?'b-gr':'b-rd'}">${f.estado==='pagado'?'✓ Pagado':'⏳ Pendiente'}</span></td>
       <td>
-        <button class="btn btn-s btn-sm" onclick="togFact(${f.id})">${f.estado==='pagado'?'↩':'✓'}</button>
-        <button class="btn btn-s btn-sm" onclick="delFact(${f.id})">🗑</button>
+        <button class="btn btn-s btn-sm" onclick="togFact('${f.id}')">${f.estado==='pagado'?'↩ Revertir':'✓ Cobrar'}</button>
+        <button class="btn btn-s btn-sm" onclick="delFact('${f.id}')">🗑</button>
       </td>
     </tr>`).join(''):`<tr><td colspan="11"><div class="es"><div class="ei">💰</div><p>Sin facturas. Creá la primera con el botón de arriba.</p></div></td></tr>`;
 }
-function togFact(id){const f=facturas.find(f=>f.id===id);if(f){f.estado=f.estado==='pagado'?'pendiente':'pagado';save();renderFact();}}
-function delFact(id){if(confirm('¿Eliminar?')){facturas=facturas.filter(f=>f.id!==id);save();renderFact();}}
+function togFact(id){const f=facturas.find(f=>String(f.id)===String(id));if(f){f.estado=f.estado==='pagado'?'pendiente':'pagado';save();renderFact();}}
+function delFact(id){if(confirm('¿Eliminar?')){facturas=facturas.filter(f=>String(f.id)!==String(id));save();renderFact();}}
+function cobrarSaldoFact(sesId){
+  const s=sessions.find(x=>String(x.id)===String(sesId));
+  if(!s)return;
+  const saldo=Math.max(0,(s.monto||0)-(s.montoPagado!=null?s.montoPagado:(s.monto||0)));
+  if(!saldo)return;
+  if(!confirm(`¿Registrar el cobro del saldo de $${saldo.toLocaleString('es-AR')} para ${s.ser}?`))return;
+  facturas.push({id:nid(facturas),sesId:s.id,fecha:new Date().toISOString().split('T')[0],
+    ser:s.ser,servicio:s.sesion,facilitador:s.facilitador,
+    monto:saldo,estado:'pagado',tipo:'Saldo restante',
+    notas:'Cobro del saldo pendiente'});
+  s.montoPagado=(s.montoPagado||0)+saldo;
+  s.saldoPendiente=0;
+  save();renderFact();
+  toast(`Saldo de $${saldo.toLocaleString('es-AR')} cobrado 💰`);
+}
 
 /* FACILITADORES */
 function renderFacs(){
@@ -1360,7 +1478,7 @@ function renderFacs(){
         <div><div class="v">${tot}</div><div class="l">Total</div></div>
         <div><div class="v">${yrc}</div><div class="l">${yr}</div></div>
       </div>
-      <button class="btn btn-s btn-sm" style="margin-top:10px;width:100%" onclick="openModal('fac',${f.id})">✏️ Editar</button>
+      <button class="btn btn-s btn-sm" style="margin-top:10px;width:100%" onclick="openModal('fac','${f.id}')">✏️ Editar</button>
     </div>`;
   }).join('');
   document.getElementById('facListBody').innerHTML=facs.map(f=>{
@@ -1376,7 +1494,7 @@ function renderFacs(){
       <td><strong>${tot}</strong></td><td>${yrc}</td>
       <td style="font-size:11px">${f.email?`📧 ${f.email}`:''}${f.cel?`<br>📱 ${f.cel}`:''}</td>
       <td>
-        <button class="btn btn-s btn-sm" onclick="openModal('fac',${f.id})">✏️</button>
+        <button class="btn btn-s btn-sm" onclick="openModal('fac','${f.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delFacilitador(${f.id})">🗑</button>
       </td>
     </tr>`;
@@ -1433,6 +1551,7 @@ function renderSeres(){
         <div>
           <strong>${s.nombre}</strong>
           ${s.prospecto?'<span class="bdg b-gr" style="font-size:9px;margin-left:5px">🌱 Prospecto</span>':''}
+          ${s.intakeCompletado?'<span class="bdg b-bl" style="font-size:9px;margin-left:4px" title="Formulario completado">💫 Intake</span>':''}
           ${s.email&&s.email!=='None'?`<div style="font-size:11px;color:var(--gold)">📧 ${s.email}</div>`:''}
           ${s.origen?`<div style="font-size:10px;color:var(--muted)">📣 ${s.origen}</div>`:''}
         </div>
@@ -1450,7 +1569,7 @@ function renderSeres(){
       <td style="font-size:12px;color:var(--muted)">${last?fd(last.fecha):'—'}</td>
       <td style="white-space:nowrap">
         ${s.prospecto?`<button class="btn btn-s btn-sm" title="Convertir a ser" onclick="convertProsp(${s.id})">✨</button>`:'<button class="btn btn-s btn-sm" onclick="showSer('+s.id+')">👁</button>'}
-        <button class="btn btn-s btn-sm" onclick="openModal('ser',${s.id})">✏️</button>
+        <button class="btn btn-s btn-sm" onclick="openModal('ser','${s.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delSer(${s.id})">🗑</button>
       </td>
     </tr>`;
@@ -1548,9 +1667,10 @@ function renderHerr(){
 
 /* MODALS */
 function openModal(type,id,extra){
+  const _id=id!=null?String(id):null; // normalise to string always
   const tod=new Date().toISOString().split('T')[0];
   if(type==='ses'){
-    const ses=id?sessions.find(x=>x.id===id):null;
+    const ses=_id?sessions.find(x=>String(x.id)===_id):null;
     document.getElementById('moSesTitle').textContent=ses?'✏️ Editar Sesión':'✨ Nueva Sesión';
     document.getElementById('nsId').value=id||'';
     if(ses){
@@ -1566,22 +1686,47 @@ function openModal(type,id,extra){
       document.getElementById('nsPV').checked=ses.primeraVez||false;
       document.getElementById('nsObs').value=ses.observacion||'';
       document.getElementById('nsMonto').value=ses.monto||0;
+      document.getElementById('nsPagado').value=ses.montoPagado!=null?ses.montoPagado:(ses.monto||0);
     } else {
       if(!document.getElementById('nsFecha').value)document.getElementById('nsFecha').value=tod;
       document.getElementById('nsPV').checked=false;
       document.getElementById('nsPais').value='Argentina';
       document.getElementById('nsProv').value='Buenos Aires';
+      document.getElementById('nsMonto').value='';
+      document.getElementById('nsPagado').value='';
     }
+    document.getElementById('saldoInfo').style.display='none';
+    calcSaldo();
     document.getElementById('dlSer').innerHTML=seres.map(s=>`<option value="${s.nombre}">`).join('');
     document.getElementById('nsFac').innerHTML=facs.map(f=>`<option>${f.nombre}</option>`).join('');
     document.getElementById('nsPrograma').innerHTML='<option value="">— Sesión suelta (sin programa) —</option>'+programas.map(p=>`<option>${p.nombre}</option>`).join('');
     if(ses)document.getElementById('nsPrograma').value=ses.programa||'';
+    // Intake del ser en esta sesión
+    const sesIntakeSec=document.getElementById('sesIntakeSection');
+    const sesIntakeBody=document.getElementById('sesIntakeBody');
+    if(ses&&ses.intakeCompletado){
+      sesIntakeSec.style.display='block';
+      const iFields=[
+        {l:'Fecha integración',v:ses.intakeFecha},
+        {l:'Antes de la sesión',v:ses.intakeAntes},
+        {l:'Durante la sesión',v:ses.intakeDurante},
+        {l:'Después',v:ses.intakeDespues},
+        {l:'Palabra / frase',v:ses.intakePalabra},
+        {l:'¿Recomienda?',v:ses.intakeRecomienda},
+        {l:'Testimonio en redes',v:ses.intakeTestimonio},
+        {l:'Info futura',v:ses.intakeInfo},
+        {l:'Mensaje al facilitador',v:ses.intakeMensaje},
+      ].filter(f=>f.v);
+      sesIntakeBody.innerHTML=iFields.map(f=>`<div style="background:var(--card2);border-radius:8px;padding:8px 12px"><span style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px">${f.l}</span><div style="margin-top:3px;color:var(--text);line-height:1.5">${f.v}</div></div>`).join('');
+    }else{
+      sesIntakeSec.style.display='none';
+    }
     document.getElementById('moSes').classList.add('open');
   } else if(type==='ser'){
     const isProsp=extra===true;
-    const s=id?seres.find(x=>x.id===id):null;
+    const s=_id?seres.find(x=>String(x.id)===_id):null;
     document.getElementById('moSerTitle').textContent=s?(s.prospecto?'✏️ Editar Prospecto':'✏️ Editar Ser'):isProsp?'🌱 Nuevo Prospecto':'💫 Nuevo Ser';
-    document.getElementById('srId').value=id||'';
+    document.getElementById('srId').value=_id||'';
     document.getElementById('srNom').value=s?s.nombre:'';
     document.getElementById('srNac').value=s?(s.nacimiento&&s.nacimiento!=='None'?s.nacimiento:''):'';
     document.getElementById('srNacion').value=s?s.nacionalidad:'Argentina';
@@ -1596,11 +1741,32 @@ function openModal(type,id,extra){
     const campSel=document.getElementById('srCamp');
     campSel.innerHTML='<option value="">— Sin campaña —</option>'+campañas.map(c=>`<option value="${c.id}" ${s&&s.campañaId===c.id?'selected':''}>${c.nombre} (${c.plataforma})</option>`).join('');
     document.getElementById('srRev').value=s?(s.review&&s.review!=='None'?s.review:''):'';
+    // Intake section
+    const intakeSec=document.getElementById('srIntakeSection');
+    const intakeBody=document.getElementById('srIntakeBody');
+    if(s&&s.intakeCompletado){
+      intakeSec.style.display='block';
+      const iFields=[
+        {l:'Sesión',v:s.intakeSesion},
+        {l:'Fecha',v:s.intakeFecha},
+        {l:'Antes de la sesión',v:s.intakeAntes},
+        {l:'Durante la sesión',v:s.intakeDurante},
+        {l:'Después',v:s.intakeDespues},
+        {l:'Palabra / frase',v:s.intakePalabra},
+        {l:'¿Recomienda?',v:s.intakeRecomienda},
+        {l:'Testimonio en redes',v:s.intakeTestimonio},
+        {l:'Quiere info futura',v:s.intakeInfo},
+        {l:'Mensaje al facilitador',v:s.intakeMensaje},
+      ].filter(f=>f.v);
+      intakeBody.innerHTML=iFields.map(f=>`<div style="background:var(--card2);border-radius:8px;padding:8px 12px"><span style="color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.5px">${f.l}</span><div style="margin-top:3px;color:var(--text);line-height:1.5">${f.v}</div></div>`).join('');
+    }else{
+      intakeSec.style.display='none';
+    }
     document.getElementById('moSer').classList.add('open');
   } else if(type==='fac'){
-    const f=id?facs.find(x=>x.id===id):null;
+    const f=_id?facs.find(x=>String(x.id)===_id):null;
     document.getElementById('moFacTitle').textContent=f?'✏️ Editar Facilitador':'🙋 Nuevo Facilitador';
-    document.getElementById('fId').value=id||'';
+    document.getElementById('fId').value=_id||'';
     document.getElementById('fNom').value=f?f.nombre:'';
     // Build herramientas checklist
     const fHerrs=f?(f.herramientas||[]):[];
@@ -1621,9 +1787,9 @@ function openModal(type,id,extra){
     document.getElementById('fBio').value=f?f.bio:'';
     document.getElementById('moFac').classList.add('open');
   } else if(type==='herr'){
-    const h=id?herramientas.find(x=>x.id===id):null;
+    const h=_id?herramientas.find(x=>String(x.id)===_id):null;
     document.getElementById('moHerrTitle').textContent=h?'✏️ Editar Herramienta':'🔮 Nueva Herramienta';
-    document.getElementById('hId').value=id||'';
+    document.getElementById('hId').value=_id||'';
     document.getElementById('hNom').value=h?h.nom:'';
     document.getElementById('hIco').value=h?h.ico:'🔮';
     document.getElementById('hDesc').value=h?h.desc:'';
@@ -1636,9 +1802,9 @@ function openModal(type,id,extra){
       </label>`).join('');
     document.getElementById('moHerr').classList.add('open');
   } else if(type==='prog'){
-    const p=id?programas.find(x=>x.id===id):null;
+    const p=_id?programas.find(x=>String(x.id)===_id):null;
     document.getElementById('moProgTitle').textContent=p?'✏️ Editar Programa':'📚 Nuevo Programa';
-    document.getElementById('pgId').value=id||'';
+    document.getElementById('pgId').value=_id||'';
     document.getElementById('pgNom').value=p?p.nombre:'';
     document.getElementById('pgIco').value=p?p.ico:'📚';
     document.getElementById('pgCol').value=p?p.col:'#C9A84C';
@@ -1655,7 +1821,7 @@ function openModal(type,id,extra){
     document.getElementById('ffSesId').value='';
     document.getElementById('moFact').classList.add('open');
   } else if(type==='camp'){
-    const c=id?campañas.find(x=>x.id===id):null;
+    const c=_id?campañas.find(x=>String(x.id)===_id):null;
     document.getElementById('moCampTitle').textContent=c?'✏️ Editar Campaña':'📢 Nueva Campaña';
     document.getElementById('cpId').value=id||'';
     document.getElementById('cpNom').value=c?c.nombre:'';
@@ -1670,7 +1836,7 @@ function openModal(type,id,extra){
   } else if(type==='serDet'){
     document.getElementById('moSerDet').classList.add('open');
   } else if(type==='insc'){
-    const insc=id?inscripciones.find(x=>x.id===id):null;
+    const insc=_id?inscripciones.find(x=>String(x.id)===_id):null;
     document.getElementById('moInscTitle').textContent=insc?'✏️ Editar Inscripción':'🗺️ Inscribir Ser en Programa';
     document.getElementById('inId').value=id||'';
     document.getElementById('inSer').innerHTML=seres.filter(s=>!s.prospecto).map(s=>`<option value="${s.id}" ${insc&&insc.serId===s.id?'selected':''}>${s.nombre}</option>`).join('');
@@ -2308,13 +2474,15 @@ function saveSes(){
     modalidad:document.getElementById('nsMod').value,
     primeraVez:document.getElementById('nsPV').checked,
     estado:document.getElementById('nsEst').value,
-    monto:parseFloat(document.getElementById('nsMonto').value)||0};
+    monto:parseFloat(document.getElementById('nsMonto').value)||0,
+    montoPagado:parseFloat(document.getElementById('nsPagado').value)||parseFloat(document.getElementById('nsMonto').value)||0};
   if(eid){
-    const ses=sessions.find(x=>x.id===parseInt(eid));
+    const ses=sessions.find(x=>String(x.id)===String(eid));
     if(ses)Object.assign(ses,sesData);
     toast('Sesión actualizada ✨');
   } else {
     const ns={id:nid(sessions),...sesData};
+    ns.saldoPendiente=Math.max(0,(ns.monto||0)-(ns.montoPagado||0));
     sessions.unshift(ns);
     const exSer=seres.find(s=>s.nombre===ser);
     if(!exSer){
@@ -2323,17 +2491,19 @@ function saveSes(){
       exSer.prospecto=false;
       toast('¡'+ser.split(' ')[0]+' pasó de prospecto a Ser ✨');
     }
-    // Auto-crear factura si tiene monto
-    if(ns.monto>0){
-      facturas.push({id:Date.now(),sesId:ns.id,fecha:ns.fecha,ser:ns.ser,servicio:ns.sesion,
-        facilitador:ns.facilitador,monto:ns.monto,
-        estado:ns.estado==='Completado'?'pagado':'pendiente',
-        notas:'Generada automáticamente desde sesión'});
+    // Auto-crear factura por monto abonado
+    if(ns.montoPagado>0){
+      facturas.push({id:nid(facturas),sesId:ns.id,fecha:ns.fecha,ser:ns.ser,servicio:ns.sesion,
+        facilitador:ns.facilitador,monto:ns.montoPagado,
+        estado:'pagado',tipo:'Seña / Pago parcial',
+        notas:ns.saldoPendiente>0?`Pago parcial. Saldo pendiente: $${ns.saldoPendiente.toLocaleString('es-AR')}`:'Pago completo'});
     }
-    toast(ns.monto>0?'Sesión y factura guardadas ✨💰':'Sesión guardada ✨');
+    if(ns.saldoPendiente>0)toast(`Sesión guardada ✨ · Saldo pendiente: $${ns.saldoPendiente.toLocaleString('es-AR')} 💸`);
+    else if(ns.montoPagado>0)toast('Sesión y pago guardados ✨💰');
+    else toast('Sesión guardada ✨');
   }
   save();closeModal('moSes');
-  document.getElementById('nsSer').value='';document.getElementById('nsObs').value='';document.getElementById('nsMonto').value='';document.getElementById('nsHora').value='';document.getElementById('nsPrograma').value='';document.getElementById('nsId').value='';
+  document.getElementById('nsSer').value='';document.getElementById('nsObs').value='';document.getElementById('nsMonto').value='';document.getElementById('nsPagado').value='';document.getElementById('nsHora').value='';document.getElementById('nsPrograma').value='';document.getElementById('nsId').value='';
   if(curSec==='sesiones')renderSes();else if(curSec==='calendario')renderCal();else renderDash();
 }
 function saveSer(){
@@ -2343,9 +2513,21 @@ function saveSer(){
   if(!nom){alert('El nombre es obligatorio');return;}
   const campId=document.getElementById('srCamp').value||null;
   if(eid){
-    const s=seres.find(x=>x.id===parseInt(eid));
-    if(s){s.nombre=nom;s.nacimiento=document.getElementById('srNac').value;s.nacionalidad=document.getElementById('srNacion').value;s.pais=document.getElementById('srPais').value;s.provincia=document.getElementById('srProv').value;s.ciudad=document.getElementById('srCiudad').value;s.celular=document.getElementById('srCel').value;s.email=document.getElementById('srEmail').value;s.zona=document.getElementById('srZona').value;s.origen=document.getElementById('srOrigen').value;s.prospecto=isProsp;s.review=document.getElementById('srRev').value;s.campañaId=campId;}
-    toast(isProsp?'Prospecto actualizado 🌱':'Ser actualizado 💫');
+    const s=seres.find(x=>String(x.id)===String(eid));
+    if(s){
+      const oldNom=s.nombre;
+      s.nombre=nom;s.nacimiento=document.getElementById('srNac').value;s.nacionalidad=document.getElementById('srNacion').value;s.pais=document.getElementById('srPais').value;s.provincia=document.getElementById('srProv').value;s.ciudad=document.getElementById('srCiudad').value;s.celular=document.getElementById('srCel').value;s.email=document.getElementById('srEmail').value;s.zona=document.getElementById('srZona').value;s.origen=document.getElementById('srOrigen').value;s.prospecto=isProsp;s.review=document.getElementById('srRev').value;s.campañaId=campId;
+      // Cascada: si el nombre cambió, actualizar sesiones y facturas
+      if(oldNom&&oldNom!==nom){
+        let updSes=0,updFact=0;
+        sessions.forEach(se=>{if(se.ser===oldNom){se.ser=nom;updSes++;}});
+        facturas.forEach(f=>{if(f.ser===oldNom){f.ser=nom;updFact++;}});
+        if(updSes||updFact)toast('Nombre actualizado en '+updSes+' sesión'+(updSes!==1?'es':'')+' y '+updFact+' factura'+(updFact!==1?'s':'')+' 🔄');
+        else toast(isProsp?'Prospecto actualizado 🌱':'Ser actualizado 💫');
+      } else {
+        toast(isProsp?'Prospecto actualizado 🌱':'Ser actualizado 💫');
+      }
+    }
   } else {
     seres.push({id:nid(seres),nombre:nom,nacimiento:document.getElementById('srNac').value,nacionalidad:document.getElementById('srNacion').value,pais:document.getElementById('srPais').value,provincia:document.getElementById('srProv').value,ciudad:document.getElementById('srCiudad').value,celular:document.getElementById('srCel').value,email:document.getElementById('srEmail').value,zona:document.getElementById('srZona').value,origen:document.getElementById('srOrigen').value,prospecto:isProsp,review:document.getElementById('srRev').value,campañaId:campId});
     toast(isProsp?'Prospecto registrado 🌱':'Ser registrado 💫');
@@ -2363,7 +2545,7 @@ function saveFac(){
   const herrs=[...document.querySelectorAll('#fHerrList input[type=checkbox]:checked')].map(c=>c.value);
   const fData={nombre:nom,herramientas:herrs,precio:parseFloat(document.getElementById('fPrecio').value)||0,email:document.getElementById('fEmail').value,cel:document.getElementById('fCel').value,pais:document.getElementById('fPais').value,zona:document.getElementById('fZona').value,ciudad:document.getElementById('fCiudad').value,direccion:document.getElementById('fDireccion').value,pres:document.getElementById('fPres').checked,onl:document.getElementById('fOnl').checked,bio:document.getElementById('fBio').value};
   if(eid){
-    const f=facs.find(x=>x.id===parseInt(eid));
+    const f=facs.find(x=>String(x.id)===String(eid));
     if(f)Object.assign(f,fData);
     toast('Facilitador actualizado 🙋');
   } else {
@@ -2378,7 +2560,7 @@ function saveFact(){
   const ser=document.getElementById('ffSer').value.trim();
   const monto=document.getElementById('ffMonto').value;
   if(!fecha||!ser||!monto){alert('Completá fecha, ser y monto');return;}
-  facturas.push({id:Date.now(),sesId:parseInt(document.getElementById('ffSesId').value)||null,fecha,ser,servicio:document.getElementById('ffServ').value,
+  facturas.push({id:nid(facturas),sesId:document.getElementById('ffSesId').value||null,fecha,ser,servicio:document.getElementById('ffServ').value,
     facilitador:document.getElementById('ffFac').value,monto:parseFloat(monto),
     tipo:document.getElementById('ffTipo').value,metodoPago:document.getElementById('ffMetodo').value,moneda:document.getElementById('ffMoneda').value,
     estado:document.getElementById('ffEst').value,notas:document.getElementById('ffNota').value});
@@ -2587,7 +2769,7 @@ function doImport(){
 let mktTab='pub';
 function setMktTab(t){
   mktTab=t;
-  ['pub','conv','ret'].forEach(x=>{
+  ['pub','conv','ret','meta'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
@@ -2595,7 +2777,8 @@ function setMktTab(t){
   });
   if(t==='pub')renderMktPub();
   else if(t==='conv')renderMktConv();
-  else renderMktRet();
+  else if(t==='ret')renderMktRet();
+  else renderMetaTab();
 }
 
 function renderMkt(){
@@ -2605,11 +2788,12 @@ function renderMkt(){
   const totalProsp=seres.filter(s=>s.prospecto).length;
   const totalConv=seres.filter(s=>!s.prospecto&&s.campañaId).length;
   const totalPresup=campañas.reduce((a,c)=>a+(parseFloat(c.presupuesto)||0),0);
+  const metaLeadCount=seres.filter(s=>s.metaLeadId).length;
   document.getElementById('mktKPIs').innerHTML=`
     <div class="kc go"><div class="ki">📢</div><div class="kl">Campañas</div><div class="kv">${totalCamp}</div><div class="ks">${activas} activas</div></div>
     <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos activos</div><div class="kv">${totalProsp}</div><div class="ks">Sin sesión aún</div></div>
     <div class="kc gr"><div class="ki">✨</div><div class="kl">Convertidos</div><div class="kv">${totalConv}</div><div class="ks">De campañas</div></div>
-    <div class="kc pk"><div class="ki">💰</div><div class="kl">Inversión total</div><div class="kv">${fc(totalPresup)}</div></div>`;
+    <div class="kc bl"><div class="ki">🔵</div><div class="kl">Leads de Meta</div><div class="kv">${metaLeadCount}</div><div class="ks">Importados automáticamente</div></div>`;
   renderMktPub();
 }
 
@@ -2785,6 +2969,143 @@ function renderMktRet(){
         <td><span class="bdg ${s.dias>=180?'b-rd':s.dias>=90?'b-or':'b-go'}" style="font-size:10px">${s.dias>=180?'🔴 Crítico':s.dias>=90?'🟡 Alerta':'🟢 Leve'}</span></td>
       </tr>`).join('')}</tbody></table>
     </div>`:`<div class="es"><div class="ei">🎉</div><p>¡Todos los seres tuvieron sesiones en los últimos ${meses} meses!</p></div>`}`;
+}
+
+/* ── META ADS INTEGRATION ────────────────────────────────── */
+function metaToken(){return localStorage.getItem('meta_token')||'';}
+function metaAccountId(){return localStorage.getItem('meta_account_id')||'';}
+function metaVerifyToken(){
+  let vt=localStorage.getItem('meta_verify_token');
+  if(!vt){vt='lacasa_'+Math.random().toString(36).slice(2,10);localStorage.setItem('meta_verify_token',vt);}
+  return vt;
+}
+function saveMeta(){
+  const tok=(document.getElementById('metaToken')?.value||'').trim();
+  const acc=(document.getElementById('metaAccount')?.value||'').trim();
+  if(!tok||!acc){toast('Completá el token y el ID de cuenta','err');return;}
+  localStorage.setItem('meta_token',tok);
+  localStorage.setItem('meta_account_id',acc.replace('act_',''));
+  toast('Configuración de Meta guardada ✅');
+  renderMetaTab();
+}
+function disconnectMeta(){
+  if(!confirm('¿Desconectar Meta Ads?'))return;
+  localStorage.removeItem('meta_token');
+  localStorage.removeItem('meta_account_id');
+  toast('Meta desconectado');
+  renderMetaTab();
+}
+function copyMetaWebhook(){
+  const url='https://lacasadelprofit.netlify.app/.netlify/functions/meta-webhook';
+  navigator.clipboard.writeText(url).then(()=>toast('URL del webhook copiada 📋'));
+}
+function copyMetaVerifyToken(){
+  navigator.clipboard.writeText(metaVerifyToken()).then(()=>toast('Verify token copiado 📋'));
+}
+async function syncMetaLeads(){
+  const tok=metaToken();
+  const acc=metaAccountId();
+  if(!tok||!acc){toast('Configurá el token y la cuenta primero','err');return;}
+  const btn=document.getElementById('btnSyncMeta');
+  if(btn){btn.disabled=true;btn.textContent='Sincronizando...';}
+  try{
+    const resp=await fetch('/api/meta-proxy?action=leads&token='+encodeURIComponent(tok)+'&account='+encodeURIComponent(acc));
+    if(!resp.ok)throw new Error('HTTP '+resp.status);
+    const data=await resp.json();
+    if(data.error)throw new Error(data.error);
+    let newLeads=0;
+    (data.leads||[]).forEach(lead=>{
+      const email=(lead.field_data?.find(f=>f.name==='email'||f.name==='EMAIL')?.values||[])[0]||'';
+      const nombre=(lead.field_data?.find(f=>f.name==='full_name'||f.name==='FULL_NAME'||f.name==='nombre')?.values||[])[0]||('Lead '+lead.id.slice(-6));
+      const tel=(lead.field_data?.find(f=>f.name==='phone_number'||f.name==='PHONE'||f.name==='celular')?.values||[])[0]||'';
+      const yaExiste=seres.find(s=>s.metaLeadId===lead.id||(email&&s.email===email));
+      if(!yaExiste){
+        seres.push({id:nid(),nombre,email,celular:tel,prospecto:true,nacimiento:'',nacionalidad:'Argentina',pais:'Argentina',provincia:'',ciudad:'',zona:'',review:'',campañaId:'',origen:'Meta Lead Ad',metaLeadId:lead.id,fechaLead:lead.created_time||new Date().toISOString()});
+        newLeads++;
+      }
+    });
+    if(newLeads>0){save();toast('✅ '+newLeads+' prospecto'+(newLeads>1?'s':'')+' importado'+(newLeads>1?'s':'')+' de Meta');}
+    else toast('Sin leads nuevos — todo actualizado');
+    renderMetaTab();
+  }catch(e){
+    toast('Error al sincronizar: '+e.message,'err');
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🔄 Sincronizar leads';}
+  }
+}
+function renderMetaTab(){
+  const connected=!!(metaToken()&&metaAccountId());
+  const WEBHOOK_URL='https://lacasadelprofit.netlify.app/.netlify/functions/meta-webhook';
+  const vt=metaVerifyToken();
+  const metaLeads=seres.filter(s=>s.metaLeadId).sort((a,b)=>new Date(b.fechaLead||0)-new Date(a.fechaLead||0));
+  document.getElementById('mktMeta').innerHTML=`
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px">
+    <div class="cc">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <div style="width:38px;height:38px;border-radius:10px;background:#1877F222;display:flex;align-items:center;justify-content:center;font-size:20px">🔵</div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--gl)">Meta Ads — Conexión API</div>
+          <div style="font-size:11px">${connected?'<span style="color:var(--green)">● Conectado</span>':'<span style="color:var(--muted)">○ No configurado</span>'}</div>
+        </div>
+      </div>
+      <div class="fg"><label>Access Token de Meta</label>
+        <input type="password" id="metaToken" placeholder="EAAxxxxxxxxxxxxxxxx..." value="${metaToken()}" style="font-size:12px">
+      </div>
+      <div class="fg"><label>ID de Cuenta Publicitaria (sin "act_")</label>
+        <input type="text" id="metaAccount" placeholder="123456789012345" value="${metaAccountId()}">
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-p" style="flex:1" onclick="saveMeta()">💾 Guardar conexión</button>
+        ${connected?'<button class="btn btn-d btn-sm" onclick="disconnectMeta()">Desconectar</button>':''}
+      </div>
+    </div>
+    <div class="cc">
+      <div style="font-size:14px;font-weight:700;color:var(--gl);margin-bottom:14px">🪝 Webhook — Leads en tiempo real</div>
+      <div class="fg"><label>URL del Webhook (copiar en Meta Developer)</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" value="${WEBHOOK_URL}" readonly style="font-size:11px;flex:1;cursor:pointer" onclick="this.select()">
+          <button class="btn btn-s btn-sm" onclick="copyMetaWebhook()" title="Copiar">📋</button>
+        </div>
+      </div>
+      <div class="fg"><label>Verify Token (copiar en Meta Developer)</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" value="${vt}" readonly style="font-size:11px;flex:1;cursor:pointer" onclick="this.select()">
+          <button class="btn btn-s btn-sm" onclick="copyMetaVerifyToken()" title="Copiar">📋</button>
+        </div>
+      </div>
+      <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:10px;font-size:11px;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--gl)">📋 Configuración (una sola vez):</strong><br>
+        1. Meta for Developers → Tu App → Webhooks<br>
+        2. Agregá suscripción al objeto "leadgen"<br>
+        3. Pegá la URL y el Verify Token de arriba<br>
+        4. Los leads van a entrar solos a partir de ahí
+      </div>
+    </div>
+  </div>
+  <div class="cc" style="margin-bottom:18px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--gl)">🔄 Sincronización manual de leads</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:3px">Importa los leads de tus formularios de Meta Ads como prospectos en el sistema</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="bdg b-bl" style="font-size:11px">${metaLeads.length} leads importados</span>
+        <button class="btn btn-p" id="btnSyncMeta" onclick="syncMetaLeads()" ${!connected?'disabled title="Configurá el token primero"':''}>🔄 Sincronizar leads</button>
+      </div>
+    </div>
+  </div>
+  ${metaLeads.length?`<div class="tc">
+    <div class="th2"><h3>📋 Leads importados desde Meta Ads</h3></div>
+    <table><thead><tr><th>Fecha</th><th>Nombre</th><th>Email</th><th>Teléfono</th><th>Estado</th><th></th></tr></thead>
+    <tbody>${metaLeads.map(s=>`<tr>
+      <td style="font-size:11px;color:var(--muted)">${s.fechaLead?fd(s.fechaLead.split('T')[0]):'—'}</td>
+      <td><strong>${s.nombre}</strong></td>
+      <td style="font-size:12px">${s.email||'—'}</td>
+      <td style="font-size:12px">${s.celular||'—'}</td>
+      <td><span class="bdg ${s.prospecto?'b-tl':'b-gr'}" style="font-size:10px">${s.prospecto?'🌱 Prospecto':'✅ Convertido'}</span></td>
+      <td><button class="btn btn-s btn-sm" onclick="openModal('ser','${s.id}')">Ver</button></td>
+    </tr>`).join('')}</tbody></table>
+  </div>`:`<div class="es"><div class="ei">🔵</div><p>Sin leads de Meta importados aún.<br><small style="color:var(--muted)">Configurá la conexión y sincronizá, o activá el webhook para recibirlos automáticamente.</small></p></div>`}`;
 }
 
 function initApp(){renderDash();}

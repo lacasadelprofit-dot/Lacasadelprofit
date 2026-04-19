@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Registrate — La Casa del Profit</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="theme-color" content="#C9A84C">
+<meta property="og:title" content="La Casa del Profit — Registrate">
+<meta property="og:description" content="Dejá tus datos y empezá tu camino de transformación.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#06060A;--card:#141320;--card2:#1C1A2E;--border:#2A2840;
+  --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;
+  --text:#EDE5C8;--muted:#7A7260;--green:#3DAA6A;--red:#E05555;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
+  background:radial-gradient(ellipse at 20% 20%,#1A1400 0%,#06060A 60%),radial-gradient(ellipse at 80% 80%,#0D0A1A 0%,transparent 50%);}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:52px 20px 36px;max-width:600px;margin:0 auto;}
+.hero .icon{font-size:56px;margin-bottom:16px;display:block;}
+.hero h1{font-size:22px;font-weight:800;color:var(--gl);letter-spacing:2px;margin-bottom:6px;}
+.hero .brand{font-size:11px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;}
+.hero p{font-size:15px;color:var(--muted);line-height:1.7;max-width:440px;margin:0 auto;}
+
+/* ── FORM CARD ── */
+.form-wrap{max-width:540px;margin:0 auto;padding:0 16px 60px;}
+.form-card{background:var(--card);border:1px solid #2A2810;border-radius:24px;padding:32px 28px;
+  box-shadow:0 0 60px rgba(201,168,76,.06),0 25px 60px rgba(0,0,0,.5);}
+
+.fg{margin-bottom:18px;}
+.fg label{display:block;font-size:11px;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.5px;font-weight:600;}
+.fg input,.fg select,.fg textarea{
+  width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);}
+.fg textarea{min-height:90px;resize:vertical;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.req{color:var(--gold);}
+
+.btn-send{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gd));
+  border:none;border-radius:12px;color:#050401;font-size:16px;font-weight:800;cursor:pointer;
+  margin-top:8px;letter-spacing:.5px;transition:opacity .2s;}
+.btn-send:hover{opacity:.9;}
+.btn-send:disabled{opacity:.5;cursor:not-allowed;}
+
+.sep{border:none;border-top:1px solid var(--border);margin:22px 0;}
+.sec-label{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;}
+
+/* ── SUCCESS ── */
+#successScreen{display:none;max-width:540px;margin:0 auto;padding:0 16px 60px;}
+.success-card{background:var(--card);border:1px solid rgba(61,170,106,.3);border-radius:24px;
+  padding:48px 32px;text-align:center;box-shadow:0 0 40px rgba(61,170,106,.08);}
+.success-icon{font-size:64px;margin-bottom:20px;}
+.success-card h2{font-size:22px;font-weight:700;color:var(--gl);margin-bottom:12px;}
+.success-card p{color:var(--muted);font-size:14px;line-height:1.7;}
+.success-card .sub{margin-top:20px;font-size:13px;color:var(--gold);}
+
+/* ── LOADER ── */
+#loader{display:none;position:fixed;inset:0;background:rgba(6,6,10,.9);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner{width:44px;height:44px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.err-msg{color:var(--red);font-size:12px;margin-top:10px;display:none;text-align:center;}
+
+@media(max-width:480px){
+  .fg-row{grid-template-columns:1fr;}
+  .form-card{padding:24px 18px;}
+  .hero{padding:36px 16px 24px;}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p style="color:var(--gl);font-size:13px;letter-spacing:1px">Enviando tu registro...</p>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <span class="icon">🌀</span>
+  <h1>LA CASA DEL PROFIT</h1>
+  <div class="brand">Herramientas para #VivireNProfit</div>
+  <p>Dejá tus datos y damos el primer paso juntos. Te contactamos para contarte todo sobre las sesiones y experiencias disponibles.</p>
+</div>
+
+<!-- FORM -->
+<div class="form-wrap" id="formWrap">
+  <div class="form-card">
+
+    <div class="sec-label">Tus datos</div>
+    <div class="fg">
+      <label>Nombre y Apellido <span class="req">*</span></label>
+      <input type="text" id="rNom" placeholder="Tu nombre completo" autocomplete="name">
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Email <span class="req">*</span></label>
+        <input type="email" id="rEmail" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>WhatsApp / Celular</label>
+        <input type="tel" id="rCel" placeholder="+54 9 11..." autocomplete="tel">
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>País</label>
+        <input type="text" id="rPais" placeholder="Argentina" value="Argentina">
+      </div>
+      <div class="fg">
+        <label>Ciudad</label>
+        <input type="text" id="rCiudad" placeholder="Buenos Aires...">
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="sec-label">¿Qué te trae por acá?</div>
+
+    <div class="fg">
+      <label>¿Cómo nos conociste?</label>
+      <select id="rOrigen">
+        <option value="">— Contanos —</option>
+        <option>Instagram</option>
+        <option>Facebook</option>
+        <option>TikTok</option>
+        <option>Referido / Amigo</option>
+        <option>Google</option>
+        <option>WhatsApp</option>
+        <option>Otro</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>¿Qué herramienta o sesión te interesa explorar?</label>
+      <select id="rInteres">
+        <option value="">— Elegí una opción —</option>
+        <option>Barras de Access</option>
+        <option>Sesión Profit</option>
+        <option>Proceso de Cuerpos</option>
+        <option>Registros Akashicos</option>
+        <option>Reiki</option>
+        <option>Numerología</option>
+        <option>Coaching con Caballos</option>
+        <option>Constelaciones Familiares</option>
+        <option>Flores de Bach</option>
+        <option>Yoga</option>
+        <option>Ceremonias Hongos</option>
+        <option>Todavía no lo sé</option>
+        <option>Quiero hablar con alguien</option>
+      </select>
+    </div>
+
+    <div class="fg">
+      <label>¿Qué te gustaría transformar o explorar en tu vida?</label>
+      <textarea id="rMensaje" placeholder="Contanos un poco sobre vos, qué estás buscando, qué te genera curiosidad... (opcional)"></textarea>
+    </div>
+
+    <p class="err-msg" id="errMsg">Completá tu nombre y email para continuar.</p>
+    <button class="btn-send" onclick="enviarRegistro()">Quiero empezar mi camino ✨</button>
+
+    <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px;line-height:1.6">
+      Tu información es confidencial y solo será usada para contactarte.<br>
+      No compartimos tus datos con terceros.
+    </p>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="successScreen">
+  <div class="success-card">
+    <div class="success-icon">🌟</div>
+    <h2>¡Gracias por dar el primer paso!</h2>
+    <p>Recibimos tu registro. En breve vamos a contactarte para contarte todo sobre las experiencias disponibles y dar juntos el siguiente paso.</p>
+    <p class="sub">✨ Bienvenido/a a La Casa del Profit</p>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+
+function nid(){return String(Date.now()+Math.floor(Math.random()*1000));}
+
+async function enviarRegistro(){
+  const nom=document.getElementById('rNom').value.trim();
+  const email=document.getElementById('rEmail').value.trim().toLowerCase();
+  const cel=document.getElementById('rCel').value.trim();
+  const pais=document.getElementById('rPais').value.trim()||'Argentina';
+  const ciudad=document.getElementById('rCiudad').value.trim();
+  const origen=document.getElementById('rOrigen').value;
+  const interes=document.getElementById('rInteres').value;
+  const mensaje=document.getElementById('rMensaje').value.trim();
+  const errEl=document.getElementById('errMsg');
+
+  if(!nom||!email){errEl.style.display='block';return;}
+  errEl.style.display='none';
+
+  document.getElementById('loader').style.display='flex';
+
+  const ser={
+    id:nid(),
+    nombre:nom,
+    email,
+    celular:cel,
+    pais,
+    ciudad,
+    provincia:'',
+    zona:'',
+    nacimiento:'',
+    nacionalidad:'Argentina',
+    prospecto:true,
+    origen:origen||'Formulario web',
+    interes,
+    mensajeRegistro:mensaje,
+    review:'',
+    campañaId:'',
+    fechaRegistro:new Date().toISOString()
+  };
+
+  try{
+    // Try via Netlify function first (uses service key, bypasses RLS)
+    const fnResp=await fetch('/api/save-prospecto',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(ser)
+    });
+
+    let ok=fnResp.ok;
+
+    // Fallback: try direct Supabase anon insert
+    if(!ok){
+      const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+      const {error}=await sb.from('seres').insert({
+        id:ser.id,
+        data:ser,
+        updated_at:new Date().toISOString()
+      });
+      ok=!error;
+      if(error)console.warn('Supabase anon insert error:',error.message);
+    }
+
+    document.getElementById('loader').style.display='none';
+    document.getElementById('formWrap').style.display='none';
+    document.querySelector('.hero').style.display='none';
+    document.getElementById('successScreen').style.display='block';
+    window.scrollTo(0,0);
+  }catch(e){
+    document.getElementById('loader').style.display='none';
+    errEl.textContent='Error al enviar. Intentá de nuevo.';
+    errEl.style.display='block';
+  }
+}
+
+// Enter key on name/email
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Enter'&&ev.target.tagName==='INPUT')enviarRegistro();
+});
+</script>
+</body>
+</html>
