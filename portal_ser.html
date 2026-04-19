@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi Portal — La Casa del Profit</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#06060A;--card:#141320;--card2:#1C1A2E;--border:#2A2840;
+  --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;
+  --text:#EDE5C8;--muted:#7A7260;
+  --green:#3DAA6A;--red:#E05555;--blue:#5B9BD5;--or:#D4863A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── LOGIN ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;
+  background:radial-gradient(ellipse at 30% 30%,#1A1400 0%,#06060A 65%);}
+.lbox{background:var(--card);border:1px solid #3A3410;border-radius:24px;padding:44px 36px;width:420px;max-width:100%;
+  box-shadow:0 0 60px rgba(201,168,76,.08),0 25px 60px rgba(0,0,0,.7);}
+.llogo{text-align:center;margin-bottom:32px;}
+.llogo .icon{font-size:48px;margin-bottom:10px;}
+.llogo h1{font-size:20px;font-weight:700;color:var(--gl);letter-spacing:2px;}
+.llogo p{color:var(--muted);font-size:12px;margin-top:4px;}
+.fg{margin-bottom:16px;}
+.fg label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.fg input{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;
+  color:var(--text);font-size:14px;outline:none;transition:border-color .2s;}
+.fg input:focus{border-color:var(--gold);}
+.btn-login{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gd));border:none;
+  border-radius:10px;color:#050401;font-size:15px;font-weight:700;cursor:pointer;margin-top:4px;letter-spacing:.5px;}
+.btn-login:hover{opacity:.9;}
+.btn-login:disabled{opacity:.5;cursor:not-allowed;}
+.err-msg{text-align:center;color:var(--red);font-size:12px;margin-top:12px;display:none;}
+
+/* ── LOADER ── */
+#loader{display:none;position:fixed;inset:0;background:rgba(6,6,10,.92);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner{width:44px;height:44px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite;}
+#loaderMsg{color:var(--gl);font-size:13px;letter-spacing:1px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── APP ── */
+#app{display:none;max-width:680px;margin:0 auto;padding:20px 16px 60px;}
+
+.p-header{text-align:center;padding:32px 16px 24px;border-bottom:1px solid var(--border);margin-bottom:24px;}
+.p-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));
+  display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#050401;
+  margin:0 auto 14px;}
+.p-name{font-size:20px;font-weight:700;color:var(--gl);}
+.p-sub{color:var(--muted);font-size:13px;margin-top:4px;}
+.btn-out{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);
+  padding:6px 14px;font-size:12px;cursor:pointer;margin-top:12px;}
+.btn-out:hover{border-color:var(--red);color:var(--red);}
+
+/* ── SECTION TITLE ── */
+.sec-title{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:12px;
+  display:flex;align-items:center;gap:8px;}
+
+/* ── STATS ── */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;text-align:center;}
+.stat-val{font-size:26px;font-weight:800;color:var(--gl);}
+.stat-lbl{font-size:10px;color:var(--muted);margin-top:3px;text-transform:uppercase;letter-spacing:.5px;}
+
+/* ── SESSION CARD ── */
+.ses-list{display:flex;flex-direction:column;gap:10px;}
+.ses-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;
+  display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;}
+.ses-card:hover{border-color:rgba(201,168,76,.3);}
+.ses-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  font-size:22px;flex-shrink:0;}
+.ses-tipo{font-size:14px;font-weight:600;color:var(--text);}
+.ses-meta{font-size:12px;color:var(--muted);margin-top:3px;}
+.ses-fac{font-size:11px;color:var(--gold);margin-top:4px;}
+.bdg{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-gr{background:rgba(61,170,106,.15);color:#5DD89A;}
+.b-or{background:rgba(212,134,58,.2);color:#F0A050;}
+.b-rd{background:rgba(224,85,85,.15);color:#F08080;}
+.b-bl{background:rgba(91,155,213,.15);color:#8BBDE8;}
+.b-gy{background:rgba(122,114,96,.15);color:#9A9080;}
+
+/* ── FILTER ── */
+.filter-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;}
+.fil{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--muted);transition:all .15s;}
+.fil.active{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gl);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty .ei{font-size:40px;margin-bottom:10px;}
+
+/* ── MOBILE ── */
+@media(max-width:480px){
+  .lbox{padding:32px 20px;}
+  .stats-row{grid-template-columns:repeat(3,1fr);gap:8px;}
+  .stat-val{font-size:20px;}
+  .ses-card{grid-template-columns:40px 1fr auto;gap:8px;}
+  .ses-icon{width:40px;height:40px;font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOADER -->
+<div id="loader" style="display:none;position:fixed;inset:0;background:rgba(6,6,10,.92);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:16px;">
+  <div class="spinner"></div>
+  <p id="loaderMsg" style="color:var(--gl);font-size:13px;letter-spacing:1px">Cargando...</p>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="lbox">
+    <div class="llogo">
+      <div class="icon">🌀</div>
+      <h1>LA CASA DEL PROFIT</h1>
+      <p>Tu espacio de transformación</p>
+    </div>
+    <div class="fg">
+      <label>Tu email</label>
+      <input type="email" id="liEmail" placeholder="tucorreo@email.com" autocomplete="email">
+    </div>
+    <button class="btn-login" id="btnLogin" onclick="doLogin()">Ver mis sesiones</button>
+    <p class="err-msg" id="errMsg">No encontramos ese email. Verificá que sea el mismo que le diste a Juan Cruz.</p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- Header -->
+  <div class="p-header">
+    <div class="p-avatar" id="avLetter">?</div>
+    <div class="p-name" id="pName">—</div>
+    <div class="p-sub" id="pSub">✨ La Casa del Profit</div>
+    <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow"></div>
+
+  <!-- Sessions -->
+  <div class="sec-title">✨ Mis Sesiones</div>
+  <div class="filter-row" id="filterRow"></div>
+  <div class="ses-list" id="sesList"></div>
+</div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+let curSer=null, allSessions=[], curFilter='todas';
+
+function showLoader(m='Cargando...'){
+  document.getElementById('loaderMsg').textContent=m;
+  document.getElementById('loader').style.display='flex';
+}
+function hideLoader(){document.getElementById('loader').style.display='none';}
+
+/* ── AUTH ── */
+async function doLogin(){
+  const email=document.getElementById('liEmail').value.trim().toLowerCase();
+  const errEl=document.getElementById('errMsg');
+  errEl.style.display='none';
+  if(!email){errEl.textContent='Ingresá tu email.';errEl.style.display='block';return;}
+  const btn=document.getElementById('btnLogin');
+  btn.disabled=true;btn.textContent='Buscando...';
+  showLoader('Buscando tu perfil...');
+  try{
+    // Fetch all seres and find by email (JSONB search)
+    const {data,error}=await _sb.from('seres').select('id,data');
+    if(error)throw error;
+    const found=data?.find(r=>{
+      const e=(r.data?.email||'').toLowerCase().trim();
+      return e&&e===email;
+    });
+    if(!found){
+      hideLoader();
+      errEl.textContent='No encontramos ese email. Verificá que sea el mismo que le diste a Juan Cruz.';
+      errEl.style.display='block';
+      btn.disabled=false;btn.textContent='Ver mis sesiones';
+      return;
+    }
+    curSer={id:found.id,...found.data};
+    // Save to session storage so refresh keeps them logged in
+    sessionStorage.setItem('lcdp_portal_ser',JSON.stringify(curSer));
+    await loadSessions();
+    showApp();
+  }catch(e){
+    hideLoader();
+    errEl.textContent='Error de conexión. Intentá de nuevo.';
+    errEl.style.display='block';
+    btn.disabled=false;btn.textContent='Ver mis sesiones';
+  }
+}
+
+function doLogout(){
+  sessionStorage.removeItem('lcdp_portal_ser');
+  curSer=null;allSessions=[];curFilter='todas';
+  document.getElementById('app').style.display='none';
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('liEmail').value='';
+  document.getElementById('btnLogin').disabled=false;
+  document.getElementById('btnLogin').textContent='Ver mis sesiones';
+}
+
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();
+});
+
+/* ── DATA ── */
+async function loadSessions(){
+  showLoader('Cargando tus sesiones...');
+  try{
+    const {data,error}=await _sb.from('sessions').select('id,data');
+    if(error)throw error;
+    // Match by ser name (case-insensitive)
+    const nombre=(curSer.nombre||'').toLowerCase().trim();
+    allSessions=(data||[])
+      .map(r=>({id:r.id,...r.data}))
+      .filter(s=>(s.ser||'').toLowerCase().trim()===nombre)
+      .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  }catch(e){console.error(e);}
+  hideLoader();
+}
+
+/* ── RENDER ── */
+function showApp(){
+  document.getElementById('loginScreen').style.display='none';
+  document.getElementById('app').style.display='block';
+  renderHeader();
+  renderStats();
+  renderFilters();
+  renderSessions();
+}
+
+function renderHeader(){
+  const n=curSer.nombre||'Ser';
+  document.getElementById('pName').textContent=n;
+  document.getElementById('avLetter').textContent=n.charAt(0).toUpperCase();
+  const prog=curSer.programa;
+  document.getElementById('pSub').textContent=prog?'🌟 '+prog:'✨ La Casa del Profit';
+}
+
+function renderStats(){
+  const total=allSessions.length;
+  const comp=allSessions.filter(s=>s.estado==='Completado'||!s.estado).length;
+  const pend=allSessions.filter(s=>s.estado==='Pendiente').length;
+  document.getElementById('statsRow').innerHTML=`
+    <div class="stat-card"><div class="stat-val">${total}</div><div class="stat-lbl">Total</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${comp}</div><div class="stat-lbl">Completadas</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--or)">${pend}</div><div class="stat-lbl">Pendientes</div></div>
+  `;
+}
+
+function renderFilters(){
+  const estados=[...new Set(allSessions.map(s=>s.estado||'Completado'))];
+  const filtros=['todas',...estados];
+  document.getElementById('filterRow').innerHTML=filtros.map(f=>`
+    <button class="fil${curFilter===f?' active':''}" onclick="setFilter('${f}')">${f==='todas'?'Todas':f}</button>
+  `).join('');
+}
+
+function setFilter(f){curFilter=f;renderFilters();renderSessions();}
+
+const TIPO_ICO={
+  'Barras de Access':'🌀','Sesión Profit':'✨','Proceso de Cuerpos':'💆',
+  'Bioexistencia':'🌿','Registros Akashicos':'📖','Reiki':'💎',
+  'Limpieza Energetica':'🌬️','Numerologia':'🔢','Coaching con Caballos':'🐴',
+  'Constelaciones':'⭐','Sesiones Pleyadianas':'🌌','Face Lift':'🌸',
+  'Clase Barras de Access':'🎓'
+};
+const TIPO_COL={
+  'Barras de Access':'#10B981','Sesión Profit':'#C9A84C','Proceso de Cuerpos':'#3B82F6',
+  'Bioexistencia':'#22C55E','Registros Akashicos':'#EC4899','Reiki':'#14B8A6',
+  'Limpieza Energetica':'#6366F1','Numerologia':'#F97316','Coaching con Caballos':'#D97706',
+  'Constelaciones':'#818CF8','Sesiones Pleyadianas':'#8B5CF6','Face Lift':'#EC4899',
+  'Clase Barras de Access':'#3DAA6A'
+};
+
+function estBadge(est){
+  const e=est||'Completado';
+  if(e==='Completado')return `<span class="bdg b-gr">✓ Completado</span>`;
+  if(e==='Pendiente') return `<span class="bdg b-or">⏳ Pendiente</span>`;
+  if(e==='Cancelado') return `<span class="bdg b-rd">✗ Cancelado</span>`;
+  if(e==='Reprogramado')return `<span class="bdg b-bl">↺ Reprogramado</span>`;
+  return `<span class="bdg b-gy">${e}</span>`;
+}
+
+function fDate(d){
+  if(!d||d==='None')return '—';
+  try{const[y,m,day]=d.split('-');return `${day}/${m}/${y}`;}catch{return d;}
+}
+
+function renderSessions(){
+  const filtered=curFilter==='todas'
+    ?allSessions
+    :allSessions.filter(s=>(s.estado||'Completado')===curFilter);
+
+  if(!filtered.length){
+    document.getElementById('sesList').innerHTML=`
+      <div class="empty"><div class="ei">🌀</div>
+      <p>${curFilter==='todas'?'Aún no tenés sesiones registradas.':'No hay sesiones con este estado.'}</p></div>`;
+    return;
+  }
+
+  document.getElementById('sesList').innerHTML=filtered.map(s=>{
+    const tipo=s.sesion||s.tipo||'Sesión';
+    const ico=TIPO_ICO[tipo]||'✨';
+    const col=TIPO_COL[tipo]||'#C9A84C';
+    const fac=s.facilitador?`<div class="ses-fac">👤 ${s.facilitador}</div>`:'';
+    const prog=s.programa?`· ${s.programa}`:'';
+    const mod=s.modalidad?`· ${s.modalidad}`:'';
+    return `
+    <div class="ses-card">
+      <div class="ses-icon" style="background:${col}22;color:${col}">${ico}</div>
+      <div>
+        <div class="ses-tipo">${tipo}</div>
+        <div class="ses-meta">📅 ${fDate(s.fecha)}${s.hora?' · '+s.hora:''}${prog}${mod}</div>
+        ${fac}
+      </div>
+      <div>${estBadge(s.estado)}</div>
+    </div>`;
+  }).join('');
+}
+
+/* ── AUTO-LOGIN from sessionStorage ── */
+(async function(){
+  const saved=sessionStorage.getItem('lcdp_portal_ser');
+  if(saved){
+    try{
+      curSer=JSON.parse(saved);
+      showLoader('Cargando tus sesiones...');
+      await loadSessions();
+      showApp();
+    }catch(e){sessionStorage.removeItem('lcdp_portal_ser');}
+  }
+})();
+</script>
+</body>
+</html>
