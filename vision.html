@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>La Casa del Profit — Visión</title>
+<style>
+:root{
+  --bg:#06060A;--card:#141320;--card2:#1C1A2E;--border:#2A2840;
+  --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;
+  --text:#EDE5C8;--muted:#7A7260;
+  --green:#3DAA6A;--blue:#5B9BD5;--purple:#9B82D4;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── Header ── */
+header{
+  text-align:center;padding:60px 24px 40px;
+  background:radial-gradient(ellipse at 50% 0%,rgba(201,168,76,.12) 0%,transparent 70%);
+  border-bottom:1px solid #1E1C10;
+  position:relative;overflow:hidden;
+}
+header::before{
+  content:'';position:absolute;inset:0;
+  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23C9A84C' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.logo-ico{font-size:56px;display:block;margin-bottom:12px;filter:drop-shadow(0 0 24px rgba(201,168,76,.4));}
+header h1{font-size:32px;font-weight:800;color:var(--gl);letter-spacing:3px;text-transform:uppercase;margin-bottom:6px;}
+header p{color:var(--muted);font-size:13px;letter-spacing:1.5px;text-transform:uppercase;}
+.vision-tagline{
+  margin:28px auto 0;max-width:640px;
+  font-size:18px;line-height:1.7;color:var(--text);
+  font-style:italic;
+  border:1px solid rgba(201,168,76,.2);border-radius:16px;
+  padding:20px 28px;background:rgba(201,168,76,.04);
+}
+.vision-tagline span{color:var(--gl);font-style:normal;font-weight:700;}
+
+/* ── Main ── */
+main{max-width:900px;margin:0 auto;padding:40px 24px 80px;}
+
+/* ── KPI Strip ── */
+.kpi-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:40px;}
+.kc{background:var(--card);border:1px solid #1E1C10;border-radius:14px;padding:18px 16px;text-align:center;position:relative;overflow:hidden;}
+.kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kc.go::before{background:linear-gradient(90deg,var(--gold),var(--gl));}
+.kc.gr::before{background:linear-gradient(90deg,var(--green),#5DD89A);}
+.kc.bl::before{background:linear-gradient(90deg,var(--blue),#88BBEE);}
+.kc.pu::before{background:linear-gradient(90deg,var(--purple),#C8AAEE);}
+.ki{font-size:26px;margin-bottom:8px;}
+.kv{font-size:30px;font-weight:800;color:var(--gl);}
+.kl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:4px;}
+
+/* ── Section title ── */
+.sec-title{font-size:13px;font-weight:700;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.sec-title::after{content:'';flex:1;height:1px;background:#1E1C10;}
+
+/* ── Vision statement ── */
+.vision-block{background:var(--card);border:1px solid #1E1C10;border-radius:16px;padding:28px 28px;margin-bottom:40px;position:relative;overflow:hidden;}
+.vision-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--gold),var(--gl),var(--gold));}
+.vision-block h2{font-size:17px;color:var(--gl);margin-bottom:14px;}
+.vision-block p{font-size:14px;line-height:1.9;color:var(--text);margin-bottom:10px;}
+.vision-block p:last-child{margin-bottom:0;}
+.vision-highlight{color:var(--gl);font-weight:700;}
+
+/* ── Milestone Timeline ── */
+.milestone-list{display:flex;flex-direction:column;gap:12px;margin-bottom:40px;}
+.ml-item{background:var(--card);border:1px solid #1E1C10;border-radius:12px;padding:16px 20px;display:flex;align-items:center;gap:16px;transition:border-color .2s;}
+.ml-item.done{border-color:rgba(61,170,106,.25);}
+.ml-item.next{border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.04);}
+.ml-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.ml-dot.done{background:rgba(61,170,106,.2);color:var(--green);}
+.ml-dot.next{background:rgba(201,168,76,.2);color:var(--gl);}
+.ml-dot.fut{background:rgba(42,40,64,.8);color:var(--muted);}
+.ml-info{flex:1;min-width:0;}
+.ml-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.ml-title.done{color:var(--gl);}
+.ml-title.fut{color:var(--muted);}
+.ml-sub{font-size:11px;color:var(--muted);}
+.ml-bar-wrap{min-width:120px;max-width:160px;}
+.ml-pct{font-size:11px;color:var(--muted);text-align:right;margin-bottom:4px;}
+.pb{height:5px;background:#1E1C10;border-radius:99px;overflow:hidden;}
+.pf{height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:99px;transition:width .6s ease;}
+.ml-date{font-size:10px;color:var(--green);margin-top:3px;}
+
+/* ── Progress to next ── */
+.next-box{background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(201,168,76,.03));border:1px solid rgba(201,168,76,.25);border-radius:16px;padding:24px 28px;margin-bottom:40px;text-align:center;}
+.next-box h3{font-size:22px;font-weight:800;color:var(--gl);margin-bottom:6px;}
+.next-box p{color:var(--muted);font-size:13px;margin-bottom:18px;}
+.big-bar{height:12px;background:#1E1C10;border-radius:99px;overflow:hidden;margin-bottom:8px;}
+.big-fill{height:100%;background:linear-gradient(90deg,var(--gd),var(--gold),var(--gl));border-radius:99px;transition:width .8s ease;}
+.next-nums{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);}
+
+/* ── Footer ── */
+footer{text-align:center;padding:24px;border-top:1px solid #1E1C10;color:var(--muted);font-size:11px;letter-spacing:.5px;}
+
+/* ── Spinner ── */
+.spinner{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--muted);font-size:13px;}
+.spin{width:20px;height:20px;border:2px solid #1E1C10;border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+@media(max-width:600px){
+  header h1{font-size:22px;}
+  .kpi-strip{grid-template-columns:1fr 1fr;}
+  .ml-bar-wrap{display:none;}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <span class="logo-ico">🏠</span>
+  <h1>La Casa del Profit</h1>
+  <p>Centro holístico de transformación personal</p>
+  <div class="vision-tagline">
+    Somos un espacio de <span>expansión consciente</span> donde cada ser descubre y activa su potencial infinito.<br>
+    Nuestra visión es acompañar a <span>1.000.000 de sesiones de transformación</span> en el mundo.
+  </div>
+</header>
+
+<main>
+  <div id="loading" class="spinner"><div class="spin"></div> Cargando datos del proyecto...</div>
+  <div id="content" style="display:none">
+
+    <!-- KPIs -->
+    <div class="sec-title">📊 El proyecto en números</div>
+    <div class="kpi-strip" id="kpiStrip"></div>
+
+    <!-- Próximo hito -->
+    <div class="sec-title">🎯 Próximo hito</div>
+    <div class="next-box" id="nextBox"></div>
+
+    <!-- Visión -->
+    <div class="sec-title">🌟 Nuestra Visión</div>
+    <div class="vision-block">
+      <h2>El camino hacia 1.000.000 de sesiones</h2>
+      <p>La Casa del Profit nació de la convicción de que <span class="vision-highlight">cada ser humano tiene dentro de sí el poder de transformar su vida</span>. No somos un centro de wellness convencional; somos un espacio de responsabilidad creativa donde el autoconocimiento se convierte en acción.</p>
+      <p>Trabajamos con herramientas energéticas, mentales y espirituales — Barras de Access Consciousness, Sesiones Profit, Procesos de Cuerpos y más — porque creemos que la transformación ocurre cuando <span class="vision-highlight">el ser, la mente y el cuerpo actúan como uno</span>.</p>
+      <p>Cada sesión es un paso. Cada ser que se transforma, transforma su entorno. Y así, de uno en uno, llegamos al millón. <span class="vision-highlight">Este es nuestro compromiso.</span></p>
+    </div>
+
+    <!-- Timeline de hitos -->
+    <div class="sec-title">🗺️ Mapa de hitos</div>
+    <div class="milestone-list" id="milestoneList"></div>
+
+  </div>
+</main>
+
+<footer>© La Casa del Profit — Actualizado en tiempo real · <a href="/" style="color:var(--gold);text-decoration:none">Acceso equipo →</a></footer>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+
+const OBJ_LIST=[100,300,500,1000,3000,5000,10000,30000,50000,100000,300000,500000,1000000];
+const OBJ_LABELS={
+  100:'Primera centena',300:'Trescientas sesiones',500:'Medio millar',
+  1000:'El primer millar',3000:'Tres mil sesiones',5000:'Cinco mil',
+  10000:'Diez mil sesiones',30000:'Treinta mil',50000:'Medio camino — 50k',
+  100000:'Cien mil sesiones',300000:'Trescientas mil',500000:'Medio millón',
+  1000000:'🎉 UN MILLÓN DE SESIONES'
+};
+
+async function supaGet(table, select='*'){
+  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?select=${select}`,{
+    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
+  });
+  return r.json();
+}
+
+function fd(s){
+  if(!s)return '—';
+  const p=s.split('-');
+  return `${p[2]}/${p[1]}/${p[0]}`;
+}
+
+async function init(){
+  try{
+    const [sesRows, serRows] = await Promise.all([
+      supaGet('sessions','data'),
+      supaGet('seres','data')
+    ]);
+
+    const sessions=(sesRows||[]).map(r=>r.data||r).filter(Boolean);
+    const seres=(serRows||[]).map(r=>r.data||r).filter(Boolean);
+
+    const comp=s=>s.estado==='completada';
+    const compSes=sessions.filter(comp);
+    const totSes=compSes.length;
+
+    const now=new Date();
+    const yr=now.getFullYear();
+    const mo=now.getMonth();
+    const yrStr=`${yr}-`;
+    const moStr=`${yr}-${String(mo+1).padStart(2,'0')}-`;
+
+    const sesMes=compSes.filter(s=>s.fecha&&s.fecha.startsWith(moStr)).length;
+    const sesAnio=compSes.filter(s=>s.fecha&&s.fecha.startsWith(yrStr)).length;
+    const totalSeres=seres.filter(s=>!s.prospecto).length;
+    const totalProsp=seres.filter(s=>s.prospecto).length;
+
+    // KPI Strip
+    document.getElementById('kpiStrip').innerHTML=`
+      <div class="kc go"><div class="ki">✨</div><div class="kv">${totSes.toLocaleString('es-AR')}</div><div class="kl">Sesiones totales</div></div>
+      <div class="kc bl"><div class="ki">📅</div><div class="kv">${sesAnio.toLocaleString('es-AR')}</div><div class="kl">Sesiones ${yr}</div></div>
+      <div class="kc gr"><div class="ki">🌿</div><div class="kv">${sesMes.toLocaleString('es-AR')}</div><div class="kl">Este mes</div></div>
+      <div class="kc pu"><div class="ki">👥</div><div class="kv">${totalSeres.toLocaleString('es-AR')}</div><div class="kl">Seres atendidos</div></div>
+      <div class="kc go"><div class="ki">🌱</div><div class="kv">${totalProsp.toLocaleString('es-AR')}</div><div class="kl">Prospectos</div></div>`;
+
+    // Find next milestone
+    const sorted=[...compSes].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+    let nextMilestone=null, prevMilestone=0;
+    for(const m of OBJ_LIST){
+      if(totSes<m){nextMilestone=m;break;}
+      prevMilestone=m;
+    }
+
+    // Next milestone box
+    if(nextMilestone){
+      const pct=Math.min(99,parseFloat((totSes/nextMilestone*100).toFixed(1)));
+      const faltan=nextMilestone-totSes;
+      document.getElementById('nextBox').innerHTML=`
+        <h3>${OBJ_LABELS[nextMilestone]}</h3>
+        <p>${totSes.toLocaleString('es-AR')} de ${nextMilestone.toLocaleString('es-AR')} sesiones · Faltan <strong style="color:var(--gl)">${faltan.toLocaleString('es-AR')}</strong></p>
+        <div class="big-bar"><div class="big-fill" style="width:${pct}%"></div></div>
+        <div class="next-nums"><span>${prevMilestone.toLocaleString('es-AR')}</span><span style="color:var(--gl);font-weight:700">${pct}%</span><span>${nextMilestone.toLocaleString('es-AR')}</span></div>`;
+    } else {
+      document.getElementById('nextBox').innerHTML=`<h3>🎉 ¡1.000.000 alcanzado!</h3><p>Un logro histórico para La Casa del Profit.</p>`;
+    }
+
+    // Milestone list
+    let foundNext=false;
+    let html='';
+    OBJ_LIST.forEach(m=>{
+      const done=totSes>=m;
+      const isNext=!done&&!foundNext;
+      if(isNext)foundNext=true;
+      const cls=done?'done':isNext?'next':'fut';
+      const icon=done?'✓':isNext?'→':'·';
+      const dateStr=done&&sorted[m-1]?sorted[m-1].fecha:null;
+      const pct=done?100:Math.min(99,parseFloat((totSes/m*100).toFixed(1)));
+      html+=`<div class="ml-item ${cls}">
+        <div class="ml-dot ${cls}">${icon}</div>
+        <div class="ml-info">
+          <div class="ml-title ${cls}">${OBJ_LABELS[m]} — ${m.toLocaleString('es-AR')} sesiones</div>
+          <div class="ml-sub">${done?'✅ Alcanzado':isNext?`🔥 En progreso — ${(m-totSes).toLocaleString('es-AR')} restantes`:`⌛ Faltan ${(m-totSes).toLocaleString('es-AR')} sesiones`}</div>
+          ${dateStr?`<div class="ml-date">Alcanzado el ${fd(dateStr)}</div>`:''}
+        </div>
+        <div class="ml-bar-wrap">
+          <div class="ml-pct">${pct}%</div>
+          <div class="pb"><div class="pf" style="width:${pct}%"></div></div>
+        </div>
+      </div>`;
+    });
+    document.getElementById('milestoneList').innerHTML=html;
+
+    document.getElementById('loading').style.display='none';
+    document.getElementById('content').style.display='block';
+  }catch(e){
+    document.getElementById('loading').innerHTML=`<span>⚠️ Error al cargar datos</span>`;
+    console.error(e);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

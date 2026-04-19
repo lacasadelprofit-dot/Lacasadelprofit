@@ -288,6 +288,7 @@ select.fi:focus{border-color:var(--gold);}
     <div class="ni" onclick="window.open('/portal_ser.html','_blank')" title="Abrir portal del ser en nueva pestaña"><span class="ico">💫</span><span>Portal del Ser</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
     <div class="ni" onclick="window.open('/registro.html','_blank')" title="Abrir formulario público en nueva pestaña"><span class="ico">📋</span><span>Formulario registro</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
     <div class="ni" onclick="window.open('/portal_programa.html','_blank')" title="Abrir portal de programas en nueva pestaña"><span class="ico">📚</span><span>Portal Programas</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
+    <div class="ni" onclick="window.open('/vision.html','_blank')" title="Ver página pública de Visión"><span class="ico">🌟</span><span>Visión Pública</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
    </div>
    <div class="s-foot">
     <div class="uinfo">
@@ -335,6 +336,7 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- SESIONES -->
     <div id="sec-sesiones" class="sec">
+     <div class="kpi-grid" id="sesKPIs" style="margin-bottom:14px"></div>
      <div class="tc">
       <div class="filters">
        <input class="si" id="sesSrch" placeholder="🔍 Buscar por ser, tipo o facilitador..." oninput="renderSes()">
@@ -358,6 +360,7 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- CALENDARIO -->
     <div id="sec-calendario" class="sec">
+     <div class="kpi-grid" id="calKPIs" style="margin-bottom:16px"></div>
      <div class="cal-nav">
       <button onclick="calPrev()">&#8249;</button>
       <h2 id="calTitle"></h2>
@@ -393,6 +396,7 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- SERES -->
     <div id="sec-seres" class="sec">
+     <div class="kpi-grid" id="seresKPIs" style="margin-bottom:16px"></div>
      <div class="tc">
       <div class="tab-bar">
        <button class="tab-btn active" id="tabTodos" onclick="setSerTab('todos')">👥 Todos</button>
@@ -515,10 +519,18 @@ select.fi:focus{border-color:var(--gold);}
    <label for="nsPV">⭐ Es la primera vez de esta sesión para el ser</label>
   </div>
   <div class="fg"><label>Observaciones</label><textarea id="nsObs" placeholder="Notas sobre la sesión..."></textarea></div>
-  <div class="fg"><label>Precio total (ARS)</label><input type="number" id="nsMonto" placeholder="0" min="0" oninput="calcSaldo()"></div>
+  <div class="fg-row">
+   <div class="fg"><label>Moneda</label>
+    <select id="nsMoneda" onchange="updateCurrencyLabels()">
+     <option value="ARS">🇦🇷 Pesos Argentinos (ARS)</option>
+     <option value="USD">🇺🇸 Dólares (USD)</option>
+    </select>
+   </div>
+   <div class="fg"><label id="lbMonto">Precio total (ARS)</label><input type="number" id="nsMonto" placeholder="0" min="0" oninput="calcSaldo()"></div>
+  </div>
   <div class="fg">
    <label style="display:flex;align-items:center;justify-content:space-between">
-    <span>Monto abonado (ARS)</span>
+    <span id="lbPagado">Monto abonado (ARS)</span>
     <span style="display:flex;gap:5px">
      <button type="button" onclick="setPctPago(50)" style="padding:2px 8px;font-size:11px;font-weight:700;background:rgba(201,168,76,.15);border:1px solid var(--gold);border-radius:6px;color:var(--gl);cursor:pointer">50%</button>
      <button type="button" onclick="setPctPago(100)" style="padding:2px 8px;font-size:11px;font-weight:700;background:rgba(61,170,106,.15);border:1px solid var(--green);border-radius:6px;color:#5DD89A;cursor:pointer">100%</button>
@@ -1067,6 +1079,14 @@ function nav(name,el){
 
 /* UTILS */
 function fd(d){if(!d||d==='None')return '—';try{const[y,m,day]=d.split('-');return `${day}/${m}/${y}`;}catch{return d;}}
+function updateCurrencyLabels(){
+  const mon=document.getElementById('nsMoneda')?.value||'ARS';
+  const sym=mon==='USD'?'USD ($)':'ARS ($)';
+  const lbM=document.getElementById('lbMonto');
+  const lbP=document.getElementById('lbPagado');
+  if(lbM)lbM.textContent=`Precio total (${sym})`;
+  if(lbP)lbP.textContent=`Monto abonado (${sym})`;
+}
 function setPctPago(pct){const tot=parseFloat(document.getElementById('nsMonto').value)||0;document.getElementById('nsPagado').value=Math.round(tot*pct/100);calcSaldo();}
 function calcSaldo(){
   const tot=parseFloat(document.getElementById('nsMonto').value)||0;
@@ -1094,30 +1114,37 @@ function estCls(e){return{Completado:'b-gr',Confirmado:'b-bl',Pendiente:'b-go',C
 function comp(s){return (s.estado||'Completado')==='Completado';}
 function renderDash(){
   const now=new Date(),yr=now.getFullYear(),mo=now.getMonth()+1;
+  const mesStr=now.toISOString().slice(0,7);
   const tot=sessions.filter(comp).length;
-  const thisMo=sessions.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===yr&&d.getMonth()+1===mo&&comp(s);}).length;
+  const thisMo=sessions.filter(s=>s.fecha&&s.fecha.startsWith(mesStr)&&comp(s)).length;
   const thisYr=sessions.filter(s=>new Date(s.fecha).getFullYear()===yr&&comp(s)).length;
   const lm=mo===1?12:mo-1,ly=mo===1?yr-1:yr;
-  const lastMo=sessions.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===ly&&d.getMonth()+1===lm&&comp(s);}).length;
+  const lmStr=`${ly}-${String(lm).padStart(2,'0')}`;
+  const lastMo=sessions.filter(s=>s.fecha&&s.fecha.startsWith(lmStr)&&comp(s)).length;
   const chg=lastMo>0?Math.round((thisMo-lastMo)/lastMo*100):0;
   const pvTot=sessions.filter(s=>s.primeraVez&&comp(s)).length;
-  const totFact=facturas.reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
+  // Revenue split
+  const revARS=sessions.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
+  const revUSD=sessions.filter(s=>s.moneda==='USD').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
+  const revARSmes=sessions.filter(s=>(s.moneda||'ARS')==='ARS'&&s.fecha&&s.fecha.startsWith(mesStr)).reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
+  const revUSDmes=sessions.filter(s=>s.moneda==='USD'&&s.fecha&&s.fecha.startsWith(mesStr)).reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
   const seresAtend=seres.filter(s=>!s.prospecto);
   const prospectos=seres.filter(s=>s.prospecto);
   const totSeres=seresAtend.length;
-  const activeSerNames=new Set(sessions.filter(s=>new Date(s.fecha).getFullYear()===yr&&comp(s)).map(s=>s.ser));
-  const activeSeres=activeSerNames.size;
-
+  const activeSerNamesYr=new Set(sessions.filter(s=>new Date(s.fecha).getFullYear()===yr&&comp(s)).map(s=>s.ser));
+  const activeSerNamesMo=new Set(sessions.filter(s=>s.fecha&&s.fecha.startsWith(mesStr)&&comp(s)).map(s=>s.ser));
   const progWithSes=programas.filter(p=>sessions.some(s=>s.programa===p.nombre&&comp(s))).length;
+  const inscActivas=inscripciones.filter(x=>{const p=programas.find(pp=>pp.id===x.programaId);return p&&x.semanaActual<=(p.semanas||[]).length;}).length;
+
   document.getElementById('dKPIs').innerHTML=`
-    <div class="kc go"><div class="ki">✨</div><div class="kl">Sesiones Totales</div><div class="kv">${tot.toLocaleString('es-AR')}</div><div class="ks">Desde el inicio</div></div>
-    <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${thisMo}</div><div class="kch ${chg>=0?'up':'dn'}">${chg>=0?'↑':'↓'} ${Math.abs(chg)}% vs anterior</div></div>
-    <div class="kc bl"><div class="ki">🌟</div><div class="kl">Sesiones ${yr}</div><div class="kv">${thisYr}</div></div>
-    <div class="kc or"><div class="ki">⭐</div><div class="kl">Primeras Veces</div><div class="kv">${pvTot}</div><div class="ks">${Math.round(pvTot/tot*100)}% del total</div></div>
-    <div class="kc pu"><div class="ki">💫</div><div class="kl">Seres Atendidos</div><div class="kv">${totSeres}</div><div class="ks">Activos ${yr}: ${activeSeres}</div></div>
-    <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${prospectos.length}</div><div class="ks">Sin sesión aún</div></div>
-    <div class="kc or"><div class="ki">📚</div><div class="kl">Programas Activos</div><div class="kv">${progWithSes}</div><div class="ks">Con sesiones completadas</div></div>
-    <div class="kc pk"><div class="ki">💰</div><div class="kl">Facturado</div><div class="kv">${fc(totFact)}</div></div>`;
+    <div class="kc go"><div class="ki">✨</div><div class="kl">Sesiones Totales</div><div class="kv">${tot.toLocaleString('es-AR')}</div><div class="ks">Desde el inicio · ${pvTot} primeras veces</div></div>
+    <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${thisMo}</div><div class="kch ${chg>=0?'up':'dn'}">${chg>=0?'↑':'↓'} ${Math.abs(chg)}% vs mes anterior</div></div>
+    <div class="kc bl"><div class="ki">🌟</div><div class="kl">Sesiones ${yr}</div><div class="kv">${thisYr}</div><div class="ks">Promedio: ${Math.round(thisYr/mo)} por mes</div></div>
+    <div class="kc pu"><div class="ki">💫</div><div class="kl">Seres Totales</div><div class="kv">${totSeres}</div><div class="ks">Activos ${yr}: ${activeSerNamesYr.size} · Este mes: ${activeSerNamesMo.size}</div></div>
+    <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${prospectos.length}</div><div class="ks">Sin sesión confirmada aún</div></div>
+    <div class="kc or"><div class="ki">📚</div><div class="kl">Programas</div><div class="kv">${progWithSes}</div><div class="ks">Activos · ${inscActivas} inscripciones en curso</div></div>
+    <div class="kc go" style="border-top-color:#5DD89A"><div class="ki">🇦🇷</div><div class="kl">Cobrado ARS</div><div class="kv" style="font-size:20px">$${Math.round(revARS).toLocaleString('es-AR')}</div><div class="ks">Este mes: $${Math.round(revARSmes).toLocaleString('es-AR')}</div></div>
+    <div class="kc bl"><div class="ki">🇺🇸</div><div class="kl">Cobrado USD</div><div class="kv" style="font-size:20px">USD ${revUSD.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="ks">Este mes: USD ${revUSDmes.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>`;
 
   renderVision(tot);
   renderToday(now);
@@ -1261,6 +1288,27 @@ function buildChFac(){
 
 /* SESIONES */
 function renderSes(){
+  // ── KPIs ──
+  const now2=new Date(),yr2=now2.getFullYear(),mesStr2=now2.toISOString().slice(0,7);
+  const lm2=now2.getMonth()===0?12:now2.getMonth(),ly2=now2.getMonth()===0?yr2-1:yr2;
+  const lmStr2=`${ly2}-${String(lm2).padStart(2,'0')}`;
+  const compSes=sessions.filter(comp);
+  const mesSes=compSes.filter(s=>s.fecha&&s.fecha.startsWith(mesStr2));
+  const lmesSes=compSes.filter(s=>s.fecha&&s.fecha.startsWith(lmStr2));
+  const yrSes=compSes.filter(s=>new Date(s.fecha).getFullYear()===yr2);
+  const pvMes=mesSes.filter(s=>s.primeraVez).length;
+  const chg2=lmesSes.length>0?Math.round((mesSes.length-lmesSes.length)/lmesSes.length*100):0;
+  const pendSes=sessions.filter(s=>(s.estado||'Completado')==='Pendiente'||(s.estado||'')==='Confirmado').length;
+  const sesMesARS=mesSes.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
+  const sesMesUSD=mesSes.filter(s=>s.moneda==='USD').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
+  const kpiEl=document.getElementById('sesKPIs');
+  if(kpiEl)kpiEl.innerHTML=`
+    <div class="kc go"><div class="ki">✨</div><div class="kl">Total Completadas</div><div class="kv">${compSes.length}</div><div class="ks">${yrSes.length} en ${yr2}</div></div>
+    <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${mesSes.length}</div><div class="kch ${chg2>=0?'up':'dn'}">${chg2>=0?'↑':'↓'} ${Math.abs(chg2)}% vs anterior</div></div>
+    <div class="kc or"><div class="ki">⭐</div><div class="kl">1° Vez este mes</div><div class="kv">${pvMes}</div><div class="ks">Seres nuevos</div></div>
+    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes/Confirmadas</div><div class="kv">${pendSes}</div><div class="ks">Sin completar</div></div>
+    <div class="kc go" style="border-top-color:#5DD89A"><div class="ki">🇦🇷</div><div class="kl">Cobrado ARS (mes)</div><div class="kv" style="font-size:18px">$${Math.round(sesMesARS).toLocaleString('es-AR')}</div></div>
+    <div class="kc bl"><div class="ki">🇺🇸</div><div class="kl">Cobrado USD (mes)</div><div class="kv" style="font-size:18px">USD ${sesMesUSD.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>`;
   const srch=document.getElementById('sesSrch').value.toLowerCase();
   const tipo=document.getElementById('sesTipo').value;
   const fac=document.getElementById('sesFac').value;
@@ -1336,6 +1384,25 @@ function renderCal(){
   const yr=calDate.getFullYear(),mo=calDate.getMonth();
   const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('calTitle').textContent=`${MES[mo]} ${yr}`;
+  // ── KPIs de Calendario ──
+  const calKpiEl=document.getElementById('calKPIs');
+  if(calKpiEl){
+    const today=new Date(); today.setHours(0,0,0,0);
+    const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+    const wStart=new Date(today); wStart.setDate(today.getDate()-today.getDay());
+    const wEnd=new Date(wStart); wEnd.setDate(wStart.getDate()+6);
+    const d7=new Date(today); d7.setDate(today.getDate()+7);
+    const toDateStr=d=>d.toISOString().slice(0,10);
+    const sesHoy=sessions.filter(s=>s.fecha===todayStr).length;
+    const sesSemana=sessions.filter(s=>{const f=new Date(s.fecha+'T00:00:00');return f>=wStart&&f<=wEnd;}).length;
+    const ses7=sessions.filter(s=>{const f=new Date(s.fecha+'T00:00:00');return f>=today&&f<=d7;}).length;
+    const pendCal=sessions.filter(s=>s.fecha>=todayStr&&(s.estado==='pendiente'||s.estado==='confirmada'||!s.estado)).length;
+    calKpiEl.innerHTML=`
+      <div class="kc go"><div class="ki">☀️</div><div class="kl">Sesiones Hoy</div><div class="kv">${sesHoy}</div><div class="ks">${todayStr}</div></div>
+      <div class="kc bl"><div class="ki">📅</div><div class="kl">Esta Semana</div><div class="kv">${sesSemana}</div><div class="ks">Lun–Dom</div></div>
+      <div class="kc or"><div class="ki">🔮</div><div class="kl">Próximos 7 días</div><div class="kv">${ses7}</div><div class="ks">Desde hoy</div></div>
+      <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes/Conf.</div><div class="kv">${pendCal}</div><div class="ks">Sin completar</div></div>`;
+  }
   const first=new Date(yr,mo,1).getDay(),days=new Date(yr,mo+1,0).getDate(),prev=new Date(yr,mo,0).getDate();
   const tod=new Date();
   const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -1365,22 +1432,57 @@ function calToday(){calDate=new Date();renderCal();}
 
 /* FACTURACIÓN */
 function renderFact(){
-  const tot=facturas.reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
-  const pag=facturas.filter(f=>f.estado==='pagado').reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
-  const pen=facturas.filter(f=>f.estado==='pendiente').reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
-  // Calcular saldo dinámicamente: monto - montoPagado
-  // Si montoPagado no existe, se asume pago completo (sin saldo)
-  const getSaldo=s=>{
-    if(s.montoPagado==null)return 0; // sin campo = pago completo (vieja sesión)
-    return Math.max(0,(s.monto||0)-(s.montoPagado||0));
-  };
+  // ── helpers ──
+  const getSaldo=s=>{if(s.montoPagado==null)return 0;return Math.max(0,(s.monto||0)-(s.montoPagado||0));};
   const saldosSes=sessions.filter(s=>getSaldo(s)>0);
-  const totSaldos=saldosSes.reduce((a,s)=>a+getSaldo(s),0);
+
+  // ── split by currency ──
+  const sesARS=sessions.filter(s=>(s.moneda||'ARS')==='ARS'&&(s.monto||0)>0);
+  const sesUSD=sessions.filter(s=>s.moneda==='USD'&&(s.monto||0)>0);
+  const factARS=facturas.filter(f=>(f.moneda||'ARS')==='ARS');
+  const factUSD=facturas.filter(f=>f.moneda==='USD');
+
+  const sumSes=(arr,field='monto')=>arr.reduce((a,s)=>a+(parseFloat(s[field])||0),0);
+  const sumFact=(arr)=>arr.reduce((a,f)=>a+(parseFloat(f.monto)||0),0);
+
+  const totARS=sumSes(sesARS,'monto');
+  const pagARS=sumSes(sesARS.filter(s=>s.montoPagado>=s.monto),'monto');
+  const totUSD=sumSes(sesUSD,'monto');
+  const pagUSD=sumSes(sesUSD.filter(s=>s.montoPagado>=s.monto),'monto');
+
+  const saldoARS=saldosSes.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+getSaldo(s),0);
+  const saldoUSD=saldosSes.filter(s=>s.moneda==='USD').reduce((a,s)=>a+getSaldo(s),0);
+
+  const fmtARS=v=>`$${Math.round(v).toLocaleString('es-AR')}`;
+  const fmtUSD=v=>`USD ${v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
+
+  const mesActual=new Date().toISOString().slice(0,7);
+  const sesMesARS=sesARS.filter(s=>s.fecha&&s.fecha.startsWith(mesActual));
+  const sesMesUSD=sesUSD.filter(s=>s.fecha&&s.fecha.startsWith(mesActual));
+
   document.getElementById('invSm').innerHTML=`
-    <div class="kc go"><div class="ki">💰</div><div class="kl">Total Facturado</div><div class="kv" style="font-size:22px">${fc(tot)}</div></div>
-    <div class="kc gr"><div class="ki">✅</div><div class="kl">Cobrado</div><div class="kv" style="font-size:22px">${fc(pag)}</div></div>
-    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Facturas Pendientes</div><div class="kv" style="font-size:22px">${fc(pen)}</div></div>
-    <div class="kc or" style="border-top-color:var(--or)"><div class="ki">💸</div><div class="kl">Saldos por Cobrar</div><div class="kv" style="font-size:22px;color:var(--or)">${fc(totSaldos)}</div><div class="ks">${saldosSes.length} sesión${saldosSes.length!==1?'es':''}</div></div>`;
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <!-- ARS Block -->
+      <div style="background:var(--card2);border:1px solid #2A3020;border-radius:14px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:#5DD89A;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇦🇷 Pesos Argentinos</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="kc gr" style="margin:0"><div class="ki" style="font-size:16px">💰</div><div class="kl">Total ARS</div><div class="kv" style="font-size:18px">${fmtARS(totARS)}</div><div class="ks">Este mes: ${fmtARS(sumSes(sesMesARS))}</div></div>
+          <div class="kc go" style="margin:0"><div class="ki" style="font-size:16px">✅</div><div class="kl">Cobrado ARS</div><div class="kv" style="font-size:18px">${fmtARS(pagARS)}</div><div class="ks">${totARS?Math.round(pagARS/totARS*100):0}% del total</div></div>
+          <div class="kc rd" style="margin:0"><div class="ki" style="font-size:16px">⏳</div><div class="kl">Saldo Pendiente</div><div class="kv" style="font-size:18px;color:var(--or)">${fmtARS(saldoARS)}</div></div>
+          <div class="kc" style="margin:0;border-top-color:#5DD89A"><div class="ki" style="font-size:16px">📊</div><div class="kl">Sesiones cobradas</div><div class="kv" style="font-size:18px">${sesARS.length}</div></div>
+        </div>
+      </div>
+      <!-- USD Block -->
+      <div style="background:var(--card2);border:1px solid #203040;border-radius:14px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇺🇸 Dólares (USD)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="kc bl" style="margin:0"><div class="ki" style="font-size:16px">💵</div><div class="kl">Total USD</div><div class="kv" style="font-size:18px">${fmtUSD(totUSD)}</div><div class="ks">Este mes: ${fmtUSD(sumSes(sesMesUSD))}</div></div>
+          <div class="kc bl" style="margin:0"><div class="ki" style="font-size:16px">✅</div><div class="kl">Cobrado USD</div><div class="kv" style="font-size:18px">${fmtUSD(pagUSD)}</div><div class="ks">${totUSD?Math.round(pagUSD/totUSD*100):0}% del total</div></div>
+          <div class="kc rd" style="margin:0"><div class="ki" style="font-size:16px">⏳</div><div class="kl">Saldo Pendiente</div><div class="kv" style="font-size:18px;color:var(--or)">${fmtUSD(saldoUSD)}</div></div>
+          <div class="kc" style="margin:0;border-top-color:var(--blue)"><div class="ki" style="font-size:16px">📊</div><div class="kl">Sesiones cobradas</div><div class="kv" style="font-size:18px">${sesUSD.length}</div></div>
+        </div>
+      </div>
+    </div>`;
   // ── Sección saldos pendientes ──────────────────────────────
   const saldoHtml=saldosSes.length?`
   <div class="tc" style="margin-bottom:18px">
@@ -1390,9 +1492,9 @@ function renderFact(){
       <td>${fd(s.fecha)}</td>
       <td><strong>${s.ser}</strong></td>
       <td><span class="bdg b-go" style="font-size:10px">${s.sesion||s.tipo||'—'}</span></td>
-      <td style="color:var(--muted)">$${(s.monto||0).toLocaleString('es-AR')}</td>
-      <td style="color:var(--green)">$${(s.montoPagado||0).toLocaleString('es-AR')}</td>
-      <td style="font-weight:700;color:var(--or)">$${getSaldo(s).toLocaleString('es-AR')}</td>
+      <td style="color:var(--muted)">${s.moneda||'ARS'} ${(s.monto||0).toLocaleString('es-AR')}</td>
+      <td style="color:var(--green)">${s.moneda||'ARS'} ${(s.montoPagado||0).toLocaleString('es-AR')}</td>
+      <td style="font-weight:700;color:var(--or)">${s.moneda||'ARS'} ${getSaldo(s).toLocaleString('es-AR')}</td>
       <td><button class="btn btn-sm" style="background:rgba(212,134,58,.2);border:1px solid var(--or);color:var(--or)"
         onclick="cobrarSaldoFact('${s.id}')">💵 Cobrar</button></td>
     </tr>`).join('')}</tbody></table>
@@ -1428,15 +1530,17 @@ function cobrarSaldoFact(sesId){
   if(!s)return;
   const saldo=Math.max(0,(s.monto||0)-(s.montoPagado!=null?s.montoPagado:(s.monto||0)));
   if(!saldo)return;
-  if(!confirm(`¿Registrar el cobro del saldo de $${saldo.toLocaleString('es-AR')} para ${s.ser}?`))return;
+  const mon=s.moneda||'ARS';
+  const sym=mon==='USD'?'USD ':'$';
+  if(!confirm(`¿Registrar el cobro del saldo de ${sym}${saldo.toLocaleString('es-AR')} para ${s.ser}?`))return;
   facturas.push({id:nid(facturas),sesId:s.id,fecha:new Date().toISOString().split('T')[0],
     ser:s.ser,servicio:s.sesion,facilitador:s.facilitador,
-    monto:saldo,estado:'pagado',tipo:'Saldo restante',
+    moneda:mon,monto:saldo,estado:'pagado',tipo:'Saldo restante',
     notas:'Cobro del saldo pendiente'});
   s.montoPagado=(s.montoPagado||0)+saldo;
   s.saldoPendiente=0;
   save();renderFact();
-  toast(`Saldo de $${saldo.toLocaleString('es-AR')} cobrado 💰`);
+  toast(`Saldo de ${sym}${saldo.toLocaleString('es-AR')} cobrado 💰`);
 }
 
 /* FACILITADORES */
@@ -1500,6 +1604,26 @@ let serTab='todos';
 const TAB_IDS={todos:'tabTodos',seres:'tabSeres',prospectos:'tabProspectos'};
 function setSerTab(t){serTab=t;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById(TAB_IDS[t]).classList.add('active');renderSeres();}
 function renderSeres(){
+  // ── KPIs de Seres ──
+  const seresKpiEl=document.getElementById('seresKPIs');
+  if(seresKpiEl){
+    const now=new Date();
+    const yr=now.getFullYear(); const mo=now.getMonth();
+    const yrStr=`${yr}-`;
+    const moStr=`${yr}-${String(mo+1).padStart(2,'0')}-`;
+    const totalSeres=seres.filter(s=>!s.prospecto).length;
+    const totalProsp=seres.filter(s=>s.prospecto).length;
+    // activos = tiene sesión completada en el año
+    const seresConSesAno=new Set(sessions.filter(s=>comp(s)&&s.fecha&&s.fecha.startsWith(yrStr)).map(s=>s.ser));
+    const activosAnio=seres.filter(s=>!s.prospecto&&seresConSesAno.has(s.nombre)).length;
+    const seresConSesMes=new Set(sessions.filter(s=>comp(s)&&s.fecha&&s.fecha.startsWith(moStr)).map(s=>s.ser));
+    const activosMes=seres.filter(s=>!s.prospecto&&seresConSesMes.has(s.nombre)).length;
+    seresKpiEl.innerHTML=`
+      <div class="kc go"><div class="ki">✨</div><div class="kl">Seres Totales</div><div class="kv">${totalSeres}</div><div class="ks">Atendidos alguna vez</div></div>
+      <div class="kc bl"><div class="ki">🗓️</div><div class="kl">Activos ${yr}</div><div class="kv">${activosAnio}</div><div class="ks">Con sesión este año</div></div>
+      <div class="kc or"><div class="ki">📆</div><div class="kl">Activos este mes</div><div class="kv">${activosMes}</div><div class="ks">Con sesión este mes</div></div>
+      <div class="kc gr"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${totalProsp}</div><div class="ks">Sin atender aún</div></div>`;
+  }
   const srch=document.getElementById('serSrch').value.toLowerCase();
   const nac=document.getElementById('serNac').value;
   const paisF=document.getElementById('serPaisF').value;
@@ -1678,6 +1802,7 @@ function openModal(type,id,extra){
       document.getElementById('nsProv').value=ses.provincia||'Buenos Aires';
       document.getElementById('nsPV').checked=ses.primeraVez||false;
       document.getElementById('nsObs').value=ses.observacion||'';
+      document.getElementById('nsMoneda').value=ses.moneda||'ARS';
       document.getElementById('nsMonto').value=ses.monto||0;
       document.getElementById('nsPagado').value=ses.montoPagado!=null?ses.montoPagado:(ses.monto||0);
     } else {
@@ -1685,10 +1810,12 @@ function openModal(type,id,extra){
       document.getElementById('nsPV').checked=false;
       document.getElementById('nsPais').value='Argentina';
       document.getElementById('nsProv').value='Buenos Aires';
+      document.getElementById('nsMoneda').value='ARS';
       document.getElementById('nsMonto').value='';
       document.getElementById('nsPagado').value='';
     }
     document.getElementById('saldoInfo').style.display='none';
+    updateCurrencyLabels();
     calcSaldo();
     document.getElementById('dlSer').innerHTML=seres.map(s=>`<option value="${s.nombre}">`).join('');
     document.getElementById('nsFac').innerHTML=facs.map(f=>`<option>${f.nombre}</option>`).join('');
@@ -2467,6 +2594,7 @@ function saveSes(){
     modalidad:document.getElementById('nsMod').value,
     primeraVez:document.getElementById('nsPV').checked,
     estado:document.getElementById('nsEst').value,
+    moneda:document.getElementById('nsMoneda')?.value||'ARS',
     monto:parseFloat(document.getElementById('nsMonto').value)||0,
     montoPagado:parseFloat(document.getElementById('nsPagado').value)||parseFloat(document.getElementById('nsMonto').value)||0};
   if(eid){
