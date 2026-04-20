@@ -188,21 +188,11 @@ footer a:hover{color:var(--gl);}
 </footer>
 
 <script>
-const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
-const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
-
 const OBJ_LIST=[100,300,500,1000,3000,5000,10000,30000,50000,100000,300000,500000,1000000];
 
 function objLabel(m,i){
   if(m===1000000)return 'Objetivo 13 — 🎉 1.000.000';
   return `Objetivo ${i+1}`;
-}
-
-async function supaGet(table,select='*'){
-  const r=await fetch(`${SUPA_URL}/rest/v1/${table}?select=${select}`,{
-    headers:{'apikey':SUPA_KEY,'Authorization':'Bearer '+SUPA_KEY}
-  });
-  return r.json();
 }
 
 function fd(s){
@@ -212,20 +202,12 @@ function fd(s){
 
 async function init(){
   try{
-    const [sesRows,serRows]=await Promise.all([
-      supaGet('sessions','data'),
-      supaGet('seres','data')
-    ]);
+    // Usamos el endpoint seguro del servidor (lee con service key)
+    const resp=await fetch('/api/vision-stats');
+    const json=await resp.json();
+    if(!json.ok)throw new Error(json.error||'Error al cargar');
 
-    const sessions=(sesRows||[]).map(r=>r.data||r).filter(Boolean);
-    const seres=(serRows||[]).map(r=>r.data||r).filter(Boolean);
-
-    const comp=s=>s.estado==='completada';
-    const compSes=sessions.filter(comp);
-    const totSes=compSes.length;
-
-    const totalSeres=seres.filter(s=>!s.prospecto).length;
-    const primeraVez=compSes.filter(s=>s.primeraVez).length;
+    const {totalSesiones:totSes, totalSeres, primeraVez, milestoneDates}=json.data;
 
     // ── KPIs ──
     document.getElementById('kpiStrip').innerHTML=`
@@ -246,7 +228,6 @@ async function init(){
       </div>`;
 
     // ── Próximo objetivo ──
-    const sorted=[...compSes].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
     let nextMilestone=null,prevMilestone=0,nextIdx=0;
     OBJ_LIST.forEach((m,i)=>{
       if(totSes>=m){prevMilestone=m;}
@@ -276,13 +257,13 @@ async function init(){
       const cls=done?'done':isNext?'next':'fut';
       const icon=done?'✓':isNext?'→':String(i+1);
       const pct=done?100:Math.min(99,parseFloat((totSes/m*100).toFixed(1)));
-      const dateStr=done&&sorted[m-1]?sorted[m-1].fecha:null;
+      const dateStr=milestoneDates[String(m)]||null;
       html+=`<div class="ml-item ${cls}">
         <div class="ml-dot ${cls}">${icon}</div>
         <div class="ml-info">
           <div class="ml-title ${cls}">${objLabel(m,i)} &mdash; ${m.toLocaleString('es-AR')} sesiones</div>
           <div class="ml-sub">${done?'✅ Alcanzado':isNext?`🔥 En progreso — faltan ${(m-totSes).toLocaleString('es-AR')}`:`⌛ Faltan ${(m-totSes).toLocaleString('es-AR')} sesiones`}</div>
-          ${dateStr?`<div class="ml-date">Alcanzado el ${fd(dateStr)}</div>`:''}
+          ${done&&dateStr?`<div class="ml-date">📅 Alcanzado el ${fd(dateStr)}</div>`:''}
         </div>
         <div class="ml-right">
           <div class="ml-pct">${pct}%</div>
