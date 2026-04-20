@@ -228,7 +228,7 @@ async function enviarRegistro(){
 
   try{
     // Try via Netlify function first (uses service key, bypasses RLS)
-    const fnResp=await fetch('/api/save-prospecto',{
+    const fnResp=await fetch('/.netlify/functions/save-prospecto',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(ser)

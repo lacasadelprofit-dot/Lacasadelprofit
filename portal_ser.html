@@ -525,7 +525,7 @@ async function submitIntake(){
 
   // Save via Netlify function
   try{
-    await fetch('/api/save-intake',{
+    await fetch('/.netlify/functions/save-intake',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({

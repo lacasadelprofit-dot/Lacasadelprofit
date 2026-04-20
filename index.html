@@ -410,7 +410,12 @@ select.fi:focus{border-color:var(--gold);}
        <select class="fi" id="serZona" onchange="renderSeres()"><option value="">Todas las zonas</option></select>
        <select class="fi" id="serCiudadF" onchange="renderSeres()"><option value="">Todas las ciudades</option></select>
       </div>
-      <table><thead><tr><th>Ser</th><th>Nacimiento</th><th>Contacto</th><th>País / Ciudad / Zona</th><th>Sesiones</th><th>1°Vez</th><th>Última ses.</th><th></th></tr></thead><tbody id="serBody"></tbody></table>
+      <div style="padding:8px 16px;display:flex;align-items:center;gap:8px;border-bottom:1px solid #1E1C10">
+        <span style="font-size:11px;color:var(--muted)">Ordenar por:</span>
+        <button class="btn btn-s btn-sm active" id="sortAlfa" onclick="setSerSort('alfa')">🔤 Alfabético</button>
+        <button class="btn btn-s btn-sm" id="sortLlegada" onclick="setSerSort('llegada')">🔢 Orden de llegada</button>
+      </div>
+      <table><thead><tr><th style="width:36px;text-align:center">#</th><th>Ser</th><th>Nacimiento</th><th>Contacto</th><th>País / Ciudad / Zona</th><th>Sesiones</th><th>1°Vez</th><th>Última ses.</th><th></th></tr></thead><tbody id="serBody"></tbody></table>
       <div style="padding:10px 16px;border-top:1px solid #1E1C10"><span id="serTot" style="font-size:12px;color:var(--muted)"></span></div>
      </div>
     </div>
@@ -728,7 +733,7 @@ select.fi:focus{border-color:var(--gold);}
 
 <!-- MODAL PROGRAMA -->
 <div class="mo" id="moProg">
- <div class="mb">
+ <div class="mb" style="width:640px;max-width:96vw">
   <h2 id="moProgTitle">📚 Programa</h2>
   <input type="hidden" id="pgId">
   <div class="fg-row">
@@ -737,11 +742,30 @@ select.fi:focus{border-color:var(--gold);}
   </div>
   <div class="fg-row">
    <div class="fg"><label>Color</label><input type="color" id="pgCol" value="#C9A84C"></div>
-   <div class="fg"><label>Duración</label><input type="text" id="pgDur" placeholder="3 meses, 8 semanas..."></div>
+   <div class="fg"><label>Tipo de programa</label>
+    <select id="pgTipo"><option value="individual">Individual</option><option value="grupal">Grupal</option><option value="retiro">Retiro</option><option value="formacion">Formación</option></select>
+   </div>
+  </div>
+  <div class="fg-row">
+   <div class="fg"><label>Duración en meses</label><input type="number" id="pgMeses" placeholder="1" min="0" step="0.5"></div>
+   <div class="fg"><label>Duración en semanas</label><input type="number" id="pgSemanas" placeholder="4" min="0"></div>
+  </div>
+  <div class="fg-row">
+   <div class="fg"><label>💰 Valor</label><input type="number" id="pgPrecio" placeholder="0" min="0"></div>
+   <div class="fg"><label>Moneda</label>
+    <select id="pgMoneda"><option value="ARS">🇦🇷 Pesos (ARS)</option><option value="USD">🇺🇸 Dólares (USD)</option></select>
+   </div>
+  </div>
+  <div class="fg"><label>Sesiones incluidas (con cantidad)</label>
+   <div id="pgSesIncList" style="display:flex;flex-direction:column;gap:5px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-top:4px;max-height:200px;overflow-y:auto"></div>
+   <div style="display:flex;gap:6px;margin-top:6px">
+    <input type="text" id="pgSesNueva" list="dlHerr" placeholder="Agregar herramienta..." style="flex:1;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px">
+    <input type="number" id="pgSesCant" placeholder="Cant." min="1" value="1" style="width:70px;padding:7px 8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px">
+    <button class="btn btn-s btn-sm" onclick="addProgSesion()">+ Agregar</button>
+   </div>
   </div>
   <div class="fg"><label>Descripción / ¿Qué es?</label><textarea id="pgDesc"></textarea></div>
   <div class="fg"><label>Objetivo del programa</label><textarea id="pgObj" style="min-height:50px"></textarea></div>
-  <div class="fg"><label>Sesiones incluidas</label><input type="text" id="pgSes" placeholder="Barras de Access, Sesión Profit..."></div>
   <div class="fg"><label>Meta / Resultado esperado</label><textarea id="pgMeta" style="min-height:50px"></textarea></div>
   <div class="mf">
    <button class="btn btn-s" onclick="closeModal('moProg')">Cancelar</button>
@@ -846,8 +870,30 @@ select.fi:focus{border-color:var(--gold);}
    <div class="fg"><label>Fecha fin</label><input type="date" id="cpFfin"></div>
   </div>
   <div class="fg-row">
-   <div class="fg"><label>Presupuesto (ARS)</label><input type="number" id="cpPres" placeholder="0" min="0"></div>
-   <div class="fg"><label>Alcance real (personas)</label><input type="number" id="cpAlc" placeholder="0" min="0"></div>
+   <div class="fg"><label>Presupuesto inicial</label><input type="number" id="cpPres" placeholder="0" min="0"></div>
+   <div class="fg"><label>Moneda</label>
+    <select id="cpMoneda"><option value="ARS">🇦🇷 Pesos (ARS)</option><option value="USD">🇺🇸 Dólares (USD)</option></select>
+   </div>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--card2);margin-bottom:12px">
+   <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">📊 KPIs de Rendimiento</div>
+   <div class="fg-row" style="margin-bottom:0">
+    <div class="fg"><label>Conversaciones iniciadas</label><input type="number" id="cpConv" placeholder="0" min="0"></div>
+    <div class="fg"><label>Alcance (personas únicas)</label><input type="number" id="cpAlc" placeholder="0" min="0"></div>
+   </div>
+   <div class="fg-row" style="margin-bottom:0">
+    <div class="fg"><label>Impresiones</label><input type="number" id="cpImp" placeholder="0" min="0"></div>
+    <div class="fg"><label>CTR %</label><input type="number" id="cpCtr" placeholder="0.00" min="0" step="0.01"></div>
+   </div>
+  </div>
+  <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--card2);margin-bottom:12px">
+   <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">💸 Historial de Pagos</div>
+   <div id="cpPagosHistorial" style="max-height:140px;overflow-y:auto;margin-bottom:8px;display:flex;flex-direction:column;gap:4px"></div>
+   <div style="display:flex;gap:6px;align-items:center">
+    <input type="date" id="cpPagoFecha" style="flex:1;padding:6px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px">
+    <input type="number" id="cpPagoMonto" placeholder="Monto" min="0" style="width:110px;padding:6px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px">
+    <button class="btn btn-s btn-sm" onclick="addCampPago()">+ Agregar</button>
+   </div>
   </div>
   <div class="fg"><label>Descripción / Contenido</label><textarea id="cpDesc" placeholder="Qué se publicó, qué oferta, qué llamado a la acción..."></textarea></div>
   <div class="mf">
@@ -1183,7 +1229,8 @@ function renderDash(){
     <div class="kc or"><div class="ki">🔮</div><div class="kl">Próximas 7 días</div><div class="kv">${prox}</div><div class="ks">${inscActivas} inscripciones activas en programas</div></div>
     <div class="kc go" style="border-top-color:#5DD89A"><div class="ki">🇦🇷</div><div class="kl">Cobrado ARS</div><div class="kv" style="font-size:20px">$${Math.round(revARS).toLocaleString('es-AR')}</div><div class="ks">${pctCob}% cobrado · LTV $${ltv.toLocaleString('es-AR')}/ser</div></div>
     <div class="kc bl"><div class="ki">🇺🇸</div><div class="kl">Cobrado USD</div><div class="kv" style="font-size:20px">USD ${revUSD.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="ks">Este mes: USD ${revUSDmes.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>
-    <div class="kc gr"><div class="ki">⭐</div><div class="kl">Facilitador del Mes</div><div class="kv" style="font-size:16px">${topFac?topFac[0].split(' ')[0]:'—'}</div><div class="ks">${topFac?topFac[1]+' sesiones este mes':'Sin sesiones'}</div></div>`;
+    <div class="kc gr"><div class="ki">⭐</div><div class="kl">Facilitador del Mes</div><div class="kv" style="font-size:16px">${topFac?topFac[0].split(' ')[0]:'—'}</div><div class="ks">${topFac?topFac[1]+' sesiones este mes':'Sin sesiones'}</div></div>
+    <div class="kc pu"><div class="ki">💡</div><div class="kl">Productos Digitales</div><div class="kv">${sessions.filter(s=>comp(s)&&esProd(s)).length.toLocaleString('es-AR')}</div><div class="ks">No suman a la visión</div></div>`;
 
   renderVision(tot);
   renderToday(now);
@@ -1470,14 +1517,21 @@ function calNext(){calDate.setMonth(calDate.getMonth()+1);renderCal();}
 function calToday(){calDate=new Date();renderCal();}
 
 /* FACTURACIÓN */
+const FAC_ADMIN='Juan Cruz Alonso'; // Único facilitador que ve su resumen aquí
+let factVistaTotal=false; // false = solo admin, true = todo el centro
+function toggleFactVista(){factVistaTotal=!factVistaTotal;renderFact();}
+
 function renderFact(){
   // ── helpers ──
   const getSaldo=s=>{if(s.montoPagado==null)return 0;return Math.max(0,(s.monto||0)-(s.montoPagado||0));};
-  const saldosSes=sessions.filter(s=>getSaldo(s)>0);
+
+  // ── filtro de sesiones: solo admin o todo el centro ──
+  const sesFilt=factVistaTotal?sessions:sessions.filter(s=>s.facilitador===FAC_ADMIN||!s.facilitador);
+  const saldosSes=sesFilt.filter(s=>getSaldo(s)>0);
 
   // ── split by currency ──
-  const sesARS=sessions.filter(s=>(s.moneda||'ARS')==='ARS'&&(s.monto||0)>0);
-  const sesUSD=sessions.filter(s=>s.moneda==='USD'&&(s.monto||0)>0);
+  const sesARS=sesFilt.filter(s=>(s.moneda||'ARS')==='ARS'&&(s.monto||0)>0);
+  const sesUSD=sesFilt.filter(s=>s.moneda==='USD'&&(s.monto||0)>0);
   const factARS=facturas.filter(f=>(f.moneda||'ARS')==='ARS');
   const factUSD=facturas.filter(f=>f.moneda==='USD');
 
@@ -1500,6 +1554,10 @@ function renderFact(){
   const sesMesUSD=sesUSD.filter(s=>s.fecha&&s.fecha.startsWith(mesActual));
 
   document.getElementById('invSm').innerHTML=`
+    <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:13px;font-weight:700;color:var(--gl)">${factVistaTotal?'📊 Resumen total del centro':'👤 Mi cuenta — Juan Cruz'}</span>
+      <button class="btn btn-s btn-sm" onclick="toggleFactVista()">${factVistaTotal?'Ver solo mi cuenta':'Ver total centro'}</button>
+    </div>
     <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px">
       <!-- ARS Block -->
       <div style="background:var(--card2);border:1px solid #2A3020;border-radius:14px;padding:16px">
@@ -1542,6 +1600,7 @@ function renderFact(){
   const srch=document.getElementById('facSrch').value.toLowerCase();
   const est=document.getElementById('facEst').value;
   const fil=facturas.filter(f=>{
+    if(!factVistaTotal&&f.facilitador&&f.facilitador!==FAC_ADMIN)return false;
     if(srch&&!f.ser.toLowerCase().includes(srch)&&!(f.servicio||'').toLowerCase().includes(srch))return false;
     if(est&&f.estado!==est)return false;
     return true;
@@ -1643,8 +1702,10 @@ function delFacilitador(id){if(confirm('¿Eliminar?')){facs=facs.filter(f=>f.id!
 
 /* SERES */
 let serTab='todos';
+let serSort='alfa'; // 'alfa' | 'llegada'
 const TAB_IDS={todos:'tabTodos',seres:'tabSeres',prospectos:'tabProspectos'};
 function setSerTab(t){serTab=t;document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));document.getElementById(TAB_IDS[t]).classList.add('active');renderSeres();}
+function setSerSort(s){serSort=s;document.getElementById('sortAlfa').classList.toggle('active',s==='alfa');document.getElementById('sortLlegada').classList.toggle('active',s==='llegada');renderSeres();}
 function renderSeres(){
   // ── KPIs de Seres ──
   const seresKpiEl=document.getElementById('seresKPIs');
@@ -1697,14 +1758,25 @@ function renderSeres(){
     if(serTab==='prospectos'&&!s.prospecto)return false;
     return true;
   });
+  // Sort: alphabetical or by arrival order (id)
+  const sorted_seres=[...fil].sort((a,b)=>{
+    if(serSort==='llegada')return (parseInt(a.id)||0)-(parseInt(b.id)||0);
+    return a.nombre.localeCompare(b.nombre,'es',{sensitivity:'base'});
+  });
+  // Build a map: id → arrival number (1-based, by insertion order across all seres)
+  const arrivalMap={};
+  [...seres].sort((a,b)=>(parseInt(a.id)||0)-(parseInt(b.id)||0)).forEach((s,i)=>{arrivalMap[s.id]=i+1;});
+
   const label=serTab==='prospectos'?'prospectos':serTab==='seres'?'seres atendidos':'registrados';
-  document.getElementById('serTot').textContent=`${fil.length} ${label}`;
-  document.getElementById('serBody').innerHTML=fil.map(s=>{
+  document.getElementById('serTot').textContent=`${sorted_seres.length} ${label}`;
+  document.getElementById('serBody').innerHTML=sorted_seres.map((s,idx)=>{
     const ss=sessions.filter(se=>se.ser===s.nombre).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
     const ssComp=ss.filter(comp);
     const last=ss[0],pvC=ssComp.filter(se=>se.primeraVez).length;
     const avCol=s.prospecto?'linear-gradient(135deg,#3DAA6A,#2A7A4A)':'linear-gradient(135deg,var(--gold),var(--gd))';
+    const arrNum=arrivalMap[s.id]||'';
     return `<tr>
+      <td style="text-align:center;font-size:11px;color:var(--muted);font-weight:700">#${arrNum}</td>
       <td><div style="display:flex;align-items:center;gap:7px">
         <div class="avsm" style="background:${avCol};color:#050401">${s.nombre.substring(0,2).toUpperCase()}</div>
         <div>
@@ -1985,11 +2057,17 @@ function openModal(type,id,extra){
     document.getElementById('pgNom').value=p?p.nombre:'';
     document.getElementById('pgIco').value=p?p.ico:'📚';
     document.getElementById('pgCol').value=p?p.col:'#C9A84C';
-    document.getElementById('pgDur').value=p?p.duracion:'';
+    document.getElementById('pgTipo').value=p?(p.tipo||'individual'):'individual';
+    document.getElementById('pgMeses').value=p?(p.meses||''):'';
+    document.getElementById('pgSemanas').value=p?(p.semanas_dur||(p.semanas||[]).length||''):'';
+    document.getElementById('pgPrecio').value=p?(p.precio||''):'';
+    document.getElementById('pgMoneda').value=p?(p.moneda||'ARS'):'ARS';
     document.getElementById('pgDesc').value=p?p.descripcion:'';
     document.getElementById('pgObj').value=p?p.objetivo:'';
-    document.getElementById('pgSes').value=p?p.sesionesIncluidas:'';
     document.getElementById('pgMeta').value=p?p.meta:'';
+    // Build sesiones incluidas list
+    window._pgSesInc=p?(p.sesionesIncluidas_v2||{}):{}; // {nom: qty}
+    renderProgSesInc();
     document.getElementById('moProg').classList.add('open');
   } else if(type==='fact'){
     if(!document.getElementById('ffFecha').value)document.getElementById('ffFecha').value=tod;
@@ -2007,8 +2085,15 @@ function openModal(type,id,extra){
     document.getElementById('cpFini').value=c?c.fechaInicio:'';
     document.getElementById('cpFfin').value=c?c.fechaFin:'';
     document.getElementById('cpPres').value=c?(c.presupuesto||0):0;
+    document.getElementById('cpMoneda').value=c?(c.moneda||'ARS'):'ARS';
     document.getElementById('cpAlc').value=c?(c.alcance||0):0;
+    document.getElementById('cpImp').value=c?(c.impresiones||0):0;
+    document.getElementById('cpCtr').value=c?(c.ctr||0):0;
+    document.getElementById('cpConv').value=c?(c.conversaciones||0):0;
     document.getElementById('cpDesc').value=c?(c.descripcion||''):'';
+    // Historial de pagos
+    window._cpPagos=c?(c.pagos||[]):[];
+    renderCampPagos();
     document.getElementById('moCamp').classList.add('open');
   } else if(type==='serDet'){
     document.getElementById('moSerDet').classList.add('open');
@@ -2588,11 +2673,33 @@ function editNotaSemana(semIdx){
 
 /* PROGRAMAS - CRUD */
 function delProg(id){if(confirm('¿Eliminar este programa?')){programas=programas.filter(p=>p.id!==id);save();renderProg();}}
+function renderProgSesInc(){
+  const list=document.getElementById('pgSesIncList');
+  if(!list)return;
+  const inc=window._pgSesInc||{};
+  list.innerHTML=Object.entries(inc).length?Object.entries(inc).map(([nom,qty])=>`
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="flex:1;font-size:12px">${nom}</span>
+      <input type="number" min="1" value="${qty}" style="width:60px;padding:3px 6px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;text-align:center"
+        onchange="window._pgSesInc['${nom}']=parseInt(this.value)||1">
+      <button class="btn btn-s btn-sm" onclick="delete window._pgSesInc['${nom}'];renderProgSesInc()">✕</button>
+    </div>`).join(''):`<span style="color:var(--muted);font-size:12px">Sin sesiones configuradas aún</span>`;
+}
+function addProgSesion(){
+  const nom=document.getElementById('pgSesNueva').value.trim();
+  const cant=parseInt(document.getElementById('pgSesCant').value)||1;
+  if(!nom)return;
+  if(!window._pgSesInc)window._pgSesInc={};
+  window._pgSesInc[nom]=(window._pgSesInc[nom]||0)+cant;
+  document.getElementById('pgSesNueva').value='';
+  document.getElementById('pgSesCant').value='1';
+  renderProgSesInc();
+}
 function saveProg(){
   const eid=document.getElementById('pgId').value;
   const nom=document.getElementById('pgNom').value.trim();
   if(!nom){alert('El nombre es obligatorio');return;}
-  const pgData={nombre:nom,ico:document.getElementById('pgIco').value||'📚',col:document.getElementById('pgCol').value,duracion:document.getElementById('pgDur').value,descripcion:document.getElementById('pgDesc').value,objetivo:document.getElementById('pgObj').value,sesionesIncluidas:document.getElementById('pgSes').value,meta:document.getElementById('pgMeta').value};
+  const pgData={nombre:nom,ico:document.getElementById('pgIco').value||'📚',col:document.getElementById('pgCol').value,tipo:document.getElementById('pgTipo').value,meses:parseFloat(document.getElementById('pgMeses').value)||0,semanas_dur:parseInt(document.getElementById('pgSemanas').value)||0,precio:parseFloat(document.getElementById('pgPrecio').value)||0,moneda:document.getElementById('pgMoneda').value,descripcion:document.getElementById('pgDesc').value,objetivo:document.getElementById('pgObj').value,meta:document.getElementById('pgMeta').value,sesionesIncluidas_v2:window._pgSesInc||{}};
   if(eid){
     const p=programas.find(x=>x.id===eid);
     if(p)Object.assign(p,pgData); // preserves p.semanas
@@ -2604,11 +2711,33 @@ function saveProg(){
   save();closeModal('moProg');renderProg();
 }
 
+function renderCampPagos(){
+  const el=document.getElementById('cpPagosHistorial');
+  if(!el)return;
+  const pagos=window._cpPagos||[];
+  el.innerHTML=pagos.length?pagos.map((p,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--card);border-radius:6px;font-size:11px">
+      <span style="color:var(--muted)">${p.fecha||'—'}</span>
+      <span style="font-weight:700;color:var(--gl);flex:1">${p.monto?p.monto.toLocaleString('es-AR'):0}</span>
+      <button class="btn btn-sm" style="padding:2px 6px;font-size:10px" onclick="window._cpPagos.splice(${i},1);renderCampPagos()">✕</button>
+    </div>`).join(''):`<span style="font-size:11px;color:var(--muted)">Sin pagos registrados</span>`;
+}
+function addCampPago(){
+  const fecha=document.getElementById('cpPagoFecha').value||new Date().toISOString().slice(0,10);
+  const monto=parseFloat(document.getElementById('cpPagoMonto').value)||0;
+  if(!monto)return;
+  if(!window._cpPagos)window._cpPagos=[];
+  window._cpPagos.push({fecha,monto});
+  document.getElementById('cpPagoMonto').value='';
+  renderCampPagos();
+}
 function saveCamp(){
   const eid=document.getElementById('cpId').value;
   const nom=document.getElementById('cpNom').value.trim();
   if(!nom){alert('El nombre es obligatorio');return;}
-  const cData={nombre:nom,plataforma:document.getElementById('cpPlat').value,estado:document.getElementById('cpEst').value,fechaInicio:document.getElementById('cpFini').value,fechaFin:document.getElementById('cpFfin').value,presupuesto:parseFloat(document.getElementById('cpPres').value)||0,alcance:parseInt(document.getElementById('cpAlc').value)||0,descripcion:document.getElementById('cpDesc').value};
+  const pagos=window._cpPagos||[];
+  const gastadoTotal=pagos.reduce((a,p)=>a+(p.monto||0),0);
+  const cData={nombre:nom,plataforma:document.getElementById('cpPlat').value,estado:document.getElementById('cpEst').value,fechaInicio:document.getElementById('cpFini').value,fechaFin:document.getElementById('cpFfin').value,presupuesto:parseFloat(document.getElementById('cpPres').value)||0,moneda:document.getElementById('cpMoneda').value,alcance:parseInt(document.getElementById('cpAlc').value)||0,impresiones:parseInt(document.getElementById('cpImp').value)||0,ctr:parseFloat(document.getElementById('cpCtr').value)||0,conversaciones:parseInt(document.getElementById('cpConv').value)||0,pagos,gastadoTotal,descripcion:document.getElementById('cpDesc').value};
   if(eid){
     const c=campañas.find(x=>x.id===eid);
     if(c)Object.assign(c,cData);
@@ -2774,30 +2903,49 @@ function renderProg(){
     const yearLine=Object.entries(byYear).sort().map(([y,c])=>`<span style="font-size:11px;color:var(--muted)">${y}: <strong style="color:var(--text)">${c}</strong></span>`).join(' · ');
     const sorted=[...pSes].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
     const first=sorted[0],last=sorted[sorted.length-1];
+    // Sesiones incluidas v2
+    const sesInc=p.sesionesIncluidas_v2||{};
+    const totalSesInc=Object.values(sesInc).reduce((a,v)=>a+v,0);
+    const sesIncLine=Object.entries(sesInc).map(([n,q])=>`<span style="font-size:10px;background:${col}22;border:1px solid ${col}44;border-radius:8px;padding:2px 7px">${q}× ${n.split(' ').slice(0,3).join(' ')}</span>`).join('');
+    // Precio
+    const precioStr=p.precio?`${p.moneda==='USD'?'USD':'$'}${p.precio.toLocaleString(p.moneda==='USD'?'en-US':'es-AR')}`:null;
+    // Duración
+    const durLine=[p.meses?`${p.meses} mes${p.meses!==1?'es':''}`:'', p.semanas_dur?`${p.semanas_dur} semanas`:((p.semanas||[]).length?`${(p.semanas||[]).length} semanas`:'')].filter(Boolean).join(' · ');
+    // Inscripciones activas
+    const inscAct=inscripciones.filter(x=>x.programaId===p.id).length;
     return `<div class="cc" style="border-left:3px solid ${col}">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px">
         <div style="width:44px;height:44px;border-radius:12px;background:${col}22;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">${ico}</div>
         <div style="flex:1">
           <div style="font-size:15px;font-weight:700;color:var(--gl)">${p.nombre}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${pSes.length?`${fd(first.fecha)} → ${fd(last.fecha)}`:'Sin sesiones registradas'}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:3px">
+            ${p.tipo?`<span class="bdg b-pu" style="font-size:9px">${p.tipo}</span>`:''}
+            ${durLine?`<span style="font-size:10px;color:var(--muted)">⏱ ${durLine}</span>`:''}
+            ${precioStr?`<span style="font-size:11px;font-weight:700;color:${col}">${precioStr}</span>`:''}
+          </div>
         </div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px">
-        <div style="background:var(--card2);border-radius:9px;padding:9px;text-align:center">
-          <div style="font-size:20px;font-weight:800;color:${col}">${pSes.length}</div>
-          <div style="font-size:10px;color:var(--muted)">Sesiones</div>
+      ${sesIncLine?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px">${sesIncLine}</div>`:''}
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-bottom:10px">
+        <div style="background:var(--card2);border-radius:9px;padding:7px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:${col}">${pSes.length}</div>
+          <div style="font-size:9px;color:var(--muted)">Realizadas</div>
         </div>
-        <div style="background:var(--card2);border-radius:9px;padding:9px;text-align:center">
-          <div style="font-size:20px;font-weight:800;color:${col}">${pSerNames.size}</div>
-          <div style="font-size:10px;color:var(--muted)">Seres</div>
+        <div style="background:var(--card2);border-radius:9px;padding:7px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:${col}">${totalSesInc||'—'}</div>
+          <div style="font-size:9px;color:var(--muted)">Incluidas</div>
         </div>
-        <div style="background:var(--card2);border-radius:9px;padding:9px;text-align:center">
-          <div style="font-size:20px;font-weight:800;color:${col}">${pFacNames.size}</div>
-          <div style="font-size:10px;color:var(--muted)">Facilitadores</div>
+        <div style="background:var(--card2);border-radius:9px;padding:7px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:${col}">${pSerNames.size}</div>
+          <div style="font-size:9px;color:var(--muted)">Seres</div>
+        </div>
+        <div style="background:var(--card2);border-radius:9px;padding:7px;text-align:center">
+          <div style="font-size:18px;font-weight:800;color:${col}">${inscAct}</div>
+          <div style="font-size:9px;color:var(--muted)">Activos</div>
         </div>
       </div>
-      ${yearLine?`<div style="display:flex;gap:10px;flex-wrap:wrap">${yearLine}</div>`:'<p style="font-size:12px;color:var(--muted);text-align:center;padding:8px 0">Este programa aún no tiene sesiones registradas</p>'}
-      <div style="display:flex;gap:6px;margin-top:10px">
+      ${yearLine?`<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">${yearLine}</div>`:''}
+      <div style="display:flex;gap:6px;margin-top:6px">
         <button class="btn btn-p btn-sm" style="flex:1" onclick="openJourneyView('${p.id}')">🗺️ Journey</button>
         <button class="btn btn-s btn-sm" onclick="openModal('prog','${p.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delProg('${p.id}')">🗑</button>
@@ -2966,18 +3114,28 @@ function setMktTab(t){
 }
 
 function renderMkt(){
-  // KPIs
   const totalCamp=campañas.length;
   const activas=campañas.filter(c=>c.estado==='activa').length;
   const totalProsp=seres.filter(s=>s.prospecto).length;
   const totalConv=seres.filter(s=>!s.prospecto&&s.campañaId).length;
-  const totalPresup=campañas.reduce((a,c)=>a+(parseFloat(c.presupuesto)||0),0);
   const metaLeadCount=seres.filter(s=>s.metaLeadId).length;
+  // Gastado real = suma de pagos registrados en todas las campañas
+  const gastadoARS=campañas.filter(c=>(c.moneda||'ARS')==='ARS').reduce((a,c)=>a+(c.gastadoTotal||c.presupuesto||0),0);
+  const gastadoUSD=campañas.filter(c=>c.moneda==='USD').reduce((a,c)=>a+(c.gastadoTotal||c.presupuesto||0),0);
+  // Totales de KPIs de todas las campañas
+  const totalConvInic=campañas.reduce((a,c)=>a+(c.conversaciones||0),0);
+  const totalAlcance=campañas.reduce((a,c)=>a+(c.alcance||0),0);
+  const totalImp=campañas.reduce((a,c)=>a+(c.impresiones||0),0);
+  const avgCtr=campañas.filter(c=>c.ctr>0).length?
+    (campañas.reduce((a,c)=>a+(c.ctr||0),0)/campañas.filter(c=>c.ctr>0).length).toFixed(2):0;
+  const cplARS=totalConvInic&&gastadoARS?Math.round(gastadoARS/totalConvInic):0;
   document.getElementById('mktKPIs').innerHTML=`
     <div class="kc go"><div class="ki">📢</div><div class="kl">Campañas</div><div class="kv">${totalCamp}</div><div class="ks">${activas} activas</div></div>
-    <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos activos</div><div class="kv">${totalProsp}</div><div class="ks">Sin sesión aún</div></div>
-    <div class="kc gr"><div class="ki">✨</div><div class="kl">Convertidos</div><div class="kv">${totalConv}</div><div class="ks">De campañas</div></div>
-    <div class="kc bl"><div class="ki">🔵</div><div class="kl">Leads de Meta</div><div class="kv">${metaLeadCount}</div><div class="ks">Importados automáticamente</div></div>`;
+    <div class="kc tl"><div class="ki">💬</div><div class="kl">Conv. iniciadas</div><div class="kv">${totalConvInic.toLocaleString('es-AR')}</div><div class="ks">CPL ARS: ${cplARS?'$'+cplARS.toLocaleString('es-AR'):'—'}</div></div>
+    <div class="kc bl"><div class="ki">👁</div><div class="kl">Alcance</div><div class="kv">${totalAlcance.toLocaleString('es-AR')}</div><div class="ks">Impresiones: ${totalImp.toLocaleString('es-AR')}</div></div>
+    <div class="kc or"><div class="ki">📊</div><div class="kl">CTR promedio</div><div class="kv">${avgCtr}%</div><div class="ks">${gastadoARS?'$'+Math.round(gastadoARS).toLocaleString('es-AR'):''} ${gastadoUSD?'USD '+gastadoUSD.toLocaleString('en-US',{maximumFractionDigits:0}):''} invertido</div></div>
+    <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${totalProsp}</div><div class="ks">Sin sesión aún</div></div>
+    <div class="kc gr"><div class="ki">✨</div><div class="kl">Convertidos</div><div class="kv">${totalConv}</div><div class="ks">${metaLeadCount} de Meta automáticos</div></div>`;
   renderMktPub();
 }
 
@@ -2995,8 +3153,12 @@ function renderMktPub(){
     const prosp=seres.filter(s=>s.campañaId===c.id);
     const conv=prosp.filter(s=>!s.prospecto);
     const rate=prosp.length?Math.round(conv.length/prosp.length*100):0;
-    const cpLead=prosp.length&&c.presupuesto?Math.round(c.presupuesto/prosp.length):0;
-    const cpConv=conv.length&&c.presupuesto?Math.round(c.presupuesto/conv.length):0;
+    const gastadoReal=c.gastadoTotal||(c.pagos&&c.pagos.length?c.pagos.reduce((a,p)=>a+(p.monto||0),0):0)||c.presupuesto||0;
+    const moneda=c.moneda||'ARS';
+    const fmtMoney=v=>moneda==='USD'?'USD '+parseFloat(v).toLocaleString('en-US',{maximumFractionDigits:0}):'$'+Math.round(v).toLocaleString('es-AR');
+    const cpLead=prosp.length&&gastadoReal?Math.round(gastadoReal/prosp.length):0;
+    const cpConv=conv.length&&gastadoReal?Math.round(gastadoReal/conv.length):0;
+    const cpConvInic=c.conversaciones&&gastadoReal?Math.round(gastadoReal/c.conversaciones):0;
     const col=PLAT_COL[c.plataforma]||'#7A7260';
     const ico=PLAT_ICO[c.plataforma]||'📣';
     return `<div class="cc" style="border-left:3px solid ${col}">
@@ -3008,7 +3170,7 @@ function renderMktPub(){
         </div>
         <span class="bdg ${EST_CLS[c.estado]||'b-gy'}" style="font-size:10px">${c.estado}</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
         <div style="background:var(--card2);border-radius:8px;padding:8px;text-align:center">
           <div style="font-size:18px;font-weight:800;color:${col}">${prosp.length}</div>
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Prospectos</div>
@@ -3022,13 +3184,20 @@ function renderMktPub(){
           <div style="font-size:9px;color:var(--muted);text-transform:uppercase">Conversión</div>
         </div>
       </div>
-      ${c.presupuesto?`<div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:6px 0;border-top:1px solid rgba(30,28,16,.8)">
-        <span>Inversión: <strong style="color:var(--gl)">${fc(parseFloat(c.presupuesto))}</strong></span>
-        ${cpLead?`<span>CPL: <strong style="color:var(--gl)">${fc(cpLead)}</strong></span>`:''}
-        ${cpConv?`<span>CPA: <strong style="color:var(--gl)">${fc(cpConv)}</strong></span>`:''}
+      ${(c.conversaciones||c.alcance||c.impresiones||c.ctr)?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-bottom:10px">${c.conversaciones?`<div style="background:rgba(199,125,255,.08);border-radius:7px;padding:6px;text-align:center"><div style="font-size:14px;font-weight:700;color:#C77DFF">${parseInt(c.conversaciones).toLocaleString('es-AR')}</div><div style="font-size:8px;color:var(--muted);text-transform:uppercase">Conv.</div></div>`:''}${c.alcance?`<div style="background:rgba(74,222,128,.08);border-radius:7px;padding:6px;text-align:center"><div style="font-size:14px;font-weight:700;color:var(--green)">${parseInt(c.alcance).toLocaleString('es-AR')}</div><div style="font-size:8px;color:var(--muted);text-transform:uppercase">Alcance</div></div>`:''}${c.impresiones?`<div style="background:rgba(96,165,250,.08);border-radius:7px;padding:6px;text-align:center"><div style="font-size:14px;font-weight:700;color:#60A5FA">${parseInt(c.impresiones).toLocaleString('es-AR')}</div><div style="font-size:8px;color:var(--muted);text-transform:uppercase">Impr.</div></div>`:''}${c.ctr?`<div style="background:rgba(251,191,36,.08);border-radius:7px;padding:6px;text-align:center"><div style="font-size:14px;font-weight:700;color:#FBBF24">${parseFloat(c.ctr).toFixed(2)}%</div><div style="font-size:8px;color:var(--muted);text-transform:uppercase">CTR</div></div>`:''}</div>`:''}
+      ${gastadoReal?`<div style="padding:8px;background:var(--card2);border-radius:8px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:10px;color:var(--muted);text-transform:uppercase">💰 Invertido</span>
+          <strong style="font-size:13px;color:var(--gl)">${fmtMoney(gastadoReal)}</strong>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${cpLead?`<span style="font-size:10px;color:var(--muted)">CPL: <strong style="color:var(--text)">${fmtMoney(cpLead)}</strong></span>`:''}
+          ${cpConvInic?`<span style="font-size:10px;color:var(--muted)">CP Conv.: <strong style="color:var(--text)">${fmtMoney(cpConvInic)}</strong></span>`:''}
+          ${cpConv?`<span style="font-size:10px;color:var(--muted)">CPA: <strong style="color:var(--text)">${fmtMoney(cpConv)}</strong></span>`:''}
+        </div>
+        ${c.pagos&&c.pagos.length>1?`<div style="font-size:9px;color:var(--muted);margin-top:4px">📋 ${c.pagos.length} pagos registrados</div>`:''}
       </div>`:''}
-      ${c.alcance?`<div style="font-size:11px;color:var(--muted);padding-top:4px">👁 Alcance: <strong style="color:var(--text)">${parseInt(c.alcance).toLocaleString('es-AR')}</strong> personas</div>`:''}
-      <div style="display:flex;gap:6px;margin-top:10px">
+      <div style="display:flex;gap:6px;margin-top:6px">
         <button class="btn btn-s btn-sm" style="flex:1" onclick="openModal('camp','${c.id}')">✏️ Editar</button>
         <button class="btn btn-s btn-sm" onclick="delCamp('${c.id}')">🗑</button>
       </div>
