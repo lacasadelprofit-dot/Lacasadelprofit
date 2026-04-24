@@ -1131,14 +1131,21 @@ function closeSidebar(){
 /* AUTO-LOGIN if session active */
 (async function(){
   showLoader('Verificando sesión...');
-  const {data:{session}}=await _sb.auth.getSession();
-  if(session){
-    await loadData();
-    document.getElementById('loginScreen').style.display='none';
-    document.getElementById('app').style.display='block';
-    initApp();
-  } else {
+  try{
+    const timeout=new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),5000));
+    const sessionCheck=_sb.auth.getSession();
+    const {data:{session}}=await Promise.race([sessionCheck,timeout]);
+    if(session){
+      await loadData();
+      document.getElementById('loginScreen').style.display='none';
+      document.getElementById('app').style.display='block';
+      initApp();
+    } else {
+      hideLoader();
+    }
+  } catch(e){
     hideLoader();
+    console.warn('Session check failed or timed out:',e.message);
   }
 })();
 
