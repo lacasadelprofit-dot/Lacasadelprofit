@@ -22,7 +22,7 @@ html{scroll-behavior:smooth;}
 /* ── Dark overlay ── */
 #globalOverlay{
   position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(4,5,2,0.22);
+  background:rgba(4,5,2,0.34);
   z-index:1;pointer-events:none;
 }
 
@@ -47,13 +47,9 @@ header{
 
 /* Sub heading — espiritual */
 .brand-dim{
-  font-size:13px;font-weight:700;letter-spacing:4px;text-transform:uppercase;
-  color:var(--pl);margin-bottom:8px;
-  text-shadow:0 0 20px rgba(155,130,212,.4);
-}
-.brand-centro{
-  font-size:12px;letter-spacing:2px;text-transform:uppercase;
-  color:var(--muted);margin-bottom:36px;
+  font-size:20px;font-weight:700;letter-spacing:4px;text-transform:uppercase;
+  color:var(--pl);margin-bottom:36px;
+  text-shadow:0 0 28px rgba(155,130,212,.5);
 }
 
 .mission{
@@ -194,7 +190,6 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
   <div class="brand-name">La Casa del Profit</div>
   <div class="brand-dim">Dimensión de Expansión Espiritual</div>
-  <div class="brand-centro">Centro holístico de transformación personal</div>
 
   <div class="mission">
     CONTRIBUIR CON 1.000.000 DE HERRAMIENTAS DE CONSCIENCIA EXPERIMENTALES<br>
@@ -285,7 +280,7 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
     const numRays = 24;
     const rayLength = Math.max(W,H) * 0.85;
     const rot = t * 0.008; // very slow rotation
-    const baseAlpha = 0.055 + pulse(0.5,1) * 0.04;
+    const baseAlpha = 0.030 + pulse(0.5,1) * 0.02;
 
     for(let i=0;i<numRays;i++){
       const a = (i/numRays)*TWO_PI + rot;
@@ -309,12 +304,12 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
         Rotates slowly; bands of light travel inward along it.
   ═══════════════════════════════════════════ */
   function drawGoldenArc(fR){
-    const minR = fR * 2.5;                    // arc starts just outside FOL
+    const minR = fR * 0.18;                   // spiral reaches the center (house)
     const maxR = Math.min(W,H) * 0.44;        // arc goes to ~44% of viewport
-    const turns = 1.35;                       // how many full turns the arc makes
-    const steps = 600;
+    const turns = 3.2;                        // more turns to fill journey to center
+    const steps = 900;                        // more steps for smooth tight center
     const rot   = t * 0.018;                  // slow rotation of whole arc
-    const numWaves = 4;                       // traveling bands
+    const numWaves = 5;                       // traveling bands
     const speed    = 1.0;                     // inward travel speed
 
     for(let pass=0; pass<2; pass++){
@@ -341,17 +336,17 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
         const bC = Math.round(lerp(4,  90,  0.1+wave*0.9));
 
         if(pass===0){
-          // Glow pass — much brighter
-          const a = glow*0.65*fade;
+          // Glow pass
+          const a = glow*0.30*fade;
           ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y);
           ctx.strokeStyle=`rgba(${rC},${gC},${bC},${a.toFixed(3)})`;
-          ctx.lineWidth=3+wave*16; ctx.lineCap='round'; ctx.stroke();
+          ctx.lineWidth=2+wave*10; ctx.lineCap='round'; ctx.stroke();
         } else {
-          // Core pass — solid golden line
-          const a = (0.22+wave*0.78)*fade;
+          // Core pass
+          const a = (0.10+wave*0.90)*fade;
           ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y);
           ctx.strokeStyle=`rgba(${rC},${gC},${bC},${a.toFixed(3)})`;
-          ctx.lineWidth=1.2+wave*3.5; ctx.lineCap='round'; ctx.stroke();
+          ctx.lineWidth=0.8+wave*2.5; ctx.lineCap='round'; ctx.stroke();
         }
         px=x; py=y;
       }
