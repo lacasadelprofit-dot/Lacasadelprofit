@@ -310,6 +310,7 @@ select.fi:focus{border-color:var(--gold);}
     <div id="sec-dashboard" class="sec active">
      <div id="dKPIs" class="kpi-grid"></div>
      <div id="dToday" style="margin-bottom:18px"></div>
+     <div id="dWeekView" style="margin-bottom:18px"></div>
      <div class="cg22" style="margin-bottom:18px">
       <div class="cc">
        <h3 style="font-size:14px;color:var(--gl);margin-bottom:14px">🌟 Visión — El camino hacia 1.000.000</h3>
@@ -1298,6 +1299,7 @@ function renderDash(){
 
   renderVision(tot);
   renderToday(now);
+  renderWeekView(now);
   renderBday(now);
   renderFacBday(now);
   renderPVCard();
@@ -1406,6 +1408,75 @@ function renderToday(now){
   document.getElementById('dToday').innerHTML=`<div class="cc">
     <h3 style="color:var(--gl);margin-bottom:12px">📅 Turnos de Hoy — ${label} <span style="margin-left:8px;font-size:11px;background:rgba(201,168,76,.15);color:var(--gold);padding:2px 9px;border-radius:20px">${tod.length} turno${tod.length>1?'s':''}</span></h3>
     ${rows}
+  </div>`;
+}
+
+function renderWeekView(now){
+  // Rango Lun-Dom de la semana actual
+  const DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const MES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const todStr=now.toISOString().slice(0,10);
+  // Lunes de esta semana
+  const dow=now.getDay(); // 0=Dom
+  const diffLun=dow===0?-6:1-dow;
+  const lun=new Date(now); lun.setDate(now.getDate()+diffLun); lun.setHours(0,0,0,0);
+  const weekDays=[];
+  for(let i=0;i<7;i++){const d=new Date(lun);d.setDate(lun.getDate()+i);weekDays.push(d);}
+  const lunStr=weekDays[0].toISOString().slice(0,10);
+  const domStr=weekDays[6].toISOString().slice(0,10);
+
+  // Sesiones individuales en la semana
+  const sesSem=sessions.filter(s=>s.fecha&&s.fecha>=lunStr&&s.fecha<=domStr&&(s.estado||'Completado')!=='Cancelado');
+
+  // Sesiones de programa (sesionesAsignadas) en la semana
+  const progSem=[];
+  inscripciones.forEach(insc=>{
+    const ser=seres.find(x=>x.id===insc.serId);
+    const serNom=ser?ser.nombre:'Ser desconocido';
+    (insc.sesionesAsignadas||[]).forEach(sa=>{
+      if(sa.fecha&&sa.fecha>=lunStr&&sa.fecha<=domStr&&(sa.estado||'pendiente')!=='cancelada'){
+        progSem.push({fecha:sa.fecha,hora:'',ser:serNom,sesion:sa.nom||'Sesión Prog.',facilitador:sa.facNombre||'—',estado:sa.estado||'pendiente',esProg:true});
+      }
+    });
+  });
+
+  // Combinar y agrupar por día
+  const all=[...sesSem.map(s=>({...s,esProg:false})),...progSem];
+  const byDay={};
+  weekDays.forEach(d=>{byDay[d.toISOString().slice(0,10)]=[];});
+  all.forEach(s=>{if(byDay[s.fecha])byDay[s.fecha].push(s);});
+  weekDays.forEach(d=>{byDay[d.toISOString().slice(0,10)].sort((a,b)=>(a.hora||'00:00').localeCompare(b.hora||'00:00'));});
+
+  const totalSem=all.length;
+  if(!totalSem){
+    document.getElementById('dWeekView').innerHTML=`<div class="cc"><h3 style="color:var(--gl)">📅 Semana — ${weekDays[0].getDate()} al ${weekDays[6].getDate()} de ${MES[weekDays[6].getMonth()]}</h3><p style="font-size:12px;color:var(--muted);padding:8px 0">Sin sesiones agendadas esta semana</p></div>`;
+    return;
+  }
+
+  const colores={Completado:'b-gr',Confirmado:'b-bl',Pendiente:'b-or',pendiente:'b-or',agendada:'b-bl',completada:'b-gr',cancelada:'b-rd'};
+  const dayCards=weekDays.map(d=>{
+    const ds=d.toISOString().slice(0,10);
+    const isHoy=ds===todStr;
+    const items=byDay[ds];
+    const dayLabel=DIAS[d.getDay()].slice(0,3)+' '+d.getDate();
+    if(!items.length) return `<div style="flex:1;min-width:90px;border-radius:10px;border:1px solid #1E1C10;padding:8px;opacity:0.35"><div style="font-size:11px;font-weight:700;color:var(--muted);text-align:center;margin-bottom:6px">${dayLabel}</div></div>`;
+    return `<div style="flex:1;min-width:90px;border-radius:10px;border:1px solid ${isHoy?'var(--gold)':'#1E1C10'};padding:8px;background:${isHoy?'rgba(201,168,76,.06)':'transparent'}">
+      <div style="font-size:11px;font-weight:700;color:${isHoy?'var(--gold)':'var(--gl)'};text-align:center;margin-bottom:6px">${dayLabel}${items.length?` <span style="background:rgba(201,168,76,.15);color:var(--gold);border-radius:10px;padding:1px 6px;font-size:10px">${items.length}</span>`:''}</div>
+      ${items.map(s=>`<div style="margin-bottom:5px;padding:5px 6px;border-radius:7px;background:var(--card2);border-left:2px solid ${s.esProg?'#8B5CF6':s.modalidad==='Online'?'#3B82F6':'#C9A84C'}">
+        <div style="font-size:10px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.hora?s.hora+' ':''}${s.ser.split(' ')[0]}</div>
+        <div style="font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.sesion}${s.esProg?' 🟣':''}</div>
+        <div style="font-size:9px;color:var(--muted)">${s.facilitador.split(' ')[0]}</div>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+
+  document.getElementById('dWeekView').innerHTML=`<div class="cc">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <h3 style="color:var(--gl)">📅 Semana — ${weekDays[0].getDate()} al ${weekDays[6].getDate()} de ${MES[weekDays[6].getMonth()]}</h3>
+      <span style="font-size:11px;background:rgba(201,168,76,.15);color:var(--gold);padding:2px 10px;border-radius:20px">${totalSem} sesión${totalSem>1?'es':''} · todos los facilitadores</span>
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto">${dayCards}</div>
+    <div style="margin-top:8px;font-size:10px;color:var(--muted)">🟡 Presencial &nbsp; 🔵 Online &nbsp; 🟣 Sesión de programa</div>
   </div>`;
 }
 
