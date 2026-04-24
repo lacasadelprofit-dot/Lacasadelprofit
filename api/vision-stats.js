@@ -68,8 +68,8 @@ module.exports = async function handler(req, res) {
     const sessions = sesRows.map(r => (r && typeof r === 'object' ? (r.data || r) : null)).filter(Boolean);
     const seres    = serRows.map(r => (r && typeof r === 'object' ? (r.data || r) : null)).filter(Boolean);
 
-    // Completed sessions — field inside the JSONB data object
-    const compSes = sessions.filter(s => s.estado === 'completada');
+    // Completed sessions — valor 'Completado' (C mayúscula); sin estado = Completado por defecto
+    const compSes = sessions.filter(s => (s.estado || 'Completado') === 'Completado');
 
     // Sort by fecha to detect milestone dates
     const sorted = [...compSes].sort((a, b) => {
