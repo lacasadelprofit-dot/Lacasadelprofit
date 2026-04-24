@@ -22,7 +22,7 @@ html{scroll-behavior:smooth;}
 /* ── Dark overlay ── */
 #globalOverlay{
   position:fixed;top:0;left:0;width:100%;height:100%;
-  background:rgba(4,5,2,0.46);
+  background:rgba(4,5,2,0.22);
   z-index:1;pointer-events:none;
 }
 
@@ -194,7 +194,7 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
   <div class="brand-name">La Casa del Profit</div>
   <div class="brand-dim">Dimensión de Expansión Espiritual</div>
-  <div class="brand-centro">Centro holístico de transformación personal y espiritual</div>
+  <div class="brand-centro">Centro holístico de transformación personal</div>
 
   <div class="mission">
     CONTRIBUIR CON 1.000.000 DE HERRAMIENTAS DE CONSCIENCIA EXPERIMENTALES<br>
@@ -285,7 +285,7 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
     const numRays = 24;
     const rayLength = Math.max(W,H) * 0.85;
     const rot = t * 0.008; // very slow rotation
-    const baseAlpha = 0.025 + pulse(0.5,1) * 0.02;
+    const baseAlpha = 0.055 + pulse(0.5,1) * 0.04;
 
     for(let i=0;i<numRays;i++){
       const a = (i/numRays)*TWO_PI + rot;
@@ -341,17 +341,17 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
         const bC = Math.round(lerp(4,  90,  0.1+wave*0.9));
 
         if(pass===0){
-          // Glow pass
-          const a = glow*0.22*fade;
+          // Glow pass — much brighter
+          const a = glow*0.65*fade;
           ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y);
           ctx.strokeStyle=`rgba(${rC},${gC},${bC},${a.toFixed(3)})`;
-          ctx.lineWidth=2+wave*10; ctx.lineCap='round'; ctx.stroke();
+          ctx.lineWidth=3+wave*16; ctx.lineCap='round'; ctx.stroke();
         } else {
-          // Core pass
-          const a = (0.08+wave*0.90)*fade;
+          // Core pass — solid golden line
+          const a = (0.22+wave*0.78)*fade;
           ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y);
           ctx.strokeStyle=`rgba(${rC},${gC},${bC},${a.toFixed(3)})`;
-          ctx.lineWidth=0.8+wave*2.5; ctx.lineCap='round'; ctx.stroke();
+          ctx.lineWidth=1.2+wave*3.5; ctx.lineCap='round'; ctx.stroke();
         }
         px=x; py=y;
       }
@@ -364,7 +364,7 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
         Centers on hexagonal lattice.
   ═══════════════════════════════════════════ */
   function drawFlowerOfLife(fR){
-    const alpha = 0.32 + pulse(0.6,0.5)*0.14;
+    const alpha = 0.50 + pulse(0.6,0.5)*0.18;
     const col = `rgba(232,201,106,${alpha.toFixed(3)})`;
 
     ctx.strokeStyle = col;
@@ -558,10 +558,15 @@ async function init(){
   try{
     const resp=await fetch('/api/vision-stats');
     const json=await resp.json();
-    if(json.ok) data=json.data;
+    if(json.ok){
+      data=json.data;
+      if(json.data._meta) console.info('vision-stats _meta:',json.data._meta);
+    } else {
+      console.error('vision-stats API error:',json.error);
+    }
   }catch(e){ console.warn('API no disponible:',e.message); }
 
-  /* ── Si falla la API → modo demo ── */
+  /* ── Si falla la API → ceros (no datos ficticios) ── */
   if(!data){
     data={ totalSesiones:0, totalSeres:0, primeraVez:0, milestoneDates:{} };
   }
