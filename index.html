@@ -317,6 +317,7 @@ select.fi:focus{border-color:var(--gold);}
       </div>
       <div>
        <div id="dBday" style="margin-bottom:12px"></div>
+       <div id="dFacBday" style="margin-bottom:12px"></div>
        <div id="dPVCard"></div>
       </div>
      </div>
@@ -638,6 +639,7 @@ select.fi:focus{border-color:var(--gold);}
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="fOnl" style="accent-color:var(--gold)"> Online</label>
    </div>
   </div>
+  <div class="fg"><label>🎂 Fecha de nacimiento</label><input type="date" id="fNac"></div>
   <div class="fg"><label>Bio / Descripción</label><textarea id="fBio"></textarea></div>
   <div class="mf">
    <button class="btn btn-s" onclick="closeModal('moFac')">Cancelar</button>
@@ -1258,11 +1260,27 @@ function renderDash(){
   const totalFactARS=sessions.filter(s=>(s.moneda||'ARS')==='ARS'&&(s.monto||0)>0).reduce((a,s)=>a+(s.monto||0),0);
   const pctCob=totalFactARS>0?Math.round(revARS/totalFactARS*100):0;
 
-  // Facilitador más activo este mes
-  const facCount={};servSes.filter(s=>s.fecha&&s.fecha.startsWith(mesStr)).forEach(s=>{if(s.facilitador)facCount[s.facilitador]=(facCount[s.facilitador]||0)+1;});
-  const topFac=Object.entries(facCount).sort((a,b)=>b[1]-a[1])[0];
-
   const inscActivas=inscripciones.filter(x=>{const p=programas.find(pp=>pp.id===x.programaId);return p&&x.semanaActual<=(p.semanas||[]).length;}).length;
+
+  // Tasa de retención: seres activos este mes que ya tenían sesiones previas
+  const seresActivosMes=[...activeSerNamesMo];
+  const seresRetornaron=seresActivosMes.filter(nom=>{
+    const sesionesDelSer=servSes.filter(s=>s.ser===nom);
+    const tieneAntes=sesionesDelSer.some(s=>s.fecha&&!s.fecha.startsWith(mesStr));
+    return tieneAntes;
+  }).length;
+  const tasaRet=seresActivosMes.length>0?Math.round(seresRetornaron/seresActivosMes.length*100):0;
+
+  // Ticket promedio del mes (ARS)
+  const ticketProm=thisMo>0?Math.round(revARSmes/thisMo):0;
+
+  // Seres en riesgo: tuvieron sesiones pero hace más de 60 días que no vienen
+  const hoy60=new Date(now);hoy60.setDate(hoy60.getDate()-60);
+  const hoy60Str=hoy60.toISOString().slice(0,10);
+  const seresEnRiesgo=seresAtend.filter(s=>{
+    const ultSes=servSes.filter(se=>se.ser===s.nombre).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha))[0];
+    return ultSes&&ultSes.fecha<hoy60Str;
+  }).length;
 
   document.getElementById('dKPIs').innerHTML=`
     <div class="kc go"><div class="ki">✨</div><div class="kl">Sesiones de Servicio</div><div class="kv">${tot.toLocaleString('es-AR')}</div><div class="ks">Desde el inicio · ${pvTot} primeras veces</div></div>
@@ -1273,12 +1291,15 @@ function renderDash(){
     <div class="kc or"><div class="ki">🔮</div><div class="kl">Próximas 7 días</div><div class="kv">${prox}</div><div class="ks">${inscActivas} inscripciones activas en programas</div></div>
     <div class="kc go" style="border-top-color:#5DD89A"><div class="ki">🇦🇷</div><div class="kl">Cobrado ARS</div><div class="kv" style="font-size:20px">$${Math.round(revARS).toLocaleString('es-AR')}</div><div class="ks">${pctCob}% cobrado · LTV $${ltv.toLocaleString('es-AR')}/ser</div></div>
     <div class="kc bl"><div class="ki">🇺🇸</div><div class="kl">Cobrado USD</div><div class="kv" style="font-size:20px">USD ${revUSD.toLocaleString('en-US',{maximumFractionDigits:0})}</div><div class="ks">Este mes: USD ${revUSDmes.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>
-    <div class="kc gr"><div class="ki">⭐</div><div class="kl">Facilitador del Mes</div><div class="kv" style="font-size:16px">${topFac?topFac[0].split(' ')[0]:'—'}</div><div class="ks">${topFac?topFac[1]+' sesiones este mes':'Sin sesiones'}</div></div>
+    <div class="kc gr"><div class="ki">🔄</div><div class="kl">Tasa de Retención</div><div class="kv">${tasaRet}%</div><div class="ks">${seresRetornaron} de ${seresActivosMes.length} seres activos retornaron</div></div>
+    <div class="kc or"><div class="ki">🎯</div><div class="kl">Ticket Promedio Mes</div><div class="kv" style="font-size:20px">$${ticketProm.toLocaleString('es-AR')}</div><div class="ks">ARS por sesión este mes</div></div>
+    <div class="kc rd"><div class="ki">⚠️</div><div class="kl">Seres en Riesgo</div><div class="kv">${seresEnRiesgo}</div><div class="ks">Sin sesión hace +60 días</div></div>
     <div class="kc pu"><div class="ki">💡</div><div class="kl">Productos Digitales</div><div class="kv">${sessions.filter(s=>comp(s)&&esProd(s)).length.toLocaleString('es-AR')}</div><div class="ks">No suman a la visión</div></div>`;
 
   renderVision(tot);
   renderToday(now);
   renderBday(now);
+  renderFacBday(now);
   renderPVCard();
   buildChSes();buildChTipo();buildChMod();buildChFac();
 
@@ -1333,6 +1354,31 @@ function renderBday(now){
           <div class="bday-age">${yr-s.birthYear} años</div>
         </div>`).join('')}</div>`
       :`<p style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Ningún ser cumple años este mes 🌙</p>`}
+    </div>`;
+}
+
+function renderFacBday(now){
+  const mo=now.getMonth()+1,yr=now.getFullYear();
+  const MES=['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const bdays=facs.filter(f=>f.nacimiento&&f.nacimiento!=='None').map(f=>{
+    const parts=f.nacimiento.split('-');
+    if(parseInt(parts[1])===mo) return{...f,day:parseInt(parts[2]),birthYear:parseInt(parts[0])};
+    return null;
+  }).filter(Boolean).sort((a,b)=>a.day-b.day);
+  const el=document.getElementById('dFacBday');
+  if(!el)return;
+  if(!bdays.length){el.innerHTML='';return;}
+  el.innerHTML=`
+    <div class="cc" style="margin-bottom:0">
+      <h3 style="color:var(--gl);margin-bottom:10px">🎂 Cumpleaños Facilitadores — ${MES[mo]} ${yr}</h3>
+      <div class="bday-grid">${bdays.map(f=>`
+        <div class="bday-card">
+          <div style="font-size:22px">🙋</div>
+          <div class="bday-name">${f.nombre.split(' ')[0]} ${f.nombre.split(' ')[1]||''}</div>
+          <div class="bday-date">${f.day} de ${MES[mo]}</div>
+          <div class="bday-age">${yr-f.birthYear} años</div>
+        </div>`).join('')}
+      </div>
     </div>`;
 }
 
@@ -2077,6 +2123,7 @@ function openModal(type,id,extra){
     document.getElementById('fDireccion').value=f?(f.direccion||''):'';
     document.getElementById('fPres').checked=f?f.pres:true;
     document.getElementById('fOnl').checked=f?f.onl:false;
+    document.getElementById('fNac').value=f?(f.nacimiento||'):'';
     document.getElementById('fBio').value=f?f.bio:'';
     document.getElementById('moFac').classList.add('open');
   } else if(type==='herr'){
@@ -3207,7 +3254,7 @@ function saveFac(){
     const val=parseFloat(inp.value)||0;
     if(val>0)precios[inp.dataset.herr]=val;
   });
-  const fData={nombre:nom,herramientas:herrs,precios,precio:parseFloat(document.getElementById('fPrecio').value)||0,email:document.getElementById('fEmail').value,cel:document.getElementById('fCel').value,pais:document.getElementById('fPais').value,zona:document.getElementById('fZona').value,ciudad:document.getElementById('fCiudad').value,direccion:document.getElementById('fDireccion').value,pres:document.getElementById('fPres').checked,onl:document.getElementById('fOnl').checked,bio:document.getElementById('fBio').value};
+  const fData={nombre:nom,herramientas:herrs,precios,precio:parseFloat(document.getElementById('fPrecio').value)||0,email:document.getElementById('fEmail').value,cel:document.getElementById('fCel').value,nacimiento:document.getElementById('fNac').value||'',pais:document.getElementById('fPais').value,zona:document.getElementById('fZona').value,ciudad:document.getElementById('fCiudad').value,direccion:document.getElementById('fDireccion').value,pres:document.getElementById('fPres').checked,onl:document.getElementById('fOnl').checked,bio:document.getElementById('fBio').value};
   if(eid){
     const f=facs.find(x=>String(x.id)===String(eid));
     if(f)Object.assign(f,fData);
