@@ -711,19 +711,22 @@ select.fi:focus{border-color:var(--gold);}
  <div class="mb">
   <h2 id="moInscTitle">🗺️ Inscribir Ser en Programa</h2>
   <input type="hidden" id="inId">
-  <div class="fg"><label>Ser *</label>
-   <select id="inSer"></select>
-  </div>
-  <div class="fg"><label>Programa *</label>
-   <select id="inProg"></select>
+  <div class="fg-row">
+   <div class="fg"><label>Ser *</label><select id="inSer" onchange="refreshInscSesAsig()"></select></div>
+   <div class="fg"><label>Programa *</label><select id="inProg" onchange="refreshInscSesAsig()"></select></div>
   </div>
   <div class="fg-row">
    <div class="fg"><label>Fecha de inicio</label><input type="date" id="inFini"></div>
-   <div class="fg"><label>Semana actual</label><input type="number" id="inSem" min="1" value="1"></div>
+   <div class="fg"><label>Fecha de fin</label><input type="date" id="inFfin"></div>
   </div>
-  <div class="fg"><label>¿Por qué eligió este camino? (para qué)</label><textarea id="inParaQue" style="min-height:70px" placeholder="Texto que verá el ser en su portal..."></textarea></div>
-  <div class="fg"><label>Intención / resultado esperado</label><input type="text" id="inIntencion" placeholder="Al final de este programa quiero..."></div>
+  <div class="fg"><label>¿Para qué eligió este camino?</label><textarea id="inParaQue" style="min-height:60px" placeholder="Texto que verá el ser en su portal…"></textarea></div>
+  <div class="fg"><label>Resultado deseado</label><input type="text" id="inIntencion" placeholder="Al terminar quiero…"></div>
   <div class="fg"><label>Código de acceso al portal</label><input type="text" id="inCode" placeholder="Ej: 1234"></div>
+  <!-- Asignación de sesiones por facilitador -->
+  <div class="fg" id="inSesAsigWrap" style="display:none">
+   <label>✨ Sesiones incluidas — Asignar facilitadores</label>
+   <div id="inSesAsigList" style="display:flex;flex-direction:column;gap:6px;margin-top:6px"></div>
+  </div>
   <div class="mf">
    <button class="btn btn-s" onclick="closeModal('moInsc')">Cancelar</button>
    <button class="btn btn-p" onclick="saveInsc()">Guardar</button>
@@ -815,12 +818,43 @@ select.fi:focus{border-color:var(--gold);}
      <option value="libre">Libre</option>
     </select>
    </div>
+   <div class="fg"><label>Área de vida</label>
+    <select id="hbArea">
+     <option value="espiritual">🌀 Espiritual</option>
+     <option value="mental">🧠 Mental</option>
+     <option value="fisica">💪 Física</option>
+     <option value="social">🤝 Social</option>
+    </select>
+   </div>
+  </div>
+  <div class="fg-row">
    <div class="fg"><label>Meta (número)</label><input type="text" id="hbMeta" placeholder="Ej: 10"></div>
    <div class="fg"><label>Unidad</label><input type="text" id="hbUni" placeholder="Ej: min, vasos, páginas"></div>
   </div>
   <div class="mf">
    <button class="btn btn-s" onclick="closeModal('moHabit')">Cancelar</button>
    <button class="btn btn-p" onclick="saveHabito()">Guardar</button>
+  </div>
+ </div>
+</div>
+
+<!-- MODAL DESAFÍO -->
+<div class="mo" id="moDesafio">
+ <div class="mb">
+  <h2 id="moDesafioTitle">🎯 Nuevo Desafío</h2>
+  <input type="hidden" id="dsId">
+  <div class="fg"><label>Descripción del desafío *</label><textarea id="dsTxt" placeholder="Ej: Escribir 3 páginas de journaling por la mañana" style="height:80px"></textarea></div>
+  <div class="fg"><label>Área de vida</label>
+   <select id="dsArea">
+    <option value="espiritual">🌀 Espiritual</option>
+    <option value="mental">🧠 Mental</option>
+    <option value="fisica">💪 Física</option>
+    <option value="social">🤝 Social</option>
+   </select>
+  </div>
+  <div class="mf">
+   <button class="btn btn-s" onclick="closeModal('moDesafio')">Cancelar</button>
+   <button class="btn btn-p" onclick="saveDesafio()">Guardar</button>
   </div>
  </div>
 </div>
@@ -1047,6 +1081,13 @@ async function _syncSupabase(){
       toast('⚠️ Error al guardar en la nube','err');
     }
   }catch(err){console.error('_syncSupabase:',err);toast('⚠️ Error de conexión','err');}
+}
+// Elimina un registro directamente de Supabase (el upsert no borra nunca)
+async function delRecord(table,id){
+  try{
+    const{error}=await _sb.from(table).delete().eq('id',String(id));
+    if(error)console.error('delRecord',table,id,error.message);
+  }catch(e){console.error('delRecord',e);}
 }
 
 /* AUTH */
@@ -1445,7 +1486,7 @@ function renderSes(){
   const pages=Math.ceil(tot/PPG);
   document.getElementById('sesPag').innerHTML=Array.from({length:pages},(_,i)=>`<button class="btn ${i===sesPage?'btn-p':'btn-s'} btn-sm" onclick="sesPage=${i};renderSes()">${i+1}</button>`).join('');
 }
-function delSes(id){if(confirm('¿Eliminar esta sesión?')){sessions=sessions.filter(s=>String(s.id)!==String(id));save();renderSes();}}
+function delSes(id){if(confirm('¿Eliminar esta sesión?')){sessions=sessions.filter(s=>String(s.id)!==String(id));delRecord('sessions',id);save();renderSes();}}
 function cobrarSaldo(id){
   const s=sessions.find(x=>String(x.id)===String(id));
   if(!s)return;
@@ -1622,7 +1663,7 @@ function renderFact(){
     </tr>`).join(''):`<tr><td colspan="11"><div class="es"><div class="ei">💰</div><p>Sin facturas. Creá la primera con el botón de arriba.</p></div></td></tr>`;
 }
 function togFact(id){const f=facturas.find(f=>String(f.id)===String(id));if(f){f.estado=f.estado==='pagado'?'pendiente':'pagado';save();renderFact();}}
-function delFact(id){if(confirm('¿Eliminar?')){facturas=facturas.filter(f=>String(f.id)!==String(id));save();renderFact();}}
+function delFact(id){if(confirm('¿Eliminar?')){facturas=facturas.filter(f=>String(f.id)!==String(id));delRecord('facturas',id);save();renderFact();}}
 function cobrarSaldoFact(sesId){
   const s=sessions.find(x=>String(x.id)===String(sesId));
   if(!s)return;
@@ -1698,7 +1739,7 @@ function renderFacs(){
     </tr>`;
   }).join('');
 }
-function delFacilitador(id){if(confirm('¿Eliminar?')){facs=facs.filter(f=>f.id!==id);save();renderFacs();}}
+function delFacilitador(id){if(confirm('¿Eliminar?')){facs=facs.filter(f=>f.id!==id);delRecord('facilitadores',id);save();renderFacs();}}
 
 /* SERES */
 let serTab='todos';
@@ -1807,7 +1848,7 @@ function renderSeres(){
     </tr>`;
   }).join('')||`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Sin resultados</td></tr>`;
 }
-function delSer(id){if(confirm('¿Eliminar este ser?')){seres=seres.filter(s=>s.id!==id);save();renderSeres();}}
+function delSer(id){if(confirm('¿Eliminar este ser?')){seres=seres.filter(s=>s.id!==id);delRecord('seres',id);save();renderSeres();}}
 function exportSeres(){
   const fil=seres.filter(s=>{
     if(serTab==='seres'&&s.prospecto)return false;
@@ -2104,10 +2145,12 @@ function openModal(type,id,extra){
     document.getElementById('inSer').innerHTML=seres.filter(s=>!s.prospecto).map(s=>`<option value="${s.id}" ${insc&&insc.serId===s.id?'selected':''}>${s.nombre}</option>`).join('');
     document.getElementById('inProg').innerHTML=programas.map(p=>`<option value="${p.id}" ${insc&&insc.programaId===p.id?'selected':''}>${p.ico||'📚'} ${p.nombre}</option>`).join('');
     document.getElementById('inFini').value=insc?(insc.fechaInicio||''):'';
-    document.getElementById('inSem').value=insc?(insc.semanaActual||1):1;
+    document.getElementById('inFfin').value=insc?(insc.fechaFin||''):'';
     document.getElementById('inParaQue').value=insc?(insc.paraQue||''):'';
     document.getElementById('inIntencion').value=insc?(insc.intencion||''):'';
     document.getElementById('inCode').value=insc?(insc.code||''):'';
+    window._inSesAsig=insc?(insc.sesionesAsignadas?JSON.parse(JSON.stringify(insc.sesionesAsignadas)):null):null;
+    refreshInscSesAsig();
     document.getElementById('moInsc').classList.add('open');
   } else if(type==='sesion'){
     const sem=getCurSem();
@@ -2126,9 +2169,18 @@ function openModal(type,id,extra){
     document.getElementById('hbId').value=(id!==null&&id!==undefined)?id:'';
     document.getElementById('hbNom').value=h?h.nombre:'';
     document.getElementById('hbFrec').value=h?(h.frecuencia||'diaria'):'diaria';
+    document.getElementById('hbArea').value=h?(h.area||'espiritual'):'espiritual';
     document.getElementById('hbMeta').value=h?(h.meta||''):'';
     document.getElementById('hbUni').value=h?(h.unidad||''):'';
     document.getElementById('moHabit').classList.add('open');
+  } else if(type==='desafio'){
+    const sem=getCurSem();
+    const d=(id!==null&&id!==undefined)?(sem?.desafios||[])[id]:null;
+    document.getElementById('moDesafioTitle').textContent=d?'✏️ Editar Desafío':'🎯 Nuevo Desafío';
+    document.getElementById('dsId').value=(id!==null&&id!==undefined)?id:'';
+    document.getElementById('dsTxt').value=d?(d.texto||''):'';
+    document.getElementById('dsArea').value=d?(d.area||'espiritual'):'espiritual';
+    document.getElementById('moDesafio').classList.add('open');
   } else if(type==='material'){
     const sem=getCurSem();
     const m=(id!==null&&id!==undefined)?(sem?.materiales||[])[id]:null;
@@ -2147,7 +2199,7 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');}));
 
 /* HERRAMIENTAS - CRUD */
-function delHerr(id){if(confirm('¿Eliminar esta herramienta?')){herramientas=herramientas.filter(h=>h.id!==id);save();renderHerr();}}
+function delHerr(id){if(confirm('¿Eliminar esta herramienta?')){herramientas=herramientas.filter(h=>h.id!==id);delRecord('herramientas',id);save();renderHerr();}}
 function saveHerr(){
   const eid=document.getElementById('hId').value;
   const nom=document.getElementById('hNom').value.trim();
@@ -2267,12 +2319,17 @@ function buildWeekEditorHTML(sem,col,semIdx,mode){
   </div>`;
 }
 
+const _AREAS={espiritual:{ico:'🌀',col:'#8B5CF6'},mental:{ico:'🧠',col:'#3B82F6'},fisica:{ico:'💪',col:'#10B981'},social:{ico:'🤝',col:'#F59E0B'}};
+function areaTag(area){const a=_AREAS[area]||_AREAS.espiritual;return `<span style="font-size:9px;background:${a.col}22;color:${a.col};border-radius:10px;padding:1px 6px;font-weight:600;flex-shrink:0">${a.ico} ${(area||'espiritual').charAt(0).toUpperCase()+(area||'espiritual').slice(1)}</span>`;}
 function renderDesafiosHTML(sem,col){
   if(!(sem.desafios||[]).length)return `<p style="font-size:12px;color:var(--muted)">Sin desafíos esta semana</p>`;
   return sem.desafios.map((d,i)=>`
     <div style="display:flex;align-items:flex-start;gap:8px;padding:8px;border-radius:8px;background:var(--card2);margin-bottom:6px">
       <span style="color:${col};font-size:14px;margin-top:1px">☐</span>
-      <span style="flex:1;font-size:13px;color:var(--text)">${d.texto}</span>
+      <div style="flex:1;min-width:0">
+        <span style="font-size:13px;color:var(--text)">${d.texto}</span>
+        <div style="margin-top:3px">${areaTag(d.area||'espiritual')}</div>
+      </div>
       <button onclick="editDesafio(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">✏️</button>
       <button onclick="delDesafio(${i})" style="background:none;border:none;cursor:pointer;color:#EF4444;font-size:13px">✕</button>
     </div>`).join('');
@@ -2281,10 +2338,10 @@ function renderHabitosHTML(sem,col){
   if(!(sem.habitos||[]).length)return `<p style="font-size:12px;color:var(--muted)">Sin hábitos esta semana</p>`;
   return sem.habitos.map((h,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--card2);margin-bottom:6px">
-      <span style="font-size:18px">🔥</span>
+      <span style="font-size:18px">${(_AREAS[h.area||'espiritual']||_AREAS.espiritual).ico}</span>
       <div style="flex:1">
         <div style="font-size:13px;font-weight:600;color:var(--text)">${h.nombre}</div>
-        <div style="font-size:11px;color:var(--muted)">${h.frecuencia||'diaria'}${h.meta?' · Meta: '+h.meta+' '+(h.unidad||''):''}</div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:2px">${areaTag(h.area||'espiritual')}<span style="font-size:10px;color:var(--muted)">${h.frecuencia||'diaria'}${h.meta?' · '+h.meta+' '+(h.unidad||''):''}</span></div>
       </div>
       <button onclick="editHabito(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">✏️</button>
       <button onclick="delHabito(${i})" style="background:none;border:none;cursor:pointer;color:#EF4444;font-size:13px">✕</button>
@@ -2360,17 +2417,17 @@ function weekListItemHTML(s,i,isActive,col,clickFn){
 }
 
 // ── DESAFÍOS (context-aware) ──────────────────────────────────
-function addDesafio(){
-  const txt=prompt('Texto del desafío:');if(!txt||!txt.trim())return;
+function addDesafio(){openModal('desafio',null);}
+function editDesafio(i){openModal('desafio',i);}
+function saveDesafio(){
+  const txt=document.getElementById('dsTxt').value.trim();if(!txt){alert('El texto es obligatorio');return;}
   const sem=getCurSem();if(!sem)return;
   if(!sem.desafios)sem.desafios=[];
-  sem.desafios.push({id:'d_'+Date.now(),texto:txt.trim()});
-  save();refreshJView();
-}
-function editDesafio(i){
-  const sem=getCurSem();if(!sem)return;
-  const txt=prompt('Editar desafío:',sem.desafios[i].texto);if(txt===null)return;
-  sem.desafios[i].texto=txt.trim();save();refreshJView();
+  const area=document.getElementById('dsArea').value||'espiritual';
+  const eid=document.getElementById('dsId').value;
+  if(eid!==''){sem.desafios[parseInt(eid)]=Object.assign(sem.desafios[parseInt(eid)],{texto:txt,area});}
+  else{sem.desafios.push({id:'d_'+Date.now(),texto:txt,area});}
+  save();closeModal('moDesafio');refreshJView();
 }
 function delDesafio(i){
   const sem=getCurSem();if(!sem)return;
@@ -2388,7 +2445,7 @@ function saveHabito(){
   const nom=document.getElementById('hbNom').value.trim();if(!nom){alert('El nombre es obligatorio');return;}
   const sem=getCurSem();if(!sem)return;
   if(!sem.habitos)sem.habitos=[];
-  const hData={nombre:nom,frecuencia:document.getElementById('hbFrec').value,meta:document.getElementById('hbMeta').value,unidad:document.getElementById('hbUni').value};
+  const hData={nombre:nom,frecuencia:document.getElementById('hbFrec').value,area:document.getElementById('hbArea').value||'espiritual',meta:document.getElementById('hbMeta').value,unidad:document.getElementById('hbUni').value};
   const eid=document.getElementById('hbId').value;
   if(eid!==''){sem.habitos[parseInt(eid)]=Object.assign(sem.habitos[parseInt(eid)],hData);}
   else{sem.habitos.push({id:'h_'+Date.now(),...hData});}
@@ -2442,6 +2499,52 @@ function toggleMtFields(){
    ════════════════════════════════════════════════════════════════ */
 let curInscId=null;
 
+// Genera/refresca la lista de asignación de facilitadores según el programa elegido
+function refreshInscSesAsig(){
+  const progId=document.getElementById('inProg').value;
+  const prog=programas.find(x=>x.id===progId);
+  const sesInc=prog?(prog.sesionesIncluidas_v2||{}):null;
+  const wrap=document.getElementById('inSesAsigWrap');
+  const list=document.getElementById('inSesAsigList');
+  if(!sesInc||!Object.keys(sesInc).length){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  // Build expected rows: one per session slot
+  const rows=[];
+  Object.entries(sesInc).forEach(([nom,qty])=>{
+    for(let i=0;i<qty;i++)rows.push({nom,slot:i+1,total:qty});
+  });
+  // Populate with existing assignments if any
+  const existing=window._inSesAsig||[];
+  list.innerHTML=rows.map((r,idx)=>{
+    const match=existing[idx]||{};
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:8px;padding:8px 10px">
+      <div style="flex:1;font-size:12px;color:var(--text)">${r.nom}${r.total>1?' #'+r.slot:''}</div>
+      <select data-idx="${idx}" data-nom="${r.nom}" onchange="updateInscSesAsig(${idx},this)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:11px;border-radius:6px;padding:4px 6px">
+        <option value="">Sin asignar</option>
+        ${facs.map(f=>`<option value="${f.id}" ${match.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
+      </select>
+      <select data-est="${idx}" onchange="updateInscSesEstado(${idx},this)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:11px;border-radius:6px;padding:4px 6px">
+        <option value="pendiente" ${(match.estado||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option>
+        <option value="agendada" ${match.estado==='agendada'?'selected':''}>📅 Agendada</option>
+        <option value="completada" ${match.estado==='completada'?'selected':''}>✅ Completada</option>
+        <option value="cancelada" ${match.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
+      </select>
+    </div>`;
+  }).join('');
+  if(!window._inSesAsig||window._inSesAsig.length!==rows.length){
+    window._inSesAsig=rows.map((r,idx)=>existing[idx]||{nom:r.nom,slot:r.slot,facId:'',estado:'pendiente'});
+  }
+}
+function updateInscSesAsig(idx,sel){
+  if(!window._inSesAsig)return;
+  const fac=facs.find(f=>f.id===sel.value);
+  window._inSesAsig[idx]={...window._inSesAsig[idx],facId:sel.value,facNombre:fac?fac.nombre:''};
+}
+function updateInscSesEstado(idx,sel){
+  if(!window._inSesAsig)return;
+  window._inSesAsig[idx]={...window._inSesAsig[idx],estado:sel.value};
+}
+
 function saveInsc(){
   const eid=document.getElementById('inId').value;
   const serId=document.getElementById('inSer').value;
@@ -2450,19 +2553,18 @@ function saveInsc(){
   const prog=programas.find(x=>x.id===programaId);
   const iData={
     serId, programaId,
-    semanaActual:parseInt(document.getElementById('inSem').value)||1,
     fechaInicio:document.getElementById('inFini').value,
+    fechaFin:document.getElementById('inFfin').value,
     paraQue:document.getElementById('inParaQue').value,
-    intencion:document.getElementById('inIntencion').value,
+    resultadoDeseado:document.getElementById('inIntencion').value,
     code:document.getElementById('inCode').value,
-    notas:'',
-    notasSemana:{},
-    // Copy program semanas as default (facilitator can adjust per ser)
+    sesionesAsignadas:window._inSesAsig||[],
+    notas:'',notasSemana:{},
     semanas: prog?(prog.semanas||[]).map(s=>JSON.parse(JSON.stringify(s))):[]
   };
   if(eid){
     const insc=inscripciones.find(x=>x.id===eid);
-    if(insc)Object.assign(insc,{serId:iData.serId,programaId:iData.programaId,semanaActual:iData.semanaActual,fechaInicio:iData.fechaInicio,paraQue:iData.paraQue,intencion:iData.intencion,code:iData.code});
+    if(insc)Object.assign(insc,{serId:iData.serId,programaId:iData.programaId,fechaInicio:iData.fechaInicio,fechaFin:iData.fechaFin,paraQue:iData.paraQue,resultadoDeseado:iData.resultadoDeseado,code:iData.code,sesionesAsignadas:iData.sesionesAsignadas});
     toast('Inscripción actualizada 🗺️');
   } else {
     inscripciones.push({id:'insc_'+Date.now(),...iData});
@@ -2474,13 +2576,45 @@ function saveInsc(){
 function delInsc(id){
   if(!confirm('¿Eliminar esta inscripción?'))return;
   inscripciones=inscripciones.filter(x=>x.id!==id);
-  save();renderJourneyAdmin();
+  delRecord('inscripciones',id);save();renderJourneyAdmin();
 }
 
+// Calcula semana actual automáticamente según fecha de inicio
+function calcSemanaAuto(insc){
+  if(!insc.fechaInicio)return insc.semanaActual||1;
+  const inicio=new Date(insc.fechaInicio+'T12:00:00');
+  const hoy=new Date();hoy.setHours(12,0,0,0);
+  const dias=Math.floor((hoy-inicio)/(1000*60*60*24));
+  if(dias<0)return 1;
+  return Math.floor(dias/7)+1;
+}
+
+// Calcula % completado por área a partir del progreso guardado
+function calcAreaProgress(insc,prog){
+  const areas={espiritual:{done:0,total:0},mental:{done:0,total:0},fisica:{done:0,total:0},social:{done:0,total:0}};
+  const semActual=calcSemanaAuto(insc);
+  const sems=insc.semanas||prog.semanas||[];
+  const progreso=insc.progreso||insc.data?.progreso||{};
+  sems.forEach((s,idx)=>{
+    if(idx>=semActual)return; // solo semanas ya alcanzadas
+    const sp=progreso[idx]||{};
+    (s.desafios||[]).forEach(d=>{
+      const ar=d.area||'espiritual';
+      if(areas[ar]!==undefined){areas[ar].total++;if(sp.desafios&&sp.desafios[d.id])areas[ar].done++;}
+    });
+    (s.habitos||[]).forEach(h=>{
+      const ar=h.area||'espiritual';
+      if(areas[ar]!==undefined){areas[ar].total++;if(sp.habitos&&(sp.habitos[h.id]||[]).length>0)areas[ar].done++;}
+    });
+  });
+  return areas;
+}
+
+let _journeyFilter=''; // id de programa seleccionado como filtro
+
 function renderJourneyAdmin(){
-  // Ensure sec-journey is the active section to render into
   const total=inscripciones.length;
-  const activos=inscripciones.filter(x=>{const p=programas.find(pp=>pp.id===x.programaId);return p&&x.semanaActual<=(p.semanas||[]).length;}).length;
+  const activos=inscripciones.filter(x=>{const sem=calcSemanaAuto(x);const p=programas.find(pp=>pp.id===x.programaId);return p&&sem<=(p.semanas_dur||(p.semanas||[]).length||999);}).length;
 
   document.getElementById('journeyAdminKPIs').innerHTML=`
     <div class="kc go"><div class="ki">🗺️</div><div class="kl">Total Inscripciones</div><div class="kv">${total}</div><div class="ks">En programas</div></div>
@@ -2492,38 +2626,114 @@ function renderJourneyAdmin(){
     return;
   }
 
-  document.getElementById('journeyAdminGrid').innerHTML=inscripciones.map(insc=>{
+  // Filtros por programa
+  const progsConInsc=[...new Set(inscripciones.map(i=>i.programaId))].map(pid=>programas.find(p=>p.id===pid)).filter(Boolean);
+  const filtroHtml=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+    <span style="font-size:11px;color:var(--muted);font-weight:600">FILTRAR:</span>
+    <button onclick="setJourneyFilter('')" style="padding:4px 12px;border-radius:20px;border:1px solid ${!_journeyFilter?'var(--gold)':'var(--border)'};background:${!_journeyFilter?'var(--gold)22':'var(--card2)'};color:${!_journeyFilter?'var(--gold)':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">Todos</button>
+    ${progsConInsc.map(p=>`<button onclick="setJourneyFilter('${p.id}')" style="padding:4px 12px;border-radius:20px;border:1px solid ${_journeyFilter===p.id?p.col||'#C9A84C':'var(--border)'};background:${_journeyFilter===p.id?(p.col||'#C9A84C')+'22':'var(--card2)'};color:${_journeyFilter===p.id?p.col||'#C9A84C':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${p.ico||'📚'} ${p.nombre}</button>`).join('')}
+  </div>`;
+
+  // Inscripciones filtradas
+  const lista=_journeyFilter?inscripciones.filter(i=>i.programaId===_journeyFilter):inscripciones;
+
+  // Resumen global de áreas (sumatorio de todas las inscripciones filtradas)
+  const globalAreas={espiritual:{done:0,total:0},mental:{done:0,total:0},fisica:{done:0,total:0},social:{done:0,total:0}};
+  lista.forEach(insc=>{
+    const prog=programas.find(p=>p.id===insc.programaId);if(!prog)return;
+    const ap=calcAreaProgress(insc,prog);
+    Object.keys(globalAreas).forEach(k=>{globalAreas[k].done+=ap[k].done;globalAreas[k].total+=ap[k].total;});
+  });
+
+  const resumenHtml=lista.length>1?`<div class="cc" style="margin-bottom:16px;padding:14px 18px">
+    <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:10px">✨ RESUMEN INTEGRATIVO${_journeyFilter?' — '+progsConInsc.find(p=>p.id===_journeyFilter)?.nombre:''}</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+      ${[['espiritual','🌀','#8B5CF6'],['mental','🧠','#3B82F6'],['fisica','💪','#10B981'],['social','🤝','#F59E0B']].map(([k,ico,c])=>{
+        const ga=globalAreas[k];const pct=ga.total?Math.round(ga.done/ga.total*100):0;
+        return `<div style="text-align:center;padding:8px;background:${c}11;border-radius:12px;border:1px solid ${c}33">
+          <div style="font-size:22px">${ico}</div>
+          <div style="font-size:11px;font-weight:700;color:${c};margin:2px 0">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
+          <div style="font-size:18px;font-weight:800;color:${c}">${pct}%</div>
+          <div style="font-size:9px;color:var(--muted)">${ga.done}/${ga.total} ítems</div>
+          <div style="margin-top:5px;background:var(--card2);border-radius:20px;height:4px;overflow:hidden"><div style="background:${c};height:100%;width:${pct}%;border-radius:20px"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`:'';
+
+  // Cards de inscripciones
+  const cardsHtml=lista.map(insc=>{
     const ser=seres.find(x=>x.id===insc.serId);
     const prog=programas.find(x=>x.id===insc.programaId);
     if(!ser||!prog)return '';
-    const totalSem=(prog.semanas||[]).length||1;
-    const semActual=insc.semanaActual||1;
+    const totalSem=prog.semanas_dur||(prog.semanas||[]).length||1;
+    const semAuto=calcSemanaAuto(insc);
+    const semActual=Math.min(semAuto,totalSem);
     const pct=Math.round(semActual/totalSem*100);
     const col=prog.col||'#C9A84C';
-    return `<div class="cc" style="border-left:3px solid ${col};cursor:pointer" onclick="openInscDetail('${insc.id}')">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-        <div style="width:42px;height:42px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
-        <div style="flex:1">
-          <div style="font-size:15px;font-weight:700">${ser.nombre}</div>
-          <div style="font-size:12px;color:var(--muted)">${prog.ico||'📚'} ${prog.nombre}</div>
+    // Estado del programa
+    const esActivo=semAuto<=totalSem;
+    const estadoBadge=esActivo
+      ?`<span style="background:#10B98122;color:#10B981;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">● ACTIVO</span>`
+      :`<span style="background:#6B728022;color:#6B7280;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">✓ FINALIZADO</span>`;
+    // Días restantes
+    let diasInfoHtml='';
+    if(insc.fechaFin){
+      const fin=new Date(insc.fechaFin+'T12:00:00');const hoy=new Date();hoy.setHours(12,0,0,0);
+      const dRest=Math.ceil((fin-hoy)/(1000*60*60*24));
+      diasInfoHtml=dRest>0?`<span style="font-size:10px;color:var(--muted)">⏳ ${dRest} días restantes</span>`:`<span style="font-size:10px;color:#EF4444">⚠️ Finalizó hace ${Math.abs(dRest)}d</span>`;
+    }
+    // 4 áreas mini
+    const ap=calcAreaProgress(insc,prog);
+    const areasMini=['espiritual','mental','fisica','social'].map((k,ki)=>{
+      const icons=['🌀','🧠','💪','🤝'];const cols=['#8B5CF6','#3B82F6','#10B981','#F59E0B'];
+      const pctA=ap[k].total?Math.round(ap[k].done/ap[k].total*100):0;
+      return `<div style="flex:1;text-align:center">
+        <div style="font-size:14px">${icons[ki]}</div>
+        <div style="font-size:10px;font-weight:700;color:${cols[ki]}">${pctA}%</div>
+        <div style="background:var(--card2);border-radius:20px;height:3px;overflow:hidden;margin-top:2px"><div style="background:${cols[ki]};height:100%;width:${pctA}%;border-radius:20px"></div></div>
+      </div>`;
+    }).join('');
+    return `<div class="cc" style="border-left:3px solid ${col};cursor:pointer;transition:.2s" onclick="openInscDetail('${insc.id}')">
+      <!-- Header -->
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:700;color:var(--gl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ser.nombre}</div>
+          <div style="font-size:11px;color:var(--muted)">${prog.ico||'📚'} ${prog.nombre}</div>
         </div>
-        <span style="background:${col}22;color:${col};font-size:11px;font-weight:700;padding:2px 8px;border-radius:20px">S${semActual}</span>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">${estadoBadge}
+          <span style="background:${col}22;color:${col};font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px">S${semActual}/${totalSem}</span>
+        </div>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">
-        <span>Semana ${semActual} de ${totalSem}</span><span>${pct}%</span>
+      <!-- Para qué -->
+      ${insc.paraQue?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic;border-left:2px solid ${col};padding-left:8px;line-height:1.4">"${insc.paraQue}"</div>`:''}
+      <!-- Progress bar -->
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
+        <span>Semana ${semActual} de ${totalSem} · ${pct}%</span>${diasInfoHtml}
       </div>
-      <div style="background:var(--card2);border-radius:20px;height:6px;overflow:hidden">
+      <div style="background:var(--card2);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px">
         <div style="background:${col};height:100%;width:${pct}%;border-radius:20px;transition:.5s"></div>
       </div>
-      ${insc.fechaInicio?`<div style="font-size:11px;color:var(--muted);margin-top:6px">📅 Inicio: ${insc.fechaInicio}</div>`:''}
-      <div style="display:flex;gap:6px;margin-top:10px">
+      <!-- 4 áreas -->
+      <div style="display:flex;gap:6px;padding:8px;background:var(--card2);border-radius:10px;margin-bottom:10px">${areasMini}</div>
+      <!-- Fechas -->
+      ${insc.fechaInicio?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px">📅 ${insc.fechaInicio}${insc.fechaFin?' → '+insc.fechaFin:''}</div>`:''}
+      <!-- Acciones -->
+      <div style="display:flex;gap:6px">
         <button class="btn btn-s btn-sm" style="flex:1" onclick="event.stopPropagation();openInscDetail('${insc.id}')">👁 Ver ficha</button>
         <button class="btn btn-s btn-sm" onclick="event.stopPropagation();openModal('insc','${insc.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="event.stopPropagation();delInsc('${insc.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
+
+  document.getElementById('journeyAdminGrid').innerHTML=`
+    <div style="grid-column:1/-1">${filtroHtml}${resumenHtml}</div>
+    ${cardsHtml||'<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)">Sin inscripciones para este programa.</div>'}`;
 }
+
+function setJourneyFilter(progId){_journeyFilter=progId;renderJourneyAdmin();}
 
 function openInscDetail(id){
   curInscId=id;
@@ -2539,9 +2749,53 @@ function openInscDetail(id){
     save();
   }
   const col=prog.col||'#C9A84C';
-  const totalSem=insc.semanas.length||1;
-  const semActual=insc.semanaActual||1;
+  const totalSem=prog.semanas_dur||(prog.semanas||[]).length||insc.semanas.length||1;
+  const semAuto=calcSemanaAuto(insc);
+  const semActual=Math.min(semAuto,totalSem);
   const pct=Math.round(semActual/totalSem*100);
+
+  // 4 áreas resumen
+  const ap=calcAreaProgress(insc,prog);
+  const areasHtml=['espiritual','mental','fisica','social'].map((k,ki)=>{
+    const icons=['🌀','🧠','💪','🤝'];const cols=['#8B5CF6','#3B82F6','#10B981','#F59E0B'];
+    const pctA=ap[k].total?Math.round(ap[k].done/ap[k].total*100):0;
+    return `<div style="flex:1;text-align:center;padding:6px 4px;background:${cols[ki]}11;border-radius:8px">
+      <div style="font-size:18px">${icons[ki]}</div>
+      <div style="font-size:10px;font-weight:700;color:${cols[ki]}">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
+      <div style="font-size:16px;font-weight:800;color:${cols[ki]}">${pctA}%</div>
+      <div style="background:var(--card2);border-radius:20px;height:4px;overflow:hidden;margin-top:3px"><div style="background:${cols[ki]};height:100%;width:${pctA}%"></div></div>
+    </div>`;
+  }).join('');
+
+  // Sesiones asignadas
+  const sesAsig=insc.sesionesAsignadas||[];
+  const sesAsigHtml=sesAsig.length?`
+    <div class="cc" style="margin-bottom:14px;padding:14px">
+      <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:10px">✨ Sesiones incluidas</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        ${sesAsig.map((s,idx)=>{
+          const estColor={pendiente:'#6B7280',agendada:'#3B82F6',completada:'#10B981',cancelada:'#EF4444'}[s.estado||'pendiente']||'#6B7280';
+          const estIco={pendiente:'⏳',agendada:'📅',completada:'✅',cancelada:'❌'}[s.estado||'pendiente']||'⏳';
+          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card2);border-radius:8px;flex-wrap:wrap">
+            <div style="flex:1;min-width:120px">
+              <div style="font-size:12px;font-weight:600;color:var(--text)">${s.nom}${sesAsig.filter(x=>x.nom===s.nom).length>1?' #'+s.slot:''}</div>
+              <div style="font-size:10px;color:var(--muted)">${s.facNombre||'Sin asignar'}</div>
+            </div>
+            <select onchange="updateDetailSesAsig(${idx},'fac',this)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 5px">
+              <option value="">Sin asignar</option>
+              ${facs.map(f=>`<option value="${f.id}" ${s.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
+            </select>
+            <select onchange="updateDetailSesAsig(${idx},'estado',this)" style="background:var(--card);border:1px solid ${estColor};color:${estColor};font-size:10px;border-radius:6px;padding:3px 5px;font-weight:600">
+              <option value="pendiente" ${(s.estado||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option>
+              <option value="agendada" ${s.estado==='agendada'?'selected':''}>📅 Agendada</option>
+              <option value="completada" ${s.estado==='completada'?'selected':''}>✅ Completada</option>
+              <option value="cancelada" ${s.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
+            </select>
+          </div>`;
+        }).join('')}
+      </div>
+      <button onclick="saveDetailSesAsig('${id}')" style="margin-top:8px;width:100%;background:var(--gold)22;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-size:11px;font-weight:600;padding:6px">💾 Guardar asignaciones</button>
+    </div>`:'';
 
   document.getElementById('journeyAdminListView').style.display='none';
   document.getElementById('journeyAdminDetailView').style.display='block';
@@ -2551,29 +2805,35 @@ function openInscDetail(id){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
       <button class="btn btn-s" onclick="closeInscDetail()">← Volver</button>
       <div style="flex:1;font-size:17px;font-weight:700;color:var(--gl)">${ser.nombre}</div>
-      <button class="btn btn-s btn-sm" onclick="avanzarSemana('${id}')">→ Avanzar semana</button>
       <button class="btn btn-s btn-sm" onclick="openModal('insc','${id}')">✏️ Datos</button>
     </div>
 
     <!-- Info strip -->
-    <div class="cc" style="border-left:3px solid ${col};margin-bottom:16px">
+    <div class="cc" style="border-left:3px solid ${col};margin-bottom:14px">
       <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
         <span style="font-size:22px">${prog.ico||'📚'}</span>
         <div style="flex:1">
           <div style="font-weight:700;color:${col}">${prog.nombre}</div>
-          <div style="font-size:11px;color:var(--muted)">${prog.duracion||''} · Semana ${semActual} de ${totalSem}</div>
+          <div style="font-size:11px;color:var(--muted)">Semana ${semActual} de ${totalSem} · auto-calculada por fecha</div>
         </div>
         <div style="text-align:right">
           <div style="font-size:18px;font-weight:800;color:${col}">${pct}%</div>
           <div style="font-size:10px;color:var(--muted)">completado</div>
         </div>
       </div>
-      <div style="margin-top:10px;background:var(--card2);border-radius:20px;height:5px;overflow:hidden">
+      <div style="margin-top:8px;background:var(--card2);border-radius:20px;height:5px;overflow:hidden">
         <div style="background:${col};height:100%;width:${pct}%;border-radius:20px"></div>
       </div>
-      ${insc.paraQue?`<div style="margin-top:10px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:8px"><strong style="color:var(--gl)">Para qué:</strong> ${insc.paraQue}</div>`:''}
-      ${insc.code?`<div style="font-size:11px;color:var(--muted);margin-top:4px">🔑 Código: <code style="background:var(--card2);padding:1px 6px;border-radius:4px">${insc.code}</code></div>`:''}
+      ${insc.paraQue?`<div style="margin-top:8px;font-size:12px;color:var(--muted);border-top:1px solid var(--border);padding-top:7px;font-style:italic">"${insc.paraQue}"</div>`:''}
+      ${insc.fechaInicio?`<div style="font-size:10px;color:var(--muted);margin-top:4px">📅 ${insc.fechaInicio}${insc.fechaFin?' → '+insc.fechaFin:''}</div>`:''}
+      ${insc.code?`<div style="font-size:10px;color:var(--muted);margin-top:2px">🔑 Código: <code style="background:var(--card2);padding:1px 6px;border-radius:4px">${insc.code}</code></div>`:''}
     </div>
+
+    <!-- 4 áreas -->
+    <div style="display:flex;gap:8px;margin-bottom:14px">${areasHtml}</div>
+
+    <!-- Sesiones asignadas -->
+    ${sesAsigHtml}
 
     <!-- Dos columnas: semanas + editor -->
     <div style="display:flex;gap:14px;align-items:flex-start">
@@ -2596,12 +2856,28 @@ function openInscDetail(id){
   renderInscWeekContent();
 }
 
+// Actualiza sesionesAsignadas en detalle (sin abrir modal)
+function updateDetailSesAsig(idx,field,sel){
+  const insc=inscripciones.find(x=>x.id===curInscId);if(!insc)return;
+  if(!insc.sesionesAsignadas)return;
+  if(field==='fac'){
+    const fac=facs.find(f=>f.id===sel.value);
+    insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],facId:sel.value,facNombre:fac?fac.nombre:''};
+  } else {
+    insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],estado:sel.value};
+  }
+}
+function saveDetailSesAsig(id){
+  const insc=inscripciones.find(x=>x.id===id);if(!insc)return;
+  save();toast('Asignaciones guardadas ✅');
+}
+
 function refreshInscWeekList(){renderInscWeekList();}
 function renderInscWeekList(){
   const insc=inscripciones.find(x=>x.id===curInscId);if(!insc)return;
   const prog=programas.find(x=>x.id===insc.programaId);
   const col=prog?prog.col||'#C9A84C':'#C9A84C';
-  const semActual=insc.semanaActual||1;
+  const semActual=calcSemanaAuto(insc);
   const el=document.getElementById('inscWeekList');if(!el)return;
   el.innerHTML=(insc.semanas||[]).map((s,i)=>{
     const isDone=i<semActual-1,isActive=i===semActual-1,isSelected=i===curInscSemIdx;
@@ -2672,7 +2948,7 @@ function editNotaSemana(semIdx){
 }
 
 /* PROGRAMAS - CRUD */
-function delProg(id){if(confirm('¿Eliminar este programa?')){programas=programas.filter(p=>p.id!==id);save();renderProg();}}
+function delProg(id){if(confirm('¿Eliminar este programa?')){programas=programas.filter(p=>p.id!==id);delRecord('programas',id);save();renderProg();}}
 function renderProgSesInc(){
   const list=document.getElementById('pgSesIncList');
   if(!list)return;
@@ -2749,7 +3025,7 @@ function saveCamp(){
   save();closeModal('moCamp');renderMkt();
 }
 
-function delCamp(id){if(confirm('¿Eliminar esta campaña?')){campañas=campañas.filter(c=>c.id!==id);save();renderMkt();}}
+function delCamp(id){if(confirm('¿Eliminar esta campaña?')){campañas=campañas.filter(c=>c.id!==id);delRecord('campanas',id);save();renderMkt();}}
 
 /* SAVES */
 function createFactFromSes(id){
