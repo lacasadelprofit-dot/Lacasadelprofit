@@ -6,147 +6,195 @@
 <title>La Casa del Profit — Dimensión de Expansión Espiritual</title>
 <style>
 :root{
-  --bg:#06060A;--card:#141320;--card2:#1C1A2E;--border:#2A2840;
   --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;--gdk:#4A380A;
-  --text:#EDE5C8;--muted:#7A7260;
-  --green:#3DAA6A;--blue:#5B9BD5;--purple:#9B82D4;--pl:#BBA9E0;
+  --text:#EDE5C8;--muted:#8A8270;
+  --green:#3DAA6A;--purple:#9B82D4;--pl:#BBA9E0;
+  --blur:blur(16px);
+  --card-bg:rgba(8,9,4,0.80);
+  --border:rgba(201,168,76,0.14);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+html{scroll-behavior:smooth;}
+
+/* ── CANVAS — fixed full-viewport ── */
+#spiralCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+
+/* ── Dark overlay ── */
+#globalOverlay{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(4,5,2,0.46);
+  z-index:1;pointer-events:none;
+}
+
+/* ── All content ── */
+#pageWrap{position:relative;z-index:2;min-height:100vh;}
+
+body{font-family:'Segoe UI',system-ui,sans-serif;color:var(--text);background:#080A04;}
 
 /* ── HEADER ── */
 header{
-  text-align:center;padding:64px 24px 48px;
-  background:
-    radial-gradient(ellipse at 50% -10%,rgba(155,130,212,.13) 0%,transparent 60%),
-    radial-gradient(ellipse at 50% 30%,rgba(201,168,76,.09) 0%,transparent 55%);
-  border-bottom:1px solid #1E1C10;position:relative;overflow:hidden;
-}
-header::before{
-  content:'';position:absolute;inset:0;opacity:.4;
-  background:url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23C9A84C' fill-opacity='0.025'%3E%3Ccircle cx='40' cy='40' r='1.5'/%3E%3C/g%3E%3C/svg%3E");
+  text-align:center;padding:72px 24px 58px;
+  position:relative;overflow:hidden;
 }
 
-/* spiral logo */
-.spiral-wrap{display:inline-block;margin-bottom:20px;filter:drop-shadow(0 0 32px rgba(201,168,76,.35));}
-.spiral-wrap svg{width:90px;height:90px;}
+/* Big brand name — different color (white) */
+.brand-name{
+  font-size:58px;font-weight:900;letter-spacing:4px;text-transform:uppercase;
+  color:#FFFFFF;
+  text-shadow:0 0 40px rgba(232,201,106,.65),0 0 80px rgba(232,201,106,.30),0 2px 6px rgba(0,0,0,.6);
+  line-height:1;margin-bottom:10px;
+}
 
-.header-label{font-size:10px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--purple);margin-bottom:10px;}
-header h1{font-size:28px;font-weight:900;color:var(--gl);letter-spacing:3px;text-transform:uppercase;margin-bottom:4px;line-height:1.2;}
-header .sub{font-size:13px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:28px;}
+/* Sub heading — espiritual */
+.brand-dim{
+  font-size:13px;font-weight:700;letter-spacing:4px;text-transform:uppercase;
+  color:var(--pl);margin-bottom:8px;
+  text-shadow:0 0 20px rgba(155,130,212,.4);
+}
+.brand-centro{
+  font-size:12px;letter-spacing:2px;text-transform:uppercase;
+  color:var(--muted);margin-bottom:36px;
+}
 
 .mission{
-  max-width:620px;margin:0 auto;
-  font-size:16px;line-height:1.8;color:var(--gl);
-  font-weight:600;letter-spacing:.3px;
-  background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.18);
-  border-radius:16px;padding:20px 28px;
+  max-width:640px;margin:0 auto;
+  font-size:14px;line-height:1.9;color:var(--gl);font-weight:600;letter-spacing:.3px;
+  background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);
+  border-radius:18px;padding:22px 30px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(232,201,106,.1);
 }
 
 /* ── MAIN ── */
-main{max-width:860px;margin:0 auto;padding:44px 24px 80px;}
+main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 
-/* ── SEC TITLE ── */
-.sec-title{font-size:11px;font-weight:700;color:var(--gd);letter-spacing:2.5px;text-transform:uppercase;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
-.sec-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,#2A2840,transparent);}
+/* ── SECTION TITLE ── */
+.sec-title{
+  font-size:10px;font-weight:700;color:var(--gd);letter-spacing:2.5px;
+  text-transform:uppercase;margin-bottom:18px;
+  display:flex;align-items:center;gap:10px;
+}
+.sec-title::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(139,105,20,.6),transparent);}
+
+/* ── GLASS CARD ── */
+.gc{
+  background:var(--card-bg);border:1px solid var(--border);border-radius:18px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03);
+}
 
 /* ── KPI STRIP ── */
-.kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:40px;}
-.kc{background:var(--card);border:1px solid #1E1C10;border-radius:16px;padding:22px 18px;text-align:center;position:relative;overflow:hidden;transition:border-color .2s;}
-.kc:hover{border-color:rgba(201,168,76,.2);}
+.kpi-strip{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:44px;}
+.kc{padding:24px 18px;text-align:center;position:relative;overflow:hidden;transition:border-color .25s,transform .2s;}
+.kc:hover{transform:translateY(-2px);}
 .kc::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;}
+.kc.go{border-color:rgba(201,168,76,.25);}
 .kc.go::before{background:linear-gradient(90deg,var(--gold),var(--gl));}
+.kc.pu{border-color:rgba(155,130,212,.22);}
 .kc.pu::before{background:linear-gradient(90deg,var(--purple),var(--pl));}
+.kc.gr{border-color:rgba(61,170,106,.22);}
 .kc.gr::before{background:linear-gradient(90deg,#3DAA6A,#5DD89A);}
-.ki{font-size:28px;margin-bottom:10px;}
-.kv{font-size:38px;font-weight:900;color:var(--gl);line-height:1;}
+.ki{font-size:30px;margin-bottom:10px;}
+.kv{font-size:40px;font-weight:900;color:var(--gl);line-height:1;text-shadow:0 0 24px rgba(232,201,106,.35);}
 .kl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-top:8px;}
 
 /* ── NEXT BOX ── */
-.next-box{background:linear-gradient(135deg,rgba(201,168,76,.07),rgba(155,130,212,.05));border:1px solid rgba(201,168,76,.22);border-radius:18px;padding:28px 30px;margin-bottom:40px;}
-.next-box h3{font-size:13px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
-.next-box .obj-name{font-size:22px;font-weight:800;color:var(--gl);margin-bottom:4px;}
-.next-box .obj-sub{font-size:13px;color:var(--muted);margin-bottom:20px;}
-.big-bar{height:14px;background:#1A1828;border-radius:99px;overflow:hidden;margin-bottom:10px;border:1px solid #2A2840;}
-.big-fill{height:100%;background:linear-gradient(90deg,var(--gdk),var(--gd),var(--gold),var(--gl));border-radius:99px;transition:width 1s ease;}
+.next-box{
+  background:linear-gradient(135deg,rgba(201,168,76,.08),rgba(155,130,212,.05));
+  border:1px solid rgba(201,168,76,.24);border-radius:20px;
+  padding:30px 32px;margin-bottom:44px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:0 8px 40px rgba(0,0,0,.45),inset 0 1px 0 rgba(232,201,106,.07);
+}
+.next-box h3{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px;}
+.next-box .obj-name{font-size:22px;font-weight:800;color:var(--gl);margin-bottom:4px;text-shadow:0 0 20px rgba(232,201,106,.3);}
+.next-box .obj-sub{font-size:13px;color:var(--muted);margin-bottom:22px;}
+.big-bar{height:14px;background:rgba(12,10,2,.8);border-radius:99px;overflow:hidden;margin-bottom:10px;border:1px solid rgba(42,32,4,.8);}
+.big-fill{height:100%;background:linear-gradient(90deg,var(--gdk),var(--gd),var(--gold),var(--gl));border-radius:99px;transition:width 1.2s ease;box-shadow:0 0 12px rgba(201,168,76,.4);}
 .next-nums{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);}
 .next-pct{text-align:center;font-size:13px;color:var(--gl);font-weight:700;margin-bottom:10px;}
 
 /* ── VISION BLOCK ── */
-.vision-block{background:var(--card);border:1px solid #1E1C10;border-radius:18px;padding:30px 32px;margin-bottom:40px;position:relative;overflow:hidden;}
-.vision-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--gold),var(--gl),var(--gold),var(--purple));}
-.vision-block h2{font-size:16px;font-weight:800;color:var(--gl);margin-bottom:16px;}
-.vision-block p{font-size:14px;line-height:1.9;color:var(--text);margin-bottom:12px;}
+.vision-block{
+  padding:32px 34px;margin-bottom:44px;position:relative;overflow:hidden;
+  background:rgba(6,7,3,.85);border:1px solid rgba(42,40,20,.8);border-radius:20px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  box-shadow:0 8px 36px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.03);
+}
+.vision-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--purple),var(--gold),var(--gl),var(--gold),var(--purple));opacity:.6;}
+.vision-block h2{font-size:16px;font-weight:800;color:var(--gl);margin-bottom:18px;text-shadow:0 0 20px rgba(232,201,106,.25);}
+.vision-block p{font-size:14px;line-height:1.95;color:var(--text);margin-bottom:14px;}
 .vision-block p:last-child{margin-bottom:0;}
 .vh{color:var(--gl);font-weight:700;}
 
 /* ── MILESTONE LIST ── */
-.milestone-list{display:flex;flex-direction:column;gap:10px;margin-bottom:40px;}
-.ml-item{background:var(--card);border:1px solid #1E1C10;border-radius:12px;padding:14px 18px;display:flex;align-items:center;gap:14px;transition:border-color .2s;}
-.ml-item.done{border-color:rgba(61,170,106,.2);}
-.ml-item.next{border-color:rgba(201,168,76,.28);background:rgba(201,168,76,.04);}
-.ml-dot{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
-.ml-dot.done{background:rgba(61,170,106,.18);color:#5DD89A;}
-.ml-dot.next{background:rgba(201,168,76,.18);color:var(--gl);}
-.ml-dot.fut{background:#1C1A2E;color:var(--muted);}
+.milestone-list{display:flex;flex-direction:column;gap:10px;margin-bottom:44px;}
+.ml-item{
+  padding:15px 20px;display:flex;align-items:center;gap:14px;
+  transition:border-color .2s,transform .2s;
+  background:rgba(8,9,4,.78);border:1px solid rgba(42,40,20,.6);border-radius:14px;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+}
+.ml-item:hover{transform:translateX(3px);}
+.ml-item.done{border-color:rgba(61,170,106,.22);background:rgba(6,16,6,.75);}
+.ml-item.next{border-color:rgba(201,168,76,.30);background:rgba(16,12,2,.8);}
+.ml-dot{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.ml-dot.done{background:rgba(61,170,106,.2);color:#5DD89A;box-shadow:0 0 12px rgba(61,170,106,.2);}
+.ml-dot.next{background:rgba(201,168,76,.18);color:var(--gl);box-shadow:0 0 14px rgba(201,168,76,.25);}
+.ml-dot.fut{background:rgba(20,18,8,.8);color:var(--muted);}
 .ml-info{flex:1;min-width:0;}
-.ml-title{font-size:13px;font-weight:700;margin-bottom:2px;}
+.ml-title{font-size:13px;font-weight:700;margin-bottom:3px;}
 .ml-title.done{color:var(--gl);}
 .ml-title.next{color:var(--text);}
 .ml-title.fut{color:var(--muted);}
 .ml-sub{font-size:11px;color:var(--muted);}
 .ml-date{font-size:10px;color:var(--green);margin-top:2px;}
-.ml-right{min-width:110px;text-align:right;}
-.ml-pct{font-size:12px;font-weight:700;color:var(--gl);margin-bottom:5px;}
-.pb{height:4px;background:#1A1828;border-radius:99px;overflow:hidden;}
-.pf{height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:99px;}
+.ml-right{min-width:120px;text-align:right;}
+.ml-pct{font-size:12px;font-weight:700;color:var(--gl);margin-bottom:6px;}
+.pb{height:4px;background:rgba(20,16,4,.9);border-radius:99px;overflow:hidden;}
+.pf{height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:99px;box-shadow:0 0 6px rgba(201,168,76,.4);}
 
 /* ── SPINNER ── */
 .spinner{display:flex;align-items:center;justify-content:center;padding:80px;gap:12px;color:var(--muted);font-size:13px;}
-.spin{width:22px;height:22px;border:2px solid #1E1C10;border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
+.spin{width:22px;height:22px;border:2px solid rgba(42,32,4,.8);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ── FOOTER ── */
-footer{text-align:center;padding:28px 24px;border-top:1px solid #1E1C10;color:var(--muted);font-size:12px;letter-spacing:.5px;}
+footer{
+  text-align:center;padding:30px 24px;border-top:1px solid rgba(42,40,20,.5);
+  color:var(--muted);font-size:12px;letter-spacing:.5px;
+  background:rgba(6,6,2,.65);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+}
 footer a{color:var(--gold);text-decoration:none;font-weight:600;}
-footer a:hover{color:var(--gl);}
+footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
-@media(max-width:600px){
-  header h1{font-size:20px;}
-  .kpi-strip{grid-template-columns:1fr;}
+/* ── RESPONSIVE ── */
+@media(max-width:640px){
+  .brand-name{font-size:32px;letter-spacing:2px;}
+  .kpi-strip{grid-template-columns:1fr;gap:10px;}
   .ml-right{display:none;}
-  .mission{font-size:14px;padding:16px 18px;}
+  .mission{font-size:13px;padding:16px 20px;}
+  .vision-block,.next-box{padding:22px 20px;}
+  main{padding:32px 16px 60px;}
 }
 </style>
 </head>
 <body>
 
-<header>
-  <!-- Spiral SVG logo -->
-  <div class="spiral-wrap">
-    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="sg1" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="#9B82D4"/>
-          <stop offset="40%" stop-color="#C9A84C"/>
-          <stop offset="100%" stop-color="#E8C96A"/>
-        </linearGradient>
-      </defs>
-      <!-- Spiral using arcs, expanding outward from center -->
-      <g fill="none" stroke="url(#sg1)" stroke-linecap="round">
-        <path stroke-width="2.8" d="M50,50 C50,50 50,44 56,44 C63,44 63,56 50,56 C37,56 37,37 50,37 C65,37 65,64 50,64 C32,64 32,30 50,30"/>
-        <path stroke-width="2.2" d="M50,30 C70,30 72,72 50,72 C26,72 24,22 50,22"/>
-        <path stroke-width="1.6" d="M50,22 C78,22 81,80 50,80 C17,80 14,14 50,14"/>
-        <path stroke-width="1.1" d="M50,14 C86,14 90,88 50,88 C8,88 4,6 50,6"/>
-      </g>
-      <!-- Center dot -->
-      <circle cx="50" cy="50" r="3" fill="#E8C96A" opacity=".9"/>
-    </svg>
-  </div>
+<!-- ══ CANVAS ══ -->
+<canvas id="spiralCanvas"></canvas>
+<div id="globalOverlay"></div>
 
-  <div class="header-label">La Casa del Profit</div>
-  <h1>Dimensión de Expansión Espiritual</h1>
-  <p class="sub">Centro holístico de transformación personal</p>
+<!-- ══ PAGE ══ -->
+<div id="pageWrap">
+
+<header>
+  <!-- No spinning logo — the canvas IS the visual centerpiece -->
+
+  <div class="brand-name">La Casa del Profit</div>
+  <div class="brand-dim">Dimensión de Expansión Espiritual</div>
+  <div class="brand-centro">Centro holístico de transformación personal y espiritual</div>
 
   <div class="mission">
     CONTRIBUIR CON 1.000.000 DE HERRAMIENTAS DE CONSCIENCIA EXPERIMENTALES<br>
@@ -158,15 +206,12 @@ footer a:hover{color:var(--gl);}
   <div id="loading" class="spinner"><div class="spin"></div> Cargando datos en tiempo real...</div>
   <div id="content" style="display:none">
 
-    <!-- KPIs -->
     <div class="sec-title" style="margin-top:8px">📊 El proyecto en números</div>
     <div class="kpi-strip" id="kpiStrip"></div>
 
-    <!-- Próximo hito -->
     <div class="sec-title">🎯 Próximo objetivo</div>
     <div class="next-box" id="nextBox"></div>
 
-    <!-- Visión -->
     <div class="sec-title">🌟 Nuestra Visión</div>
     <div class="vision-block">
       <h2>El camino hacia 1.000.000 de sesiones</h2>
@@ -175,7 +220,6 @@ footer a:hover{color:var(--gl);}
       <p>Cada sesión es un paso. Cada ser que se transforma, transforma su entorno.</p>
     </div>
 
-    <!-- Hitos -->
     <div class="sec-title">🗺️ Mapa de objetivos</div>
     <div class="milestone-list" id="milestoneList"></div>
 
@@ -187,6 +231,315 @@ footer a:hover{color:var(--gl);}
   <a href="https://lacasadelprofit.com">Experimentá y sé parte de esta transformación espiritual →</a>
 </footer>
 
+</div><!-- #pageWrap -->
+
+<!-- ══════════════════════════════════════════════
+     CANVAS ANIMATION
+     Composition (back to front):
+       1. Dark olive-green radial bg
+       2. Radial light rays (rotating, subtle)
+       3. Large golden C-arc (rotating slowly)
+       4. Flower of Life (centered, gently pulsing)
+       5. House silhouette (centered)
+       6. Central golden glow (pulsing)
+══════════════════════════════════════════════ -->
+<script>
+(function(){
+  const canvas = document.getElementById('spiralCanvas');
+  const ctx    = canvas.getContext('2d');
+  const TWO_PI = Math.PI * 2;
+  let W, H, cx, cy;
+  let t = 0; // animation time (seconds)
+
+  /* ── Resize ─────────────────────────────────── */
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    cx = W / 2;
+    cy = H / 2;
+  }
+
+  /* ── Utility ─────────────────────────────────── */
+  function lerp(a,b,v){ return a+(b-a)*v; }
+  function clamp(v,mn,mx){ return v<mn?mn:v>mx?mx:v; }
+  function pulse(speed,phase){ return (Math.sin(t*speed+phase)+1)*0.5; }
+
+  /* ═══════════════════════════════════════════
+     1. BACKGROUND GRADIENT (dark olive → amber center)
+  ═══════════════════════════════════════════ */
+  function drawBackground(){
+    const grd = ctx.createRadialGradient(cx, cy*0.85, 0, cx, cy, Math.max(W,H)*0.75);
+    const p = pulse(0.4, 0) * 0.08;
+    grd.addColorStop(0,   `rgba(${Math.round(48+p*20)},${Math.round(34+p*10)},4,1)`);  // warm dark amber center
+    grd.addColorStop(0.25,`rgba(22,18,3,1)`);
+    grd.addColorStop(0.55,`rgba(10,13,5,1)`);  // dark olive mid
+    grd.addColorStop(1,   `rgba(5,6,2,1)`);    // near black edges
+    ctx.fillStyle = grd;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  /* ═══════════════════════════════════════════
+     2. RADIAL LIGHT RAYS from center
+  ═══════════════════════════════════════════ */
+  function drawRays(fR){
+    const numRays = 24;
+    const rayLength = Math.max(W,H) * 0.85;
+    const rot = t * 0.008; // very slow rotation
+    const baseAlpha = 0.025 + pulse(0.5,1) * 0.02;
+
+    for(let i=0;i<numRays;i++){
+      const a = (i/numRays)*TWO_PI + rot;
+      const x2 = cx + rayLength*Math.cos(a);
+      const y2 = cy + rayLength*Math.sin(a);
+      const grd = ctx.createLinearGradient(cx,cy,x2,y2);
+      grd.addColorStop(0,   `rgba(232,201,106,${(baseAlpha*2).toFixed(3)})`);
+      grd.addColorStop(0.15,`rgba(232,201,106,${baseAlpha.toFixed(3)})`);
+      grd.addColorStop(1,   `rgba(232,201,106,0)`);
+      ctx.beginPath();
+      ctx.moveTo(cx,cy);
+      ctx.lineTo(x2,y2);
+      ctx.strokeStyle = grd;
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     3. LARGE GOLDEN SPIRAL ARC (the "C" wrap from the image)
+        Rotates slowly; bands of light travel inward along it.
+  ═══════════════════════════════════════════ */
+  function drawGoldenArc(fR){
+    const minR = fR * 2.5;                    // arc starts just outside FOL
+    const maxR = Math.min(W,H) * 0.44;        // arc goes to ~44% of viewport
+    const turns = 1.35;                       // how many full turns the arc makes
+    const steps = 600;
+    const rot   = t * 0.018;                  // slow rotation of whole arc
+    const numWaves = 4;                       // traveling bands
+    const speed    = 1.0;                     // inward travel speed
+
+    for(let pass=0; pass<2; pass++){
+      let px=0,py=0;
+      for(let i=0;i<=steps;i++){
+        const p = i/steps;  // 0=outer tip, 1=inner end
+        const r = lerp(maxR, minR, p);
+        // Arc angle: winding inward (clockwise: negative direction)
+        const theta = rot - turns*TWO_PI*p;
+
+        const x = cx + r*Math.cos(theta);
+        const y = cy + r*Math.sin(theta);
+        if(i===0){ px=x; py=y; continue; }
+
+        // Inward wave: bands travel from outer to inner
+        const wave = (Math.sin(p*numWaves*TWO_PI - t*speed)+1)*0.5;
+        // Fade tips
+        const fade = clamp( Math.min(p<0.04?p/0.04:1, p>0.96?(1-p)/0.04:1), 0, 1 );
+        const glow = 0.08 + wave * 0.92;
+
+        // Gold color, brighter at wave peaks
+        const rC = Math.round(lerp(60, 240, 0.2+wave*0.8));
+        const gC = Math.round(lerp(30, 200, 0.2+wave*0.8));
+        const bC = Math.round(lerp(4,  90,  0.1+wave*0.9));
+
+        if(pass===0){
+          // Glow pass
+          const a = glow*0.22*fade;
+          ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y);
+          ctx.strokeStyle=`rgba(${rC},${gC},${bC},${a.toFixed(3)})`;
+          ctx.lineWidth=2+wave*10; ctx.lineCap='round'; ctx.stroke();
+        } else {
+          // Core pass
+          const a = (0.08+wave*0.90)*fade;
+          ctx.beginPath(); ctx.moveTo(px,py); ctx.lineTo(x,y);
+          ctx.strokeStyle=`rgba(${rC},${gC},${bC},${a.toFixed(3)})`;
+          ctx.lineWidth=0.8+wave*2.5; ctx.lineCap='round'; ctx.stroke();
+        }
+        px=x; py=y;
+      }
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     4. FLOWER OF LIFE — sacred geometry
+        All circles same radius fR (base unit).
+        Centers on hexagonal lattice.
+  ═══════════════════════════════════════════ */
+  function drawFlowerOfLife(fR){
+    const alpha = 0.32 + pulse(0.6,0.5)*0.14;
+    const col = `rgba(232,201,106,${alpha.toFixed(3)})`;
+
+    ctx.strokeStyle = col;
+    ctx.lineWidth   = 0.9;
+    ctx.globalAlpha = 1;
+
+    function circ(x,y){ ctx.beginPath(); ctx.arc(x,y,fR,0,TWO_PI); ctx.stroke(); }
+
+    // Center circle
+    circ(cx, cy);
+
+    // Ring 1: 6 circles at distance fR (hex neighbors)
+    const ring1=[];
+    for(let i=0;i<6;i++){
+      const a=(i/6)*TWO_PI;
+      ring1.push([cx+fR*Math.cos(a), cy+fR*Math.sin(a)]);
+      circ(ring1[i][0],ring1[i][1]);
+    }
+
+    // Ring 2a: 6 circles at distance √3·fR (30° offset)
+    for(let i=0;i<6;i++){
+      const a=(i/6)*TWO_PI + Math.PI/6;
+      const d = Math.sqrt(3)*fR;
+      circ(cx+d*Math.cos(a), cy+d*Math.sin(a));
+    }
+
+    // Ring 2b: 6 circles at distance 2·fR (same angles as ring 1)
+    for(let i=0;i<6;i++){
+      const a=(i/6)*TWO_PI;
+      circ(cx+2*fR*Math.cos(a), cy+2*fR*Math.sin(a));
+    }
+
+    // Enclosing circle (inner edge of border ring)
+    const encR = 2*fR;
+    ctx.globalAlpha = alpha*1.2;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx,cy,encR,0,TWO_PI); ctx.stroke();
+
+    // Outer border ring (double circle effect)
+    ctx.lineWidth = 0.7;
+    ctx.globalAlpha = alpha*0.8;
+    ctx.beginPath(); ctx.arc(cx,cy,encR+fR*0.12,0,TWO_PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,encR+fR*0.28,0,TWO_PI); ctx.stroke();
+
+    ctx.globalAlpha = 1;
+  }
+
+  /* ═══════════════════════════════════════════
+     5. HOUSE SILHOUETTE
+        Centered in the FOL, golden stroke
+  ═══════════════════════════════════════════ */
+  function drawHouse(fR){
+    const s    = fR * 0.72;           // half-width of house body
+    const hTop = cy - s * 1.35;      // roof peak Y
+    const hBot = cy + s * 0.95;      // floor Y
+    const hL   = cx - s;             // left wall
+    const hR   = cx + s;             // right wall
+    const wallY= cy - s * 0.05;      // roof base / wall top
+
+    const glowAlpha = 0.28 + pulse(0.8,2)*0.18;
+    const coreAlpha = 0.65 + pulse(0.8,2)*0.2;
+
+    // Two passes: glow + core
+    for(let pass=0; pass<2; pass++){
+      const lw = pass===0 ? 4 : 1.4;
+      const al = pass===0 ? glowAlpha : coreAlpha;
+      ctx.strokeStyle = `rgba(232,201,106,${al.toFixed(3)})`;
+      ctx.lineWidth = lw;
+      ctx.lineCap = 'round';
+      ctx.lineJoin= 'round';
+
+      ctx.beginPath();
+      // Roof (triangle)
+      ctx.moveTo(hL - s*0.18, wallY);
+      ctx.lineTo(cx, hTop);
+      ctx.lineTo(hR + s*0.18, wallY);
+      // Left wall
+      ctx.moveTo(hL, wallY);
+      ctx.lineTo(hL, hBot);
+      // Right wall
+      ctx.moveTo(hR, wallY);
+      ctx.lineTo(hR, hBot);
+      // Floor
+      ctx.moveTo(hL, hBot);
+      ctx.lineTo(hR, hBot);
+      ctx.stroke();
+
+      // Arched door (centered)
+      const dW = s*0.28;   // door half-width
+      const dTop= cy + s*0.05; // top of door arch
+      ctx.beginPath();
+      ctx.moveTo(cx - dW, hBot);
+      ctx.lineTo(cx - dW, dTop);
+      ctx.arc(cx, dTop, dW, Math.PI, 0);
+      ctx.lineTo(cx + dW, hBot);
+      ctx.stroke();
+    }
+
+    // Decorative scroll/spiral at base of house (like image)
+    const scrollX = cx;
+    const scrollY = hBot + fR*0.16;
+    const scrollR = fR*0.18;
+    for(let pass=0; pass<2; pass++){
+      const lw = pass===0 ? 3.5 : 1.2;
+      const al = pass===0 ? glowAlpha*0.8 : coreAlpha*0.75;
+      ctx.strokeStyle = `rgba(232,201,106,${al.toFixed(3)})`;
+      ctx.lineWidth = lw;
+      ctx.beginPath();
+      // Draw a small Archimedean spiral (1.5 turns) at scroll position
+      let first=true;
+      for(let i=0;i<=80;i++){
+        const sp = i/80;
+        const r = scrollR * sp;
+        const a = sp*TWO_PI*1.5 - Math.PI*0.5;
+        const sx = scrollX + r*Math.cos(a);
+        const sy = scrollY + r*Math.sin(a);
+        if(first){ ctx.moveTo(sx,sy); first=false; } else { ctx.lineTo(sx,sy); }
+      }
+      ctx.stroke();
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     6. CENTRAL GOLDEN GLOW
+  ═══════════════════════════════════════════ */
+  function drawCentralGlow(fR){
+    const p = pulse(0.6, 1.2);
+    // Inner warm pulse
+    const grd1 = ctx.createRadialGradient(cx,cy,0, cx,cy, fR*1.6);
+    grd1.addColorStop(0,  `rgba(255,210,80,${(0.18+p*0.12).toFixed(3)})`);
+    grd1.addColorStop(0.5,`rgba(201,168,76,${(0.06+p*0.04).toFixed(3)})`);
+    grd1.addColorStop(1,  `rgba(201,168,76,0)`);
+    ctx.fillStyle=grd1;
+    ctx.fillRect(0,0,W,H);
+
+    // Outer ambient glow
+    const grd2 = ctx.createRadialGradient(cx,cy,fR*1.5, cx,cy, Math.min(W,H)*0.46);
+    grd2.addColorStop(0, `rgba(201,168,76,${(0.05+p*0.04).toFixed(3)})`);
+    grd2.addColorStop(1, `rgba(201,168,76,0)`);
+    ctx.fillStyle=grd2;
+    ctx.fillRect(0,0,W,H);
+
+    // Edge vignette (dark olive)
+    const vig = ctx.createRadialGradient(cx,cy, Math.min(W,H)*0.4, cx,cy, Math.max(W,H)*0.8);
+    vig.addColorStop(0,'rgba(5,6,2,0)');
+    vig.addColorStop(1,'rgba(4,5,1,0.80)');
+    ctx.fillStyle=vig;
+    ctx.fillRect(0,0,W,H);
+  }
+
+  /* ═══════════════════════════════════════════
+     MAIN DRAW LOOP
+  ═══════════════════════════════════════════ */
+  function drawFrame(){
+    // fR = Flower of Life base circle radius, scales with viewport
+    const fR = Math.min(W,H) * 0.082;
+
+    drawBackground();
+    drawRays(fR);
+    drawGoldenArc(fR);
+    drawFlowerOfLife(fR);
+    drawHouse(fR);
+    drawCentralGlow(fR);
+
+    t += 0.016;
+    requestAnimationFrame(drawFrame);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  drawFrame();
+})();
+</script>
+
+<!-- ══ DATA FETCH ══ -->
 <script>
 const OBJ_LIST=[100,300,500,1000,3000,5000,10000,30000,50000,100000,300000,500000,1000000];
 
@@ -194,94 +547,96 @@ function objLabel(m,i){
   if(m===1000000)return 'Objetivo 13 — 🎉 1.000.000';
   return `Objetivo ${i+1}`;
 }
-
 function fd(s){
   if(!s)return '—';
   const p=s.split('-');return `${p[2]}/${p[1]}/${p[0]}`;
 }
+function fmtN(n){ return typeof n==='number'?n.toLocaleString('es-AR'):'—'; }
 
 async function init(){
+  let data=null;
   try{
-    // Usamos el endpoint seguro del servidor (lee con service key)
     const resp=await fetch('/api/vision-stats');
     const json=await resp.json();
-    if(!json.ok)throw new Error(json.error||'Error al cargar');
+    if(json.ok) data=json.data;
+  }catch(e){ console.warn('API no disponible:',e.message); }
 
-    const {totalSesiones:totSes, totalSeres, primeraVez, milestoneDates}=json.data;
-
-    // ── KPIs ──
-    document.getElementById('kpiStrip').innerHTML=`
-      <div class="kc go">
-        <div class="ki">✨</div>
-        <div class="kv">${totSes.toLocaleString('es-AR')}</div>
-        <div class="kl">Sesiones de transformación</div>
-      </div>
-      <div class="kc pu">
-        <div class="ki">👥</div>
-        <div class="kv">${totalSeres.toLocaleString('es-AR')}</div>
-        <div class="kl">Seres atendidos</div>
-      </div>
-      <div class="kc gr">
-        <div class="ki">🌱</div>
-        <div class="kv">${primeraVez.toLocaleString('es-AR')}</div>
-        <div class="kl">Primera vez con herramienta</div>
-      </div>`;
-
-    // ── Próximo objetivo ──
-    let nextMilestone=null,prevMilestone=0,nextIdx=0;
-    OBJ_LIST.forEach((m,i)=>{
-      if(totSes>=m){prevMilestone=m;}
-      else if(nextMilestone===null){nextMilestone=m;nextIdx=i;}
-    });
-
-    if(nextMilestone){
-      const pct=Math.min(99,parseFloat((totSes/nextMilestone*100).toFixed(1)));
-      const faltan=nextMilestone-totSes;
-      document.getElementById('nextBox').innerHTML=`
-        <h3>Próximo</h3>
-        <div class="obj-name">${objLabel(nextMilestone,nextIdx)} — ${nextMilestone.toLocaleString('es-AR')} sesiones</div>
-        <div class="obj-sub">${totSes.toLocaleString('es-AR')} completadas &nbsp;·&nbsp; Faltan <strong style="color:var(--gl)">${faltan.toLocaleString('es-AR')}</strong> sesiones</div>
-        <div class="next-pct">${pct}% completado</div>
-        <div class="big-bar"><div class="big-fill" style="width:${pct}%"></div></div>
-        <div class="next-nums"><span>${prevMilestone.toLocaleString('es-AR')}</span><span>${nextMilestone.toLocaleString('es-AR')}</span></div>`;
-    } else {
-      document.getElementById('nextBox').innerHTML=`<div class="obj-name" style="text-align:center">🎉 ¡1.000.000 alcanzado! Misión cumplida.</div>`;
-    }
-
-    // ── Mapa de objetivos ──
-    let foundNext=false,html='';
-    OBJ_LIST.forEach((m,i)=>{
-      const done=totSes>=m;
-      const isNext=!done&&!foundNext;
-      if(isNext)foundNext=true;
-      const cls=done?'done':isNext?'next':'fut';
-      const icon=done?'✓':isNext?'→':String(i+1);
-      const pct=done?100:Math.min(99,parseFloat((totSes/m*100).toFixed(1)));
-      const dateStr=milestoneDates[String(m)]||null;
-      html+=`<div class="ml-item ${cls}">
-        <div class="ml-dot ${cls}">${icon}</div>
-        <div class="ml-info">
-          <div class="ml-title ${cls}">${objLabel(m,i)} &mdash; ${m.toLocaleString('es-AR')} sesiones</div>
-          <div class="ml-sub">${done?'✅ Alcanzado':isNext?`🔥 En progreso — faltan ${(m-totSes).toLocaleString('es-AR')}`:`⌛ Faltan ${(m-totSes).toLocaleString('es-AR')} sesiones`}</div>
-          ${done&&dateStr?`<div class="ml-date">📅 Alcanzado el ${fd(dateStr)}</div>`:''}
-        </div>
-        <div class="ml-right">
-          <div class="ml-pct">${pct}%</div>
-          <div class="pb"><div class="pf" style="width:${pct}%"></div></div>
-        </div>
-      </div>`;
-    });
-    document.getElementById('milestoneList').innerHTML=html;
-
-    document.getElementById('loading').style.display='none';
-    document.getElementById('content').style.display='block';
-  }catch(e){
-    document.getElementById('loading').innerHTML=`<span>⚠️ Error al cargar — intentá recargar la página</span>`;
-    console.error(e);
+  /* ── Si falla la API → modo demo ── */
+  if(!data){
+    data={ totalSesiones:0, totalSeres:0, primeraVez:0, milestoneDates:{} };
   }
+
+  const {totalSesiones:totSes, totalSeres, primeraVez, milestoneDates}=data;
+
+  /* KPIs */
+  document.getElementById('kpiStrip').innerHTML=`
+    <div class="kc go gc">
+      <div class="ki">✨</div>
+      <div class="kv">${fmtN(totSes)}</div>
+      <div class="kl">Sesiones de transformación</div>
+    </div>
+    <div class="kc pu gc">
+      <div class="ki">👥</div>
+      <div class="kv">${fmtN(totalSeres)}</div>
+      <div class="kl">Seres atendidos</div>
+    </div>
+    <div class="kc gr gc">
+      <div class="ki">🌱</div>
+      <div class="kv">${fmtN(primeraVez)}</div>
+      <div class="kl">Primera vez con herramienta</div>
+    </div>`;
+
+  /* Próximo objetivo */
+  let nextMilestone=null,prevMilestone=0,nextIdx=0;
+  OBJ_LIST.forEach((m,i)=>{
+    if(totSes>=m){prevMilestone=m;}
+    else if(nextMilestone===null){nextMilestone=m;nextIdx=i;}
+  });
+  if(nextMilestone){
+    const pct=Math.min(99,parseFloat((totSes/nextMilestone*100).toFixed(1)));
+    const faltan=nextMilestone-totSes;
+    document.getElementById('nextBox').innerHTML=`
+      <h3>Próximo</h3>
+      <div class="obj-name">${objLabel(nextMilestone,nextIdx)} — ${nextMilestone.toLocaleString('es-AR')} sesiones</div>
+      <div class="obj-sub">${fmtN(totSes)} completadas &nbsp;·&nbsp; Faltan <strong style="color:var(--gl)">${faltan.toLocaleString('es-AR')}</strong> sesiones</div>
+      <div class="next-pct">${pct}% completado</div>
+      <div class="big-bar"><div class="big-fill" style="width:${pct}%"></div></div>
+      <div class="next-nums"><span>${prevMilestone.toLocaleString('es-AR')}</span><span>${nextMilestone.toLocaleString('es-AR')}</span></div>`;
+  } else {
+    document.getElementById('nextBox').innerHTML=`<div class="obj-name" style="text-align:center">🎉 ¡1.000.000 alcanzado! Misión cumplida.</div>`;
+  }
+
+  /* Mapa de objetivos */
+  let foundNext=false,html='';
+  OBJ_LIST.forEach((m,i)=>{
+    const done=totSes>=m;
+    const isNext=!done&&!foundNext;
+    if(isNext)foundNext=true;
+    const cls=done?'done':isNext?'next':'fut';
+    const icon=done?'✓':isNext?'→':String(i+1);
+    const pct=done?100:Math.min(99,parseFloat((totSes/m*100).toFixed(1)));
+    const dateStr=milestoneDates[String(m)]||null;
+    html+=`<div class="ml-item ${cls}">
+      <div class="ml-dot ${cls}">${icon}</div>
+      <div class="ml-info">
+        <div class="ml-title ${cls}">${objLabel(m,i)} &mdash; ${m.toLocaleString('es-AR')} sesiones</div>
+        <div class="ml-sub">${done?'✅ Alcanzado':isNext?`🔥 En progreso — faltan ${(m-totSes).toLocaleString('es-AR')}`:`⌛ Faltan ${(m-totSes).toLocaleString('es-AR')} sesiones`}</div>
+        ${done&&dateStr?`<div class="ml-date">📅 Alcanzado el ${fd(dateStr)}</div>`:''}
+      </div>
+      <div class="ml-right">
+        <div class="ml-pct">${pct}%</div>
+        <div class="pb"><div class="pf" style="width:${pct}%"></div></div>
+      </div>
+    </div>`;
+  });
+  document.getElementById('milestoneList').innerHTML=html;
+
+  document.getElementById('loading').style.display='none';
+  document.getElementById('content').style.display='block';
 }
 
 init();
 </script>
+
 </body>
 </html>

@@ -759,11 +759,14 @@ select.fi:focus{border-color:var(--gold);}
     <select id="pgMoneda"><option value="ARS">🇦🇷 Pesos (ARS)</option><option value="USD">🇺🇸 Dólares (USD)</option></select>
    </div>
   </div>
-  <div class="fg"><label>Sesiones incluidas (con cantidad)</label>
-   <div id="pgSesIncList" style="display:flex;flex-direction:column;gap:5px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-top:4px;max-height:200px;overflow-y:auto"></div>
-   <div style="display:flex;gap:6px;margin-top:6px">
-    <input type="text" id="pgSesNueva" list="dlHerr" placeholder="Agregar herramienta..." style="flex:1;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px">
-    <input type="number" id="pgSesCant" placeholder="Cant." min="1" value="1" style="width:70px;padding:7px 8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px">
+  <div class="fg">
+   <label>✨ Sesiones incluidas — por herramienta</label>
+   <div id="pgSesIncList" style="display:flex;flex-direction:column;gap:6px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-top:4px;max-height:240px;overflow-y:auto"></div>
+   <div style="display:flex;gap:6px;margin-top:8px;align-items:center">
+    <select id="pgSesNueva" style="flex:1;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px">
+     <option value="">— Elegir herramienta —</option>
+    </select>
+    <input type="number" id="pgSesCant" placeholder="Cant." min="1" value="1" style="width:64px;padding:7px 8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;text-align:center">
     <button class="btn btn-s btn-sm" onclick="addProgSesion()">+ Agregar</button>
    </div>
   </div>
@@ -2107,7 +2110,11 @@ function openModal(type,id,extra){
     document.getElementById('pgObj').value=p?p.objetivo:'';
     document.getElementById('pgMeta').value=p?p.meta:'';
     // Build sesiones incluidas list
-    window._pgSesInc=p?(p.sesionesIncluidas_v2||{}):{}; // {nom: qty}
+    window._pgSesInc=p?JSON.parse(JSON.stringify(p.sesionesIncluidas_v2||{})):{};
+    // Populate herramienta dropdown
+    const pgSesNueva=document.getElementById('pgSesNueva');
+    pgSesNueva.innerHTML='<option value="">— Elegir herramienta —</option>'+
+      herramientas.filter(h=>!h.esProducto).map(h=>`<option value="${h.nom}">${h.ico||'✨'} ${h.nom}</option>`).join('');
     renderProgSesInc();
     document.getElementById('moProg').classList.add('open');
   } else if(type==='fact'){
@@ -2508,42 +2515,60 @@ function refreshInscSesAsig(){
   const list=document.getElementById('inSesAsigList');
   if(!sesInc||!Object.keys(sesInc).length){wrap.style.display='none';return;}
   wrap.style.display='block';
-  // Build expected rows: one per session slot
+
+  // Build rows (one per slot), backward-compat with old {nom:number} format
   const rows=[];
-  Object.entries(sesInc).forEach(([nom,qty])=>{
-    for(let i=0;i<qty;i++)rows.push({nom,slot:i+1,total:qty});
+  Object.entries(sesInc).forEach(([nom,val])=>{
+    const qty=_pgSesQty(val);
+    const defFacId=_pgSesFacId(val);
+    const defFac=facs.find(f=>f.id===defFacId);
+    for(let i=0;i<qty;i++)rows.push({nom,slot:i+1,total:qty,defFacId,defFacNombre:defFac?defFac.nombre:''});
   });
-  // Populate with existing assignments if any
+
+  // Merge with existing or create from defaults
   const existing=window._inSesAsig||[];
+  if(!window._inSesAsig||window._inSesAsig.length!==rows.length){
+    window._inSesAsig=rows.map((r,idx)=>existing[idx]||{nom:r.nom,slot:r.slot,facId:r.defFacId,facNombre:r.defFacNombre,estado:'pendiente',fecha:''});
+  }
+
+  const estColors={pendiente:'var(--muted)',agendada:'#3B82F6',completada:'#10B981',cancelada:'#EF4444'};
   list.innerHTML=rows.map((r,idx)=>{
-    const match=existing[idx]||{};
-    return `<div style="display:flex;align-items:center;gap:8px;background:var(--card2);border-radius:8px;padding:8px 10px">
-      <div style="flex:1;font-size:12px;color:var(--text)">${r.nom}${r.total>1?' #'+r.slot:''}</div>
-      <select data-idx="${idx}" data-nom="${r.nom}" onchange="updateInscSesAsig(${idx},this)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:11px;border-radius:6px;padding:4px 6px">
-        <option value="">Sin asignar</option>
-        ${facs.map(f=>`<option value="${f.id}" ${match.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
-      </select>
-      <select data-est="${idx}" onchange="updateInscSesEstado(${idx},this)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:11px;border-radius:6px;padding:4px 6px">
-        <option value="pendiente" ${(match.estado||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option>
-        <option value="agendada" ${match.estado==='agendada'?'selected':''}>📅 Agendada</option>
-        <option value="completada" ${match.estado==='completada'?'selected':''}>✅ Completada</option>
-        <option value="cancelada" ${match.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
-      </select>
+    const m=window._inSesAsig[idx]||{};
+    const hi=herramientas.find(x=>x.nom===r.nom)||{};
+    return `<div style="background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <span style="font-size:18px">${hi.ico||'✨'}</span>
+        <div style="flex:1;font-size:12px;font-weight:700;color:var(--text)">${r.nom}${r.total>1?` <span style="color:var(--muted);font-weight:400;font-size:10px">#${r.slot} de ${r.total}</span>`:''}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <select onchange="updInscSesField(${idx},'fac',this)"
+          style="flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:11px;border-radius:6px;padding:4px 7px">
+          <option value="">Sin asignar</option>
+          ${facs.map(f=>`<option value="${f.id}" ${m.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
+        </select>
+        <input type="date" value="${m.fecha||''}" onchange="updInscSesField(${idx},'fecha',this)"
+          title="Fecha de la sesión"
+          style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:11px;border-radius:6px;padding:4px 7px">
+        <select onchange="updInscSesField(${idx},'estado',this)"
+          style="background:var(--card);border:1px solid var(--border);color:${estColors[m.estado||'pendiente']};font-size:11px;border-radius:6px;padding:4px 7px;font-weight:600">
+          <option value="pendiente" ${(m.estado||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option>
+          <option value="agendada" ${m.estado==='agendada'?'selected':''}>📅 Agendada</option>
+          <option value="completada" ${m.estado==='completada'?'selected':''}>✅ Completada</option>
+          <option value="cancelada" ${m.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
+        </select>
+      </div>
     </div>`;
   }).join('');
-  if(!window._inSesAsig||window._inSesAsig.length!==rows.length){
-    window._inSesAsig=rows.map((r,idx)=>existing[idx]||{nom:r.nom,slot:r.slot,facId:'',estado:'pendiente'});
-  }
 }
-function updateInscSesAsig(idx,sel){
+function updInscSesField(idx,field,el){
   if(!window._inSesAsig)return;
-  const fac=facs.find(f=>f.id===sel.value);
-  window._inSesAsig[idx]={...window._inSesAsig[idx],facId:sel.value,facNombre:fac?fac.nombre:''};
+  if(field==='fac'){const fac=facs.find(f=>f.id===el.value);window._inSesAsig[idx]={...window._inSesAsig[idx],facId:el.value,facNombre:fac?fac.nombre:''};}
+  else if(field==='fecha'){window._inSesAsig[idx]={...window._inSesAsig[idx],fecha:el.value};}
+  else if(field==='estado'){window._inSesAsig[idx]={...window._inSesAsig[idx],estado:el.value};}
 }
-function updateInscSesEstado(idx,sel){
-  if(!window._inSesAsig)return;
-  window._inSesAsig[idx]={...window._inSesAsig[idx],estado:sel.value};
-}
+// Backward compat aliases
+function updateInscSesAsig(idx,sel){updInscSesField(idx,'fac',sel);}
+function updateInscSesEstado(idx,sel){updInscSesField(idx,'estado',sel);}
 
 function saveInsc(){
   const eid=document.getElementById('inId').value;
@@ -2769,32 +2794,48 @@ function openInscDetail(id){
 
   // Sesiones asignadas
   const sesAsig=insc.sesionesAsignadas||[];
+  const estColors={pendiente:'#6B7280',agendada:'#3B82F6',completada:'#10B981',cancelada:'#EF4444'};
   const sesAsigHtml=sesAsig.length?`
     <div class="cc" style="margin-bottom:14px;padding:14px">
-      <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:10px">✨ Sesiones incluidas</div>
-      <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-size:11px;font-weight:700;color:var(--gl)">✨ Sesiones del programa — Control por sesión</div>
+        <div style="font-size:10px;color:var(--muted)">${sesAsig.filter(s=>s.estado==='completada').length}/${sesAsig.length} completadas</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px">
         ${sesAsig.map((s,idx)=>{
-          const estColor={pendiente:'#6B7280',agendada:'#3B82F6',completada:'#10B981',cancelada:'#EF4444'}[s.estado||'pendiente']||'#6B7280';
-          const estIco={pendiente:'⏳',agendada:'📅',completada:'✅',cancelada:'❌'}[s.estado||'pendiente']||'⏳';
-          return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--card2);border-radius:8px;flex-wrap:wrap">
-            <div style="flex:1;min-width:120px">
-              <div style="font-size:12px;font-weight:600;color:var(--text)">${s.nom}${sesAsig.filter(x=>x.nom===s.nom).length>1?' #'+s.slot:''}</div>
-              <div style="font-size:10px;color:var(--muted)">${s.facNombre||'Sin asignar'}</div>
+          const hi=herramientas.find(x=>x.nom===s.nom)||{};
+          const ec=estColors[s.estado||'pendiente']||'#6B7280';
+          const sameNom=sesAsig.filter(x=>x.nom===s.nom).length>1;
+          return `<div style="background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid var(--border)">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+              <span style="font-size:18px">${hi.ico||'✨'}</span>
+              <div style="flex:1">
+                <div style="font-size:12px;font-weight:700;color:var(--text)">${s.nom}${sameNom?' <span style="color:var(--muted);font-weight:400;font-size:10px">#'+s.slot+'</span>':''}</div>
+                <div style="font-size:10px;color:var(--muted)">${s.facNombre||'Sin facilitador asignado'}${s.fecha?' · 📅 '+s.fecha:''}</div>
+              </div>
+              <span style="font-size:11px;font-weight:700;color:${ec}">${{pendiente:'⏳',agendada:'📅',completada:'✅',cancelada:'❌'}[s.estado||'pendiente']||'⏳'} ${(s.estado||'pendiente').charAt(0).toUpperCase()+(s.estado||'pendiente').slice(1)}</span>
             </div>
-            <select onchange="updateDetailSesAsig(${idx},'fac',this)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 5px">
-              <option value="">Sin asignar</option>
-              ${facs.map(f=>`<option value="${f.id}" ${s.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
-            </select>
-            <select onchange="updateDetailSesAsig(${idx},'estado',this)" style="background:var(--card);border:1px solid ${estColor};color:${estColor};font-size:10px;border-radius:6px;padding:3px 5px;font-weight:600">
-              <option value="pendiente" ${(s.estado||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option>
-              <option value="agendada" ${s.estado==='agendada'?'selected':''}>📅 Agendada</option>
-              <option value="completada" ${s.estado==='completada'?'selected':''}>✅ Completada</option>
-              <option value="cancelada" ${s.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
-            </select>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <select onchange="updateDetailSesAsig(${idx},'fac',this)"
+                style="flex:1;min-width:120px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 6px">
+                <option value="">Sin asignar</option>
+                ${facs.map(f=>`<option value="${f.id}" ${s.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
+              </select>
+              <input type="date" value="${s.fecha||''}" title="Fecha de la sesión"
+                onchange="updateDetailSesAsig(${idx},'fecha',this)"
+                style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 6px">
+              <select onchange="updateDetailSesAsig(${idx},'estado',this)"
+                style="background:var(--card);border:1px solid ${ec};color:${ec};font-size:10px;border-radius:6px;padding:3px 6px;font-weight:600">
+                <option value="pendiente" ${(s.estado||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option>
+                <option value="agendada" ${s.estado==='agendada'?'selected':''}>📅 Agendada</option>
+                <option value="completada" ${s.estado==='completada'?'selected':''}>✅ Completada</option>
+                <option value="cancelada" ${s.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
+              </select>
+            </div>
           </div>`;
         }).join('')}
       </div>
-      <button onclick="saveDetailSesAsig('${id}')" style="margin-top:8px;width:100%;background:var(--gold)22;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-size:11px;font-weight:600;padding:6px">💾 Guardar asignaciones</button>
+      <button onclick="saveDetailSesAsig('${id}')" style="margin-top:10px;width:100%;background:var(--gold)22;border:1px solid var(--gold);border-radius:7px;color:var(--gold);font-size:11px;font-weight:600;padding:6px">💾 Guardar cambios en sesiones</button>
     </div>`:'';
 
   document.getElementById('journeyAdminListView').style.display='none';
@@ -2857,15 +2898,12 @@ function openInscDetail(id){
 }
 
 // Actualiza sesionesAsignadas en detalle (sin abrir modal)
-function updateDetailSesAsig(idx,field,sel){
+function updateDetailSesAsig(idx,field,el){
   const insc=inscripciones.find(x=>x.id===curInscId);if(!insc)return;
   if(!insc.sesionesAsignadas)return;
-  if(field==='fac'){
-    const fac=facs.find(f=>f.id===sel.value);
-    insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],facId:sel.value,facNombre:fac?fac.nombre:''};
-  } else {
-    insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],estado:sel.value};
-  }
+  if(field==='fac'){const fac=facs.find(f=>f.id===el.value);insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],facId:el.value,facNombre:fac?fac.nombre:''};}
+  else if(field==='fecha'){insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],fecha:el.value};}
+  else{insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],estado:el.value};}
 }
 function saveDetailSesAsig(id){
   const insc=inscripciones.find(x=>x.id===id);if(!insc)return;
@@ -2949,24 +2987,61 @@ function editNotaSemana(semIdx){
 
 /* PROGRAMAS - CRUD */
 function delProg(id){if(confirm('¿Eliminar este programa?')){programas=programas.filter(p=>p.id!==id);delRecord('programas',id);save();renderProg();}}
+// Helpers: new sesionesIncluidas_v2 format = {nom: {qty, facId, facNombre}}
+// Backward-compat: value may still be a plain number from old data
+function _pgSesQty(val){return typeof val==='object'?(val.qty||1):(val||1);}
+function _pgSesFacId(val){return typeof val==='object'?(val.facId||''):''; }
+
 function renderProgSesInc(){
   const list=document.getElementById('pgSesIncList');
   if(!list)return;
   const inc=window._pgSesInc||{};
-  list.innerHTML=Object.entries(inc).length?Object.entries(inc).map(([nom,qty])=>`
-    <div style="display:flex;align-items:center;gap:8px">
-      <span style="flex:1;font-size:12px">${nom}</span>
-      <input type="number" min="1" value="${qty}" style="width:60px;padding:3px 6px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;text-align:center"
-        onchange="window._pgSesInc['${nom}']=parseInt(this.value)||1">
-      <button class="btn btn-s btn-sm" onclick="delete window._pgSesInc['${nom}'];renderProgSesInc()">✕</button>
-    </div>`).join(''):`<span style="color:var(--muted);font-size:12px">Sin sesiones configuradas aún</span>`;
+  const entries=Object.entries(inc);
+  if(!entries.length){list.innerHTML=`<span style="color:var(--muted);font-size:12px">Sin sesiones configuradas aún. Usá el selector de abajo para agregar.</span>`;return;}
+  list.innerHTML=entries.map(([nom,val])=>{
+    const qty=_pgSesQty(val);
+    const facId=_pgSesFacId(val);
+    const h=herramientas.find(x=>x.nom===nom)||{};
+    return `<div style="display:flex;align-items:center;gap:8px;background:var(--card);border-radius:9px;padding:9px 11px;border:1px solid var(--border)">
+      <span style="font-size:18px;flex-shrink:0">${h.ico||'✨'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${nom}</div>
+        <div style="font-size:10px;color:var(--muted)">${qty} sesión${qty>1?'es':''} incluida${qty>1?'s':''}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+        <input type="number" min="1" value="${qty}" title="Cantidad"
+          style="width:48px;padding:4px 6px;background:var(--card2);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;text-align:center"
+          onchange="updPgSesQty('${nom}',parseInt(this.value)||1)">
+        <select title="Facilitador asignado por defecto" onchange="updPgSesFac('${nom}',this.value)"
+          style="background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:11px;border-radius:6px;padding:4px 6px;max-width:140px">
+          <option value="">Cualquier fac.</option>
+          ${facs.map(f=>`<option value="${f.id}" ${facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
+        </select>
+        <button class="btn btn-s btn-sm" style="color:#EF4444;flex-shrink:0" onclick="delete window._pgSesInc['${nom}'];renderProgSesInc()">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+function updPgSesQty(nom,qty){
+  if(!window._pgSesInc)return;
+  const cur=window._pgSesInc[nom];
+  window._pgSesInc[nom]={qty,facId:_pgSesFacId(cur),facNombre:''};
+  // update label inline without full re-render
+  renderProgSesInc();
+}
+function updPgSesFac(nom,facId){
+  if(!window._pgSesInc)return;
+  const cur=window._pgSesInc[nom];
+  const fac=facs.find(f=>f.id===facId);
+  window._pgSesInc[nom]={qty:_pgSesQty(cur),facId:facId||'',facNombre:fac?fac.nombre:''};
 }
 function addProgSesion(){
   const nom=document.getElementById('pgSesNueva').value.trim();
   const cant=parseInt(document.getElementById('pgSesCant').value)||1;
-  if(!nom)return;
+  if(!nom){alert('Elegí una herramienta del listado');return;}
   if(!window._pgSesInc)window._pgSesInc={};
-  window._pgSesInc[nom]=(window._pgSesInc[nom]||0)+cant;
+  const cur=window._pgSesInc[nom];
+  window._pgSesInc[nom]={qty:_pgSesQty(cur)+cant,facId:_pgSesFacId(cur),facNombre:''};
   document.getElementById('pgSesNueva').value='';
   document.getElementById('pgSesCant').value='1';
   renderProgSesInc();
