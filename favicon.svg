@@ -1,25 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <defs>
-    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0E0D14"/>
-      <stop offset="100%" style="stop-color:#06060A"/>
-    </linearGradient>
-    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#E8C96A"/>
-      <stop offset="100%" style="stop-color:#C9A84C"/>
-    </linearGradient>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2A1E04"/>
+      <stop offset="100%" stop-color="#080A04"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#E8C96A" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#E8C96A" stop-opacity="0"/>
+    </radialGradient>
   </defs>
-  <!-- Background rounded square -->
-  <rect width="100" height="100" rx="18" fill="url(#bg)"/>
-  <!-- Gold border ring -->
-  <rect x="3" y="3" width="94" height="94" rx="16" fill="none" stroke="url(#gold)" stroke-width="2" opacity="0.8"/>
-  <!-- Outer spiral arc 1 -->
-  <path d="M50 15 A35 35 0 1 1 15.5 65" fill="none" stroke="#E8C96A" stroke-width="5" stroke-linecap="round" opacity="0.9"/>
-  <!-- Middle spiral arc 2 -->
-  <path d="M50 26 A24 24 0 1 1 27 70" fill="none" stroke="#C9A84C" stroke-width="4" stroke-linecap="round" opacity="0.75"/>
-  <!-- Inner spiral arc 3 -->
-  <path d="M50 37 A13 13 0 1 1 37.5 62" fill="none" stroke="#8B6914" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
-  <!-- Center dot -->
-  <circle cx="50" cy="50" r="5" fill="url(#gold)"/>
-  <circle cx="50" cy="50" r="2.2" fill="#06060A"/>
+
+  <!-- Background -->
+  <circle cx="50" cy="50" r="50" fill="url(#bg)"/>
+  <circle cx="50" cy="50" r="50" fill="url(#glow)"/>
+
+  <!-- Flower of Life — 7 circles, r=18 -->
+  <g stroke="#C9A84C" stroke-width="1.1" fill="none" opacity="0.85">
+    <circle cx="50"    cy="50"    r="18"/>
+    <circle cx="50"    cy="32"    r="18"/>
+    <circle cx="65.59" cy="41"    r="18"/>
+    <circle cx="65.59" cy="59"    r="18"/>
+    <circle cx="50"    cy="68"    r="18"/>
+    <circle cx="34.41" cy="59"    r="18"/>
+    <circle cx="34.41" cy="41"    r="18"/>
+  </g>
+
+  <!-- Enclosing border rings -->
+  <circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.4" fill="none" opacity="0.6"/>
+  <circle cx="50" cy="50" r="38.5" stroke="#C9A84C" stroke-width="0.6" fill="none" opacity="0.35"/>
+
+  <!-- House silhouette — golden, centered -->
+  <g stroke="#E8C96A" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95">
+    <polyline points="34,50 50,37 66,50"/>
+    <line x1="37" y1="50" x2="37" y2="63"/>
+    <line x1="63" y1="50" x2="63" y2="63"/>
+    <line x1="37" y1="63" x2="63" y2="63"/>
+    <path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63"/>
+  </g>
+
+  <!-- Central glow -->
+  <circle cx="50" cy="50" r="8" fill="#E8C96A" opacity="0.07"/>
 </svg>
