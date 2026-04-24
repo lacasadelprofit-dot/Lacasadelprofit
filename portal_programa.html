@@ -27,7 +27,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .lbox{background:var(--card);border:1px solid #3A3410;border-radius:24px;padding:44px 38px;width:400px;max-width:calc(100vw - 32px);
   box-shadow:0 0 60px rgba(201,168,76,.08),0 25px 60px rgba(0,0,0,.7);}
 .llogo{text-align:center;margin-bottom:28px;}
-.llogo .ico{font-size:48px;display:block;margin-bottom:10px;}
+.llogo svg{display:block;margin:0 auto 10px;border-radius:50%;}
 .llogo h1{font-size:19px;font-weight:800;color:var(--gl);letter-spacing:2px;}
 .llogo .sub{font-size:11px;color:var(--gd);letter-spacing:1.5px;margin-top:3px;text-transform:uppercase;}
 .fg{margin-bottom:14px;}
@@ -302,7 +302,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 <!-- LOGIN -->
 <div id="loginScreen">
   <div class="lbox">
-    <div class="llogo"><span class="ico">🌀</span><h1>LA CASA DEL PROFIT</h1><div class="sub">Portal del Programa</div></div>
+    <div class="llogo"><svg width="72" height="72" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ppg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A1E04"/><stop offset="100%" stop-color="#080A04"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ppg)"/><g stroke="#C9A84C" stroke-width="1.2" fill="none" opacity="0.9"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="32" r="18"/><circle cx="65.6" cy="41" r="18"/><circle cx="65.6" cy="59" r="18"/><circle cx="50" cy="68" r="18"/><circle cx="34.4" cy="59" r="18"/><circle cx="34.4" cy="41" r="18"/></g><circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.5" fill="none" opacity="0.6"/><circle cx="50" cy="50" r="38.5" stroke="#C9A84C" stroke-width="0.6" fill="none" opacity="0.35"/><g stroke="#E8C96A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="34,50 50,37 66,50"/><line x1="37" y1="50" x2="37" y2="63"/><line x1="63" y1="50" x2="63" y2="63"/><line x1="37" y1="63" x2="63" y2="63"/><path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63" fill="none"/></g></svg><h1>LA CASA DEL PROFIT</h1><div class="sub">Portal del Programa</div></div>
     <div class="fg"><label>Tu Email</label><input type="email" id="lEmail" placeholder="tu@email.com" autocomplete="email"></div>
     <div class="fg"><label>Código de acceso</label><input type="text" id="lCode" placeholder="Ingresá tu código" autocomplete="off" style="letter-spacing:2px;font-weight:700;"></div>
     <button class="btn-login" onclick="doLogin()" id="btnLogin">Entrar ✨</button>
@@ -313,7 +313,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 
 <!-- SELECTOR -->
 <div id="progSelector">
-  <div class="ps-header"><span class="ico">🌀</span><h2 id="psTitle">Tus Programas</h2><p id="psSub">Elegí el programa que querés ver</p></div>
+  <div class="ps-header"><svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ppg2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A1E04"/><stop offset="100%" stop-color="#080A04"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ppg2)"/><g stroke="#C9A84C" stroke-width="1.2" fill="none" opacity="0.9"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="32" r="18"/><circle cx="65.6" cy="41" r="18"/><circle cx="65.6" cy="59" r="18"/><circle cx="50" cy="68" r="18"/><circle cx="34.4" cy="59" r="18"/><circle cx="34.4" cy="41" r="18"/></g><circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.5" fill="none" opacity="0.6"/><g stroke="#E8C96A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="34,50 50,37 66,50"/><line x1="37" y1="50" x2="37" y2="63"/><line x1="63" y1="50" x2="63" y2="63"/><line x1="37" y1="63" x2="63" y2="63"/><path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63" fill="none"/></g></svg><h2 id="psTitle">Tus Programas</h2><p id="psSub">Elegí el programa que querés ver</p></div>
   <div class="ps-grid" id="psGrid"></div>
 </div>
 
