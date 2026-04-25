@@ -2320,7 +2320,7 @@ function openModal(type,id,extra){
     document.getElementById('fDireccion').value=f?(f.direccion||''):'';
     document.getElementById('fPres').checked=f?f.pres:true;
     document.getElementById('fOnl').checked=f?f.onl:false;
-    document.getElementById('fNac').value=f?(f.nacimiento||'):'';
+    document.getElementById('fNac').value=f?(f.nacimiento||''):'';
     document.getElementById('fBio').value=f?f.bio:'';
     document.getElementById('moFac').classList.add('open');
   } else if(type==='herr'){
