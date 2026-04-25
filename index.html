@@ -440,16 +440,31 @@ select.fi:focus{border-color:var(--gold);}
      </div>
      <!-- Journey editor (se muestra al hacer click en Gestionar Journey) -->
      <div id="progJourneyView" style="display:none">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
        <button class="btn btn-s" onclick="closeJourneyView()">← Volver</button>
        <div id="journeyProgTitle" style="font-size:18px;font-weight:700;color:var(--gl);flex:1"></div>
-       <button class="btn btn-p" onclick="addSemana()">+ Nueva Semana</button>
+       <button id="btnNuevaSemana" class="btn btn-p" onclick="addSemana()">+ Nueva Semana</button>
       </div>
-      <div style="display:flex;gap:14px;align-items:flex-start">
-       <!-- Panel izquierdo: lista de semanas -->
-       <div id="journeyWeekList" style="width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:6px"></div>
-       <!-- Panel derecho: contenido de la semana seleccionada -->
-       <div id="journeyWeekContent" style="flex:1;min-width:0"></div>
+      <!-- Tabs del editor -->
+      <div class="tab-bar" style="margin-bottom:14px">
+       <button class="tab-btn active" id="ptabSemanas" onclick="setProgTab('semanas')">📅 Semanas</button>
+       <button class="tab-btn" id="ptabSesiones" onclick="setProgTab('sesiones')">✨ Sesiones</button>
+       <button class="tab-btn" id="ptabMateriales" onclick="setProgTab('materiales')">📖 Materiales</button>
+      </div>
+      <!-- Tab Semanas -->
+      <div id="progTabSemanas">
+       <div style="display:flex;gap:14px;align-items:flex-start">
+        <div id="journeyWeekList" style="width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:6px"></div>
+        <div id="journeyWeekContent" style="flex:1;min-width:0"></div>
+       </div>
+      </div>
+      <!-- Tab Sesiones -->
+      <div id="progTabSesiones" style="display:none">
+       <div id="progSesionesView"></div>
+      </div>
+      <!-- Tab Materiales -->
+      <div id="progTabMateriales" style="display:none">
+       <div id="progMaterialesView"></div>
       </div>
      </div>
     </div>
@@ -2519,12 +2534,93 @@ function refreshJView(){
   else renderInscWeekContent();
 }
 
+let _curProgTab='semanas';
+function setProgTab(tab){
+  _curProgTab=tab;
+  ['semanas','sesiones','materiales'].forEach(t=>{
+    const btn=document.getElementById('ptab'+t.charAt(0).toUpperCase()+t.slice(1));
+    const panel=document.getElementById('progTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(btn)btn.classList.toggle('active',t===tab);
+    if(panel)panel.style.display=t===tab?'block':'none';
+  });
+  const btnSem=document.getElementById('btnNuevaSemana');
+  if(btnSem)btnSem.style.display=tab==='semanas'?'':'none';
+  if(tab==='sesiones')renderProgSesionesTab();
+  if(tab==='materiales')renderProgMaterialesTab();
+}
+function renderProgSesionesTab(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  const col=p.col||'#C9A84C';
+  const semanas=p.semanas||[];
+  const el=document.getElementById('progSesionesView');if(!el)return;
+  // Agrupa todas las sesiones de todas las semanas
+  const allSes=[];
+  semanas.forEach(s=>(s.sesiones||[]).forEach(se=>allSes.push({...se,semana:s.num,tituloSem:s.titulo})));
+  if(!allSes.length){
+    el.innerHTML=`<div class="cc"><p style="color:var(--muted);font-size:13px;text-align:center;padding:24px">No hay sesiones cargadas en este programa.<br>Agregá sesiones desde la pestaña <strong>Semanas</strong>.</p></div>`;
+    return;
+  }
+  // Agrupa por herramienta
+  const byHerr={};
+  allSes.forEach(se=>{const k=se.nombre||se.tipo||'Sesión';if(!byHerr[k])byHerr[k]=[];byHerr[k].push(se);});
+  const resumen=Object.entries(byHerr).map(([nom,items])=>{
+    const h=herramientas.find(x=>x.nom===nom)||{};
+    const facsRel=facs.filter(f=>(f.herramientas||[]).includes(nom)||(h.facs||[]).includes(f.nombre));
+    return `<div style="background:var(--card2);border-radius:12px;padding:12px 14px;border:1px solid var(--border);margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:20px">${h.ico||'✨'}</span>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--gl)">${nom}</div>
+          <div style="font-size:11px;color:var(--muted)">${items.length} sesión${items.length>1?'es':''} en el programa</div>
+        </div>
+        ${facsRel.length?`<div style="font-size:10px;color:var(--muted)">${facsRel.map(f=>`<span style="background:${col}22;padding:2px 7px;border-radius:10px;margin-left:3px">${f.nombre.split(' ')[0]}</span>`).join('')}</div>`:''}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px">
+        ${items.map(se=>`<span style="font-size:10px;background:${col}15;border:1px solid ${col}33;border-radius:8px;padding:3px 9px">📅 Sem. ${se.semana} — ${se.tituloSem||''}</span>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div class="cc" style="margin-bottom:0">
+    <h3 style="color:var(--gl);margin-bottom:12px">✨ Sesiones del programa — ${allSes.length} en total</h3>
+    ${resumen}
+  </div>`;
+}
+function renderProgMaterialesTab(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  const col=p.col||'#C9A84C';
+  const semanas=p.semanas||[];
+  const el=document.getElementById('progMaterialesView');if(!el)return;
+  const allMat=[];
+  semanas.forEach(s=>(s.materiales||[]).forEach(m=>allMat.push({...m,semana:s.num,tituloSem:s.titulo})));
+  if(!allMat.length){
+    el.innerHTML=`<div class="cc"><p style="color:var(--muted);font-size:13px;text-align:center;padding:24px">No hay materiales cargados.<br>Agregá materiales desde la pestaña <strong>Semanas</strong>.</p></div>`;
+    return;
+  }
+  const byTipo={};
+  allMat.forEach(m=>{const k=m.tipo||'Otro';if(!byTipo[k])byTipo[k]=[];byTipo[k].push(m);});
+  const icoTipo={pdf:'📄',video:'🎥',audio:'🎧',lectura:'📖',link:'🔗',Otro:'📎'};
+  el.innerHTML=`<div class="cc" style="margin-bottom:0">
+    <h3 style="color:var(--gl);margin-bottom:12px">📖 Materiales del programa — ${allMat.length} en total</h3>
+    ${Object.entries(byTipo).map(([tipo,items])=>`
+      <div style="margin-bottom:12px">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:6px">${icoTipo[tipo]||'📎'} ${tipo.toUpperCase()}</div>
+        ${items.map(m=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:4px;border:1px solid var(--border)">
+          <div style="flex:1">
+            <div style="font-size:12px;font-weight:600;color:var(--text)">${m.nombre||'Material'}</div>
+            <div style="font-size:10px;color:var(--muted)">Sem. ${m.semana} — ${m.tituloSem||''}</div>
+          </div>
+          ${m.url?`<a href="${m.url}" target="_blank" style="font-size:11px;color:var(--gold);text-decoration:none">↗ Abrir</a>`:''}
+        </div>`).join('')}
+      </div>`).join('')}
+  </div>`;
+}
 function openJourneyView(progId){
-  curJourneyProgId=progId;curJourneySemIdx=0;journeyMode='tmpl';
+  curJourneyProgId=progId;curJourneySemIdx=0;journeyMode='tmpl';_curProgTab='semanas';
   const p=programas.find(x=>x.id===progId);if(!p)return;
   document.getElementById('progListView').style.display='none';
   document.getElementById('progJourneyView').style.display='block';
   document.getElementById('journeyProgTitle').innerHTML=`${p.ico} ${p.nombre}`;
+  setProgTab('semanas');
   renderJourney();
 }
 function closeJourneyView(){
@@ -3525,13 +3621,17 @@ function renderProg(){
     const yearLine=Object.entries(byYear).sort().map(([y,c])=>`<span style="font-size:11px;color:var(--muted)">${y}: <strong style="color:var(--text)">${c}</strong></span>`).join(' · ');
     const sorted=[...pSes].sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
     const first=sorted[0],last=sorted[sorted.length-1];
-    // Sesiones incluidas v2 — valor puede ser número o {qty,facId,facNombre}
+    // Sesiones incluidas v2 — agrupar por herramienta (nom) para mostrar limpio
     const sesInc=p.sesionesIncluidas_v2||{};
-    const totalSesInc=Object.values(sesInc).reduce((a,v)=>a+_pgSesQty(v),0);
-    const sesIncLine=Object.entries(sesInc).map(([n,v])=>{
-      const q=_pgSesQty(v);
-      const h=herramientas.find(x=>x.nom===n)||{};
-      return `<span style="font-size:10px;background:${col}22;border:1px solid ${col}44;border-radius:8px;padding:2px 7px">${h.ico||''} ${q}× ${n.split(' ').slice(0,3).join(' ')}</span>`;
+    const sesGrouped={};
+    Object.entries(sesInc).forEach(([key,v])=>{
+      const nom=typeof v==='object'&&v.nom?v.nom:key.split('__')[0];
+      sesGrouped[nom]=(sesGrouped[nom]||0)+_pgSesQty(v);
+    });
+    const totalSesInc=Object.values(sesGrouped).reduce((a,n)=>a+n,0);
+    const sesIncLine=Object.entries(sesGrouped).map(([nom,q])=>{
+      const h=herramientas.find(x=>x.nom===nom)||{};
+      return `<span style="font-size:10px;background:${col}22;border:1px solid ${col}44;border-radius:8px;padding:2px 7px">${h.ico||''} ${q}× ${nom.split(' ').slice(0,3).join(' ')}</span>`;
     }).join('');
     // Precio
     const precioStr=p.precio?`${p.moneda==='USD'?'USD':'$'}${p.precio.toLocaleString(p.moneda==='USD'?'en-US':'es-AR')}`:null;
@@ -4095,7 +4195,9 @@ async function syncProgramTemplates(){
   let updated=0,skipped=0;
   for(const def of PROG_DEFAULT){
     if(!(def.semanas||[]).length)continue;// template has no semanas, skip
-    const prog=programas.find(p=>p.id===def.id);
+    // Buscar por id primero, luego por nombre (case-insensitive, sin tildes)
+    const normName=s=>s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'').trim();
+    const prog=programas.find(p=>p.id===def.id)||programas.find(p=>normName(p.nombre)===normName(def.nombre));
     if(!prog)continue;
     if((prog.semanas||[]).length>0){skipped++;continue;}// already has content
     prog.semanas=JSON.parse(JSON.stringify(def.semanas));
