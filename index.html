@@ -510,7 +510,7 @@ select.fi:focus{border-color:var(--gold);}
   <div class="fg"><label>Ser (Cliente) *</label><input type="text" id="nsSer" list="dlSer" placeholder="Nombre del ser..."><datalist id="dlSer"></datalist></div>
   <div class="fg-row">
    <div class="fg"><label>Herramienta *</label>
-    <select id="nsTipo">
+    <select id="nsTipo" onchange="onSesHerramientaChange()">
      <option>Barras de Access</option><option>Sesión Profit</option><option>Proceso de Cuerpos</option>
      <option>Bioexistencia</option><option>Registros Akashicos</option><option>Reiki</option>
      <option>Limpieza Energetica</option><option>Numerologia</option><option>Borra de cafe</option>
@@ -2260,7 +2260,9 @@ function openModal(type,id,extra){
     updateCurrencyLabels();
     calcSaldo();
     document.getElementById('dlSer').innerHTML=seres.map(s=>`<option value="${s.nombre}">`).join('');
-    document.getElementById('nsFac').innerHTML=facs.map(f=>`<option>${f.nombre}</option>`).join('');
+    // Filtrar facilitadores según herramienta seleccionada
+    onSesHerramientaChange(ses?ses.facilitador:'');
+    if(ses)document.getElementById('nsFac').value=ses.facilitador||'';
     document.getElementById('nsPrograma').innerHTML='<option value="">— Sesión suelta (sin programa) —</option>'+programas.map(p=>`<option>${p.nombre}</option>`).join('');
     if(ses)document.getElementById('nsPrograma').value=ses.programa||'';
     // Intake del ser en esta sesión
@@ -3397,6 +3399,20 @@ function onProgHerramientaChange(){
     :facs;
   facSel.innerHTML='<option value="">— Cualquiera —</option>'+
     facsFiltrados.map(f=>`<option value="${f.id}">${f.nombre}</option>`).join('');
+}
+function onSesHerramientaChange(keepFac){
+  const nom=document.getElementById('nsTipo').value;
+  const facSel=document.getElementById('nsFac');
+  if(!facSel)return;
+  const curFac=keepFac||facSel.value;
+  // Filtrar facilitadores que tienen esta herramienta
+  const h=herramientas.find(x=>x.nom===nom);
+  const facsFiltrados=h&&h.facs&&h.facs.length
+    ?facs.filter(f=>h.facs.includes(f.nombre)||(f.herramientas||[]).includes(nom))
+    :facs;
+  facSel.innerHTML=facsFiltrados.map(f=>`<option value="${f.nombre}">${f.nombre}</option>`).join('');
+  // Restaurar selección si sigue disponible
+  if(curFac&&facsFiltrados.some(f=>f.nombre===curFac))facSel.value=curFac;
 }
 function addProgSesion(){
   const nom=document.getElementById('pgSesNueva').value.trim();
