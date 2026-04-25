@@ -302,6 +302,10 @@ select.fi:focus{border-color:var(--gold);}
    <div class="topbar">
     <button class="hamburger" onclick="openSidebar()" title="Menú">☰</button>
     <h1 id="pgTitle">🏠 Dashboard</h1>
+    <div style="display:flex;align-items:center;gap:8px;margin-left:auto;margin-right:8px">
+     <span id="offlineBadge" style="display:none;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(239,68,68,.15);color:#EF4444;border:1px solid rgba(239,68,68,.3);white-space:nowrap">📴 Offline</span>
+     <span id="syncBadge" style="display:none;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);cursor:pointer;white-space:nowrap" onclick="manualSync()" title="Tap para sincronizar ahora">🔄 Pendientes</span>
+    </div>
     <div class="acts" id="pgActs"><button class="btn btn-p" onclick="openModal('ses')">+ Nueva Sesión</button></div>
    </div>
    <div class="content">
@@ -1007,6 +1011,91 @@ const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
+/* ── Service Worker Registration ── */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('/sw.js').catch(e=>console.warn('SW:',e));
+}
+
+/* ── Offline / Local Cache ── */
+const LCP_KEY='lcp_data_v1';
+const LCP_QUEUE='lcp_sync_queue';
+
+function saveLocalCache(){
+  try{
+    const payload={seres,sessions,facs,facturas,herramientas,programas,campanas:campañas,inscripciones,ts:Date.now()};
+    localStorage.setItem(LCP_KEY,JSON.stringify(payload));
+  }catch(e){console.warn('saveLocalCache:',e);}
+}
+
+function loadLocalCache(){
+  try{
+    const raw=localStorage.getItem(LCP_KEY);
+    if(!raw)return false;
+    const d=JSON.parse(raw);
+    seres=d.seres||[];sessions=d.sessions||[];facs=d.facs||[];
+    facturas=d.facturas||[];herramientas=d.herramientas||[];programas=d.programas||[];
+    campañas=d.campanas||[];inscripciones=d.inscripciones||[];
+    return true;
+  }catch(e){return false;}
+}
+
+function getPendingQueue(){
+  try{return JSON.parse(localStorage.getItem(LCP_QUEUE)||'[]');}catch{return[];}
+}
+function setPendingQueue(q){
+  try{localStorage.setItem(LCP_QUEUE,JSON.stringify(q));}catch{}
+}
+function addToQueue(table,data){
+  const q=getPendingQueue();
+  // Replace any previous entry for the same table (last write wins)
+  const idx=q.findIndex(x=>x.table===table);
+  if(idx>=0)q[idx]={table,data,ts:Date.now()};
+  else q.push({table,data,ts:Date.now()});
+  setPendingQueue(q);
+  updateOfflineUI();
+}
+
+function updateOfflineUI(){
+  const isOnline=navigator.onLine;
+  const pending=getPendingQueue().length;
+  const ob=document.getElementById('offlineBadge');
+  const sb=document.getElementById('syncBadge');
+  if(ob)ob.style.display=isOnline?'none':'inline-block';
+  if(sb)sb.style.display=(pending>0&&isOnline)?'inline-block':'none';
+  if(sb&&pending>0)sb.textContent=`🔄 ${pending} pendiente${pending>1?'s':''}`;
+}
+
+async function processSyncQueue(){
+  const q=getPendingQueue();
+  if(!q.length)return;
+  if(!navigator.onLine)return;
+  toast(`☁️ Sincronizando ${q.length} cambio(s)...`);
+  const failed=[];
+  for(const item of q){
+    try{
+      await _sb.from(item.table).upsert(_wrap(item.data));
+    }catch(e){failed.push(item);}
+  }
+  setPendingQueue(failed);
+  updateOfflineUI();
+  if(!failed.length)toast('✅ Todo sincronizado con la nube');
+  else toast(`⚠️ ${failed.length} cambio(s) sin sincronizar`,'err');
+}
+
+async function manualSync(){
+  await processSyncQueue();
+}
+
+window.addEventListener('online',()=>{
+  toast('🟢 Conexión restaurada');
+  updateOfflineUI();
+  processSyncQueue();
+});
+window.addEventListener('offline',()=>{
+  toast('📴 Sin conexión — modo offline activado');
+  updateOfflineUI();
+});
+
 function showLoader(msg='Cargando...'){
   const l=document.getElementById('loader');
   document.getElementById('loaderMsg').textContent=msg;
@@ -1046,7 +1135,20 @@ async function loadData(){
     if(!ff.data?.length && FACS_DEF.length)     await _sb.from('facilitadores').upsert(_wrap(FACS_DEF));
     if(!hh.data?.length && HERR.length)         await _sb.from('herramientas').upsert(_wrap(HERR));
     if(!pp.data?.length && PROG_DEFAULT.length) await _sb.from('programas').upsert(_wrap(PROG_DEFAULT));
-  }catch(err){console.error('loadData:',err);toast('Error al cargar datos: '+err.message,'err');}
+    // ✅ Guardar copia local para uso offline
+    saveLocalCache();
+    updateOfflineUI();
+  }catch(err){
+    console.error('loadData:',err);
+    // 📴 Sin conexión — intentar cargar desde caché local
+    const cached=loadLocalCache();
+    if(cached){
+      toast('📴 Offline — mostrando datos del último acceso');
+    } else {
+      toast('Sin conexión y sin caché local. Conectate a internet para el primer acceso.','err');
+    }
+    updateOfflineUI();
+  }
   hideLoader();
 }
 // ─────────────────────────────────────────────────────────
@@ -1072,21 +1174,38 @@ function save(){
   _saveTimer=setTimeout(()=>_syncSupabase(),1000);
 }
 async function _syncSupabase(){
+  const pairs=[
+    ['seres',seres],['sessions',sessions],['facilitadores',facs],
+    ['facturas',facturas],['herramientas',herramientas],['programas',programas],
+    ['campanas',campañas],['inscripciones',inscripciones]
+  ];
+  // Siempre guardar localmente primero
+  saveLocalCache();
+  // Sin internet → encolar y salir
+  if(!navigator.onLine){
+    pairs.filter(([,arr])=>arr.length).forEach(([tbl,arr])=>addToQueue(tbl,arr));
+    toast('📴 Guardado localmente — se sincronizará al reconectarte');
+    return;
+  }
   try{
-    const pairs=[
-      ['seres',seres],['sessions',sessions],['facilitadores',facs],
-      ['facturas',facturas],['herramientas',herramientas],['programas',programas],
-      ['campanas',campañas],['inscripciones',inscripciones]
-    ];
     const results=await Promise.all(
       pairs.filter(([,arr])=>arr.length).map(([tbl,arr])=>_sb.from(tbl).upsert(_wrap(arr)))
     );
     const errs=results.filter(r=>r.error);
     if(errs.length){
       errs.forEach(r=>console.error('sync err:',r.error));
-      toast('⚠️ Error al guardar en la nube','err');
+      // Encolar los que fallaron para reintentar
+      errs.forEach((_,i)=>{const[tbl,arr]=pairs[i];if(arr.length)addToQueue(tbl,arr);});
+      toast('⚠️ Error al guardar en la nube — reintentando al reconectarse','err');
+    } else {
+      updateOfflineUI();
     }
-  }catch(err){console.error('_syncSupabase:',err);toast('⚠️ Error de conexión','err');}
+  }catch(err){
+    console.error('_syncSupabase:',err);
+    pairs.filter(([,arr])=>arr.length).forEach(([tbl,arr])=>addToQueue(tbl,arr));
+    toast('📴 Sin conexión — cambios en cola para sincronizar');
+    updateOfflineUI();
+  }
 }
 // Elimina un registro directamente de Supabase (el upsert no borra nunca)
 async function delRecord(table,id){
@@ -3960,7 +4079,7 @@ async function syncProgramTemplates(){
   renderProg();
 }
 
-function initApp(){renderDash();}
+function initApp(){renderDash();updateOfflineUI();}
 </script>
 </body>
 </html>
