@@ -1495,18 +1495,21 @@ function renderFacBday(now){
   }).filter(Boolean).sort((a,b)=>a.day-b.day);
   const el=document.getElementById('dFacBday');
   if(!el)return;
-  if(!bdays.length){el.innerHTML='';return;}
+  const facsSinFecha=facs.filter(f=>!f.nacimiento||f.nacimiento==='None'||f.nacimiento==='');
   el.innerHTML=`
     <div class="cc" style="margin-bottom:0">
       <h3 style="color:var(--gl);margin-bottom:10px">🎂 Cumpleaños Facilitadores — ${MES[mo]} ${yr}</h3>
-      <div class="bday-grid">${bdays.map(f=>`
-        <div class="bday-card">
-          <div style="font-size:22px">🙋</div>
-          <div class="bday-name">${f.nombre.split(' ')[0]} ${f.nombre.split(' ')[1]||''}</div>
-          <div class="bday-date">${f.day} de ${MES[mo]}</div>
-          <div class="bday-age">${yr-f.birthYear} años</div>
-        </div>`).join('')}
-      </div>
+      ${bdays.length
+        ?`<div class="bday-grid">${bdays.map(f=>`
+          <div class="bday-card">
+            <div style="font-size:22px">🙋</div>
+            <div class="bday-name">${f.nombre.split(' ')[0]} ${f.nombre.split(' ')[1]||''}</div>
+            <div class="bday-date">${f.day} de ${MES[mo]}</div>
+            <div class="bday-age">${yr-f.birthYear} años</div>
+          </div>`).join('')}
+        </div>`
+        :`<p style="font-size:12px;color:var(--muted);text-align:center;padding:10px 0">Ningún facilitador cumple años este mes 🌙</p>`}
+      ${facsSinFecha.length?`<p style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center">⚠️ ${facsSinFecha.length} facilitador${facsSinFecha.length>1?'es':''}  sin fecha de nacimiento cargada — agregala desde <strong>Facilitadores</strong></p>`:''}
     </div>`;
 }
 
@@ -2914,21 +2917,7 @@ function renderJourneyAdmin(){
     Object.keys(globalAreas).forEach(k=>{globalAreas[k].done+=ap[k].done;globalAreas[k].total+=ap[k].total;});
   });
 
-  const resumenHtml=lista.length>1?`<div class="cc" style="margin-bottom:16px;padding:14px 18px">
-    <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:10px">✨ RESUMEN INTEGRATIVO${_journeyFilter?' — '+progsConInsc.find(p=>p.id===_journeyFilter)?.nombre:''}</div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
-      ${[['espiritual','🌀','#8B5CF6'],['mental','🧠','#3B82F6'],['fisica','💪','#10B981'],['social','🤝','#F59E0B']].map(([k,ico,c])=>{
-        const ga=globalAreas[k];const pct=ga.total?Math.round(ga.done/ga.total*100):0;
-        return `<div style="text-align:center;padding:8px;background:${c}11;border-radius:12px;border:1px solid ${c}33">
-          <div style="font-size:22px">${ico}</div>
-          <div style="font-size:11px;font-weight:700;color:${c};margin:2px 0">${k.charAt(0).toUpperCase()+k.slice(1)}</div>
-          <div style="font-size:18px;font-weight:800;color:${c}">${pct}%</div>
-          <div style="font-size:9px;color:var(--muted)">${ga.done}/${ga.total} ítems</div>
-          <div style="margin-top:5px;background:var(--card2);border-radius:20px;height:4px;overflow:hidden"><div style="background:${c};height:100%;width:${pct}%;border-radius:20px"></div></div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`:'';
+  const resumenHtml='';
 
   // Cards de inscripciones
   const cardsHtml=lista.map(insc=>{
