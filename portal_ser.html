@@ -157,7 +157,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tool-card:hover{border-color:rgba(201,168,76,.35);}
 .tool-ico{font-size:26px;line-height:1;}
 .tool-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
-.btn-agendar{margin-top:6px;padding:6px 14px;background:rgba(201,168,76,.12);
+.tool-desc{font-size:11px;color:var(--muted);line-height:1.55;margin-top:2px;}
+.btn-agendar{margin-top:8px;padding:6px 14px;background:rgba(201,168,76,.12);
   border:1px solid rgba(201,168,76,.3);border-radius:20px;color:var(--gl);
   font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block;}
 .btn-agendar:hover{background:rgba(201,168,76,.22);}
@@ -243,7 +244,7 @@ const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
 let curSer=null, allSessions=[], curFilter='todas', intakeSesActual=null;
-let radios={};
+let radios={}, herramientasPortal=[];
 
 /* ── UTILS ── */
 function showLoader(m='Cargando...'){document.getElementById('loaderMsg').textContent=m;document.getElementById('loader').style.display='flex';}
@@ -274,6 +275,7 @@ async function doLogin(){
     curSer={id:found.id,...found.data};
     sessionStorage.setItem('lcdp_portal_ser',JSON.stringify(curSer));
     await loadSessions();
+    await loadHerramientas();
     showAppScreen();
   }catch(e){
     hideLoader();
@@ -318,11 +320,16 @@ const HERRAMIENTAS=[
 
 function openAgenda(){
   const nombre=curSer?.nombre||'';
-  document.getElementById('toolsGrid').innerHTML=HERRAMIENTAS.map(h=>{
-    const msg=encodeURIComponent(`Hola Juan Cruz! Soy ${nombre} y me gustaría agendar una sesión de ${h.nom}. ✨`);
+  const lista=herramientasPortal.length?herramientasPortal:HERRAMIENTAS;
+  document.getElementById('toolsGrid').innerHTML=lista.map(h=>{
+    const nom=h.nom||h.nombre||'Sesión';
+    const ico=h.ico||'✨';
+    const desc=h.desc||'';
+    const msg=encodeURIComponent(`Hola Juan Cruz! Soy ${nombre} y me gustaría agendar una sesión de ${nom}. ✨`);
     return`<div class="tool-card">
-      <div class="tool-ico">${h.ico}</div>
-      <div class="tool-name">${h.nom}</div>
+      <div class="tool-ico">${ico}</div>
+      <div class="tool-name">${nom}</div>
+      ${desc?`<div class="tool-desc">${desc}</div>`:''}
       <a class="btn-agendar" href="https://wa.me/${WA_NUM}?text=${msg}" target="_blank">Agendar →</a>
     </div>`;
   }).join('');
@@ -336,6 +343,15 @@ function closeAgenda(){
 function closeAgendaOutside(e){if(e.target===document.getElementById('agendaOverlay'))closeAgenda();}
 
 /* ── DATA ── */
+async function loadHerramientas(){
+  try{
+    const {data}=await _sb.from('herramientas').select('id,data');
+    if(data&&data.length){
+      herramientasPortal=(data||[]).map(r=>({id:r.id,...r.data})).filter(h=>h.disponiblePortal===true);
+    }
+  }catch(e){console.warn('herramientas fallback',e);}
+}
+
 async function loadSessions(){
   showLoader('Cargando tus sesiones...');
   try{

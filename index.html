@@ -762,6 +762,12 @@ select.fi:focus{border-color:var(--gold);}
   <div class="fg"><label>Descripción</label><textarea id="hDesc"></textarea></div>
   <div class="fg-row">
    <div class="fg"><label>Color</label><input type="color" id="hCol" value="#C9A84C"></div>
+   <div class="fg" style="display:flex;flex-direction:column;justify-content:flex-end">
+    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 0">
+     <input type="checkbox" id="hDisponible" style="accent-color:var(--gold);width:16px;height:16px">
+     <span style="font-size:13px;font-weight:600;color:var(--text)">Disponible en Portal del Ser</span>
+    </label>
+   </div>
   </div>
   <div class="fg">
    <label>Facilitadores que la ofrecen</label>
@@ -2370,6 +2376,7 @@ function renderHerr(){
         <div>
           <div class="hn">${h.nom}</div>
           <div class="hcnt" style="color:var(--gd)">${sesCount} sesiones · ${allFacs.length} facilitadores</div>
+          ${h.disponiblePortal?'<span style="font-size:9px;font-weight:700;color:#3DAA6A;background:rgba(61,170,106,.12);border:1px solid rgba(61,170,106,.25);border-radius:10px;padding:1px 7px">✓ En Portal</span>':'<span style="font-size:9px;color:var(--muted)">No visible en Portal</span>'}
         </div>
       </div>
       <div class="hdesc">${h.desc}</div>
@@ -2557,6 +2564,7 @@ function openModal(type,id,extra){
     document.getElementById('hIco').value=h?h.ico:'🔮';
     document.getElementById('hDesc').value=h?h.desc:'';
     document.getElementById('hCol').value=h?h.col:'#C9A84C';
+    document.getElementById('hDisponible').checked=h?(h.disponiblePortal===true):false;
     const hFacs=h?(h.facs||[]):[];
     document.getElementById('hFacList').innerHTML=facs.map(f=>`
       <label style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:12px">
@@ -2682,7 +2690,7 @@ function saveHerr(){
   const nom=document.getElementById('hNom').value.trim();
   if(!nom){alert('El nombre es obligatorio');return;}
   const selFacs=[...document.querySelectorAll('#hFacList input:checked')].map(c=>c.value);
-  const hData={nom,ico:document.getElementById('hIco').value||'🔮',desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs};
+  const hData={nom,ico:document.getElementById('hIco').value||'🔮',desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked};
   if(eid){
     const h=herramientas.find(x=>x.id===eid);
     if(h)Object.assign(h,hData);
