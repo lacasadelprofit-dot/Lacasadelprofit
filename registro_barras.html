@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Registrate — La Casa del Profit</title>
+<title>Barras de Access — La Casa del Profit</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="icon" type="image/png" href="/favicon.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <meta name="theme-color" content="#C9A84C">
-<meta property="og:title" content="La Casa del Profit — Registrate">
-<meta property="og:description" content="Dejá tus datos y empezá tu camino de transformación.">
+<meta property="og:title" content="Barras de Access — La Casa del Profit">
+<meta property="og:description" content="Quiero saber más sobre las Barras de Access. Dejá tus datos y te contactamos.">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -21,14 +21,12 @@
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;
   background:radial-gradient(ellipse at 20% 20%,#1A1400 0%,#06060A 60%),radial-gradient(ellipse at 80% 80%,#0D0A1A 0%,transparent 50%);}
 
-/* ── HERO ── */
 .hero{text-align:center;padding:52px 20px 36px;max-width:600px;margin:0 auto;}
-.hero .icon{font-size:56px;margin-bottom:16px;display:block;}
 .hero h1{font-size:22px;font-weight:800;color:var(--gl);letter-spacing:2px;margin-bottom:6px;}
-.hero .brand{font-size:11px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;}
+.hero .brand{font-size:11px;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.hero .pill{display:inline-block;font-size:12px;font-weight:700;padding:5px 16px;border-radius:20px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);color:var(--gold);margin-bottom:20px;letter-spacing:.5px;}
 .hero p{font-size:15px;color:var(--muted);line-height:1.7;max-width:440px;margin:0 auto;}
 
-/* ── FORM CARD ── */
 .form-wrap{max-width:540px;margin:0 auto;padding:0 16px 60px;}
 .form-card{background:var(--card);border:1px solid #2A2810;border-radius:24px;padding:32px 28px;
   box-shadow:0 0 60px rgba(201,168,76,.06),0 25px 60px rgba(0,0,0,.5);}
@@ -43,6 +41,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
 .req{color:var(--gold);}
 
+.check-group{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.check-group label,.radio-group label{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:400;cursor:pointer;color:var(--text);}
+.check-group input,.radio-group input{width:16px;height:16px;accent-color:var(--gold);flex-shrink:0;}
+.radio-group{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+
 .btn-send{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gd));
   border:none;border-radius:12px;color:#050401;font-size:16px;font-weight:800;cursor:pointer;
   margin-top:8px;letter-spacing:.5px;transition:opacity .2s;}
@@ -52,7 +55,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .sep{border:none;border-top:1px solid var(--border);margin:22px 0;}
 .sec-label{font-size:12px;color:var(--gold);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:16px;}
 
-/* ── SUCCESS ── */
 #successScreen{display:none;max-width:540px;margin:0 auto;padding:0 16px 60px;}
 .success-card{background:var(--card);border:1px solid rgba(61,170,106,.3);border-radius:24px;
   padding:48px 32px;text-align:center;box-shadow:0 0 40px rgba(61,170,106,.08);}
@@ -61,13 +63,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .success-card p{color:var(--muted);font-size:14px;line-height:1.7;}
 .success-card .sub{margin-top:20px;font-size:13px;color:var(--gold);}
 
-/* ── LOADER ── */
 #loader{display:none;position:fixed;inset:0;background:rgba(6,6,10,.9);z-index:9999;
   align-items:center;justify-content:center;flex-direction:column;gap:16px;}
 .spinner{width:44px;height:44px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);
   border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
 .err-msg{color:var(--red);font-size:12px;margin-top:10px;display:none;text-align:center;}
 
 @media(max-width:480px){
@@ -89,7 +89,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <svg width="76" height="76" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" style="margin:0 auto 16px;display:block"><defs><radialGradient id="rg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A1E04"/><stop offset="100%" stop-color="#080A04"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="url(#rg1)"/><g stroke="#C9A84C" stroke-width="1.2" fill="none" opacity="0.9"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="32" r="18"/><circle cx="65.6" cy="41" r="18"/><circle cx="65.6" cy="59" r="18"/><circle cx="50" cy="68" r="18"/><circle cx="34.4" cy="59" r="18"/><circle cx="34.4" cy="41" r="18"/></g><circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.5" fill="none" opacity="0.6"/><circle cx="50" cy="50" r="38.5" stroke="#C9A84C" stroke-width="0.6" fill="none" opacity="0.35"/><g stroke="#E8C96A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="34,50 50,37 66,50"/><line x1="37" y1="50" x2="37" y2="63"/><line x1="63" y1="50" x2="63" y2="63"/><line x1="37" y1="63" x2="63" y2="63"/><path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63" fill="none"/></g></svg>
   <h1>LA CASA DEL PROFIT</h1>
   <div class="brand">Herramientas para #VivireNProfit</div>
-  <p>Dejá tus datos y damos el primer paso juntos. Te contactamos para contarte todo sobre las sesiones y experiencias disponibles.</p>
+  <div class="pill">✦ Barras de Access</div>
+  <p>Una sesión que libera el ruido mental y te devuelve el espacio para vivir con más ligereza. Dejá tus datos y te contamos todo.</p>
 </div>
 
 <!-- FORM -->
@@ -114,7 +115,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="fg-row">
       <div class="fg">
         <label>País</label>
-        <input type="text" id="rPais" placeholder="Argentina" value="Argentina">
+        <input type="text" id="rPais" value="Argentina">
       </div>
       <div class="fg">
         <label>Ciudad</label>
@@ -123,10 +124,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
 
     <hr class="sep">
-    <div class="sec-label">¿Qué te trae por acá?</div>
+    <div class="sec-label">¿Cómo nos conociste?</div>
 
     <div class="fg">
-      <label>¿Cómo nos conociste?</label>
       <select id="rOrigen">
         <option value="">— Contanos —</option>
         <option>Instagram</option>
@@ -139,33 +139,38 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       </select>
     </div>
 
+    <hr class="sep">
+    <div class="sec-label">Contanos un poco más</div>
+
     <div class="fg">
-      <label>¿Qué herramienta o sesión te interesa explorar?</label>
-      <select id="rInteres">
-        <option value="">— Elegí una opción —</option>
-        <option>Barras de Access</option>
-        <option>Sesión Profit</option>
-        <option>Proceso de Cuerpos</option>
-        <option>Registros Akashicos</option>
-        <option>Reiki</option>
-        <option>Numerología</option>
-        <option>Coaching con Caballos</option>
-        <option>Constelaciones Familiares</option>
-        <option>Flores de Bach</option>
-        <option>Yoga</option>
-        <option>Ceremonias Hongos</option>
-        <option>Todavía no lo sé</option>
-        <option>Quiero hablar con alguien</option>
-      </select>
+      <label>¿Qué sentís más? <span style="font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">(podés marcar más de uno)</span></label>
+      <div class="check-group">
+        <label><input type="checkbox" id="rSint1"> Mucho ruido mental</label>
+        <label><input type="checkbox" id="rSint2"> Estrés / Ansiedad</label>
+        <label><input type="checkbox" id="rSint3"> Cansancio general</label>
+      </div>
     </div>
 
     <div class="fg">
-      <label>¿Qué te gustaría transformar o explorar en tu vida?</label>
-      <textarea id="rMensaje" placeholder="Contanos un poco sobre vos, qué estás buscando, qué te genera curiosidad... (opcional)"></textarea>
+      <label>¿En qué momento lo sentís más?</label>
+      <div class="radio-group">
+        <label><input type="radio" name="rMomento" id="rMom1" value="A la noche"> A la noche</label>
+        <label><input type="radio" name="rMomento" id="rMom2" value="Trabajando"> Trabajando</label>
+        <label><input type="radio" name="rMomento" id="rMom3" value="Todo el día"> Todo el día</label>
+        <label>
+          <input type="radio" name="rMomento" id="rMom4" value="Otro" onchange="document.getElementById('rMomOtro').style.display='block'"> Otro
+        </label>
+        <input type="text" id="rMomOtro" placeholder="Contanos cuándo..." style="display:none;margin-top:2px">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>¿Algo más que quieras contarnos?</label>
+      <textarea id="rMensaje" placeholder="Tu situación actual, lo que estás buscando, lo que te genera curiosidad... (opcional)"></textarea>
     </div>
 
     <p class="err-msg" id="errMsg">Completá tu nombre, email y celular para continuar.</p>
-    <button class="btn-send" onclick="enviarRegistro()">Quiero empezar mi camino ✨</button>
+    <button class="btn-send" onclick="enviarRegistro()">Quiero saber más sobre las Barras ✨</button>
 
     <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px;line-height:1.6">
       Tu información es confidencial y solo será usada para contactarte.<br>
@@ -179,7 +184,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="success-card">
     <div class="success-icon">🌟</div>
     <h2>¡Gracias por dar el primer paso!</h2>
-    <p>Recibimos tu registro. En breve vamos a contactarte para contarte todo sobre las experiencias disponibles y dar juntos el siguiente paso.</p>
+    <p>Recibimos tu registro. En breve te contactamos para contarte todo sobre las Barras de Access y coordinar tu primera sesión.</p>
     <p class="sub">✨ Bienvenido/a a La Casa del Profit</p>
   </div>
 </div>
@@ -197,11 +202,20 @@ async function enviarRegistro(){
   const pais=document.getElementById('rPais').value.trim()||'Argentina';
   const ciudad=document.getElementById('rCiudad').value.trim();
   const origen=document.getElementById('rOrigen').value;
-  const interes=document.getElementById('rInteres').value;
   const mensaje=document.getElementById('rMensaje').value.trim();
   const errEl=document.getElementById('errMsg');
 
-  // Canal origen → canalProsp
+  // Síntomas
+  const sintomas=['rSint1','rSint2','rSint3'].map((id,i)=>
+    document.getElementById(id)?.checked?['Mucho ruido mental','Estrés / Ansiedad','Cansancio general'][i]:null
+  ).filter(Boolean);
+
+  // Momento
+  const momRadio=['rMom1','rMom2','rMom3','rMom4'].find(id=>document.getElementById(id)?.checked);
+  const momento=momRadio?document.getElementById(momRadio).value:'';
+  const momentoOtro=momento==='Otro'?(document.getElementById('rMomOtro')?.value||''):'';
+
+  // Canal
   const canalMap={'Instagram':'IG comentario','Facebook':'IG comentario','TikTok':'IG comentario','WhatsApp':'WhatsApp','Referido / Amigo':'Referido'};
   const canalProsp=canalMap[origen]||'Otro';
 
@@ -210,7 +224,6 @@ async function enviarRegistro(){
     errEl.style.display='block';return;
   }
   errEl.style.display='none';
-
   document.getElementById('loader').style.display='flex';
 
   const ser={
@@ -225,42 +238,33 @@ async function enviarRegistro(){
     nacimiento:'',
     nacionalidad:'Argentina',
     prospecto:true,
-    origen:origen||'Formulario web',
-    interes,
-    herramientaInteres:interes||'',
+    origen:origen||'Formulario Barras',
+    interes:'Barras de Access',
+    herramientaInteres:'Barras de Access',
     mensajeRegistro:mensaje,
     review:'',
     campañaId:'',
     fechaRegistro:new Date().toISOString(),
     etapaProsp:'Nuevo',
     canalProsp,
-    sintomas:[],
-    momento:'',
-    momentoOtro:''
+    sintomas,
+    momento,
+    momentoOtro
   };
 
   try{
-    // Try via Netlify function first (uses service key, bypasses RLS)
     const fnResp=await fetch('/.netlify/functions/save-prospecto',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify(ser)
     });
-
     let ok=fnResp.ok;
-
-    // Fallback: try direct Supabase anon insert
     if(!ok){
       const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-      const {error}=await sb.from('seres').insert({
-        id:ser.id,
-        data:ser,
-        updated_at:new Date().toISOString()
-      });
+      const {error}=await sb.from('seres').insert({id:ser.id,data:ser,updated_at:new Date().toISOString()});
       ok=!error;
       if(error)console.warn('Supabase anon insert error:',error.message);
     }
-
     document.getElementById('loader').style.display='none';
     document.getElementById('formWrap').style.display='none';
     document.querySelector('.hero').style.display='none';
@@ -273,7 +277,6 @@ async function enviarRegistro(){
   }
 }
 
-// Enter key on name/email
 document.addEventListener('keydown',ev=>{
   if(ev.key==='Enter'&&ev.target.tagName==='INPUT')enviarRegistro();
 });
