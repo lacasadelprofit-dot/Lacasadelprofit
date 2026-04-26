@@ -1,6 +1,11 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api/:path*" },
+    {
+      "has": [{ "type": "host", "value": "registro.juancruzconsciencia.lat" }],
+      "source": "/",
+      "destination": "/registro_jcc.html"
+    },
     { "source": "/(.*)", "destination": "/$1" }
   ]
 }
