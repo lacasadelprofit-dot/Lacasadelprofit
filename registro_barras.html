@@ -129,13 +129,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="fg">
       <select id="rOrigen">
         <option value="">— Contanos —</option>
-        <option>Instagram</option>
-        <option>Facebook</option>
-        <option>TikTok</option>
-        <option>Referido / Amigo</option>
-        <option>Google</option>
-        <option>WhatsApp</option>
-        <option>Otro</option>
+        <option value="IG comentario">Comenté en Instagram</option>
+        <option value="IG direct">Me mandé un DM en Instagram</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Referido">Me lo recomendó alguien</option>
+        <option value="Otro">Otro</option>
       </select>
     </div>
 
@@ -215,9 +213,7 @@ async function enviarRegistro(){
   const momento=momRadio?document.getElementById(momRadio).value:'';
   const momentoOtro=momento==='Otro'?(document.getElementById('rMomOtro')?.value||''):'';
 
-  // Canal
-  const canalMap={'Instagram':'IG comentario','Facebook':'IG comentario','TikTok':'IG comentario','WhatsApp':'WhatsApp','Referido / Amigo':'Referido'};
-  const canalProsp=canalMap[origen]||'Otro';
+  const canalProsp=origen||'Otro';
 
   if(!nom||!email||!cel){
     errEl.textContent='Completá tu nombre, email y celular para continuar.';
@@ -238,7 +234,7 @@ async function enviarRegistro(){
     nacimiento:'',
     nacionalidad:'Argentina',
     prospecto:true,
-    origen:origen||'Formulario Barras',
+    origen:canalProsp||'Formulario Barras',
     interes:'Barras de Access',
     herramientaInteres:'Barras de Access',
     mensajeRegistro:mensaje,
