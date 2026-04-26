@@ -633,7 +633,24 @@ select.fi:focus{border-color:var(--gold);}
      <option>Flores de Bach</option><option>Viaje Sonoro</option><option>Otro</option>
     </select>
    </div>
-   <div class="fg"><label>Nota rápida</label><input type="text" id="srNotaProsp" placeholder="Lo que preguntó, su situación..."></div>
+   <div class="fg">
+    <label style="margin-bottom:6px;display:block">¿Qué sentís más?</label>
+    <div style="display:flex;flex-direction:column;gap:5px">
+     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer"><input type="checkbox" id="srSint1" style="width:15px;height:15px"> Mucho ruido mental</label>
+     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer"><input type="checkbox" id="srSint2" style="width:15px;height:15px"> Estrés / Ansiedad</label>
+     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer"><input type="checkbox" id="srSint3" style="width:15px;height:15px"> Cansancio general</label>
+    </div>
+   </div>
+   <div class="fg">
+    <label style="margin-bottom:6px;display:block">¿En qué momento lo sentís más?</label>
+    <div style="display:flex;flex-direction:column;gap:5px">
+     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer"><input type="radio" name="srMomento" id="srMom1" value="A la noche" style="width:15px;height:15px"> A la noche</label>
+     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer"><input type="radio" name="srMomento" id="srMom2" value="Trabajando" style="width:15px;height:15px"> Trabajando</label>
+     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer"><input type="radio" name="srMomento" id="srMom3" value="Todo el día" style="width:15px;height:15px"> Todo el día</label>
+     <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:400;cursor:pointer"><input type="radio" name="srMomento" id="srMom4" value="Otro" style="width:15px;height:15px"> Otro</label>
+    </div>
+    <input type="text" id="srMomOtro" placeholder="Describilo..." style="margin-top:7px;display:none">
+   </div>
   </div>
   <div class="fg"><label>Origen / Cómo llegó</label><input type="text" id="srOrigen" placeholder="Instagram, publicidad, referido..."></div>
   <div class="fg"><label>Campaña de origen</label><select id="srCamp"><option value="">— Sin campaña —</option></select></div>
@@ -2336,7 +2353,25 @@ function openModal(type,id,extra){
     document.getElementById('srCanalProsp').value=s?(s.canalProsp||''):'';
     document.getElementById('srEtapaProsp').value=s?(s.etapaProsp||'Nuevo'):'Nuevo';
     document.getElementById('srHerrInteres').value=s?(s.herramientaInteres||''):'';
-    document.getElementById('srNotaProsp').value=s?(s.notaProsp||''):'';
+    // Síntomas (checkboxes)
+    const sint=s?(s.sintomas||[]):[];
+    document.getElementById('srSint1').checked=sint.includes('Mucho ruido mental');
+    document.getElementById('srSint2').checked=sint.includes('Estrés / Ansiedad');
+    document.getElementById('srSint3').checked=sint.includes('Cansancio general');
+    // Momento (radio)
+    const mom=s?(s.momento||''):'';
+    ['srMom1','srMom2','srMom3','srMom4'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.checked=el.value===mom;
+    });
+    const momOtro=document.getElementById('srMomOtro');
+    momOtro.value=s?(s.momentoOtro||''):'';
+    momOtro.style.display=mom==='Otro'?'block':'none';
+    // Listener para mostrar/ocultar campo Otro
+    ['srMom1','srMom2','srMom3','srMom4'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(el)el.onchange=()=>{momOtro.style.display=document.getElementById('srMom4').checked?'block':'none';};
+    });
     document.getElementById('srProspFields').style.display=isProspecto?'block':'none';
     const campSel=document.getElementById('srCamp');
     campSel.innerHTML='<option value="">— Sin campaña —</option>'+campañas.map(c=>`<option value="${c.id}" ${s&&s.campañaId===c.id?'selected':''}>${c.nombre} (${c.plataforma})</option>`).join('');
@@ -3595,13 +3630,19 @@ function saveSer(){
   const canalProsp=document.getElementById('srCanalProsp').value||'';
   const etapaProsp=document.getElementById('srEtapaProsp').value||'Nuevo';
   const herramientaInteres=document.getElementById('srHerrInteres').value||'';
-  const notaProsp=document.getElementById('srNotaProsp').value||'';
+  // Síntomas
+  const sintomas=['srSint1','srSint2','srSint3'].map((id,i)=>document.getElementById(id)?.checked?['Mucho ruido mental','Estrés / Ansiedad','Cansancio general'][i]:null).filter(Boolean);
+  // Momento
+  const momRadio=['srMom1','srMom2','srMom3','srMom4'].find(id=>document.getElementById(id)?.checked);
+  const momento=momRadio?document.getElementById(momRadio).value:'';
+  const momentoOtro=momento==='Otro'?(document.getElementById('srMomOtro')?.value||''):'';
+  const notaProsp='';
   if(eid){
     const s=seres.find(x=>String(x.id)===String(eid));
     if(s){
       const oldNom=s.nombre;
       s.nombre=nom;s.nacimiento=document.getElementById('srNac').value;s.nacionalidad=document.getElementById('srNacion').value;s.pais=document.getElementById('srPais').value;s.provincia=document.getElementById('srProv').value;s.ciudad=document.getElementById('srCiudad').value;s.celular=document.getElementById('srCel').value;s.email=document.getElementById('srEmail').value;s.instagram=document.getElementById('srInsta').value;s.zona=document.getElementById('srZona').value;s.origen=document.getElementById('srOrigen').value;s.prospecto=isProsp;s.review=document.getElementById('srRev').value;s.campañaId=campId;
-      s.canalProsp=canalProsp;s.etapaProsp=etapaProsp;s.herramientaInteres=herramientaInteres;s.notaProsp=notaProsp;
+      s.canalProsp=canalProsp;s.etapaProsp=etapaProsp;s.herramientaInteres=herramientaInteres;s.sintomas=sintomas;s.momento=momento;s.momentoOtro=momentoOtro;
       // Cascada: si el nombre cambió, actualizar sesiones y facturas
       if(oldNom&&oldNom!==nom){
         let updSes=0,updFact=0;
@@ -3614,14 +3655,16 @@ function saveSer(){
       }
     }
   } else {
-    seres.push({id:nid(seres),nombre:nom,nacimiento:document.getElementById('srNac').value,nacionalidad:document.getElementById('srNacion').value,pais:document.getElementById('srPais').value,provincia:document.getElementById('srProv').value,ciudad:document.getElementById('srCiudad').value,celular:document.getElementById('srCel').value,email:document.getElementById('srEmail').value,instagram:document.getElementById('srInsta').value,zona:document.getElementById('srZona').value,origen:document.getElementById('srOrigen').value,prospecto:isProsp,review:document.getElementById('srRev').value,campañaId:campId,canalProsp,etapaProsp,herramientaInteres,notaProsp});
+    seres.push({id:nid(seres),nombre:nom,nacimiento:document.getElementById('srNac').value,nacionalidad:document.getElementById('srNacion').value,pais:document.getElementById('srPais').value,provincia:document.getElementById('srProv').value,ciudad:document.getElementById('srCiudad').value,celular:document.getElementById('srCel').value,email:document.getElementById('srEmail').value,instagram:document.getElementById('srInsta').value,zona:document.getElementById('srZona').value,origen:document.getElementById('srOrigen').value,prospecto:isProsp,review:document.getElementById('srRev').value,campañaId:campId,canalProsp,etapaProsp,herramientaInteres,sintomas,momento,momentoOtro});
     toast(isProsp?'Prospecto registrado 🌱':'Ser registrado 💫');
   }
   // Refresh zona filter options
   document.getElementById('serZona').dataset.filled='';
   document.getElementById('serZona').innerHTML='<option value="">Todas las zonas</option>';
   save();closeModal('moSer');
-  if(curSec==='seres')renderSeres();else renderDash();
+  if(curSec==='seres')renderSeres();
+  else if(curSec==='marketing'){renderMkt();setTimeout(()=>{setMktTab('prosp');},50);}
+  else renderDash();
 }
 function saveFac(){
   const eid=document.getElementById('fId').value;
@@ -4202,6 +4245,18 @@ function openProspDetail(id){
   // Abre modal de ser en modo prospecto
   openModal('ser',String(id));
 }
+function migrateProspectos(){
+  const prosp=getProspectos();
+  let updated=0;
+  prosp.forEach(p=>{
+    let changed=false;
+    if(!p.herramientaInteres){p.herramientaInteres='Barras de Access';changed=true;}
+    if(!p.etapaProsp||p.etapaProsp==='Nuevo'){p.etapaProsp='Contactado';changed=true;}
+    if(changed)updated++;
+  });
+  save();renderMktProsp();
+  toast(`${updated} prospectos actualizados ✅`);
+}
 function renderMktProsp(){
   const prosp=getProspectos();
   const total=prosp.length;
@@ -4211,7 +4266,13 @@ function renderMktProsp(){
   const tasa=total>0?Math.round(convertidos/total*100):0;
   const hoy=new Date();
 
-  const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+  const noEtapa=prosp.filter(p=>!p.etapaProsp||p.etapaProsp==='Nuevo').length;
+  const noHerr=prosp.filter(p=>!p.herramientaInteres).length;
+  const migBanner=(noEtapa>0||noHerr>0)?`<div style="display:flex;align-items:center;justify-content:space-between;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:10px;padding:10px 14px;margin-bottom:14px">
+    <span style="font-size:12px;color:var(--gold)">⚡ ${noEtapa} prospectos sin etapa · ${noHerr} sin herramienta asignada</span>
+    <button onclick="migrateProspectos()" style="font-size:11px;padding:5px 12px;border-radius:7px;background:rgba(201,168,76,.2);border:1px solid var(--gold);color:var(--gold);cursor:pointer">Marcar todos como Contactado + Barras de Access</button>
+  </div>`:'';
+  const kpis=migBanner+`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
     ${[
       {l:'TOTAL PROSPECTOS',v:total,s:'leads acumulados',c:'var(--text)'},
       {l:'SIN CONTACTAR',v:sinContactar,s:'pendientes hoy',c:'var(--or)'},
