@@ -131,6 +131,37 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .intake-completed-banner{background:rgba(61,170,106,.1);border:1px solid rgba(61,170,106,.25);border-radius:14px;
   padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;}
 
+/* ── AGENDA BUTTON ── */
+.btn-agenda{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gd));
+  border:none;border-radius:14px;color:#050401;font-size:15px;font-weight:800;cursor:pointer;
+  margin-bottom:24px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:opacity .2s;box-shadow:0 4px 20px rgba(201,168,76,.25);}
+.btn-agenda:hover{opacity:.9;}
+
+/* ── AGENDA MODAL ── */
+.agenda-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.88);z-index:9000;
+  overflow-y:auto;padding:20px 16px 40px;}
+.agenda-overlay.open{display:block;}
+.agenda-modal{max-width:600px;margin:0 auto;background:var(--card);border:1px solid #2A2810;
+  border-radius:24px;overflow:hidden;box-shadow:0 0 60px rgba(0,0,0,.8);}
+.agenda-top{padding:24px 24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.agenda-top h2{font-size:17px;font-weight:700;color:var(--gl);}
+.agenda-top p{font-size:12px;color:var(--muted);margin-top:3px;}
+.btn-close-agenda{background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  color:var(--muted);padding:6px 12px;font-size:13px;cursor:pointer;}
+.btn-close-agenda:hover{border-color:var(--red);color:var(--red);}
+.tools-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:20px;}
+.tool-card{background:var(--card2);border:1px solid var(--border);border-radius:14px;
+  padding:16px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  transition:border-color .15s;}
+.tool-card:hover{border-color:rgba(201,168,76,.35);}
+.tool-ico{font-size:26px;line-height:1;}
+.tool-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
+.btn-agendar{margin-top:6px;padding:6px 14px;background:rgba(201,168,76,.12);
+  border:1px solid rgba(201,168,76,.3);border-radius:20px;color:var(--gl);
+  font-size:11px;font-weight:700;cursor:pointer;transition:all .15s;text-decoration:none;display:inline-block;}
+.btn-agendar:hover{background:rgba(201,168,76,.22);}
+
 @media(max-width:480px){
   .lbox{padding:32px 20px;}
   .stats-row{gap:8px;}
@@ -138,6 +169,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .ses-main{grid-template-columns:40px 1fr auto;gap:8px;padding:12px;}
   .ses-icon{width:40px;height:40px;font-size:18px;}
   .intake-card{padding:18px 14px;}
+  .tools-grid{grid-template-columns:1fr 1fr;}
 }
 </style>
 </head>
@@ -174,9 +206,24 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
   </div>
   <div class="stats-row" id="statsRow"></div>
+  <button class="btn-agenda" onclick="openAgenda()">📅 Agendá tu próxima sesión</button>
   <div class="sec-title">✨ Mis Sesiones</div>
   <div class="filter-row" id="filterRow"></div>
   <div class="ses-list" id="sesList"></div>
+</div>
+
+<!-- AGENDA MODAL -->
+<div class="agenda-overlay" id="agendaOverlay" onclick="closeAgendaOutside(event)">
+  <div class="agenda-modal">
+    <div class="agenda-top">
+      <div>
+        <h2>📅 Agendá tu próxima sesión</h2>
+        <p>Elegí la herramienta y te contactamos por WhatsApp</p>
+      </div>
+      <button class="btn-close-agenda" onclick="closeAgenda()">✕ Cerrar</button>
+    </div>
+    <div class="tools-grid" id="toolsGrid"></div>
+  </div>
 </div>
 
 <!-- INTAKE SCREEN (form + view) -->
@@ -245,6 +292,48 @@ function doLogout(){
   document.getElementById('btnLogin').textContent='Ver mis sesiones';
 }
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
+
+/* ── AGENDA ── */
+const WA_NUM='5491151758653';
+const HERRAMIENTAS=[
+  {ico:'🌀',nom:'Barras de Access'},
+  {ico:'✨',nom:'Sesión Profit'},
+  {ico:'💆',nom:'Proceso de Cuerpos'},
+  {ico:'🌿',nom:'Bioexistencia'},
+  {ico:'📖',nom:'Registros Akashicos'},
+  {ico:'💎',nom:'Reiki'},
+  {ico:'🌬️',nom:'Limpieza Energética'},
+  {ico:'🔢',nom:'Numerología'},
+  {ico:'🐴',nom:'Coaching con Caballos'},
+  {ico:'⭐',nom:'Constelaciones Familiares'},
+  {ico:'🌸',nom:'Face Lift'},
+  {ico:'🎓',nom:'Clase Barras de Access'},
+  {ico:'🍄',nom:'Ceremonias Hongos'},
+  {ico:'🌺',nom:'Flores de Bach'},
+  {ico:'🎵',nom:'Viaje Sonoro'},
+  {ico:'🧘',nom:'Yoga'},
+  {ico:'🐸',nom:'Bufu Alvarius'},
+  {ico:'🌌',nom:'Sesiones Pleyadianas'},
+];
+
+function openAgenda(){
+  const nombre=curSer?.nombre||'';
+  document.getElementById('toolsGrid').innerHTML=HERRAMIENTAS.map(h=>{
+    const msg=encodeURIComponent(`Hola Juan Cruz! Soy ${nombre} y me gustaría agendar una sesión de ${h.nom}. ✨`);
+    return`<div class="tool-card">
+      <div class="tool-ico">${h.ico}</div>
+      <div class="tool-name">${h.nom}</div>
+      <a class="btn-agendar" href="https://wa.me/${WA_NUM}?text=${msg}" target="_blank">Agendar →</a>
+    </div>`;
+  }).join('');
+  document.getElementById('agendaOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function closeAgenda(){
+  document.getElementById('agendaOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeAgendaOutside(e){if(e.target===document.getElementById('agendaOverlay'))closeAgenda();}
 
 /* ── DATA ── */
 async function loadSessions(){
