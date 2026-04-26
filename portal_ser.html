@@ -347,7 +347,10 @@ async function loadHerramientas(){
   try{
     const {data}=await _sb.from('herramientas').select('id,data');
     if(data&&data.length){
-      herramientasPortal=(data||[]).map(r=>({id:r.id,...r.data})).filter(h=>h.disponiblePortal===true);
+      const todas=(data||[]).map(r=>({id:r.id,...r.data}));
+      const marcadas=todas.filter(h=>h.disponiblePortal===true);
+      // Si hay alguna marcada, mostrar solo esas. Si no, mostrar todas (con desc)
+      herramientasPortal=marcadas.length?marcadas:todas;
     }
   }catch(e){console.warn('herramientas fallback',e);}
 }
