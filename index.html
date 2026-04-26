@@ -1298,8 +1298,9 @@ async function _syncSupabase(){
 async function delRecord(table,id){
   try{
     const{error}=await _sb.from(table).delete().eq('id',String(id));
-    if(error)console.error('delRecord',table,id,error.message);
-  }catch(e){console.error('delRecord',e);}
+    if(error){console.error('delRecord',table,id,error.message);return false;}
+    return true;
+  }catch(e){console.error('delRecord',e);return false;}
 }
 
 /* AUTH */
@@ -2185,7 +2186,17 @@ function renderSeres(){
     </tr>`;
   }).join('')||`<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Sin resultados</td></tr>`;
 }
-function delSer(id){if(confirm('¿Eliminar este ser?')){seres=seres.filter(s=>s.id!==id);delRecord('seres',id);save();renderSeres();}}
+async function delSer(id){
+  if(!confirm('¿Eliminar este ser? Esta acción no se puede deshacer.'))return;
+  const ok=await delRecord('seres',id);
+  if(ok){
+    seres=seres.filter(s=>String(s.id)!==String(id));
+    save();renderSeres();
+    toast('Ser eliminado correctamente');
+  }else{
+    toast('Error al eliminar. Intentá de nuevo.','err');
+  }
+}
 function exportSeres(){
   const fil=seres.filter(s=>{
     if(serTab==='seres'&&s.prospecto)return false;
@@ -4337,10 +4348,16 @@ function setProspEtapa(id,etapa){
   if(etapa==='Convertido'){s.prospecto=false;s.estado='Activo';}
   save();renderMktProsp();
 }
-function delProspecto(id){
-  if(!confirm('¿Eliminar este prospecto?'))return;
-  const i=seres.findIndex(x=>String(x.id)===String(id));
-  if(i>-1){seres.splice(i,1);save();renderMktProsp();}
+async function delProspecto(id){
+  if(!confirm('¿Eliminar este prospecto? Esta acción no se puede deshacer.'))return;
+  const ok=await delRecord('seres',id);
+  if(ok){
+    seres=seres.filter(x=>String(x.id)!==String(id));
+    save();renderMktProsp();
+    toast('Prospecto eliminado correctamente');
+  }else{
+    toast('Error al eliminar. Intentá de nuevo.','err');
+  }
 }
 function openProspDetail(id){
   const s=seres.find(x=>String(x.id)===String(id));
