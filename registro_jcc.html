@@ -59,12 +59,28 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   text-transform:uppercase;margin-bottom:16px;}
 
 /* BENEFITS STRIP */
-.benefits{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 16px 28px;max-width:540px;margin-left:auto;margin-right:auto;padding:0 16px;}
+.benefits{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 auto 28px;max-width:540px;padding:0 16px;}
 .benefit-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;
   display:flex;align-items:flex-start;gap:10px;}
 .benefit-card .ico{font-size:22px;line-height:1;flex-shrink:0;}
 .benefit-card .txt strong{display:block;font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;}
 .benefit-card .txt span{font-size:12px;color:var(--muted);}
+
+/* PERSONAL MESSAGE */
+.msg-wrap{max-width:540px;margin:0 auto 32px;padding:0 16px;}
+.msg-card{background:var(--text);border-radius:20px;padding:32px 28px;position:relative;overflow:hidden;}
+.msg-card::before{content:'';position:absolute;top:-40px;right:-40px;width:160px;height:160px;
+  border-radius:50%;background:rgba(193,122,72,.12);pointer-events:none;}
+.msg-card::after{content:'';position:absolute;bottom:-30px;left:-30px;width:100px;height:100px;
+  border-radius:50%;background:rgba(193,122,72,.08);pointer-events:none;}
+.msg-card p{font-size:15px;line-height:1.8;color:rgba(255,255,255,.85);margin-bottom:16px;position:relative;}
+.msg-card p strong{color:#fff;font-weight:700;}
+.msg-card p em{color:var(--terra-light);font-style:normal;}
+.msg-card .msg-sig{display:flex;align-items:center;gap:10px;margin-top:20px;position:relative;}
+.msg-card .msg-sig .dot{width:36px;height:36px;border-radius:50%;background:var(--terra);
+  display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;}
+.msg-card .msg-sig .name{font-size:13px;font-weight:700;color:#fff;line-height:1.3;}
+.msg-card .msg-sig .role{font-size:11px;color:rgba(255,255,255,.5);}
 
 /* SUCCESS */
 #successScreen{display:none;max-width:540px;margin:0 auto;padding:0 16px 60px;}
@@ -124,6 +140,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="benefit-card">
     <div class="ico">✨</div>
     <div class="txt"><strong>Mayor claridad</strong><span>mejor enfoque y decisiones</span></div>
+  </div>
+</div>
+
+<!-- PERSONAL MESSAGE -->
+<div class="msg-wrap">
+  <div class="msg-card">
+    <p>Las Barras de Access son <strong>32 puntos en tu cabeza</strong> que, al ser activados, liberan todo lo que acumulaste: el ruido mental, el estrés, las creencias que ya no te sirven.</p>
+    <p>Es como darle un <strong>reseteo profundo a tu sistema</strong>.</p>
+    <p>El resultado es diferente para cada persona. Hay quienes sienten una <em>paz que hacía mucho no encontraban</em>. Otros, claridad. Otros, simplemente un descanso profundo.</p>
+    <p>Si algo en vos resonó con esto, <strong>empezamos por acá</strong>.</p>
+    <div class="msg-sig">
+      <div class="dot">🌿</div>
+      <div>
+        <div class="name">Juan Cruz</div>
+        <div class="role">Facilitador de Barras de Access</div>
+      </div>
+    </div>
   </div>
 </div>
 
