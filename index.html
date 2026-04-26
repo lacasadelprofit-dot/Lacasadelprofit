@@ -486,11 +486,13 @@ select.fi:focus{border-color:var(--gold);}
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
       <button class="tab-btn" id="mktTabRet" onclick="setMktTab('ret')">🔄 Retención</button>
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
+      <button class="tab-btn" id="mktTabProsp" onclick="setMktTab('prosp')">🌱 Prospectos</button>
      </div>
      <div id="mktPub"></div>
      <div id="mktConv" style="display:none"></div>
      <div id="mktRet" style="display:none"></div>
      <div id="mktMeta" style="display:none"></div>
+     <div id="mktProsp" style="display:none"></div>
     </div>
 
    </div>
@@ -604,8 +606,34 @@ select.fi:focus{border-color:var(--gold);}
   </div>
   <div class="fg"><label>📸 Instagram</label><input type="text" id="srInsta" placeholder="@usuario"></div>
   <div class="fg-check" id="srProspCheck">
-   <input type="checkbox" id="srProsp">
+   <input type="checkbox" id="srProsp" onchange="toggleProspFields()">
    <label for="srProsp">🌱 Es un prospecto (todavía no fue atendido)</label>
+  </div>
+  <div id="srProspFields" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+   <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px">🌱 Datos del prospecto</div>
+   <div class="fg-row">
+    <div class="fg"><label>Canal de origen</label>
+     <select id="srCanalProsp">
+      <option value="">— Sin especificar —</option>
+      <option>IG comentario</option><option>IG direct</option><option>WhatsApp</option><option>Referido</option><option>Otro</option>
+     </select>
+    </div>
+    <div class="fg"><label>Etapa</label>
+     <select id="srEtapaProsp">
+      <option>Nuevo</option><option>Contactado</option><option>Interesado</option><option>Agendado</option><option>Convertido</option>
+     </select>
+    </div>
+   </div>
+   <div class="fg"><label>Herramienta de interés</label>
+    <select id="srHerrInteres">
+     <option value="">— Sin especificar —</option>
+     <option>Barras de Access</option><option>Sesión Profit</option><option>Proceso de Cuerpos</option>
+     <option>Bioexistencia</option><option>Registros Akashicos</option><option>Reiki</option>
+     <option>Numerologia</option><option>Coaching con Caballos</option><option>Constelaciones</option>
+     <option>Flores de Bach</option><option>Viaje Sonoro</option><option>Otro</option>
+    </select>
+   </div>
+   <div class="fg"><label>Nota rápida</label><input type="text" id="srNotaProsp" placeholder="Lo que preguntó, su situación..."></div>
   </div>
   <div class="fg"><label>Origen / Cómo llegó</label><input type="text" id="srOrigen" placeholder="Instagram, publicidad, referido..."></div>
   <div class="fg"><label>Campaña de origen</label><select id="srCamp"><option value="">— Sin campaña —</option></select></div>
@@ -2302,7 +2330,14 @@ function openModal(type,id,extra){
     document.getElementById('srInsta').value=s?(s.instagram||''):'';
     document.getElementById('srZona').value=s?(s.zona||''):'';
     document.getElementById('srOrigen').value=s?(s.origen||''):'';
-    document.getElementById('srProsp').checked=s?!!s.prospecto:isProsp;
+    const isProspecto=s?!!s.prospecto:isProsp;
+    document.getElementById('srProsp').checked=isProspecto;
+    // Campos de prospecto
+    document.getElementById('srCanalProsp').value=s?(s.canalProsp||''):'';
+    document.getElementById('srEtapaProsp').value=s?(s.etapaProsp||'Nuevo'):'Nuevo';
+    document.getElementById('srHerrInteres').value=s?(s.herramientaInteres||''):'';
+    document.getElementById('srNotaProsp').value=s?(s.notaProsp||''):'';
+    document.getElementById('srProspFields').style.display=isProspecto?'block':'none';
     const campSel=document.getElementById('srCamp');
     campSel.innerHTML='<option value="">— Sin campaña —</option>'+campañas.map(c=>`<option value="${c.id}" ${s&&s.campañaId===c.id?'selected':''}>${c.nombre} (${c.plataforma})</option>`).join('');
     document.getElementById('srRev').value=s?(s.review&&s.review!=='None'?s.review:''):'';
@@ -3547,17 +3582,26 @@ function saveSes(){
   document.getElementById('nsSer').value='';document.getElementById('nsObs').value='';document.getElementById('nsMonto').value='';document.getElementById('nsPagado').value='';document.getElementById('nsHora').value='';document.getElementById('nsPrograma').value='';document.getElementById('nsId').value='';
   if(curSec==='sesiones')renderSes();else if(curSec==='calendario')renderCal();else renderDash();
 }
+function toggleProspFields(){
+  const chk=document.getElementById('srProsp').checked;
+  document.getElementById('srProspFields').style.display=chk?'block':'none';
+}
 function saveSer(){
   const eid=document.getElementById('srId').value;
   const nom=document.getElementById('srNom').value.trim();
   const isProsp=document.getElementById('srProsp').checked;
   if(!nom){alert('El nombre es obligatorio');return;}
   const campId=document.getElementById('srCamp').value||null;
+  const canalProsp=document.getElementById('srCanalProsp').value||'';
+  const etapaProsp=document.getElementById('srEtapaProsp').value||'Nuevo';
+  const herramientaInteres=document.getElementById('srHerrInteres').value||'';
+  const notaProsp=document.getElementById('srNotaProsp').value||'';
   if(eid){
     const s=seres.find(x=>String(x.id)===String(eid));
     if(s){
       const oldNom=s.nombre;
       s.nombre=nom;s.nacimiento=document.getElementById('srNac').value;s.nacionalidad=document.getElementById('srNacion').value;s.pais=document.getElementById('srPais').value;s.provincia=document.getElementById('srProv').value;s.ciudad=document.getElementById('srCiudad').value;s.celular=document.getElementById('srCel').value;s.email=document.getElementById('srEmail').value;s.instagram=document.getElementById('srInsta').value;s.zona=document.getElementById('srZona').value;s.origen=document.getElementById('srOrigen').value;s.prospecto=isProsp;s.review=document.getElementById('srRev').value;s.campañaId=campId;
+      s.canalProsp=canalProsp;s.etapaProsp=etapaProsp;s.herramientaInteres=herramientaInteres;s.notaProsp=notaProsp;
       // Cascada: si el nombre cambió, actualizar sesiones y facturas
       if(oldNom&&oldNom!==nom){
         let updSes=0,updFact=0;
@@ -3570,7 +3614,7 @@ function saveSer(){
       }
     }
   } else {
-    seres.push({id:nid(seres),nombre:nom,nacimiento:document.getElementById('srNac').value,nacionalidad:document.getElementById('srNacion').value,pais:document.getElementById('srPais').value,provincia:document.getElementById('srProv').value,ciudad:document.getElementById('srCiudad').value,celular:document.getElementById('srCel').value,email:document.getElementById('srEmail').value,instagram:document.getElementById('srInsta').value,zona:document.getElementById('srZona').value,origen:document.getElementById('srOrigen').value,prospecto:isProsp,review:document.getElementById('srRev').value,campañaId:campId});
+    seres.push({id:nid(seres),nombre:nom,nacimiento:document.getElementById('srNac').value,nacionalidad:document.getElementById('srNacion').value,pais:document.getElementById('srPais').value,provincia:document.getElementById('srProv').value,ciudad:document.getElementById('srCiudad').value,celular:document.getElementById('srCel').value,email:document.getElementById('srEmail').value,instagram:document.getElementById('srInsta').value,zona:document.getElementById('srZona').value,origen:document.getElementById('srOrigen').value,prospecto:isProsp,review:document.getElementById('srRev').value,campañaId:campId,canalProsp,etapaProsp,herramientaInteres,notaProsp});
     toast(isProsp?'Prospecto registrado 🌱':'Ser registrado 💫');
   }
   // Refresh zona filter options
@@ -3845,7 +3889,7 @@ function doImport(){
 let mktTab='pub';
 function setMktTab(t){
   mktTab=t;
-  ['pub','conv','ret','meta'].forEach(x=>{
+  ['pub','conv','ret','meta','prosp'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
@@ -3854,6 +3898,7 @@ function setMktTab(t){
   if(t==='pub')renderMktPub();
   else if(t==='conv')renderMktConv();
   else if(t==='ret')renderMktRet();
+  else if(t==='prosp')renderMktProsp();
   else renderMetaTab();
 }
 
@@ -4130,6 +4175,92 @@ async function syncMetaLeads(){
     if(btn){btn.disabled=false;btn.textContent='🔄 Sincronizar leads';}
   }
 }
+/* ── PIPELINE DE PROSPECTOS ─────────────────────────────────── */
+const PROSP_ETAPAS=['Nuevo','Contactado','Interesado','Agendado','Convertido'];
+const PROSP_CANALES=['IG comentario','IG direct','WhatsApp','Referido','Otro'];
+const PROSP_COL={Nuevo:'var(--muted)',Contactado:'#8B5CF6',Interesado:'var(--gold)',Agendado:'var(--blue)',Convertido:'var(--green)'};
+const PROSP_BG={Nuevo:'rgba(120,120,140,.1)',Contactado:'rgba(139,92,246,.12)',Interesado:'rgba(201,168,76,.12)',Agendado:'rgba(59,130,246,.12)',Convertido:'rgba(61,170,106,.12)'};
+
+function getProspectos(){
+  return seres.filter(s=>s.prospecto||s.estado==='Prospecto'||s.estado==='prospecto');
+}
+function setProspEtapa(id,etapa){
+  const s=seres.find(x=>String(x.id)===String(id));
+  if(!s)return;
+  s.etapaProsp=etapa;
+  if(etapa==='Convertido'){s.prospecto=false;s.estado='Activo';}
+  save();renderMktProsp();
+}
+function delProspecto(id){
+  if(!confirm('¿Eliminar este prospecto?'))return;
+  const i=seres.findIndex(x=>String(x.id)===String(id));
+  if(i>-1){seres.splice(i,1);save();renderMktProsp();}
+}
+function openProspDetail(id){
+  const s=seres.find(x=>String(x.id)===String(id));
+  if(!s)return;
+  // Abre modal de ser en modo prospecto
+  openModal('ser',String(id));
+}
+function renderMktProsp(){
+  const prosp=getProspectos();
+  const total=prosp.length;
+  const sinContactar=prosp.filter(p=>!p.etapaProsp||p.etapaProsp==='Nuevo').length;
+  const agendados=prosp.filter(p=>p.etapaProsp==='Agendado').length;
+  const convertidos=prosp.filter(p=>p.etapaProsp==='Convertido').length;
+  const tasa=total>0?Math.round(convertidos/total*100):0;
+  const hoy=new Date();
+
+  const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px">
+    ${[
+      {l:'TOTAL PROSPECTOS',v:total,s:'leads acumulados',c:'var(--text)'},
+      {l:'SIN CONTACTAR',v:sinContactar,s:'pendientes hoy',c:'var(--or)'},
+      {l:'AGENDADOS',v:agendados,s:'con turno confirmado',c:'var(--blue)'},
+      {l:'CONVERTIDOS',v:convertidos,s:tasa+'% conversión',c:'var(--green)'},
+    ].map(k=>`<div class="cc" style="padding:12px 14px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">${k.l}</div>
+      <div style="font-size:26px;font-weight:800;color:${k.c}">${k.v}</div>
+      <div style="font-size:11px;color:var(--muted)">${k.s}</div>
+    </div>`).join('')}
+  </div>`;
+
+  const pipeline=`<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:start">
+    ${PROSP_ETAPAS.map(etapa=>{
+      const cards=prosp.filter(p=>(p.etapaProsp||'Nuevo')===etapa);
+      const col=PROSP_COL[etapa];
+      const bg=PROSP_BG[etapa];
+      return `<div>
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 10px;border-radius:8px;margin-bottom:8px;background:${bg}">
+          <span style="font-size:12px;font-weight:700;color:${col}">${etapa}</span>
+          <span style="font-size:11px;font-weight:700;padding:1px 8px;border-radius:10px;background:${bg};color:${col}">${cards.length}</span>
+        </div>
+        ${cards.map(p=>{
+          const dias=p.fechaRegistro?Math.floor((hoy-new Date(p.fechaRegistro))/86400000):null;
+          const canal=p.canalProsp||'';
+          const canalCol=canal.includes('WhatsApp')?'rgba(61,170,106,.15)':canal.includes('IG')?'rgba(139,92,246,.15)':'rgba(120,120,140,.1)';
+          const canalTextCol=canal.includes('WhatsApp')?'var(--green)':canal.includes('IG')?'#8B5CF6':'var(--muted)';
+          const herr=p.herramientaInteres||'';
+          return `<div class="cc" style="padding:10px;margin-bottom:7px;cursor:pointer" onclick="openProspDetail('${p.id}')">
+            <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">${p.nombre}</div>
+            ${herr?`<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${herr}</div>`:''}
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+              ${canal?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${canalCol};color:${canalTextCol}">${canal}</span>`:''}
+              ${dias!==null?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--card2);color:var(--muted)">hace ${dias}d</span>`:''}
+            </div>
+            <div style="display:flex;gap:4px;flex-wrap:wrap">
+              ${PROSP_ETAPAS.filter(e=>e!==etapa).map(e=>`<button onclick="event.stopPropagation();setProspEtapa('${p.id}','${e}')" style="font-size:9px;padding:2px 6px;border-radius:6px;background:var(--card2);border:1px solid var(--border);color:var(--muted);cursor:pointer">→ ${e}</button>`).join('')}
+              <button onclick="event.stopPropagation();delProspecto('${p.id}')" style="font-size:9px;padding:2px 6px;border-radius:6px;background:rgba(220,60,60,.1);border:1px solid rgba(220,60,60,.3);color:#e06060;cursor:pointer">🗑</button>
+            </div>
+          </div>`;
+        }).join('')}
+        <div onclick="openModal('ser',null,true)" style="border:1px dashed var(--border);border-radius:8px;padding:8px;text-align:center;font-size:11px;color:var(--muted);cursor:pointer;margin-top:2px">+ agregar</div>
+      </div>`;
+    }).join('')}
+  </div>`;
+
+  document.getElementById('mktProsp').innerHTML=kpis+pipeline;
+}
+
 function renderMetaTab(){
   const connected=!!(metaToken()&&metaAccountId());
   const WEBHOOK_URL='https://lacasadelprofit.netlify.app/.netlify/functions/meta-webhook';
