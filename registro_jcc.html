@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barras de Access — Juan Cruz Consciencia</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="theme-color" content="#C17A48">
+<meta property="og:title" content="Barras de Access — Juan Cruz Consciencia">
+<meta property="og:description" content="Liberá el estrés y la mente sin hablar de tus problemas. Dejá tus datos y te contactamos.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
+  --terra:#C17A48;--terra-dark:#9A5C30;--terra-light:#F0E4D6;
+  --text:#1C1200;--muted:#7A6E60;--green:#3DAA6A;--red:#D94F3A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+.hero{text-align:center;padding:52px 20px 36px;max-width:600px;margin:0 auto;}
+.hero .brand-name{font-size:18px;font-weight:800;color:var(--text);letter-spacing:.5px;margin-bottom:4px;}
+.hero .brand-sub{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:20px;}
+.hero .pill{display:inline-block;font-size:12px;font-weight:700;padding:5px 18px;border-radius:20px;
+  background:var(--terra-light);border:1px solid rgba(193,122,72,.35);color:var(--terra-dark);
+  margin-bottom:22px;letter-spacing:.3px;}
+.hero h1{font-size:26px;font-weight:800;color:var(--text);line-height:1.25;margin-bottom:12px;}
+.hero p{font-size:15px;color:var(--muted);line-height:1.7;max-width:440px;margin:0 auto;}
+
+.form-wrap{max-width:540px;margin:0 auto;padding:0 16px 60px;}
+.form-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:32px 28px;
+  box-shadow:0 4px 24px rgba(0,0,0,.07),0 1px 4px rgba(0,0,0,.04);}
+
+.fg{margin-bottom:18px;}
+.fg label{display:block;font-size:11px;color:var(--muted);margin-bottom:7px;text-transform:uppercase;
+  letter-spacing:.5px;font-weight:600;}
+.fg input,.fg select,.fg textarea{
+  width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--terra);}
+.fg textarea{min-height:90px;resize:vertical;}
+.fg-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.req{color:var(--terra);}
+
+.check-group{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+.check-group label,.radio-group label{display:flex;align-items:center;gap:10px;font-size:14px;
+  font-weight:400;cursor:pointer;color:var(--text);}
+.check-group input,.radio-group input{width:16px;height:16px;accent-color:var(--terra);flex-shrink:0;}
+.radio-group{display:flex;flex-direction:column;gap:10px;margin-top:4px;}
+
+.btn-send{width:100%;padding:15px;background:var(--terra);
+  border:none;border-radius:12px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;
+  margin-top:8px;letter-spacing:.3px;transition:background .2s;}
+.btn-send:hover{background:var(--terra-dark);}
+.btn-send:disabled{opacity:.5;cursor:not-allowed;}
+
+.sep{border:none;border-top:1px solid var(--border);margin:22px 0;}
+.sec-label{font-size:12px;color:var(--terra-dark);font-weight:700;letter-spacing:.8px;
+  text-transform:uppercase;margin-bottom:16px;}
+
+/* BENEFITS STRIP */
+.benefits{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin:0 16px 28px;max-width:540px;margin-left:auto;margin-right:auto;padding:0 16px;}
+.benefit-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px;
+  display:flex;align-items:flex-start;gap:10px;}
+.benefit-card .ico{font-size:22px;line-height:1;flex-shrink:0;}
+.benefit-card .txt strong{display:block;font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px;}
+.benefit-card .txt span{font-size:12px;color:var(--muted);}
+
+/* SUCCESS */
+#successScreen{display:none;max-width:540px;margin:0 auto;padding:0 16px 60px;}
+.success-card{background:var(--card);border:1px solid rgba(61,170,106,.3);border-radius:20px;
+  padding:48px 32px;text-align:center;box-shadow:0 4px 24px rgba(0,0,0,.06);}
+.success-icon{font-size:64px;margin-bottom:20px;}
+.success-card h2{font-size:22px;font-weight:700;color:var(--text);margin-bottom:12px;}
+.success-card p{color:var(--muted);font-size:14px;line-height:1.7;}
+.success-card .sub{margin-top:20px;font-size:13px;color:var(--terra);font-weight:600;}
+
+/* LOADER */
+#loader{display:none;position:fixed;inset:0;background:rgba(250,250,248,.92);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner{width:44px;height:44px;border:3px solid rgba(193,122,72,.2);border-top-color:var(--terra);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.err-msg{color:var(--red);font-size:12px;margin-top:10px;display:none;text-align:center;}
+
+@media(max-width:480px){
+  .fg-row{grid-template-columns:1fr;}
+  .form-card{padding:24px 18px;}
+  .hero{padding:36px 16px 24px;}
+  .benefits{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p style="color:var(--terra);font-size:13px;letter-spacing:.5px;font-weight:600">Enviando tu registro...</p>
+</div>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="brand-name">Juan Cruz Consciencia</div>
+  <div class="brand-sub">Barras de Access · Proceso de Cuerpos</div>
+  <div class="pill">✨ Sesión presencial · 60 minutos</div>
+  <h1>Liberá el estrés y la mente<br>sin hablar de tus problemas</h1>
+  <p style="margin-top:12px">Una sesión de Barras de Access® para resetear tu cabeza, dormir mejor y abrirte a más dinero y posibilidades.</p>
+</div>
+
+<!-- BENEFITS -->
+<div class="benefits">
+  <div class="benefit-card">
+    <div class="ico">🧘</div>
+    <div class="txt"><strong>Calmar la mente</strong><span>menos ruido y pensamientos repetitivos</span></div>
+  </div>
+  <div class="benefit-card">
+    <div class="ico">💚</div>
+    <div class="txt"><strong>Reducir estrés</strong><span>libera tensión acumulada</span></div>
+  </div>
+  <div class="benefit-card">
+    <div class="ico">🔓</div>
+    <div class="txt"><strong>Soltar bloqueos</strong><span>creencias que te limitan</span></div>
+  </div>
+  <div class="benefit-card">
+    <div class="ico">✨</div>
+    <div class="txt"><strong>Mayor claridad</strong><span>mejor enfoque y decisiones</span></div>
+  </div>
+</div>
+
+<!-- FORM -->
+<div class="form-wrap" id="formWrap">
+  <div class="form-card">
+
+    <div class="sec-label">Tus datos</div>
+    <div class="fg">
+      <label>Nombre y Apellido <span class="req">*</span></label>
+      <input type="text" id="rNom" placeholder="Tu nombre completo" autocomplete="name">
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>Email <span class="req">*</span></label>
+        <input type="email" id="rEmail" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>WhatsApp / Celular <span class="req">*</span></label>
+        <input type="tel" id="rCel" placeholder="+54 9 11..." autocomplete="tel">
+      </div>
+    </div>
+    <div class="fg-row">
+      <div class="fg">
+        <label>País</label>
+        <input type="text" id="rPais" value="Argentina">
+      </div>
+      <div class="fg">
+        <label>Ciudad</label>
+        <input type="text" id="rCiudad" placeholder="Buenos Aires...">
+      </div>
+    </div>
+
+    <hr class="sep">
+    <div class="sec-label">¿Cómo llegaste hasta acá?</div>
+
+    <div class="fg">
+      <select id="rOrigen">
+        <option value="">— Contanos —</option>
+        <option value="IG comentario">Comenté en Instagram</option>
+        <option value="IG direct">Me mandé un DM en Instagram</option>
+        <option value="WhatsApp">WhatsApp</option>
+        <option value="Referido">Me lo recomendó alguien</option>
+        <option value="Otro">Otro</option>
+      </select>
+    </div>
+
+    <hr class="sep">
+    <div class="sec-label">Contanos un poco</div>
+
+    <div class="fg">
+      <label>¿Qué sentís más? <span style="font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">(podés marcar más de uno)</span></label>
+      <div class="check-group">
+        <label><input type="checkbox" id="rSint1"> 🧠 Mucho ruido mental, no puedo frenar la mente</label>
+        <label><input type="checkbox" id="rSint2"> 😰 Estrés, ansiedad o sobrecarga constante</label>
+        <label><input type="checkbox" id="rSint3"> 😴 Cansancio general, me cuesta relajarme de verdad</label>
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>¿En qué momento lo sentís más?</label>
+      <div class="radio-group">
+        <label><input type="radio" name="rMomento" id="rMom1" value="A la noche"> 🌙 A la noche</label>
+        <label><input type="radio" name="rMomento" id="rMom2" value="Trabajando"> 💻 Trabajando</label>
+        <label><input type="radio" name="rMomento" id="rMom3" value="Todo el día"> ☀️ Todo el día</label>
+        <label><input type="radio" name="rMomento" id="rMom4" value="Otro" onchange="document.getElementById('rMomOtro').style.display='block'"> ✏️ Otro</label>
+        <input type="text" id="rMomOtro" placeholder="Contanos cuándo..." style="display:none;margin-top:2px">
+      </div>
+    </div>
+
+    <div class="fg">
+      <label>¿Algo más que quieras contarnos? <span style="font-size:10px;color:var(--muted);text-transform:none;letter-spacing:0">(opcional)</span></label>
+      <textarea id="rMensaje" placeholder="Tu situación, lo que buscás, lo que te genera curiosidad..."></textarea>
+    </div>
+
+    <p class="err-msg" id="errMsg">Completá tu nombre, email y celular para continuar.</p>
+    <button class="btn-send" onclick="enviarRegistro()">Quiero reservar mi sesión ✨</button>
+
+    <p style="text-align:center;color:var(--muted);font-size:11px;margin-top:16px;line-height:1.6">
+      Tu información es confidencial y solo será usada para contactarte.<br>
+      No compartimos tus datos con terceros.
+    </p>
+  </div>
+</div>
+
+<!-- SUCCESS -->
+<div id="successScreen">
+  <div class="success-card">
+    <div class="success-icon">🌟</div>
+    <h2>¡Gracias por dar el primer paso!</h2>
+    <p>Recibimos tu registro. En breve Juan Cruz te contacta para contarte todo sobre las Barras de Access y coordinar tu primera sesión.</p>
+    <p class="sub">✨ Nos vemos pronto</p>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+
+function nid(){return String(Date.now()+Math.floor(Math.random()*1000));}
+
+async function enviarRegistro(){
+  const nom=document.getElementById('rNom').value.trim();
+  const email=document.getElementById('rEmail').value.trim().toLowerCase();
+  const cel=document.getElementById('rCel').value.trim();
+  const pais=document.getElementById('rPais').value.trim()||'Argentina';
+  const ciudad=document.getElementById('rCiudad').value.trim();
+  const origen=document.getElementById('rOrigen').value;
+  const mensaje=document.getElementById('rMensaje').value.trim();
+  const errEl=document.getElementById('errMsg');
+
+  // Síntomas
+  const sintomas=['rSint1','rSint2','rSint3'].map((id,i)=>
+    document.getElementById(id)?.checked?['Mucho ruido mental','Estrés / Ansiedad','Cansancio general'][i]:null
+  ).filter(Boolean);
+
+  // Momento
+  const momRadio=['rMom1','rMom2','rMom3','rMom4'].find(id=>document.getElementById(id)?.checked);
+  const momento=momRadio?document.getElementById(momRadio).value:'';
+  const momentoOtro=momento==='Otro'?(document.getElementById('rMomOtro')?.value||''):'';
+
+  const canalProsp=origen||'Otro';
+
+  if(!nom||!email||!cel){
+    errEl.textContent='Completá tu nombre, email y celular para continuar.';
+    errEl.style.display='block';return;
+  }
+  errEl.style.display='none';
+  document.getElementById('loader').style.display='flex';
+
+  const ser={
+    id:nid(),
+    nombre:nom,
+    email,
+    celular:cel,
+    pais,
+    ciudad,
+    provincia:'',
+    zona:'',
+    nacimiento:'',
+    nacionalidad:'Argentina',
+    prospecto:true,
+    marca:'jcc',
+    origen:canalProsp||'Formulario JCC Barras',
+    interes:'Barras de Access',
+    herramientaInteres:'Barras de Access',
+    mensajeRegistro:mensaje,
+    review:'',
+    campañaId:'',
+    fechaRegistro:new Date().toISOString(),
+    etapaProsp:'Nuevo',
+    canalProsp,
+    sintomas,
+    momento,
+    momentoOtro
+  };
+
+  try{
+    const fnResp=await fetch('/.netlify/functions/save-prospecto',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(ser)
+    });
+    let ok=fnResp.ok;
+    if(!ok){
+      const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+      const {error}=await sb.from('seres').insert({id:ser.id,data:ser,updated_at:new Date().toISOString()});
+      ok=!error;
+      if(error)console.warn('Supabase anon insert error:',error.message);
+    }
+    document.getElementById('loader').style.display='none';
+    document.getElementById('formWrap').style.display='none';
+    document.querySelector('.hero').style.display='none';
+    document.querySelectorAll('.benefits').forEach(el=>el.style.display='none');
+    document.getElementById('successScreen').style.display='block';
+    window.scrollTo(0,0);
+  }catch(e){
+    document.getElementById('loader').style.display='none';
+    errEl.textContent='Error al enviar. Intentá de nuevo.';
+    errEl.style.display='block';
+  }
+}
+
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Enter'&&ev.target.tagName==='INPUT')enviarRegistro();
+});
+</script>
+</body>
+</html>
