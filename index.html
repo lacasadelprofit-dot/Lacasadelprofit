@@ -1027,8 +1027,12 @@ select.fi:focus{border-color:var(--gold);}
 
 <!-- MODAL DETALLE SER -->
 <div class="mo" id="moSerDet">
- <div class="mb" style="width:620px"><div id="serDetContent"></div>
-  <div class="mf"><button class="btn btn-s" onclick="closeModal('moSerDet')">Cerrar</button></div>
+ <div class="mb" style="width:700px">
+  <div id="serDetContent"></div>
+  <div class="mf">
+   <button class="btn btn-s" onclick="closeModal('moSerDet')">Cerrar</button>
+   <button class="btn btn-p" id="serDetEditBtn" onclick="">✏️ Editar</button>
+  </div>
  </div>
 </div>
 
@@ -2173,7 +2177,8 @@ function renderSeres(){
       <td>${pvC>0?`<span class="bdg b-or">⭐ ${pvC}</span>`:'—'}</td>
       <td style="font-size:12px;color:var(--muted)">${last?fd(last.fecha):'—'}</td>
       <td style="white-space:nowrap">
-        ${s.prospecto?`<button class="btn btn-s btn-sm" title="Convertir a ser" onclick="convertProsp(${s.id})">✨</button>`:'<button class="btn btn-s btn-sm" onclick="showSer('+s.id+')">👁</button>'}
+        <button class="btn btn-s btn-sm" onclick="showSer(${s.id})" title="Ver perfil">👁</button>
+        ${s.prospecto?`<button class="btn btn-s btn-sm" title="Convertir a ser" onclick="convertProsp(${s.id})">✨</button>`:''}
         <button class="btn btn-s btn-sm" onclick="openModal('ser','${s.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delSer(${s.id})">🗑</button>
       </td>
@@ -2204,36 +2209,133 @@ function exportSeres(){
   toast('✅ Exportado correctamente');
 }
 function convertProsp(id){const s=seres.find(x=>x.id===id);if(s&&confirm(`¿Convertir a ${s.nombre} en Ser atendido?`)){s.prospecto=false;save();renderSeres();toast('¡'+s.nombre.split(' ')[0]+' ahora es un Ser ✨');}}
+let _showSerTab='resumen';
 function showSer(id){
   const s=seres.find(x=>x.id===id);if(!s)return;
+  _showSerTab='resumen';
+  document.getElementById('serDetEditBtn').onclick=()=>{closeModal('moSerDet');openModal('ser',String(id));};
+  _renderSerDet(s);
+  openModal('serDet');
+}
+function setSerDetTab(tab,id){
+  _showSerTab=tab;
+  const s=seres.find(x=>String(x.id)===String(id));if(!s)return;
+  _renderSerDet(s);
+}
+function _renderSerDet(s){
+  const id=s.id;
   const ss=sessions.filter(se=>se.ser===s.nombre).sort((a,b)=>new Date(b.fecha)-new Date(a.fecha));
   const first=ss[ss.length-1],last=ss[0],pvC=ss.filter(se=>se.primeraVez).length;
-  document.getElementById('serDetContent').innerHTML=`
-    <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      <div style="width:54px;height:54px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));display:flex;align-items:center;justify-content:center;font-size:19px;font-weight:700;color:#050401">${s.nombre.substring(0,2).toUpperCase()}</div>
-      <div>
-        <h2 style="font-size:17px;margin-bottom:3px;color:var(--gl)">${s.nombre}</h2>
-        <p style="color:var(--muted);font-size:12px">${s.nacionalidad&&s.nacionalidad!=='None'?s.nacionalidad:''}${s.provincia&&s.provincia!=='None'?' · '+s.provincia:''}${s.email&&s.email!=='None'?' · '+s.email:''}</p>
+  const totalPag=ss.reduce((a,se)=>a+(se.montoPagado||se.monto||0),0);
+  // Intakes de sesiones (sesiones que tienen intakeCompletado)
+  const sesIntakes=ss.filter(se=>se.intakeCompletado);
+  // Tabs
+  const tabs=[
+    {k:'resumen',l:'📋 Resumen'},
+    {k:'sesiones',l:`✨ Sesiones (${ss.length})`},
+    {k:'formularios',l:`💫 Formularios (${sesIntakes.length+(s.intakeCompletado?1:0)})`},
+  ];
+  const tabBar=`<div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0">
+    ${tabs.map(t=>`<button onclick="setSerDetTab('${t.k}','${id}')" style="font-size:12px;padding:7px 14px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid ${_showSerTab===t.k?'var(--border)':'transparent'};border-bottom:${_showSerTab===t.k?'1px solid var(--card)':'none'};background:${_showSerTab===t.k?'var(--card)':'transparent'};color:${_showSerTab===t.k?'var(--gl)':'var(--muted)'};margin-bottom:-1px">${t.l}</button>`).join('')}
+  </div>`;
+
+  // Header siempre visible
+  const header=`<div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+    <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#050401;flex-shrink:0">${s.nombre.substring(0,2).toUpperCase()}</div>
+    <div style="flex:1;min-width:0">
+      <h2 style="font-size:16px;margin-bottom:2px;color:var(--gl)">${s.nombre}${s.prospecto?` <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(61,170,106,.15);color:var(--green);font-weight:600">PROSPECTO</span>`:''}</h2>
+      <div style="font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px">
+        ${s.celular&&s.celular!=='None'?`<span>📱 ${s.celular}</span>`:''}
+        ${s.email&&s.email!=='None'?`<span>✉️ ${s.email}</span>`:''}
+        ${s.ciudad?`<span>📍 ${s.ciudad}${s.provincia&&s.provincia!=='None'?' · '+s.provincia:''}</span>`:''}
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:9px;margin-bottom:14px">
-      <div class="kc go" style="padding:10px"><div class="kl" style="font-size:9px">Sesiones</div><div class="kv" style="font-size:20px">${ss.length}</div></div>
-      <div class="kc or" style="padding:10px"><div class="kl" style="font-size:9px">1° Veces</div><div class="kv" style="font-size:20px">${pvC}</div></div>
-      <div class="kc gr" style="padding:10px"><div class="kl" style="font-size:9px">Primera</div><div style="font-size:12px;font-weight:600;margin-top:2px">${first?fd(first.fecha):'—'}</div></div>
-      <div class="kc bl" style="padding:10px"><div class="kl" style="font-size:9px">Última</div><div style="font-size:12px;font-weight:600;margin-top:2px">${last?fd(last.fecha):'—'}</div></div>
-    </div>
-    ${s.review&&s.review!=='None'?`<div style="background:var(--card2);border-radius:9px;padding:10px;margin-bottom:12px;font-size:13px;color:var(--muted);font-style:italic;border:1px solid #1E1C10">"${s.review}"</div>`:''}
-    <h3 style="font-size:12px;margin-bottom:8px;color:var(--gd);text-transform:uppercase;letter-spacing:.5px">Historial de Sesiones</h3>
-    <div style="max-height:230px;overflow-y:auto">
-      ${ss.map(se=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(30,28,16,.8)">
-        <span style="font-size:11px;color:var(--muted)">${fd(se.fecha)}${se.hora?' '+se.hora:''}</span>
-        ${se.primeraVez?'<span class="bdg b-or" style="font-size:9px">⭐ 1°Vez</span>':'<span></span>'}
-        <span class="bdg ${bc(se.sesion)}" style="font-size:10px">${se.sesion}</span>
-        <span style="font-size:11px;color:var(--muted)">${se.facilitador}</span>
-        <span class="bdg ${estCls(se.estado||'Completado')}" style="font-size:9px">${se.estado||'Completado'}</span>
-      </div>`).join('')||'<p style="text-align:center;color:var(--muted);padding:12px">Sin sesiones</p>'}
+  </div>`;
+
+  let body='';
+
+  if(_showSerTab==='resumen'){
+    const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px">
+      <div class="kc go" style="padding:10px 8px"><div class="kl" style="font-size:9px">Sesiones</div><div class="kv" style="font-size:20px">${ss.length}</div></div>
+      <div class="kc or" style="padding:10px 8px"><div class="kl" style="font-size:9px">1° Veces</div><div class="kv" style="font-size:20px">${pvC}</div></div>
+      <div class="kc gr" style="padding:10px 8px"><div class="kl" style="font-size:9px">Primera</div><div style="font-size:11px;font-weight:600;margin-top:2px">${first?fd(first.fecha):'—'}</div></div>
+      <div class="kc bl" style="padding:10px 8px"><div class="kl" style="font-size:9px">Última</div><div style="font-size:11px;font-weight:600;margin-top:2px">${last?fd(last.fecha):'—'}</div></div>
     </div>`;
-  openModal('serDet');
+    // Datos de prospecto si aplica
+    const prospInfo=s.prospecto?`<div style="background:rgba(61,170,106,.08);border:1px solid rgba(61,170,106,.2);border-radius:10px;padding:12px;margin-bottom:12px">
+      <div style="font-size:10px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🌱 Info de prospecto</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px">
+        ${s.etapaProsp?`<div><span style="color:var(--muted)">Etapa:</span> <strong>${s.etapaProsp}</strong></div>`:''}
+        ${s.canalProsp?`<div><span style="color:var(--muted)">Canal:</span> <strong>${s.canalProsp}</strong></div>`:''}
+        ${s.herramientaInteres?`<div><span style="color:var(--muted)">Interés:</span> <strong>${s.herramientaInteres}</strong></div>`:''}
+        ${s.origen?`<div><span style="color:var(--muted)">Origen:</span> <strong>${s.origen}</strong></div>`:''}
+      </div>
+      ${(s.sintomas||[]).length?`<div style="margin-top:8px;font-size:12px"><span style="color:var(--muted)">Siente:</span> ${s.sintomas.map(x=>`<span style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--gold);margin-left:4px">${x}</span>`).join('')}</div>`:''}
+      ${s.momento?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">Cuándo:</span> <strong>${s.momento}${s.momentoOtro?' — '+s.momentoOtro:''}</strong></div>`:''}
+      ${s.mensajeRegistro?`<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;border-top:1px solid rgba(61,170,106,.15);padding-top:8px">"${s.mensajeRegistro}"</div>`:''}
+    </div>`:'';
+    const review=s.review&&s.review!=='None'?`<div style="background:var(--card2);border-radius:9px;padding:10px;margin-bottom:12px;font-size:13px;color:var(--muted);font-style:italic;border:1px solid #1E1C10">"${s.review}"</div>`:'';
+    const contacto=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:12px;margin-bottom:12px">
+      ${s.instagram?`<div class="cc" style="padding:8px"><span style="color:var(--muted)">Instagram</span><br><strong>${s.instagram}</strong></div>`:''}
+      ${totalPag>0?`<div class="cc" style="padding:8px"><span style="color:var(--muted)">Total pagado</span><br><strong style="color:var(--gl)">$${totalPag.toLocaleString('es-AR')}</strong></div>`:''}
+    </div>`;
+    body=kpis+prospInfo+review+contacto;
+  }
+
+  else if(_showSerTab==='sesiones'){
+    body=`<div style="max-height:380px;overflow-y:auto">
+      ${ss.length?ss.map(se=>`<div style="background:var(--card2);border-radius:9px;padding:10px 12px;margin-bottom:7px;border:1px solid var(--border)">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:12px;font-weight:700;color:var(--gl)">${fd(se.fecha)}${se.hora?' '+se.hora:''}</span>
+            ${se.primeraVez?'<span class="bdg b-or" style="font-size:9px">⭐ 1°Vez</span>':''}
+          </div>
+          <span class="bdg ${estCls(se.estado||'Completado')}" style="font-size:10px">${se.estado||'Completado'}</span>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:5px">
+          <span class="bdg ${bc(se.sesion)}" style="font-size:11px">${se.sesion}</span>
+          <span style="font-size:11px;color:var(--muted)">${se.facilitador}</span>
+          ${se.montoPagado>0?`<span style="font-size:11px;color:var(--gl);font-weight:700">$${(se.montoPagado||se.monto||0).toLocaleString('es-AR')}</span>`:''}
+        </div>
+        ${se.observacion?`<div style="font-size:11px;color:var(--muted);margin-top:5px;font-style:italic">${se.observacion}</div>`:''}
+        ${se.intakeCompletado?`<div style="font-size:10px;margin-top:5px;color:var(--green)">💫 Completó el formulario de integración</div>`:''}
+      </div>`).join(''):'<p style="text-align:center;color:var(--muted);padding:24px">Sin sesiones registradas</p>'}
+    </div>`;
+  }
+
+  else if(_showSerTab==='formularios'){
+    const intakes=[];
+    // Intake del ser (registro)
+    if(s.intakeCompletado){
+      intakes.push({titulo:'Formulario de Integración del Ser',fecha:s.intakeFecha||'',fields:[
+        {l:'Sesión',v:s.intakeSesion},{l:'Antes de la sesión',v:s.intakeAntes},
+        {l:'Durante',v:s.intakeDurante},{l:'Después',v:s.intakeDespues},
+        {l:'Palabra clave',v:s.intakePalabra},{l:'¿Recomienda?',v:s.intakeRecomienda},
+        {l:'Testimonio',v:s.intakeTestimonio},{l:'Info futura',v:s.intakeInfo},
+        {l:'Mensaje',v:s.intakeMensaje},
+      ].filter(f=>f.v)});
+    }
+    // Intakes de sesiones individuales
+    sesIntakes.forEach(se=>{
+      intakes.push({titulo:`Integración — ${se.sesion} (${fd(se.fecha)})`,fecha:se.intakeFecha||se.fecha,fields:[
+        {l:'Antes',v:se.intakeAntes},{l:'Durante',v:se.intakeDurante},
+        {l:'Después',v:se.intakeDespues},{l:'Palabra clave',v:se.intakePalabra},
+        {l:'¿Recomienda?',v:se.intakeRecomienda},{l:'Testimonio',v:se.intakeTestimonio},
+        {l:'Info futura',v:se.intakeInfo},{l:'Mensaje',v:se.intakeMensaje},
+      ].filter(f=>f.v)});
+    });
+    body=`<div style="max-height:380px;overflow-y:auto">
+      ${intakes.length?intakes.map(it=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:8px">💫 ${it.titulo}</div>
+        ${it.fields.map(f=>`<div style="margin-bottom:6px"><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${f.l}</div><div style="font-size:13px;color:var(--text);margin-top:2px;line-height:1.5">${f.v}</div></div>`).join('')}
+      </div>`).join(''):`<div style="text-align:center;padding:32px">
+        <div style="font-size:32px;margin-bottom:10px">💫</div>
+        <p style="color:var(--muted);font-size:13px">Esta persona aún no completó ningún formulario de integración.</p>
+      </div>`}
+    </div>`;
+  }
+
+  document.getElementById('serDetContent').innerHTML=header+tabBar+body;
 }
 
 /* HERRAMIENTAS */
