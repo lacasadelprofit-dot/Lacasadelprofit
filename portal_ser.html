@@ -298,24 +298,24 @@ document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&document.getElemen
 /* ── AGENDA ── */
 const WA_NUM='5491151758653';
 const HERRAMIENTAS=[
-  {ico:'🌀',nom:'Barras de Access'},
-  {ico:'✨',nom:'Sesión Profit'},
-  {ico:'💆',nom:'Proceso de Cuerpos'},
-  {ico:'🌿',nom:'Bioexistencia'},
-  {ico:'📖',nom:'Registros Akashicos'},
-  {ico:'💎',nom:'Reiki'},
-  {ico:'🌬️',nom:'Limpieza Energética'},
-  {ico:'🔢',nom:'Numerología'},
-  {ico:'🐴',nom:'Coaching con Caballos'},
-  {ico:'⭐',nom:'Constelaciones Familiares'},
-  {ico:'🌸',nom:'Face Lift'},
-  {ico:'🎓',nom:'Clase Barras de Access'},
-  {ico:'🍄',nom:'Ceremonias Hongos'},
-  {ico:'🌺',nom:'Flores de Bach'},
-  {ico:'🎵',nom:'Viaje Sonoro'},
-  {ico:'🧘',nom:'Yoga'},
-  {ico:'🐸',nom:'Bufu Alvarius'},
-  {ico:'🌌',nom:'Sesiones Pleyadianas'},
+  {ico:'🌀',nom:'Barras de Access',desc:'Técnica de consciencia que trabaja sobre 32 puntos en la cabeza, liberando cargas eléctricas de creencias y limitaciones acumuladas. Genera ligereza, claridad y mayor facilidad para crear.'},
+  {ico:'✨',nom:'Sesión Profit',desc:'Sesión personalizada de coaching consciente para expandir posibilidades, identificar bloqueos y crear una vida en plena elección y libertad.'},
+  {ico:'💆',nom:'Proceso de Cuerpos',desc:'Trabajo corporal energético que facilita la liberación de traumas, tensiones y memorias almacenadas en el cuerpo físico. Restaura el flujo natural de energía vital.'},
+  {ico:'🌱',nom:'Bioexistencia',desc:'Modalidad terapéutica que integra biología, consciencia y existencia. Explora los patrones inconscientes que gobiernan tu vida y cómo transformarlos desde la raíz.'},
+  {ico:'📖',nom:'Registros Akashicos',desc:'Acceso a la memoria del alma a través de los registros energéticos universales. Permite comprender patrones kármicos, misiones de vida y desbloquear limitaciones profundas.'},
+  {ico:'🙌',nom:'Reiki',desc:'Sistema japonés de sanación energética que canaliza energía universal a través de las manos. Equilibra los chakras, reduce el estrés y promueve sanación integral.'},
+  {ico:'🌬️',nom:'Limpieza Energética',desc:'Proceso de depuración del campo energético personal y de espacios físicos. Libera energías densas y vínculos que limitan el bienestar y la expansión.'},
+  {ico:'🔢',nom:'Numerología',desc:'Sistema ancestral que utiliza los números derivados de tu nombre y fecha de nacimiento para revelar propósito de vida, talentos, desafíos y ciclos personales.'},
+  {ico:'🐎',nom:'Coaching con Caballos',desc:'Trabajo terapéutico y de desarrollo personal usando caballos como espejos del alma. Los caballos reflejan el estado emocional e interior del ser con honestidad.'},
+  {ico:'⭐',nom:'Constelaciones Familiares',desc:'Trabajo sistémico que revela y sana dinámicas familiares y organizacionales inconscientes que afectan el presente. Profunda herramienta de liberación.'},
+  {ico:'🌸',nom:'Face Lift',desc:'Técnica de Access Consciousness que trabaja directamente con el rostro y la cabeza, liberando tensiones físicas y energéticas acumuladas en esta zona.'},
+  {ico:'🎓',nom:'Clase Barras de Access',desc:'Formación práctica para aprender la técnica de Barras de Access. Al finalizar, el participante puede facilitar sesiones a otras personas.'},
+  {ico:'🍄',nom:'Ceremonias Hongos',desc:'Ceremonias sagradas con medicina ancestral de hongos psilocibios en contexto sagrado y supervisado. Facilitan expansión de consciencia y sanación profunda.'},
+  {ico:'🌺',nom:'Flores de Bach',desc:'Sistema terapéutico basado en flores silvestres que trabaja sobre los estados emocionales, devolviendo el equilibrio y la armonía al campo emocional.'},
+  {ico:'🎵',nom:'Viaje Sonoro',desc:'Experiencia de sanación profunda a través del sonido de cuencos tibetanos, gongs y otros instrumentos sagrados que inducen estados meditativos expansivos.'},
+  {ico:'🧘',nom:'Yoga',desc:'Práctica milenaria que une cuerpo, mente y espíritu a través de posturas, respiración y meditación. Favorece el equilibrio, la flexibilidad y la paz interior.'},
+  {ico:'🐸',nom:'Bufu Alvarius',desc:'Medicina ancestral del sapo Bufo Alvarius. Experiencia de expansión de consciencia profunda y transformadora, facilitada en entorno sagrado y seguro.'},
+  {ico:'🌌',nom:'Sesiones Pleyadianas',desc:'Canalizaciones y trabajo energético de alta frecuencia conectado con la energía pleyadiana. Activación de códigos y expansión de consciencia.'},
 ];
 
 function openAgenda(){
@@ -347,9 +347,15 @@ async function loadHerramientas(){
   try{
     const {data}=await _sb.from('herramientas').select('id,data');
     if(data&&data.length){
-      const todas=(data||[]).map(r=>({id:r.id,...r.data}));
+      const todas=(data||[]).map(r=>({id:r.id,...r.data})).map(h=>{
+        // Si no tiene desc, buscar en fallback por nombre
+        if(!h.desc){
+          const fb=HERRAMIENTAS.find(x=>x.nom===h.nom||x.nom===(h.nombre||''));
+          if(fb)h.desc=fb.desc;
+        }
+        return h;
+      });
       const marcadas=todas.filter(h=>h.disponiblePortal===true);
-      // Si hay alguna marcada, mostrar solo esas. Si no, mostrar todas (con desc)
       herramientasPortal=marcadas.length?marcadas:todas;
     }
   }catch(e){console.warn('herramientas fallback',e);}
