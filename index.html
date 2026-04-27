@@ -2185,6 +2185,7 @@ function renderSeres(){
       <td style="font-size:12px;color:var(--muted)">${last?fd(last.fecha):'—'}</td>
       <td style="white-space:nowrap">
         <button class="btn btn-s btn-sm" onclick="showSer(${s.id})" title="Ver perfil">👁</button>
+        ${!s.prospecto?`<button class="btn btn-s btn-sm" onclick="showSer(${s.id},'sesiones')" title="Historial de sesiones">📋</button>`:''}
         ${s.prospecto?`<button class="btn btn-s btn-sm" title="Convertir a ser" onclick="convertProsp(${s.id})">✨</button>`:''}
         <button class="btn btn-s btn-sm" onclick="openModal('ser','${s.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delSer(${s.id})">🗑</button>
@@ -2227,9 +2228,9 @@ function exportSeres(){
 }
 function convertProsp(id){const s=seres.find(x=>x.id===id);if(s&&confirm(`¿Convertir a ${s.nombre} en Ser atendido?`)){s.prospecto=false;save();renderSeres();toast('¡'+s.nombre.split(' ')[0]+' ahora es un Ser ✨');}}
 let _showSerTab='resumen';
-function showSer(id){
+function showSer(id,tab){
   const s=seres.find(x=>x.id===id);if(!s)return;
-  _showSerTab='resumen';
+  _showSerTab=tab||'resumen';
   document.getElementById('serDetEditBtn').onclick=()=>{closeModal('moSerDet');openModal('ser',String(id));};
   _renderSerDet(s);
   openModal('serDet');
