@@ -2229,7 +2229,7 @@ function exportSeres(){
 function convertProsp(id){const s=seres.find(x=>x.id===id);if(s&&confirm(`¿Convertir a ${s.nombre} en Ser atendido?`)){s.prospecto=false;save();renderSeres();toast('¡'+s.nombre.split(' ')[0]+' ahora es un Ser ✨');}}
 let _showSerTab='resumen';
 function showSer(id,tab){
-  const s=seres.find(x=>x.id===id);if(!s)return;
+  const s=seres.find(x=>String(x.id)===String(id));if(!s)return;
   _showSerTab=tab||'resumen';
   document.getElementById('serDetEditBtn').onclick=()=>{closeModal('moSerDet');openModal('ser',String(id));};
   _renderSerDet(s);
