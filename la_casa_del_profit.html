@@ -447,10 +447,14 @@ select.fi:focus{border-color:var(--gold);}
        <button id="btnNuevaSemana" class="btn btn-p" onclick="addSemana()">+ Nueva Semana</button>
       </div>
       <!-- Tabs del editor -->
-      <div class="tab-bar" style="margin-bottom:14px">
+      <div class="tab-bar" style="margin-bottom:14px;flex-wrap:wrap">
        <button class="tab-btn active" id="ptabSemanas" onclick="setProgTab('semanas')">📅 Semanas</button>
        <button class="tab-btn" id="ptabSesiones" onclick="setProgTab('sesiones')">✨ Sesiones</button>
-       <button class="tab-btn" id="ptabMateriales" onclick="setProgTab('materiales')">📖 Materiales</button>
+       <button class="tab-btn" id="ptabMateriales" onclick="setProgTab('materiales')">📖 Material</button>
+       <button class="tab-btn" id="ptabOnboarding" onclick="setProgTab('onboarding')">🚀 Onboarding</button>
+       <button class="tab-btn" id="ptabCalendario" onclick="setProgTab('calendario')">🗓 Calendario</button>
+       <button class="tab-btn" id="ptabNotas" onclick="setProgTab('notas')">📝 Notas</button>
+       <button class="tab-btn" id="ptabComunicacion" onclick="setProgTab('comunicacion')">💬 Comunicación</button>
       </div>
       <!-- Tab Semanas -->
       <div id="progTabSemanas">
@@ -466,6 +470,22 @@ select.fi:focus{border-color:var(--gold);}
       <!-- Tab Materiales -->
       <div id="progTabMateriales" style="display:none">
        <div id="progMaterialesView"></div>
+      </div>
+      <!-- Tab Onboarding -->
+      <div id="progTabOnboarding" style="display:none">
+       <div id="progOnboardingView"></div>
+      </div>
+      <!-- Tab Calendario -->
+      <div id="progTabCalendario" style="display:none">
+       <div id="progCalendarioView"></div>
+      </div>
+      <!-- Tab Notas -->
+      <div id="progTabNotas" style="display:none">
+       <div id="progNotasView"></div>
+      </div>
+      <!-- Tab Comunicación -->
+      <div id="progTabComunicacion" style="display:none">
+       <div id="progComunicacionView"></div>
       </div>
      </div>
     </div>
@@ -2732,7 +2752,7 @@ function refreshJView(){
 let _curProgTab='semanas';
 function setProgTab(tab){
   _curProgTab=tab;
-  ['semanas','sesiones','materiales'].forEach(t=>{
+  ['semanas','sesiones','materiales','onboarding','calendario','notas','comunicacion'].forEach(t=>{
     const btn=document.getElementById('ptab'+t.charAt(0).toUpperCase()+t.slice(1));
     const panel=document.getElementById('progTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(btn)btn.classList.toggle('active',t===tab);
@@ -2742,72 +2762,293 @@ function setProgTab(tab){
   if(btnSem)btnSem.style.display=tab==='semanas'?'':'none';
   if(tab==='sesiones')renderProgSesionesTab();
   if(tab==='materiales')renderProgMaterialesTab();
+  if(tab==='onboarding')renderProgOnboardingTab();
+  if(tab==='calendario')renderProgCalendarioTab();
+  if(tab==='notas')renderProgNotasTab();
+  if(tab==='comunicacion')renderProgComunicacionTab();
 }
 function renderProgSesionesTab(){
   const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
   const col=p.col||'#C9A84C';
-  const semanas=p.semanas||[];
   const el=document.getElementById('progSesionesView');if(!el)return;
-  // Agrupa todas las sesiones de todas las semanas
+  // Sesiones de semanas
   const allSes=[];
-  semanas.forEach(s=>(s.sesiones||[]).forEach(se=>allSes.push({...se,semana:s.num,tituloSem:s.titulo})));
-  if(!allSes.length){
-    el.innerHTML=`<div class="cc"><p style="color:var(--muted);font-size:13px;text-align:center;padding:24px">No hay sesiones cargadas en este programa.<br>Agregá sesiones desde la pestaña <strong>Semanas</strong>.</p></div>`;
-    return;
-  }
-  // Agrupa por herramienta
-  const byHerr={};
-  allSes.forEach(se=>{const k=se.nombre||se.tipo||'Sesión';if(!byHerr[k])byHerr[k]=[];byHerr[k].push(se);});
-  const resumen=Object.entries(byHerr).map(([nom,items])=>{
-    const h=herramientas.find(x=>x.nom===nom)||{};
-    const facsRel=facs.filter(f=>(f.herramientas||[]).includes(nom)||(h.facs||[]).includes(f.nombre));
-    return `<div style="background:var(--card2);border-radius:12px;padding:12px 14px;border:1px solid var(--border);margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <span style="font-size:20px">${h.ico||'✨'}</span>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:var(--gl)">${nom}</div>
-          <div style="font-size:11px;color:var(--muted)">${items.length} sesión${items.length>1?'es':''} en el programa</div>
-        </div>
-        ${facsRel.length?`<div style="font-size:10px;color:var(--muted)">${facsRel.map(f=>`<span style="background:${col}22;padding:2px 7px;border-radius:10px;margin-left:3px">${f.nombre.split(' ')[0]}</span>`).join('')}</div>`:''}
+  (p.semanas||[]).forEach(s=>(s.sesiones||[]).forEach(se=>allSes.push({...se,semana:s.num,tituloSem:s.titulo,_src:'semana'})));
+  // Sesiones globales del programa (independientes de semana)
+  (p.sesionesGlobales||[]).forEach((se,i)=>allSes.push({...se,_src:'global',_idx:i}));
+
+  const icoTipo={pdf:'📄',video:'🎥',audio:'🎧',lectura:'📖',link:'🔗'};
+  const sesCards=allSes.map(se=>{
+    const h=herramientas.find(x=>x.nom===(se.nombre||se.tipo))||{};
+    return `<div style="background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;margin-bottom:7px">
+      <span style="font-size:20px">${h.ico||'✨'}</span>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:700;color:var(--text)">${se.nombre||se.tipo||'Sesión'}</div>
+        <div style="font-size:10px;color:var(--muted)">${se._src==='global'?'📌 Global':('Sem. '+se.semana+(se.tituloSem?' — '+se.tituloSem:''))}</div>
+        ${se.descripcion?`<div style="font-size:10px;color:var(--muted);margin-top:2px">${se.descripcion}</div>`:''}
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:5px">
-        ${items.map(se=>`<span style="font-size:10px;background:${col}15;border:1px solid ${col}33;border-radius:8px;padding:3px 9px">📅 Sem. ${se.semana} — ${se.tituloSem||''}</span>`).join('')}
-      </div>
+      ${se._src==='global'?`<button onclick="delProgSesGlobal(${se._idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px" title="Eliminar">🗑</button>`:''}
     </div>`;
   }).join('');
-  el.innerHTML=`<div class="cc" style="margin-bottom:0">
-    <h3 style="color:var(--gl);margin-bottom:12px">✨ Sesiones del programa — ${allSes.length} en total</h3>
-    ${resumen}
+
+  el.innerHTML=`<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--gl)">✨ Sesiones — ${allSes.length} en total</div>
+      <button onclick="showAddProgSes()" style="background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:5px 12px;cursor:pointer">+ Agregar sesión</button>
+    </div>
+    ${allSes.length?`<div>${sesCards}</div>`:`<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Sin sesiones. Agregá desde aquí o desde cada semana.</div>`}
+    <div id="addProgSesForm"></div>
   </div>`;
 }
+function showAddProgSes(){
+  const el=document.getElementById('addProgSesForm');if(!el)return;
+  const p=programas.find(x=>x.id===curJourneyProgId);
+  const col=p?p.col||'#C9A84C':'#C9A84C';
+  el.innerHTML=`<div class="cc" style="margin-top:12px;padding:14px">
+    <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:10px">Nueva sesión global</div>
+    <select id="pses_nombre" style="margin-bottom:7px;width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px">
+      <option value="">— Elegir herramienta —</option>
+      ${herramientas.map(h=>`<option value="${h.nom}">${h.ico||'✨'} ${h.nom}</option>`).join('')}
+    </select>
+    <input id="pses_desc" placeholder="Descripción (opcional)" style="margin-bottom:10px;font-size:12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);width:100%">
+    <button onclick="saveProgSesGlobal()" style="width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:7px;cursor:pointer">Guardar sesión</button>
+  </div>`;
+}
+function saveProgSesGlobal(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  if(!p.sesionesGlobales)p.sesionesGlobales=[];
+  const nom=(document.getElementById('pses_nombre')||{}).value;
+  if(!nom){toast('Elegí una herramienta');return;}
+  const h=herramientas.find(x=>x.nom===nom)||{};
+  p.sesionesGlobales.push({nombre:nom,ico:h.ico||'✨',descripcion:(document.getElementById('pses_desc')||{}).value||''});
+  save();renderProgSesionesTab();toast('Sesión agregada ✅');
+}
+function delProgSesGlobal(idx){
+  if(!confirm('¿Eliminar esta sesión?'))return;
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  (p.sesionesGlobales||[]).splice(idx,1);save();renderProgSesionesTab();toast('Eliminada');
+}
+
 function renderProgMaterialesTab(){
   const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
   const col=p.col||'#C9A84C';
-  const semanas=p.semanas||[];
   const el=document.getElementById('progMaterialesView');if(!el)return;
+  // Materiales de semanas
   const allMat=[];
-  semanas.forEach(s=>(s.materiales||[]).forEach(m=>allMat.push({...m,semana:s.num,tituloSem:s.titulo})));
-  if(!allMat.length){
-    el.innerHTML=`<div class="cc"><p style="color:var(--muted);font-size:13px;text-align:center;padding:24px">No hay materiales cargados.<br>Agregá materiales desde la pestaña <strong>Semanas</strong>.</p></div>`;
-    return;
-  }
-  const byTipo={};
-  allMat.forEach(m=>{const k=m.tipo||'Otro';if(!byTipo[k])byTipo[k]=[];byTipo[k].push(m);});
-  const icoTipo={pdf:'📄',video:'🎥',audio:'🎧',lectura:'📖',link:'🔗',Otro:'📎'};
-  el.innerHTML=`<div class="cc" style="margin-bottom:0">
-    <h3 style="color:var(--gl);margin-bottom:12px">📖 Materiales del programa — ${allMat.length} en total</h3>
-    ${Object.entries(byTipo).map(([tipo,items])=>`
-      <div style="margin-bottom:12px">
-        <div style="font-size:11px;font-weight:700;color:var(--gold);margin-bottom:6px">${icoTipo[tipo]||'📎'} ${tipo.toUpperCase()}</div>
-        ${items.map(m=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:4px;border:1px solid var(--border)">
-          <div style="flex:1">
-            <div style="font-size:12px;font-weight:600;color:var(--text)">${m.nombre||'Material'}</div>
-            <div style="font-size:10px;color:var(--muted)">Sem. ${m.semana} — ${m.tituloSem||''}</div>
-          </div>
-          ${m.url?`<a href="${m.url}" target="_blank" style="font-size:11px;color:var(--gold);text-decoration:none">↗ Abrir</a>`:''}
-        </div>`).join('')}
-      </div>`).join('')}
+  (p.semanas||[]).forEach(s=>(s.materiales||[]).forEach(m=>allMat.push({...m,semana:s.num,tituloSem:s.titulo,_src:'semana'})));
+  // Materiales globales del programa
+  (p.materialesGlobales||[]).forEach((m,i)=>allMat.push({...m,_src:'global',_idx:i}));
+  const icoTipo={pdf:'📄',video:'🎥',audio:'🎧',lectura:'📖',link:'🔗'};
+
+  const matCards=allMat.map(m=>`
+    <div style="background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid var(--border);display:flex;align-items:center;gap:10px;margin-bottom:7px">
+      <span style="font-size:20px">${icoTipo[m.tipo]||'📎'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--text)">${m.nombre||m.titulo||'Material'}</div>
+        <div style="font-size:10px;color:var(--muted)">${m._src==='global'?'📌 Global':('Sem. '+m.semana+(m.tituloSem?' — '+m.tituloSem:''))}</div>
+        ${m.url?`<a href="${m.url}" target="_blank" style="font-size:10px;color:${col}">Ver ↗</a>`:''}
+      </div>
+      ${m._src==='global'?`<button onclick="delProgMatGlobal(${m._idx})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px">🗑</button>`:''}
+    </div>`).join('');
+
+  el.innerHTML=`<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--gl)">📖 Material — ${allMat.length} en total</div>
+      <button onclick="showAddProgMat()" style="background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:5px 12px;cursor:pointer">+ Agregar</button>
+    </div>
+    ${allMat.length?`<div>${matCards}</div>`:`<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px">Sin materiales. Agregá desde aquí o desde cada semana.</div>`}
+    <div id="addProgMatForm"></div>
   </div>`;
+}
+function showAddProgMat(){
+  const el=document.getElementById('addProgMatForm');if(!el)return;
+  const p=programas.find(x=>x.id===curJourneyProgId);
+  const col=p?p.col||'#C9A84C':'#C9A84C';
+  el.innerHTML=`<div class="cc" style="margin-top:12px;padding:14px">
+    <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:10px">Nuevo material global</div>
+    <input id="pmat_titulo" placeholder="Título del recurso" style="margin-bottom:7px;font-size:12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);width:100%">
+    <select id="pmat_tipo" style="margin-bottom:7px;width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);font-size:12px">
+      <option value="link">🔗 Link</option><option value="video">🎥 Video</option><option value="pdf">📄 PDF</option><option value="audio">🎧 Audio</option><option value="lectura">📖 Lectura</option>
+    </select>
+    <input id="pmat_url" placeholder="URL (opcional)" style="margin-bottom:10px;font-size:12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);width:100%">
+    <button onclick="saveProgMatGlobal()" style="width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:7px;cursor:pointer">Guardar material</button>
+  </div>`;
+}
+function saveProgMatGlobal(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  if(!p.materialesGlobales)p.materialesGlobales=[];
+  const titulo=(document.getElementById('pmat_titulo')||{}).value?.trim();
+  if(!titulo){toast('Ingresá un título');return;}
+  p.materialesGlobales.push({nombre:titulo,tipo:(document.getElementById('pmat_tipo')||{}).value||'link',url:(document.getElementById('pmat_url')||{}).value?.trim()||'',fecha:new Date().toISOString().split('T')[0]});
+  save();renderProgMaterialesTab();toast('Material guardado ✅');
+}
+function delProgMatGlobal(idx){
+  if(!confirm('¿Eliminar este material?'))return;
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  (p.materialesGlobales||[]).splice(idx,1);save();renderProgMaterialesTab();toast('Eliminado');
+}
+
+/* ── Programas: tabs nuevas ── */
+function renderProgOnboardingTab(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  const col=p.col||'#C9A84C';
+  const el=document.getElementById('progOnboardingView');if(!el)return;
+  if(!p.onboardingQs)p.onboardingQs=[
+    {k:'objetivos',l:'¿Cuáles son tus objetivos para este programa?'},
+    {k:'situacion',l:'¿Cuál es tu situación actual?'},
+    {k:'compromisos',l:'¿A qué te comprometés?'},
+    {k:'expectativas',l:'¿Qué esperás lograr?'},
+    {k:'disponibilidad',l:'¿Cuánto tiempo podés dedicar por día?'},
+  ];
+  const qs=p.onboardingQs;
+  const rows=qs.map((q,i)=>`
+    <div style="background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;margin-bottom:6px">
+      <div style="flex:1;font-size:12px;color:var(--text)">${i+1}. ${q.l}</div>
+      <button onclick="delProgOnboardingQ(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">🗑</button>
+    </div>`).join('');
+  el.innerHTML=`<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;color:var(--gl)">🚀 Onboarding — Preguntas de inicio</div>
+      <button onclick="saveProgOnboarding('${p.id}')" style="background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:5px 12px;cursor:pointer">💾 Guardar</button>
+    </div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Estas preguntas se muestran cuando un ser inicia este programa. Podés editarlas o agregar nuevas.</p>
+    <div id="progOnboardingQList">${rows}</div>
+    <div class="cc" style="margin-top:12px;padding:12px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:6px">+ Nueva pregunta</div>
+      <input id="newObQ" placeholder="Escribí la pregunta..." style="font-size:12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;color:var(--text);width:100%;margin-bottom:7px">
+      <button onclick="addProgOnboardingQ('${p.id}')" style="width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:6px;cursor:pointer">Agregar pregunta</button>
+    </div>
+  </div>`;
+}
+function addProgOnboardingQ(progId){
+  const p=programas.find(x=>x.id===progId);if(!p)return;
+  const input=document.getElementById('newObQ');if(!input)return;
+  const txt=input.value.trim();if(!txt){toast('Escribí la pregunta');return;}
+  if(!p.onboardingQs)p.onboardingQs=[];
+  p.onboardingQs.push({k:'q'+Date.now(),l:txt});
+  save();renderProgOnboardingTab();toast('Pregunta agregada ✅');
+}
+function delProgOnboardingQ(idx){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  (p.onboardingQs||[]).splice(idx,1);save();renderProgOnboardingTab();
+}
+function saveProgOnboarding(progId){save();toast('Onboarding guardado ✅');}
+
+function renderProgCalendarioTab(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  const col=p.col||'#C9A84C';
+  const el=document.getElementById('progCalendarioView');if(!el)return;
+  const semanas=p.semanas||[];
+  if(!semanas.length){
+    el.innerHTML=`<div style="padding:24px;text-align:center;color:var(--muted)">Sin semanas. Creá semanas en la pestaña Semanas.</div>`;return;
+  }
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AI={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
+  const rows=semanas.map((s,i)=>{
+    const byArea={};
+    (s.habitos||[]).forEach(h=>{if(h.area&&!byArea[h.area])byArea[h.area]=h;});
+    const habDots=['espiritual','mental','fisica','social'].map(k=>byArea[k]
+      ?`<span title="${byArea[k].nom}" style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:${AC[k]};background:${AC[k]}18;border-radius:5px;padding:2px 6px;margin:2px">${AI[k]} ${byArea[k].nom}</span>`
+      :`<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--border);background:var(--card2);border-radius:5px;padding:2px 6px;margin:2px">${AI[k]} —</span>`).join('');
+    const sesCnt=(s.sesiones||[]).length;
+    const desCnt=(s.desafios||[]).length;
+    return `<div style="display:flex;gap:12px;align-items:flex-start;padding:12px;background:var(--card2);border-radius:10px;border:1px solid var(--border);margin-bottom:8px">
+      <div style="width:36px;height:36px;border-radius:50%;background:${col}22;border:2px solid ${col};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:${col};flex-shrink:0">${s.num}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:4px">${s.titulo||'Semana '+s.num}</div>
+        <div style="font-flex:wrap;margin-bottom:4px">${habDots}</div>
+        <div style="font-size:10px;color:var(--muted)">${desCnt} desafío${desCnt!==1?'s':''} · ${sesCnt} sesión${sesCnt!==1?'es':''}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=`<div>
+    <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:14px">🗓 Estructura del programa — ${semanas.length} semanas</div>
+    ${rows}
+  </div>`;
+}
+
+function renderProgNotasTab(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  const col=p.col||'#C9A84C';
+  const el=document.getElementById('progNotasView');if(!el)return;
+  if(!p.notasAdmin)p.notasAdmin=[];
+  const items=p.notasAdmin.length?[...p.notasAdmin].reverse().map(n=>`
+    <div style="background:var(--card2);border-radius:10px;padding:12px;border-left:3px solid ${col};margin-bottom:7px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">${n.fecha||''}</div>
+      <div style="font-size:12px;color:var(--text);white-space:pre-wrap">${n.texto}</div>
+    </div>`).join('')
+    :`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Sin notas.</div>`;
+  el.innerHTML=`<div>
+    <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:12px">📝 Notas del programa</div>
+    <div class="cc" style="margin-bottom:12px;padding:12px">
+      <textarea id="progNotaInput" style="height:80px;resize:none;font-size:12px" placeholder="Agregar nota sobre este programa..."></textarea>
+      <button onclick="saveProgNota('${p.id}')" style="margin-top:6px;width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:6px;cursor:pointer">Agregar nota</button>
+    </div>
+    ${items}
+  </div>`;
+}
+function saveProgNota(progId){
+  const p=programas.find(x=>x.id===progId);if(!p)return;
+  if(!p.notasAdmin)p.notasAdmin=[];
+  const el=document.getElementById('progNotaInput');if(!el)return;
+  const texto=el.value.trim();if(!texto)return;
+  p.notasAdmin.push({fecha:new Date().toLocaleDateString('es-AR'),texto});
+  save();renderProgNotasTab();toast('Nota guardada ✅');
+}
+
+function renderProgComunicacionTab(){
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  const col=p.col||'#C9A84C';
+  const el=document.getElementById('progComunicacionView');if(!el)return;
+  if(!p.mensajesTemplate)p.mensajesTemplate=[];
+  const msgs=p.mensajesTemplate;
+  const tipoIco={bienvenida:'👋',semana:'📅',cierre:'🎉',recordatorio:'🔔',devolucion:'📋'};
+  const items=msgs.length?msgs.map((m,i)=>`
+    <div style="background:var(--card2);border-radius:10px;padding:12px;border:1px solid var(--border);margin-bottom:7px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span>${tipoIco[m.tipo]||'💬'}</span>
+          <span style="font-size:11px;font-weight:700;color:${col}">${m.titulo}</span>
+          <span style="font-size:10px;color:var(--muted);background:var(--card);border-radius:5px;padding:1px 6px">${m.tipo||'mensaje'}</span>
+        </div>
+        <button onclick="delProgMsg(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px">🗑</button>
+      </div>
+      <div style="font-size:12px;color:var(--text);white-space:pre-wrap;padding:8px;background:var(--card);border-radius:7px">${m.cuerpo}</div>
+    </div>`).join('')
+    :`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Sin mensajes template.</div>`;
+  el.innerHTML=`<div>
+    <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:6px">💬 Mensajes template</div>
+    <p style="font-size:11px;color:var(--muted);margin-bottom:12px">Mensajes pre-armados para enviar a los seres durante el programa.</p>
+    <div class="cc" style="margin-bottom:12px;padding:14px">
+      <div style="display:flex;gap:8px;margin-bottom:7px;flex-wrap:wrap">
+        <input id="pmsg_titulo" placeholder="Título del mensaje" style="flex:1;min-width:150px;font-size:12px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;color:var(--text)">
+        <select id="pmsg_tipo" style="background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;color:var(--text);font-size:11px">
+          <option value="bienvenida">👋 Bienvenida</option>
+          <option value="semana">📅 Por semana</option>
+          <option value="recordatorio">🔔 Recordatorio</option>
+          <option value="devolucion">📋 Devolución</option>
+          <option value="cierre">🎉 Cierre</option>
+        </select>
+      </div>
+      <textarea id="pmsg_cuerpo" style="height:90px;resize:none;font-size:12px;margin-bottom:7px" placeholder="Cuerpo del mensaje..."></textarea>
+      <button onclick="saveProgMsg('${p.id}')" style="width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:6px;cursor:pointer">Guardar mensaje</button>
+    </div>
+    ${items}
+  </div>`;
+}
+function saveProgMsg(progId){
+  const p=programas.find(x=>x.id===progId);if(!p)return;
+  if(!p.mensajesTemplate)p.mensajesTemplate=[];
+  const titulo=(document.getElementById('pmsg_titulo')||{}).value?.trim();
+  const cuerpo=(document.getElementById('pmsg_cuerpo')||{}).value?.trim();
+  if(!titulo||!cuerpo){toast('Completá título y cuerpo');return;}
+  p.mensajesTemplate.push({titulo,tipo:(document.getElementById('pmsg_tipo')||{}).value||'mensaje',cuerpo});
+  save();renderProgComunicacionTab();toast('Mensaje guardado ✅');
+}
+function delProgMsg(idx){
+  if(!confirm('¿Eliminar este mensaje?'))return;
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  (p.mensajesTemplate||[]).splice(idx,1);save();renderProgComunicacionTab();toast('Eliminado');
 }
 function openJourneyView(progId){
   curJourneyProgId=progId;curJourneySemIdx=0;journeyMode='tmpl';_curProgTab='semanas';
