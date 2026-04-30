@@ -3116,6 +3116,9 @@ function refreshInscSesAsig(){
           <option value="completada" ${m.estado==='completada'?'selected':''}>✅ Completada</option>
           <option value="cancelada" ${m.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
         </select>
+        <input type="number" value="${m.monto||''}" placeholder="$ Monto"
+          onchange="updInscSesField(${idx},'monto',this)"
+          style="width:90px;background:var(--card);border:1px solid var(--border);color:var(--gl);font-size:11px;border-radius:6px;padding:4px 7px;font-weight:600">
       </div>
     </div>`;
   }).join('');
@@ -3125,6 +3128,7 @@ function updInscSesField(idx,field,el){
   if(field==='fac'){const fac=facs.find(f=>f.id===el.value);window._inSesAsig[idx]={...window._inSesAsig[idx],facId:el.value,facNombre:fac?fac.nombre:''};}
   else if(field==='fecha'){window._inSesAsig[idx]={...window._inSesAsig[idx],fecha:el.value};}
   else if(field==='estado'){window._inSesAsig[idx]={...window._inSesAsig[idx],estado:el.value};}
+  else if(field==='monto'){window._inSesAsig[idx]={...window._inSesAsig[idx],monto:parseFloat(el.value)||0};}
 }
 // Backward compat aliases
 function updateInscSesAsig(idx,sel){updInscSesField(idx,'fac',sel);}
@@ -3377,6 +3381,9 @@ function openInscDetail(id){
                 <option value="completada" ${s.estado==='completada'?'selected':''}>✅ Completada</option>
                 <option value="cancelada" ${s.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
               </select>
+              <input type="number" value="${s.monto||''}" placeholder="$ Monto"
+                onchange="updateDetailSesAsig(${idx},'monto',this)"
+                style="width:90px;background:var(--card);border:1px solid var(--border);color:var(--gl);font-size:10px;border-radius:6px;padding:3px 6px;font-weight:600">
             </div>
           </div>`;
         }).join('')}
@@ -3449,11 +3456,14 @@ function updateDetailSesAsig(idx,field,el){
   if(!insc.sesionesAsignadas)return;
   if(field==='fac'){const fac=facs.find(f=>f.id===el.value);insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],facId:el.value,facNombre:fac?fac.nombre:''};}
   else if(field==='fecha'){insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],fecha:el.value};}
+  else if(field==='monto'){insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],monto:parseFloat(el.value)||0};}
   else{insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],estado:el.value};}
 }
 function saveDetailSesAsig(id){
   const insc=inscripciones.find(x=>x.id===id);if(!insc)return;
-  save();toast('Asignaciones guardadas ✅');
+  const total=(insc.sesionesAsignadas||[]).reduce((a,s)=>a+(s.monto||0),0);
+  save();
+  toast('Asignaciones guardadas ✅'+(total>0?` · Costo total: $${total.toLocaleString('es-AR')}`:''));
 }
 
 function refreshInscWeekList(){renderInscWeekList();}
