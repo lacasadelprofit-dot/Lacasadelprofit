@@ -330,10 +330,14 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
       </div>
       <div class="s-back" id="sBack" onclick="goToSelector()" style="display:none">← Mis programas</div>
       <div class="s-tabs">
-        <div class="s-tab active" id="tab-general"    onclick="switchTab('general')"><span class="ti">🏠</span>General</div>
-        <div class="s-tab"        id="tab-avance"     onclick="switchTab('avance')"><span class="ti">📊</span>Mi Avance</div>
-        <div class="s-tab"        id="tab-semanas"    onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
-        <div class="s-tab"        id="tab-calendario" onclick="switchTab('calendario')"><span class="ti">🗓</span>Calendario</div>
+        <div class="s-tab active" id="tab-general"      onclick="switchTab('general')"><span class="ti">🏠</span>General</div>
+        <div class="s-tab"        id="tab-habitos"      onclick="switchTab('habitos')"><span class="ti">✅</span>Hábitos</div>
+        <div class="s-tab"        id="tab-avance"       onclick="switchTab('avance')"><span class="ti">📊</span>Mi Avance</div>
+        <div class="s-tab"        id="tab-semanas"      onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
+        <div class="s-tab"        id="tab-calendario"   onclick="switchTab('calendario')"><span class="ti">🗓</span>Calendario</div>
+        <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
+        <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
+        <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
       </div>
       <div id="weekListWrap" style="flex:1;display:none;flex-direction:column;overflow-y:auto;">
         <div class="s-sec-lbl">Semanas</div>
@@ -412,7 +416,7 @@ async function _doSave(cb){
   sessionStorage.setItem('pp_all_insc',JSON.stringify(allInscList));
   // Save to Supabase via API (sends progreso + extraData with paraQue/resultadoDeseado)
   try{
-    const body={recordId:curInsc.id,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||''}};
+    const body={recordId:curInsc.id,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[]}};
     const resp=await fetch(SAVE_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!resp.ok)console.warn('save-progreso HTTP',resp.status);
   }catch(e){console.warn('save error:',e.message);}
@@ -520,7 +524,7 @@ function launchApp(ser,insc,prog){
 function switchTab(tab){
   if(curTab==='semanas')saveNotaImmediate();
   curTab=tab;
-  ['general','avance','semanas','calendario'].forEach(t=>{
+  ['general','avance','semanas','calendario','habitos','material','notas','comunicacion'].forEach(t=>{
     document.getElementById('tab-'+t)?.classList.toggle('active',t===tab);
   });
   const ww=document.getElementById('weekListWrap');const sp=document.getElementById('sSpacer');
@@ -530,6 +534,10 @@ function switchTab(tab){
   else if(tab==='avance')renderAvance();
   else if(tab==='semanas')renderSemana(curSemIdx);
   else if(tab==='calendario')renderCalendario();
+  else if(tab==='habitos')renderHabitosTab();
+  else if(tab==='material')renderMaterialTab();
+  else if(tab==='notas')renderNotasTab();
+  else if(tab==='comunicacion')renderComunicacionTab();
   document.getElementById('mainContent').scrollTop=0;
 }
 function updateProgressBar(){
@@ -911,6 +919,227 @@ function renderCalendario(){
 }
 function calNav(d){if(d===0)calDate=new Date();else calDate=new Date(calDate.getFullYear(),calDate.getMonth()+d,1);renderCalendario();}
 function selectDay(date){selDay=selDay===date?null:date;renderCalendario();}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// HÁBITOS — registro diario sincronizado con Journey admin
+// ══════════════════════════════════════════════════════════════════════════════
+const AC_HAB={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+const AI_HAB={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
+const AK_HAB=['espiritual','mental','fisica','social'];
+
+function renderHabitosTab(){
+  const todayStr=today();
+  const todayLabel=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  // Get current week index
+  let semIdx=0;
+  if(curInsc.fechaInicio){const ini=new Date(curInsc.fechaInicio+'T12:00:00');const dias=Math.floor((new Date()-ini)/(1000*60*60*24));semIdx=Math.max(0,Math.floor(dias/7));}
+  const sem=(curInsc.semanas||[])[semIdx]||{};
+  const habByArea={},desByArea={};
+  (sem.habitos||[]).forEach(h=>{if(h.area&&!habByArea[h.area])habByArea[h.area]=h;});
+  (sem.desafios||[]).forEach(d=>{if(d.area&&!desByArea[d.area])desByArea[d.area]=d;});
+  if(!curInsc.habTrack)curInsc.habTrack={};
+  if(!curInsc.desTrack)curInsc.desTrack={};
+  const hd=curInsc.habTrack[todayStr]||{};
+  const dd=curInsc.desTrack[todayStr]||{};
+
+  // Weekly mini-view (last 7 days)
+  const last7=lastNDays(7);
+
+  const habRows=AK_HAB.map(k=>{
+    const hab=habByArea[k];
+    const doneToday=!!(hd[k]);
+    const weekDots=last7.map(d=>{
+      const done=curInsc.habTrack[d]&&curInsc.habTrack[d][k];
+      const isT=d===todayStr;
+      return `<div title="${fmtDate(d)}" style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${done?AC_HAB[k]:'var(--border)'};background:${done?AC_HAB[k]+'33':'transparent'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${done?AC_HAB[k]:'var(--muted)'};${isT?'outline:2px solid '+AC_HAB[k]+';outline-offset:1px;':''}">${done?'✓':''}</div>`;
+    }).join('');
+    const weekDone=last7.filter(d=>curInsc.habTrack[d]&&curInsc.habTrack[d][k]).length;
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${AC_HAB[k]};flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${AI_HAB[k]} ${hab?hab.nom:'Hábito '+k}</div>
+          ${hab&&hab.frecuencia?`<div style="font-size:10px;color:var(--muted)">${hab.frecuencia}</div>`:''}
+        </div>
+        <button onclick="portalToggleHab('${k}','${todayStr}')" style="padding:7px 16px;border-radius:20px;border:1.5px solid ${doneToday?AC_HAB[k]:'var(--border)'};background:${doneToday?AC_HAB[k]+'22':'transparent'};color:${doneToday?AC_HAB[k]:'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;transition:.2s">${doneToday?'✅ Hecho':'Marcar'}</button>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;justify-content:center">
+        ${weekDots}
+      </div>
+      <div style="margin-top:6px;background:var(--card2);border-radius:20px;height:3px;overflow:hidden">
+        <div style="background:${AC_HAB[k]};height:100%;width:${Math.round(weekDone/7*100)}%;border-radius:20px;transition:.3s"></div>
+      </div>
+      <div style="font-size:9px;color:var(--muted);text-align:right;margin-top:3px">${weekDone}/7 esta semana</div>
+    </div>`;
+  }).join('');
+
+  const desRows=AK_HAB.map(k=>{
+    const des=desByArea[k];
+    const doneToday=!!(dd[k]);
+    const weekDots=last7.map(d=>{
+      const done=curInsc.desTrack[d]&&curInsc.desTrack[d][k];
+      const isT=d===todayStr;
+      return `<div title="${fmtDate(d)}" style="width:22px;height:22px;border-radius:6px;border:1.5px solid ${done?AC_HAB[k]:'var(--border)'};background:${done?AC_HAB[k]+'33':'transparent'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${done?AC_HAB[k]:'var(--muted)'};${isT?'outline:2px solid '+AC_HAB[k]+';outline-offset:1px;':''}">${done?'✓':''}</div>`;
+    }).join('');
+    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:10px;height:10px;border-radius:3px;background:${AC_HAB[k]};flex-shrink:0"></div>
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${AI_HAB[k]} ${des?des.nom:'Desafío '+k}</div>
+          ${des&&des.descripcion?`<div style="font-size:10px;color:var(--muted)">${des.descripcion}</div>`:''}
+        </div>
+        <button onclick="portalToggleDes('${k}','${todayStr}')" style="padding:7px 16px;border-radius:20px;border:1.5px solid ${doneToday?AC_HAB[k]:'var(--border)'};background:${doneToday?AC_HAB[k]+'22':'transparent'};color:${doneToday?AC_HAB[k]:'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;transition:.2s">${doneToday?'✅ Hecho':'Marcar'}</button>
+      </div>
+      <div style="display:flex;gap:4px;align-items:center;justify-content:center">${weekDots}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">✅ Hábitos del día</div>
+      <div style="font-size:12px;color:var(--muted);text-transform:capitalize">${todayLabel} · Semana ${semIdx+1}${sem.titulo?' — '+sem.titulo:''}</div>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">H — Hábitos diarios</div>
+    ${habRows}
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px">D — Desafíos</div>
+    ${desRows}
+    <div style="font-size:9px;color:var(--muted);text-align:center;margin-top:10px">Los círculos muestran los últimos 7 días. El círculo con borde resaltado es hoy.</div>
+  `;
+}
+
+function portalToggleHab(area,dateStr){
+  if(!curInsc.habTrack)curInsc.habTrack={};
+  if(!curInsc.habTrack[dateStr])curInsc.habTrack[dateStr]={};
+  curInsc.habTrack[dateStr][area]=!curInsc.habTrack[dateStr][area];
+  saveProgress();
+  renderHabitosTab();
+}
+function portalToggleDes(area,dateStr){
+  if(!curInsc.desTrack)curInsc.desTrack={};
+  if(!curInsc.desTrack[dateStr])curInsc.desTrack[dateStr]={};
+  curInsc.desTrack[dateStr][area]=!curInsc.desTrack[dateStr][area];
+  saveProgress();
+  renderHabitosTab();
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MATERIAL
+// ══════════════════════════════════════════════════════════════════════════════
+function renderMaterialTab(){
+  const icoTipo={pdf:'📄',video:'🎥',audio:'🎧',link:'🔗',lectura:'📖'};
+  // Material de la inscripción (asignado desde admin)
+  const matInsc=curInsc.material||[];
+  // Material global del programa
+  const matProg=curProg.materialesGlobales||[];
+  // Material por semanas
+  const matSem=[];
+  (curInsc.semanas||[]).forEach(s=>(s.materiales||[]).forEach(m=>matSem.push({...m,semana:s.num,tituloSem:s.titulo})));
+
+  const all=[...matProg,...matInsc,...matSem];
+
+  if(!all.length){
+    document.getElementById('mainContent').innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">📁</div>Todavía no hay material disponible.</div>`;
+    return;
+  }
+
+  const cards=all.map(m=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+      <span style="font-size:26px;flex-shrink:0">${icoTipo[m.tipo]||'📎'}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--gl)">${m.nombre||m.titulo||'Recurso'}</div>
+        ${m.semana?`<div style="font-size:10px;color:var(--muted)">Semana ${m.semana}${m.tituloSem?' — '+m.tituloSem:''}</div>`:''}
+        ${m.fecha?`<div style="font-size:10px;color:var(--muted)">${m.fecha}</div>`:''}
+      </div>
+      ${m.url?`<a href="${m.url}" target="_blank" style="flex-shrink:0;padding:8px 14px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:9px;color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">Abrir ↗</a>`:
+        `<span style="flex-shrink:0;font-size:10px;color:var(--muted)">Sin link</span>`}
+    </div>`).join('');
+
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">📁 Material</div>
+      <div style="font-size:12px;color:var(--muted)">${all.length} recurso${all.length!==1?'s':''} disponibles</div>
+    </div>
+    ${cards}
+  `;
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// NOTAS
+// ══════════════════════════════════════════════════════════════════════════════
+function renderNotasTab(){
+  if(!curInsc.notasSer)curInsc.notasSer=[];
+  const notas=curInsc.notasSer.filter(n=>n.de!=='admin');// ser solo ve sus propias notas
+  const col=curProg.col||'#C9A84C';
+
+  const items=notas.length?[...notas].reverse().map((n,i)=>`
+    <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${col};border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${n.fecha||''}</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${n.texto}</div>
+    </div>`).join('')
+    :`<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">Todavía no escribiste notas.</div>`;
+
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">📝 Mis Notas</div>
+      <div style="font-size:12px;color:var(--muted)">${notas.length} nota${notas.length!==1?'s':''}</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">Nueva nota</div>
+      <textarea id="portalNotaInput" style="width:100%;min-height:100px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6" placeholder="Escribí tu reflexión, aprendizaje o lo que quieras registrar..."></textarea>
+      <button onclick="savePortalNota()" style="margin-top:8px;width:100%;padding:10px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer">Guardar nota</button>
+    </div>
+    ${items}
+  `;
+}
+function savePortalNota(){
+  const el=document.getElementById('portalNotaInput');if(!el)return;
+  const texto=el.value.trim();if(!texto){return;}
+  if(!curInsc.notasSer)curInsc.notasSer=[];
+  curInsc.notasSer.push({fecha:new Date().toLocaleDateString('es-AR'),de:'ser',texto});
+  saveProgress(()=>{renderNotasTab();toast('Nota guardada ✅');});
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// COMUNICACIÓN
+// ══════════════════════════════════════════════════════════════════════════════
+function renderComunicacionTab(){
+  if(!curInsc.comunicacion)curInsc.comunicacion=[];
+  const msgs=curInsc.comunicacion;
+  const col=curProg.col||'#C9A84C';
+
+  const msgHtml=msgs.length?msgs.map(m=>{
+    const isAdmin=m.de==='admin';
+    return `<div style="display:flex;justify-content:${isAdmin?'flex-start':'flex-end'};margin-bottom:10px">
+      <div style="max-width:80%;background:${isAdmin?'var(--card)':'rgba(201,168,76,.1)'};border:1px solid ${isAdmin?'var(--border)':'rgba(201,168,76,.3)'};border-radius:${isAdmin?'4px 14px 14px 14px':'14px 4px 14px 14px'};padding:10px 14px">
+        <div style="font-size:10px;color:${isAdmin?col:'var(--muted)'};font-weight:700;margin-bottom:4px">${isAdmin?'Tu facilitador':'Vos'} · ${m.fecha||''}${m.tipo==='devolucion'?' · 📋 Devolución':''}</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5;white-space:pre-wrap">${m.texto}</div>
+      </div>
+    </div>`;
+  }).join('')
+  :`<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">Sin mensajes aún.</div>`;
+
+  // Count unread (admin messages ser hasn't replied to)
+  const adminMsgs=msgs.filter(m=>m.de==='admin').length;
+
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">💬 Comunicación</div>
+      <div style="font-size:12px;color:var(--muted)">${adminMsgs} mensaje${adminMsgs!==1?'s':''} de tu facilitador</div>
+    </div>
+    <div style="max-height:450px;overflow-y:auto;padding:4px;margin-bottom:14px">${msgHtml}</div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+      <textarea id="portalMsgInput" style="width:100%;min-height:80px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6" placeholder="Escribí tu respuesta o consulta..."></textarea>
+      <button onclick="sendPortalMsg()" style="margin-top:8px;width:100%;padding:10px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer">Enviar mensaje</button>
+    </div>
+  `;
+}
+function sendPortalMsg(){
+  const el=document.getElementById('portalMsgInput');if(!el)return;
+  const texto=el.value.trim();if(!texto)return;
+  if(!curInsc.comunicacion)curInsc.comunicacion=[];
+  curInsc.comunicacion.push({fecha:new Date().toLocaleDateString('es-AR'),de:'ser',texto,tipo:'mensaje'});
+  saveProgress(()=>{renderComunicacionTab();toast('Mensaje enviado ✅');});
+}
 
 // ── AUTO-RESTORE ──────────────────────────────────────────────────────────────
 window.addEventListener('load',()=>{
