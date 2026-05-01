@@ -362,6 +362,7 @@ let _sb, curSer=null, curInsc=null, curProg=null;
 let curSemIdx=0, curTab='general', progreso={};
 let calDate=new Date(), selDay=null;
 let _pCalView='mes', _pCalYear=new Date().getFullYear(), _pCalMonth=new Date().getMonth(), _pCalWeek=0;
+let _habSelections={};
 let allSessions=[], allInscList=[], allProgsList=[];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -928,12 +929,17 @@ const AC_HAB={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F5
 const AI_HAB={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
 const AK_HAB=['espiritual','mental','fisica','social'];
 
-// ── HÁBITOS: CALENDARIO COMPLETO (Mensual + Semanal) ─────────────────────────
+// ── HÁBITOS: FORMULARIO DE ELECCIÓN + CALENDARIO COMPLETO ────────────────────
 function renderHabitosTab(){
+  const hasChosen = curInsc.habitosElegidos && Object.keys(curInsc.habitosElegidos).length >= 4;
+  if(!hasChosen){ renderHabitosForm(false); return; }
   document.getElementById('mainContent').innerHTML=`
-    <div style="margin-bottom:14px">
-      <div style="font-size:18px;font-weight:800;color:var(--gl)">🗓 Hábitos & Desafíos</div>
-      <div style="font-size:12px;color:var(--muted)">Registrá tu progreso — se sincroniza con tu facilitador en tiempo real</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--gl)">🗓 Hábitos & Desafíos</div>
+        <div style="font-size:12px;color:var(--muted)">Registrá tu progreso — sincronizado con tu facilitador</div>
+      </div>
+      <button onclick="renderHabitosForm(true)" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer;flex-shrink:0">✏️ Editar hábitos</button>
     </div>
     <div id="pCalSubNav" style="display:flex;gap:6px;margin-bottom:14px">
       <button id="pcaltab_mes" onclick="switchPortalCalView('mes')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📅 Mensual</button>
@@ -942,6 +948,143 @@ function renderHabitosTab(){
     <div id="pCalViewContainer"></div>
   `;
   initPortalCal();
+}
+
+function renderHabitosForm(isEdit){
+  const AK=['espiritual','mental','fisica','social'];
+  const AI={espiritual:'🌀 Espiritual',mental:'🧠 Mental',fisica:'💪 Física',social:'🤝 Social'};
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  // Gather habits from all program weeks
+  const habOpts={espiritual:[],mental:[],fisica:[],social:[]};
+  const seen={};
+  (curProg&&curProg.semanas||[]).forEach(sem=>{
+    (sem.habitos||[]).forEach(h=>{
+      if(h.area&&h.nom&&habOpts[h.area]){
+        const key=h.area+'|'+h.nom;
+        if(!seen[key]){seen[key]=true;habOpts[h.area].push(h.nom);}
+      }
+    });
+  });
+  // Default suggestions if program has no habits defined
+  const defaults={
+    espiritual:['Meditar diariamente','Oración / gratitud','Lectura espiritual','Journaling espiritual'],
+    mental:['Leer 30 minutos','Aprender algo nuevo','Meditación mindfulness','Podcast educativo'],
+    fisica:['Caminar / Ejercitar','Hidratarme bien','Dormir 8 horas','Estiramiento diario'],
+    social:['Conectar con alguien','Tiempo en familia','Acto de servicio','Gratitud expresada']
+  };
+  _habSelections=Object.assign({},curInsc.habitosElegidos||{});
+  const sections=AK.map(k=>{
+    const opts=habOpts[k].length?habOpts[k]:defaults[k];
+    const curNom=(_habSelections[k]&&_habSelections[k].nom)||'';
+    const isCustom=curNom&&!opts.includes(curNom);
+    const cards=opts.map((nom,i)=>{
+      const isSel=nom===curNom;
+      const safe=nom.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+      return `<button onclick="pSelectHab('${k}','${safe}')" style="display:block;width:100%;text-align:left;padding:9px 13px;border-radius:10px;border:1.5px solid ${isSel?AC[k]:'var(--border)'};background:${isSel?AC[k]+'22':'var(--card2)'};color:${isSel?AC[k]:'var(--muted)'};font-size:12px;font-weight:${isSel?700:400};cursor:pointer;transition:.15s;margin-bottom:5px">${isSel?'✅ ':''}${nom}</button>`;
+    }).join('');
+    return `<div style="background:var(--card);border:1px solid ${curNom?AC[k]+'66':'var(--border)'};border-radius:14px;padding:14px;margin-bottom:10px" id="habsec_${k}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <div style="width:10px;height:10px;border-radius:50%;background:${AC[k]}"></div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${AI[k]}</div>
+        <div id="habcheck_${k}" style="margin-left:auto;font-size:10px;color:${AC[k]};font-weight:700">${curNom?'✓ elegido':''}</div>
+      </div>
+      <div id="haboptlist_${k}">${cards}</div>
+      <input id="habcustom_${k}" type="text" placeholder="Escribir mi propio hábito..." value="${isCustom?curNom:''}"
+        oninput="pHabCustomInput('${k}',this.value)"
+        style="width:100%;padding:8px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;margin-top:6px;outline:none;font-family:inherit;box-sizing:border-box">
+    </div>`;
+  }).join('');
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:18px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">${isEdit?'✏️ Editar mis hábitos':'🌱 Elegí tus hábitos'}</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px">${isEdit?'Podés cambiar tus hábitos en cualquier momento':'Elegí 1 hábito por área — se duplica en todas las semanas del programa'}</div>
+    </div>
+    ${sections}
+    <div style="display:flex;gap:8px;margin-top:4px;padding-bottom:20px">
+      ${isEdit?`<button onclick="renderHabitosTab()" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:14px;font-weight:600;cursor:pointer">Cancelar</button>`:''}
+      <button onclick="saveHabitosElegidos()" style="flex:2;padding:12px;background:linear-gradient(135deg,var(--gold),var(--gd));border:none;border-radius:10px;color:#050401;font-size:14px;font-weight:800;cursor:pointer">${isEdit?'💾 Guardar cambios':'✅ Confirmar mis hábitos'}</button>
+    </div>
+  `;
+}
+
+function pSelectHab(area,nom){
+  _habSelections[area]={nom:nom,area:area};
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const list=document.getElementById('haboptlist_'+area);
+  if(list){
+    list.querySelectorAll('button').forEach(btn=>{
+      const bNom=btn.textContent.replace('✅ ','').trim();
+      const isSel=bNom===nom;
+      btn.style.border=`1.5px solid ${isSel?AC[area]:'var(--border)'}`;
+      btn.style.background=isSel?AC[area]+'22':'var(--card2)';
+      btn.style.color=isSel?AC[area]:'var(--muted)';
+      btn.style.fontWeight=isSel?'700':'400';
+      btn.textContent=(isSel?'✅ ':'')+bNom;
+    });
+  }
+  const chk=document.getElementById('habcheck_'+area);if(chk)chk.textContent='✓ elegido';
+  const sec=document.getElementById('habsec_'+area);if(sec)sec.style.borderColor=AC[area]+'66';
+  // Clear custom input
+  const inp=document.getElementById('habcustom_'+area);if(inp)inp.value='';
+}
+
+function pHabCustomInput(area,val){
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  if(val.trim()){
+    _habSelections[area]={nom:val.trim(),area:area};
+    // Deselect all cards
+    const list=document.getElementById('haboptlist_'+area);
+    if(list){
+      list.querySelectorAll('button').forEach(btn=>{
+        const bNom=btn.textContent.replace('✅ ','').trim();
+        btn.style.border=`1.5px solid var(--border)`;
+        btn.style.background='var(--card2)';
+        btn.style.color='var(--muted)';
+        btn.style.fontWeight='400';
+        btn.textContent=bNom;
+      });
+    }
+    const chk=document.getElementById('habcheck_'+area);if(chk)chk.textContent='✓ elegido';
+  } else {
+    delete _habSelections[area];
+    const chk=document.getElementById('habcheck_'+area);if(chk)chk.textContent='';
+  }
+}
+
+function saveHabitosElegidos(){
+  const AK=['espiritual','mental','fisica','social'];
+  // Check custom inputs last (override)
+  AK.forEach(k=>{
+    const inp=document.getElementById('habcustom_'+k);
+    if(inp&&inp.value.trim())_habSelections[k]={nom:inp.value.trim(),area:k};
+  });
+  const missing=AK.filter(k=>!(_habSelections[k]&&_habSelections[k].nom));
+  if(missing.length){
+    const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+    const AI={espiritual:'🌀 Espiritual',mental:'🧠 Mental',fisica:'💪 Física',social:'🤝 Social'};
+    const names=missing.map(k=>AI[k]).join(', ');
+    alert('Falta elegir un hábito en: '+names);
+    return;
+  }
+  // Save selections
+  curInsc.habitosElegidos={};
+  AK.forEach(k=>{curInsc.habitosElegidos[k]=_habSelections[k];});
+  // Duplicate to ALL semanas
+  if(!curInsc.semanas)curInsc.semanas=[];
+  // Also fill weeks from program template if inscription semanas is empty
+  if(!curInsc.semanas.length&&curProg&&curProg.semanas){
+    curInsc.semanas=JSON.parse(JSON.stringify(curProg.semanas));
+  }
+  curInsc.semanas.forEach(sem=>{
+    sem.habitos=sem.habitos||[];
+    AK.forEach(k=>{
+      sem.habitos=sem.habitos.filter(h=>h.area!==k);
+      sem.habitos.push(Object.assign({},curInsc.habitosElegidos[k]));
+    });
+  });
+  saveProgress();
+  _habSelections={};
+  renderHabitosTab();
 }
 
 function initPortalCal(){
@@ -1054,7 +1197,7 @@ function renderPortalCalSemanal(){
     return `<div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:7px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
         <div style="width:9px;height:9px;border-radius:50%;background:${AC[k]};flex-shrink:0"></div>
-        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${hab?hab.nom:'Hábito '+k}</div>
+        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${hab?hab.nom:(curInsc.habitosElegidos&&curInsc.habitosElegidos[k]?curInsc.habitosElegidos[k].nom:'Hábito '+k)}</div>
         <div style="font-size:10px;color:${AC[k]};font-weight:700">${doneCnt}/7</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${btns}</div>
@@ -1117,7 +1260,7 @@ function showPortalCalDayModal(ds){
   (sem.desafios||[]).forEach(d=>{if(d.area&&!desByArea[d.area])desByArea[d.area]=d;});
   const rowsH=AK.map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:5px">
     <div style="width:9px;height:9px;border-radius:50%;background:${AC[k]};flex-shrink:0"></div>
-    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${habByArea[k]?habByArea[k].nom:k}</div>
+    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${habByArea[k]?habByArea[k].nom:(curInsc.habitosElegidos&&curInsc.habitosElegidos[k]?curInsc.habitosElegidos[k].nom:k)}</div>
     <button onclick="portalToggleHab('${k}','${ds}')" style="padding:3px 12px;border-radius:20px;border:1px solid ${hd[k]?AC[k]:'var(--border)'};background:${hd[k]?AC[k]+'22':'transparent'};color:${hd[k]?AC[k]:'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${hd[k]?'✅ Hecho':'Marcar'}</button>
   </div>`).join('');
   const rowsD=AK.map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:5px">
