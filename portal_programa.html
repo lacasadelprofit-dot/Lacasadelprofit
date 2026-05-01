@@ -361,6 +361,7 @@ const SAVE_FN  = '/api/save-progreso';
 let _sb, curSer=null, curInsc=null, curProg=null;
 let curSemIdx=0, curTab='general', progreso={};
 let calDate=new Date(), selDay=null;
+let _pCalView='mes', _pCalYear=new Date().getFullYear(), _pCalMonth=new Date().getMonth(), _pCalWeek=0;
 let allSessions=[], allInscList=[], allProgsList=[];
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -927,84 +928,217 @@ const AC_HAB={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F5
 const AI_HAB={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
 const AK_HAB=['espiritual','mental','fisica','social'];
 
+// ── HÁBITOS: CALENDARIO COMPLETO (Mensual + Semanal) ─────────────────────────
 function renderHabitosTab(){
-  const todayStr=today();
-  const todayLabel=new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
-  // Get current week index
-  let semIdx=0;
-  if(curInsc.fechaInicio){const ini=new Date(curInsc.fechaInicio+'T12:00:00');const dias=Math.floor((new Date()-ini)/(1000*60*60*24));semIdx=Math.max(0,Math.floor(dias/7));}
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">🗓 Hábitos & Desafíos</div>
+      <div style="font-size:12px;color:var(--muted)">Registrá tu progreso — se sincroniza con tu facilitador en tiempo real</div>
+    </div>
+    <div id="pCalSubNav" style="display:flex;gap:6px;margin-bottom:14px">
+      <button id="pcaltab_mes" onclick="switchPortalCalView('mes')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📅 Mensual</button>
+      <button id="pcaltab_sem" onclick="switchPortalCalView('sem')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📆 Semanal</button>
+    </div>
+    <div id="pCalViewContainer"></div>
+  `;
+  initPortalCal();
+}
+
+function initPortalCal(){
+  if(curInsc){
+    if(curInsc.fechaInicio){
+      const d=new Date(curInsc.fechaInicio+'T12:00:00');
+      _pCalYear=d.getFullYear();_pCalMonth=d.getMonth();
+    } else {
+      _pCalYear=new Date().getFullYear();_pCalMonth=new Date().getMonth();
+    }
+    let semIdx=0;
+    if(curInsc.fechaInicio){const ini=new Date(curInsc.fechaInicio+'T12:00:00');const dias=Math.floor((new Date()-ini)/(1000*60*60*24));semIdx=Math.max(0,Math.floor(dias/7));}
+    _pCalWeek=semIdx;
+  }
+  switchPortalCalView(_pCalView);
+}
+
+function switchPortalCalView(view){
+  _pCalView=view;
+  const col=curProg&&curProg.col?curProg.col:'#C9A84C';
+  ['mes','sem'].forEach(v=>{
+    const btn=document.getElementById('pcaltab_'+v);if(!btn)return;
+    const isActive=v===view;
+    btn.style.background=isActive?col+'22':'transparent';
+    btn.style.color=isActive?col:'var(--muted)';
+    btn.style.border=isActive?`1px solid ${col}`:`1px solid var(--border)`;
+  });
+  const container=document.getElementById('pCalViewContainer');if(!container)return;
+  if(view==='mes') container.innerHTML=renderPortalCalMensual();
+  else container.innerHTML=renderPortalCalSemanal();
+}
+
+function renderPortalCalMensual(){
+  if(!curInsc||!curProg)return'';
+  const col=curProg.col||'#C9A84C';
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AK=['espiritual','mental','fisica','social'];
+  const habTrack=curInsc.habTrack||{};const desTrack=curInsc.desTrack||{};
+  const sesDates=new Set([...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[])].map(s=>(s.fecha||s.date||'').slice(0,10)).filter(Boolean));
+  const year=_pCalYear,month=_pCalMonth;
+  const mNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const dNames=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const firstDay=new Date(year,month,1).getDay();
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const todayStr=new Date().toISOString().split('T')[0];
+  let cells='';
+  for(let i=0;i<firstDay;i++) cells+=`<div></div>`;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const hd=habTrack[ds]||{};const dd=desTrack[ds]||{};
+    const isToday=ds===todayStr;const hasS=sesDates.has(ds);
+    const hdots=AK.map(k=>`<div style="width:5px;height:5px;border-radius:50%;background:${hd[k]?AC[k]:'var(--border)'};flex-shrink:0"></div>`).join('');
+    const ddots=AK.map(k=>`<div style="width:5px;height:5px;border-radius:50%;background:${dd[k]?AC[k]:'var(--border)'};flex-shrink:0"></div>`).join('');
+    cells+=`<div onclick="portalCalDayClick('${ds}')" style="cursor:pointer;border:1px solid ${isToday?col:'var(--border)'};border-radius:8px;padding:4px 3px;background:${isToday?col+'11':'var(--card)'};min-height:54px;position:relative;transition:.15s">
+      <div style="font-size:10px;font-weight:${isToday?700:400};color:${isToday?col:'var(--muted)'};margin-bottom:2px">${d}</div>
+      ${hasS?`<div style="position:absolute;top:2px;right:3px;font-size:7px;font-weight:800;color:${col};background:${col}33;border-radius:3px;padding:1px 3px">S</div>`:''}
+      <div style="display:flex;gap:2px;margin-bottom:2px;align-items:center"><span style="font-size:6px;color:var(--muted);width:7px;flex-shrink:0">H</span>${hdots}</div>
+      <div style="display:flex;gap:2px;align-items:center"><span style="font-size:6px;color:var(--muted);width:7px;flex-shrink:0">D</span>${ddots}</div>
+    </div>`;
+  }
+  const legend=AK.map(k=>`<div style="width:7px;height:7px;border-radius:50%;background:${AC[k]}"></div>`).join('');
+  return `<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <button onclick="portalCalNavMonth(-1)" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:4px 10px;cursor:pointer">‹</button>
+      <div style="font-weight:700;color:var(--gl)">${mNames[month]} ${year}</div>
+      <button onclick="portalCalNavMonth(1)" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:4px 10px;cursor:pointer">›</button>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;align-items:center;font-size:10px;color:var(--muted)">
+      <div style="display:flex;gap:3px;align-items:center">${legend}<span>H=hábitos</span></div>
+      <div style="display:flex;gap:3px;align-items:center">${legend}<span>D=desafíos</span></div>
+      <div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}33;border-radius:3px;padding:1px 4px">S</span><span>=sesión</span></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">
+      ${dNames.map(d=>`<div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px">${d}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:10px">Tocá un día para registrar tus hábitos y desafíos</div>
+  </div>`;
+}
+
+function renderPortalCalSemanal(){
+  if(!curInsc||!curProg)return'';
+  const col=curProg.col||'#C9A84C';
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AI={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
+  const AK=['espiritual','mental','fisica','social'];
+  const habTrack=curInsc.habTrack||{};const desTrack=curInsc.desTrack||{};
+  const semIdx=_pCalWeek||0;
+  let wStart=new Date();
+  if(curInsc.fechaInicio){
+    wStart=new Date(curInsc.fechaInicio+'T12:00:00');
+    wStart.setDate(wStart.getDate()+semIdx*7);
+  } else {
+    wStart.setDate(wStart.getDate()-wStart.getDay()+1);
+  }
+  const dow=wStart.getDay();
+  wStart.setDate(wStart.getDate()-(dow===0?6:dow-1));
+  const days=[];for(let i=0;i<7;i++){const d=new Date(wStart);d.setDate(d.getDate()+i);days.push(d);}
+  const dNames=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const todayStr=new Date().toISOString().split('T')[0];
   const sem=(curInsc.semanas||[])[semIdx]||{};
   const habByArea={},desByArea={};
   (sem.habitos||[]).forEach(h=>{if(h.area&&!habByArea[h.area])habByArea[h.area]=h;});
   (sem.desafios||[]).forEach(d=>{if(d.area&&!desByArea[d.area])desByArea[d.area]=d;});
-  if(!curInsc.habTrack)curInsc.habTrack={};
-  if(!curInsc.desTrack)curInsc.desTrack={};
-  const hd=curInsc.habTrack[todayStr]||{};
-  const dd=curInsc.desTrack[todayStr]||{};
-
-  // Weekly mini-view (last 7 days)
-  const last7=lastNDays(7);
-
-  const habRows=AK_HAB.map(k=>{
+  const dayHdrs=days.map((d,i)=>{const ds=d.toISOString().split('T')[0];const isToday=ds===todayStr;return `<div style="text-align:center;font-size:10px;font-weight:${isToday?800:600};color:${isToday?col:'var(--muted)'}"><div>${dNames[i]}</div><div style="font-size:12px;color:${isToday?col:'var(--text)'}">${d.getDate()}</div></div>`;}).join('');
+  const habRows=AK.map(k=>{
     const hab=habByArea[k];
-    const doneToday=!!(hd[k]);
-    const weekDots=last7.map(d=>{
-      const done=curInsc.habTrack[d]&&curInsc.habTrack[d][k];
-      const isT=d===todayStr;
-      return `<div title="${fmtDate(d)}" style="width:22px;height:22px;border-radius:50%;border:1.5px solid ${done?AC_HAB[k]:'var(--border)'};background:${done?AC_HAB[k]+'33':'transparent'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${done?AC_HAB[k]:'var(--muted)'};${isT?'outline:2px solid '+AC_HAB[k]+';outline-offset:1px;':''}">${done?'✓':''}</div>`;
-    }).join('');
-    const weekDone=last7.filter(d=>curInsc.habTrack[d]&&curInsc.habTrack[d][k]).length;
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:10px;height:10px;border-radius:50%;background:${AC_HAB[k]};flex-shrink:0"></div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${AI_HAB[k]} ${hab?hab.nom:'Hábito '+k}</div>
-          ${hab&&hab.frecuencia?`<div style="font-size:10px;color:var(--muted)">${hab.frecuencia}</div>`:''}
-        </div>
-        <button onclick="portalToggleHab('${k}','${todayStr}')" style="padding:7px 16px;border-radius:20px;border:1.5px solid ${doneToday?AC_HAB[k]:'var(--border)'};background:${doneToday?AC_HAB[k]+'22':'transparent'};color:${doneToday?AC_HAB[k]:'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;transition:.2s">${doneToday?'✅ Hecho':'Marcar'}</button>
+    const btns=days.map(d=>{const ds=d.toISOString().split('T')[0];const done=habTrack[ds]&&habTrack[ds][k];return `<div style="display:flex;justify-content:center"><button onclick="portalToggleHab('${k}','${ds}')" style="width:32px;height:32px;border-radius:50%;border:1.5px solid ${done?AC[k]:'var(--border)'};background:${done?AC[k]+'33':'transparent'};cursor:pointer;font-size:13px;color:${done?AC[k]:'var(--muted)'};transition:.15s">${done?'✓':''}</button></div>`;}).join('');
+    const doneCnt=days.filter(d=>habTrack[d.toISOString().split('T')[0]]&&habTrack[d.toISOString().split('T')[0]][k]).length;
+    return `<div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="width:9px;height:9px;border-radius:50%;background:${AC[k]};flex-shrink:0"></div>
+        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${hab?hab.nom:'Hábito '+k}</div>
+        <div style="font-size:10px;color:${AC[k]};font-weight:700">${doneCnt}/7</div>
       </div>
-      <div style="display:flex;gap:4px;align-items:center;justify-content:center">
-        ${weekDots}
-      </div>
-      <div style="margin-top:6px;background:var(--card2);border-radius:20px;height:3px;overflow:hidden">
-        <div style="background:${AC_HAB[k]};height:100%;width:${Math.round(weekDone/7*100)}%;border-radius:20px;transition:.3s"></div>
-      </div>
-      <div style="font-size:9px;color:var(--muted);text-align:right;margin-top:3px">${weekDone}/7 esta semana</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${btns}</div>
+      <div style="background:var(--border);border-radius:20px;height:3px;overflow:hidden"><div style="background:${AC[k]};height:100%;width:${Math.round(doneCnt/7*100)}%;border-radius:20px;transition:.3s"></div></div>
     </div>`;
   }).join('');
-
-  const desRows=AK_HAB.map(k=>{
+  const desRows=AK.map(k=>{
     const des=desByArea[k];
-    const doneToday=!!(dd[k]);
-    const weekDots=last7.map(d=>{
-      const done=curInsc.desTrack[d]&&curInsc.desTrack[d][k];
-      const isT=d===todayStr;
-      return `<div title="${fmtDate(d)}" style="width:22px;height:22px;border-radius:6px;border:1.5px solid ${done?AC_HAB[k]:'var(--border)'};background:${done?AC_HAB[k]+'33':'transparent'};display:flex;align-items:center;justify-content:center;font-size:9px;color:${done?AC_HAB[k]:'var(--muted)'};${isT?'outline:2px solid '+AC_HAB[k]+';outline-offset:1px;':''}">${done?'✓':''}</div>`;
-    }).join('');
-    return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <div style="width:10px;height:10px;border-radius:3px;background:${AC_HAB[k]};flex-shrink:0"></div>
-        <div style="flex:1">
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${AI_HAB[k]} ${des?des.nom:'Desafío '+k}</div>
-          ${des&&des.descripcion?`<div style="font-size:10px;color:var(--muted)">${des.descripcion}</div>`:''}
-        </div>
-        <button onclick="portalToggleDes('${k}','${todayStr}')" style="padding:7px 16px;border-radius:20px;border:1.5px solid ${doneToday?AC_HAB[k]:'var(--border)'};background:${doneToday?AC_HAB[k]+'22':'transparent'};color:${doneToday?AC_HAB[k]:'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;transition:.2s">${doneToday?'✅ Hecho':'Marcar'}</button>
+    const btns=days.map(d=>{const ds=d.toISOString().split('T')[0];const done=desTrack[ds]&&desTrack[ds][k];return `<div style="display:flex;justify-content:center"><button onclick="portalToggleDes('${k}','${ds}')" style="width:32px;height:32px;border-radius:6px;border:1.5px solid ${done?AC[k]:'var(--border)'};background:${done?AC[k]+'33':'transparent'};cursor:pointer;font-size:13px;color:${done?AC[k]:'var(--muted)'};transition:.15s">${done?'✓':''}</button></div>`;}).join('');
+    const doneCnt=days.filter(d=>desTrack[d.toISOString().split('T')[0]]&&desTrack[d.toISOString().split('T')[0]][k]).length;
+    return `<div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:7px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="width:9px;height:9px;border-radius:3px;background:${AC[k]};flex-shrink:0"></div>
+        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${des?des.nom:'Desafío '+k}</div>
+        <div style="font-size:10px;color:${AC[k]};font-weight:700">${doneCnt}/7</div>
       </div>
-      <div style="display:flex;gap:4px;align-items:center;justify-content:center">${weekDots}</div>
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${btns}</div>
+      <div style="background:var(--border);border-radius:20px;height:3px;overflow:hidden"><div style="background:${AC[k]};height:100%;width:${Math.round(doneCnt/7*100)}%;border-radius:20px;transition:.3s"></div></div>
     </div>`;
   }).join('');
-
-  document.getElementById('mainContent').innerHTML=`
-    <div style="margin-bottom:14px">
-      <div style="font-size:18px;font-weight:800;color:var(--gl)">✅ Hábitos del día</div>
-      <div style="font-size:12px;color:var(--muted);text-transform:capitalize">${todayLabel} · Semana ${semIdx+1}${sem.titulo?' — '+sem.titulo:''}</div>
+  const wLabel=`${days[0].getDate()}/${days[0].getMonth()+1} – ${days[6].getDate()}/${days[6].getMonth()+1}/${days[6].getFullYear()}`;
+  const sLabel=`Semana ${semIdx+1}${sem.titulo?' · '+sem.titulo:''}`;
+  return `<div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button onclick="portalCalNavWeek(-1)" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:4px 10px;cursor:pointer">‹</button>
+      <div style="text-align:center"><div style="font-weight:700;color:var(--gl);font-size:13px">${sLabel}</div><div style="font-size:10px;color:var(--muted)">${wLabel}</div></div>
+      <button onclick="portalCalNavWeek(1)" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:4px 10px;cursor:pointer">›</button>
     </div>
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">H — Hábitos diarios</div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px">${dayHdrs}</div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">H — Hábitos Diarios</div>
     ${habRows}
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px">D — Desafíos</div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);margin:12px 0 8px;text-transform:uppercase;letter-spacing:1px">D — Desafíos</div>
     ${desRows}
-    <div style="font-size:9px;color:var(--muted);text-align:center;margin-top:10px">Los círculos muestran los últimos 7 días. El círculo con borde resaltado es hoy.</div>
-  `;
+  </div>`;
+}
+
+function portalCalNavMonth(dir){
+  _pCalMonth+=dir;
+  if(_pCalMonth<0){_pCalMonth=11;_pCalYear--;}
+  if(_pCalMonth>11){_pCalMonth=0;_pCalYear++;}
+  const c=document.getElementById('pCalViewContainer');if(c)c.innerHTML=renderPortalCalMensual();
+}
+function portalCalNavWeek(dir){
+  _pCalWeek=Math.max(0,(_pCalWeek||0)+dir);
+  const c=document.getElementById('pCalViewContainer');if(c)c.innerHTML=renderPortalCalSemanal();
+}
+function portalCalDayClick(ds){showPortalCalDayModal(ds);}
+function showPortalCalDayModal(ds){
+  const col=curProg&&curProg.col?curProg.col:'#C9A84C';
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AI={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
+  const AK=['espiritual','mental','fisica','social'];
+  if(!curInsc.habTrack)curInsc.habTrack={};if(!curInsc.desTrack)curInsc.desTrack={};
+  const hd=curInsc.habTrack[ds]||{};const dd=curInsc.desTrack[ds]||{};
+  let semIdx=0;
+  if(curInsc.fechaInicio){const ini=new Date(curInsc.fechaInicio+'T12:00:00');const tgt=new Date(ds+'T12:00:00');semIdx=Math.max(0,Math.floor((tgt-ini)/(1000*60*60*24*7)));}
+  const sem=(curInsc.semanas||[])[semIdx]||{};
+  const habByArea={},desByArea={};
+  (sem.habitos||[]).forEach(h=>{if(h.area&&!habByArea[h.area])habByArea[h.area]=h;});
+  (sem.desafios||[]).forEach(d=>{if(d.area&&!desByArea[d.area])desByArea[d.area]=d;});
+  const rowsH=AK.map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+    <div style="width:9px;height:9px;border-radius:50%;background:${AC[k]};flex-shrink:0"></div>
+    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${habByArea[k]?habByArea[k].nom:k}</div>
+    <button onclick="portalToggleHab('${k}','${ds}')" style="padding:3px 12px;border-radius:20px;border:1px solid ${hd[k]?AC[k]:'var(--border)'};background:${hd[k]?AC[k]+'22':'transparent'};color:${hd[k]?AC[k]:'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${hd[k]?'✅ Hecho':'Marcar'}</button>
+  </div>`).join('');
+  const rowsD=AK.map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+    <div style="width:9px;height:9px;border-radius:4px;background:${AC[k]};flex-shrink:0"></div>
+    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${desByArea[k]?desByArea[k].nom:k}</div>
+    <button onclick="portalToggleDes('${k}','${ds}')" style="padding:3px 12px;border-radius:20px;border:1px solid ${dd[k]?AC[k]:'var(--border)'};background:${dd[k]?AC[k]+'22':'transparent'};color:${dd[k]?AC[k]:'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${dd[k]?'✅ Hecho':'Marcar'}</button>
+  </div>`).join('');
+  const dateLabel=new Date(ds+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  let mo=document.getElementById('pMoCalDay');
+  if(!mo){mo=document.createElement('div');mo.id='pMoCalDay';mo.style.cssText='position:fixed;inset:0;background:#00000099;z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';document.body.appendChild(mo);}
+  mo.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;max-width:400px;width:100%;max-height:80vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div style="font-weight:700;color:var(--gl);font-size:13px;text-transform:capitalize">${dateLabel}</div>
+      <button onclick="document.getElementById('pMoCalDay').style.display='none'" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1">×</button>
+    </div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:1px">H — Hábitos</div>
+    ${rowsH}
+    <div style="font-size:10px;font-weight:700;color:var(--muted);margin:12px 0 7px;text-transform:uppercase;letter-spacing:1px">D — Desafíos</div>
+    ${rowsD}
+  </div>`;
+  mo.style.display='flex';
 }
 
 function portalToggleHab(area,dateStr){
@@ -1012,14 +1146,20 @@ function portalToggleHab(area,dateStr){
   if(!curInsc.habTrack[dateStr])curInsc.habTrack[dateStr]={};
   curInsc.habTrack[dateStr][area]=!curInsc.habTrack[dateStr][area];
   saveProgress();
-  renderHabitosTab();
+  const mo=document.getElementById('pMoCalDay');
+  if(mo&&mo.style.display!=='none')showPortalCalDayModal(dateStr);
+  const c=document.getElementById('pCalViewContainer');
+  if(c){if(_pCalView==='mes')c.innerHTML=renderPortalCalMensual();else c.innerHTML=renderPortalCalSemanal();}
 }
 function portalToggleDes(area,dateStr){
   if(!curInsc.desTrack)curInsc.desTrack={};
   if(!curInsc.desTrack[dateStr])curInsc.desTrack[dateStr]={};
   curInsc.desTrack[dateStr][area]=!curInsc.desTrack[dateStr][area];
   saveProgress();
-  renderHabitosTab();
+  const mo=document.getElementById('pMoCalDay');
+  if(mo&&mo.style.display!=='none')showPortalCalDayModal(dateStr);
+  const c=document.getElementById('pCalViewContainer');
+  if(c){if(_pCalView==='mes')c.innerHTML=renderPortalCalMensual();else c.innerHTML=renderPortalCalSemanal();}
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
