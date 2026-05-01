@@ -418,7 +418,7 @@ async function _doSave(cb){
   sessionStorage.setItem('pp_all_insc',JSON.stringify(allInscList));
   // Save to Supabase via API (sends progreso + extraData with paraQue/resultadoDeseado)
   try{
-    const body={recordId:curInsc.id,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[]}};
+    const body={recordId:curInsc.id,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[],habitosElegidos:curInsc.habitosElegidos||{},semanas:curInsc.semanas||[]}};
     const resp=await fetch(SAVE_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!resp.ok)console.warn('save-progreso HTTP',resp.status);
   }catch(e){console.warn('save error:',e.message);}
@@ -956,9 +956,10 @@ function renderHabitosForm(isEdit){
   const seen={};
   (curProg&&curProg.semanas||[]).forEach(sem=>{
     (sem.habitos||[]).forEach(h=>{
-      if(h.area&&h.nom&&habOpts[h.area]){
-        const key=h.area+'|'+h.nom;
-        if(!seen[key]){seen[key]=true;habOpts[h.area].push(h.nom);}
+      const hNom=h.nombre||h.nom;
+      if(h.area&&hNom&&habOpts[h.area]){
+        const key=h.area+'|'+hNom;
+        if(!seen[key]){seen[key]=true;habOpts[h.area].push(hNom);}
       }
     });
   });
@@ -1193,7 +1194,7 @@ function renderPortalCalSemanal(){
     return `<div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:7px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
         <div style="width:9px;height:9px;border-radius:50%;background:${AC[k]};flex-shrink:0"></div>
-        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${hab?hab.nom:(curInsc.habitosElegidos&&curInsc.habitosElegidos[k]?curInsc.habitosElegidos[k].nom:'Hábito '+k)}</div>
+        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${hab?(hab.nombre||hab.nom):(curInsc.habitosElegidos&&curInsc.habitosElegidos[k]?(curInsc.habitosElegidos[k].nombre||curInsc.habitosElegidos[k].nom):'Hábito '+k)}</div>
         <div style="font-size:10px;color:${AC[k]};font-weight:700">${doneCnt}/7</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${btns}</div>
@@ -1207,7 +1208,7 @@ function renderPortalCalSemanal(){
     return `<div style="background:var(--card2);border-radius:10px;padding:10px;margin-bottom:7px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
         <div style="width:9px;height:9px;border-radius:3px;background:${AC[k]};flex-shrink:0"></div>
-        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${des?des.nom:'Desafío '+k}</div>
+        <div style="flex:1;font-size:12px;font-weight:600;color:var(--text)">${AI[k]} ${des?(des.texto||des.nom||'Desafío '+k):'Desafío '+k}</div>
         <div style="font-size:10px;color:${AC[k]};font-weight:700">${doneCnt}/7</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:5px">${btns}</div>
@@ -1256,12 +1257,12 @@ function showPortalCalDayModal(ds){
   (sem.desafios||[]).forEach(d=>{if(d.area&&!desByArea[d.area])desByArea[d.area]=d;});
   const rowsH=AK.map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:5px">
     <div style="width:9px;height:9px;border-radius:50%;background:${AC[k]};flex-shrink:0"></div>
-    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${habByArea[k]?habByArea[k].nom:(curInsc.habitosElegidos&&curInsc.habitosElegidos[k]?curInsc.habitosElegidos[k].nom:k)}</div>
+    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${habByArea[k]?(habByArea[k].nombre||habByArea[k].nom):(curInsc.habitosElegidos&&curInsc.habitosElegidos[k]?(curInsc.habitosElegidos[k].nombre||curInsc.habitosElegidos[k].nom):k)}</div>
     <button onclick="portalToggleHab('${k}','${ds}')" style="padding:3px 12px;border-radius:20px;border:1px solid ${hd[k]?AC[k]:'var(--border)'};background:${hd[k]?AC[k]+'22':'transparent'};color:${hd[k]?AC[k]:'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${hd[k]?'✅ Hecho':'Marcar'}</button>
   </div>`).join('');
   const rowsD=AK.map(k=>`<div style="display:flex;align-items:center;gap:10px;padding:7px 10px;background:var(--card2);border-radius:8px;margin-bottom:5px">
     <div style="width:9px;height:9px;border-radius:4px;background:${AC[k]};flex-shrink:0"></div>
-    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${desByArea[k]?desByArea[k].nom:k}</div>
+    <div style="flex:1;font-size:12px;color:var(--text)">${AI[k]} ${desByArea[k]?(desByArea[k].texto||desByArea[k].nom||k):k}</div>
     <button onclick="portalToggleDes('${k}','${ds}')" style="padding:3px 12px;border-radius:20px;border:1px solid ${dd[k]?AC[k]:'var(--border)'};background:${dd[k]?AC[k]+'22':'transparent'};color:${dd[k]?AC[k]:'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${dd[k]?'✅ Hecho':'Marcar'}</button>
   </div>`).join('');
   const dateLabel=new Date(ds+'T12:00:00').toLocaleDateString('es-AR',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
