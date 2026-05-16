@@ -271,11 +271,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
   <div class="stats-row" id="statsRow"></div>
   <div id="proximaBox"></div>
-  <a class="btn-sec btn-sec-regalos" href="/regalos.html" target="_blank" style="display:flex;width:100%;margin-bottom:12px;border-radius:14px;padding:14px;font-size:14px;justify-content:center;gap:8px;">✦ Regalos</a>
-  <button class="btn-agenda" onclick="openAgenda()">📅 Agendá tu próxima sesión</button>
-  <div class="sec-btns">
-    <a class="btn-sec btn-sec-wapp" href="https://chat.whatsapp.com/TU_LINK_COMUNIDAD" target="_blank">💬 Comunidad</a>
-    <a class="btn-sec btn-sec-vision" href="/vision.html" target="_blank">🌀 Visión</a>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+    <a class="btn-sec btn-sec-regalos" href="/regalos.html" target="_blank">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><path d="M9 1.5L16.5 7L9 16.5L1.5 7Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/><line x1="1.5" y1="7" x2="16.5" y2="7" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/><line x1="9" y1="1.5" x2="9" y2="16.5" stroke="currentColor" stroke-width="0.9" stroke-linecap="round"/></svg>
+      Regalos
+    </a>
+    <button class="btn-agenda" onclick="openAgenda()" style="margin-bottom:0">
+      <svg width="17" height="17" viewBox="0 0 18 18" fill="none" style="flex-shrink:0"><circle cx="9" cy="9" r="5" stroke="currentColor" stroke-width="1.2"/><circle cx="9" cy="9" r="2" stroke="currentColor" stroke-width="0.9"/><line x1="9" y1="1" x2="9" y2="3.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="9" y1="14.5" x2="9" y2="17" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="1" y1="9" x2="3.5" y2="9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="14.5" y1="9" x2="17" y2="9" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="3.2" y1="3.2" x2="5" y2="5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="13" y1="13" x2="14.8" y2="14.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="14.8" y1="3.2" x2="13" y2="5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/><line x1="5" y1="13" x2="3.2" y2="14.8" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/></svg>
+      Agendá
+    </button>
+    <a class="btn-sec btn-sec-wapp" href="https://chat.whatsapp.com/TU_LINK_COMUNIDAD" target="_blank">
+      <svg width="18" height="14" viewBox="0 0 22 16" fill="none" style="flex-shrink:0"><circle cx="7.5" cy="8" r="6" stroke="currentColor" stroke-width="1.1"/><circle cx="14.5" cy="8" r="6" stroke="currentColor" stroke-width="1.1"/></svg>
+      Comunidad
+    </a>
+    <a class="btn-sec btn-sec-vision" href="/vision.html" target="_blank">
+      <svg width="20" height="14" viewBox="0 0 22 16" fill="none" style="flex-shrink:0"><path d="M1 8C1 8 5 1 11 1C17 1 21 8 21 8C21 8 17 15 11 15C5 15 1 8 1 8Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="11" cy="8" r="3.5" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="8" r="1.3" fill="currentColor"/></svg>
+      Visión
+    </a>
   </div>
   <div class="sec-title">✨ Mis Sesiones</div>
   <div class="filter-row" id="filterRow"></div>
@@ -900,19 +912,14 @@ async function submitIntake(){
   const idx=allSessions.findIndex(s=>String(s.id)===String(intakeSesActual.id));
   if(idx>=0)allSessions[idx]=intakeSesActual;
 
-  // Save via Vercel API
+  // Save directly to Supabase
   try{
-    await fetch('/api/save-intake',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        table:'sessions',
-        recordId:intakeSesActual.id,
-        intakeData,
-        fullData:intakeSesActual
-      })
-    });
-  }catch(e){console.warn('save-intake error:',e.message);}
+    const {error}=await _sb.from('sessions').update({
+      data:intakeSesActual,
+      updated_at:new Date().toISOString()
+    }).eq('id',intakeSesActual.id);
+    if(error)console.warn('intake save error:',error.message);
+  }catch(e){console.warn('intake save error:',e.message);}
 
   hideLoader();
   // Show view mode
