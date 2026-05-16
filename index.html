@@ -2316,6 +2316,7 @@ function renderSeres(){
         <button class="btn btn-s btn-sm" onclick="showSer(${s.id})" title="Ver perfil">👁</button>
         ${!s.prospecto?`<button class="btn btn-s btn-sm" onclick="showSer(${s.id},'sesiones')" title="Historial de sesiones">📋</button>`:''}
         ${s.prospecto?`<button class="btn btn-s btn-sm" title="Convertir a ser" onclick="convertProsp(${s.id})">✨</button>`:''}
+        ${s.celular&&s.celular!=='None'?`<a class="btn btn-sm" href="${waLink(s.celular,s.nombre)}" target="_blank" title="Abrir WhatsApp" style="background:rgba(37,211,102,.15);color:#4ADE80;border:1px solid rgba(37,211,102,.3);text-decoration:none;display:inline-flex;align-items:center;gap:3px"><svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.554 4.103 1.523 5.824L.057 23.928a.5.5 0 0 0 .614.614l6.155-1.453A11.944 11.944 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0m0 22a9.944 9.944 0 0 1-5.073-1.384l-.363-.217-3.764.888.905-3.695-.236-.38A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10"/></svg></a>`:''}
         <button class="btn btn-s btn-sm" onclick="openModal('ser','${s.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delSer(${s.id})">🗑</button>
       </td>
@@ -2355,6 +2356,23 @@ function exportSeres(){
   XLSX.writeFile(wb,`seres_lcdp_${new Date().toISOString().split('T')[0]}.xlsx`);
   toast('✅ Exportado correctamente');
 }
+function waLink(cel, nombre){
+  let n = (cel||'').replace(/[\s\-().+]/g,'');
+  if(!n) return '#';
+  // Si ya tiene código de país (54 = Argentina)
+  if(n.startsWith('54')){
+    // Asegurarse de que el 9 móvil esté después del 54
+    if(!n.startsWith('549')) n='549'+n.slice(2);
+  } else if(n.startsWith('0')){
+    // Número local argentino: 011... → 54911...
+    n='549'+n.slice(1);
+  } else {
+    // Sin prefijo → asumir Argentina móvil
+    n='549'+n;
+  }
+  const msg=encodeURIComponent('Hola '+(nombre||'').split(' ')[0]+'! 🌟');
+  return `https://wa.me/${n}?text=${msg}`;
+}
 function convertProsp(id){const s=seres.find(x=>x.id===id);if(s&&confirm(`¿Convertir a ${s.nombre} en Ser atendido?`)){s.prospecto=false;save();renderSeres();toast('¡'+s.nombre.split(' ')[0]+' ahora es un Ser ✨');}}
 let _showSerTab='resumen';
 function showSer(id,tab){
@@ -2391,8 +2409,8 @@ function _renderSerDet(s){
     <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;color:#050401;flex-shrink:0">${s.nombre.substring(0,2).toUpperCase()}</div>
     <div style="flex:1;min-width:0">
       <h2 style="font-size:16px;margin-bottom:2px;color:var(--gl)">${s.nombre}${s.prospecto?` <span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(61,170,106,.15);color:var(--green);font-weight:600">PROSPECTO</span>`:''}</h2>
-      <div style="font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px">
-        ${s.celular&&s.celular!=='None'?`<span>📱 ${s.celular}</span>`:''}
+      <div style="font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+        ${s.celular&&s.celular!=='None'?`<span>📱 ${s.celular}</span><a href="${waLink(s.celular,s.nombre)}" target="_blank" title="Abrir WhatsApp" style="display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;background:rgba(37,211,102,.15);color:#4ADE80;border:1px solid rgba(37,211,102,.3);text-decoration:none;font-size:11px;font-weight:700"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.554 4.103 1.523 5.824L.057 23.928a.5.5 0 0 0 .614.614l6.155-1.453A11.944 11.944 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0m0 22a9.944 9.944 0 0 1-5.073-1.384l-.363-.217-3.764.888.905-3.695-.236-.38A9.944 9.944 0 0 1 2 12C2 6.477 6.477 2 12 2s10 4.477 10 10-4.477 10-10 10"/></svg> WhatsApp</a>`:''}
         ${s.email&&s.email!=='None'?`<span>✉️ ${s.email}</span>`:''}
         ${s.ciudad?`<span>📍 ${s.ciudad}${s.provincia&&s.provincia!=='None'?' · '+s.provincia:''}</span>`:''}
       </div>
