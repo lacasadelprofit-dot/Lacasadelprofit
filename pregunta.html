@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pregunta Expansiva — La Casa del Profit</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#C9A84C">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#06060A;--card:rgba(18,14,30,0.58);--border:rgba(201,168,76,0.20);
+  --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;--gold-pale:#F5E4A8;
+  --text:#EDE5C8;--muted:#7A7260;--purple:#9B82D4;
+  --blur:blur(20px);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+#spiralCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#globalOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,5,2,0.28);z-index:1;pointer-events:none;}
+#page{position:relative;z-index:2;width:100%;max-width:580px;padding:32px 16px 60px;display:flex;flex-direction:column;align-items:center;}
+
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:var(--card);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:10px;color:var(--muted);padding:8px 14px;
+  font-size:13px;cursor:pointer;text-decoration:none;margin-bottom:32px;transition:border-color .2s,color .2s;align-self:flex-start;}
+.back-btn:hover{border-color:var(--gold);color:var(--gl);}
+
+.page-icon{font-size:48px;margin-bottom:14px;display:block;text-align:center;}
+.page-title{font-size:22px;font-weight:800;color:var(--gl);letter-spacing:1px;margin-bottom:8px;text-align:center;}
+.page-sub{font-size:13px;color:var(--muted);text-align:center;line-height:1.7;margin-bottom:36px;}
+
+.card-pregunta{
+  background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid rgba(155,130,212,.35);border-radius:24px;padding:32px 28px;
+  width:100%;position:relative;overflow:hidden;
+  box-shadow:0 0 60px rgba(155,130,212,.08),0 8px 32px rgba(0,0,0,.5);
+  margin-bottom:24px;min-height:160px;display:flex;align-items:center;justify-content:center;
+  transition:opacity .25s;
+}
+.card-pregunta::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,#9B82D4,#C4AEFF,#9B82D4,transparent);}
+.card-pregunta::after{content:'"';position:absolute;top:16px;left:20px;font-size:80px;color:rgba(155,130,212,.12);line-height:1;font-family:Georgia,serif;}
+
+#preguntaTexto{font-size:17px;line-height:1.8;color:var(--text);text-align:center;position:relative;z-index:1;font-style:italic;}
+#preguntaTexto.loading{color:var(--muted);}
+
+.btn-nueva{
+  padding:16px 36px;background:linear-gradient(135deg,#9B82D4,#6B52A4);
+  border:none;border-radius:14px;color:#fff;font-size:16px;font-weight:800;cursor:pointer;
+  letter-spacing:.3px;display:flex;align-items:center;gap:10px;
+  transition:opacity .2s,transform .15s;box-shadow:0 4px 24px rgba(155,130,212,.3);margin-bottom:16px;
+}
+.btn-nueva:hover{opacity:.9;transform:translateY(-1px);}
+.btn-nueva:active{transform:translateY(0);}
+.btn-nueva svg{animation:none;}
+.btn-nueva.spinning svg{animation:spin .6s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.tipo-badge{display:inline-flex;align-items:center;gap:5px;padding:5px 14px;border-radius:20px;
+  background:rgba(155,130,212,.12);border:1px solid rgba(155,130,212,.28);
+  color:#C4AEFF;font-size:12px;font-weight:600;margin-bottom:16px;}
+
+.contador{font-size:12px;color:var(--muted);text-align:center;}
+</style>
+</head>
+<body>
+
+<canvas id="spiralCanvas"></canvas>
+<div id="globalOverlay"></div>
+
+<div id="page">
+  <a class="back-btn" href="/portal_ser.html">← Volver al portal</a>
+
+  <span class="page-icon">💬</span>
+  <div class="page-title">Pregunta Expansiva</div>
+  <div class="page-sub">Permitite ser cuestionado/a.<br>Cada pregunta es una puerta.</div>
+
+  <div class="tipo-badge">💬 Pregunta Expansiva</div>
+
+  <div class="card-pregunta">
+    <p id="preguntaTexto" class="loading">Cargando...</p>
+  </div>
+
+  <button class="btn-nueva" id="btnNueva" onclick="nuevaPregunta()">
+    <svg id="iconSpinner" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+    </svg>
+    Nueva pregunta
+  </button>
+  <div class="contador" id="contador"></div>
+</div>
+
+<script>
+(function(){
+  const canvas=document.getElementById('spiralCanvas');
+  const ctx=canvas.getContext('2d');
+  const TWO_PI=Math.PI*2;
+  let W,H,cx,cy,t=0;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;cx=W/2;cy=H/2;}
+  function lerp(a,b,v){return a+(b-a)*v;}
+  function clamp(v,mn,mx){return v<mn?mn:v>mx?mx:v;}
+  function pulse(speed,phase){return(Math.sin(t*speed+phase)+1)*0.5;}
+  function drawBackground(){
+    const grd=ctx.createRadialGradient(cx,cy*0.85,0,cx,cy,Math.max(W,H)*0.75);
+    const p=pulse(0.4,0)*0.08;
+    grd.addColorStop(0,`rgba(${Math.round(48+p*20)},${Math.round(34+p*10)},4,1)`);
+    grd.addColorStop(0.25,'rgba(22,18,3,1)');grd.addColorStop(0.55,'rgba(10,13,5,1)');grd.addColorStop(1,'rgba(5,6,2,1)');
+    ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  }
+  function drawRays(){
+    const numRays=24,rayLength=Math.max(W,H)*0.85,rot=t*0.008,baseAlpha=0.030+pulse(0.5,1)*0.02;
+    for(let i=0;i<numRays;i++){
+      const a=(i/numRays)*TWO_PI+rot,x2=cx+rayLength*Math.cos(a),y2=cy+rayLength*Math.sin(a);
+      const grd=ctx.createLinearGradient(cx,cy,x2,y2);
+      grd.addColorStop(0,`rgba(232,201,106,${(baseAlpha*2).toFixed(3)})`);
+      grd.addColorStop(0.15,`rgba(232,201,106,${baseAlpha.toFixed(3)})`);
+      grd.addColorStop(1,'rgba(232,201,106,0)');
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x2,y2);ctx.strokeStyle=grd;ctx.lineWidth=1;ctx.stroke();
+    }
+  }
+  function drawFlowerOfLife(fR){
+    const alpha=0.50+pulse(0.6,0.5)*0.18;
+    ctx.strokeStyle=`rgba(232,201,106,${alpha.toFixed(3)})`;ctx.lineWidth=0.9;ctx.globalAlpha=1;
+    function circ(x,y){ctx.beginPath();ctx.arc(x,y,fR,0,TWO_PI);ctx.stroke();}
+    circ(cx,cy);
+    for(let i=0;i<6;i++){const a=(i/6)*TWO_PI;circ(cx+fR*Math.cos(a),cy+fR*Math.sin(a));}
+    for(let i=0;i<6;i++){const a=(i/6)*TWO_PI+Math.PI/6,d=Math.sqrt(3)*fR;circ(cx+d*Math.cos(a),cy+d*Math.sin(a));}
+    for(let i=0;i<6;i++){const a=(i/6)*TWO_PI;circ(cx+2*fR*Math.cos(a),cy+2*fR*Math.sin(a));}
+    const encR=2*fR;
+    ctx.globalAlpha=alpha*1.2;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,encR,0,TWO_PI);ctx.stroke();
+    ctx.lineWidth=0.7;ctx.globalAlpha=alpha*0.8;
+    ctx.beginPath();ctx.arc(cx,cy,encR+fR*0.12,0,TWO_PI);ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,encR+fR*0.28,0,TWO_PI);ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  function drawCentralGlow(fR){
+    const p=pulse(0.6,1.2);
+    const grd1=ctx.createRadialGradient(cx,cy,0,cx,cy,fR*1.6);
+    grd1.addColorStop(0,`rgba(155,130,212,${(0.15+p*0.10).toFixed(3)})`);
+    grd1.addColorStop(0.5,`rgba(155,130,212,${(0.04+p*0.03).toFixed(3)})`);
+    grd1.addColorStop(1,'rgba(155,130,212,0)');
+    ctx.fillStyle=grd1;ctx.fillRect(0,0,W,H);
+    const vig=ctx.createRadialGradient(cx,cy,Math.min(W,H)*0.4,cx,cy,Math.max(W,H)*0.8);
+    vig.addColorStop(0,'rgba(5,6,2,0)');vig.addColorStop(1,'rgba(4,5,1,0.80)');
+    ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
+  }
+  function drawFrame(){
+    const fR=Math.min(W,H)*0.082;
+    drawBackground();drawRays();drawFlowerOfLife(fR);drawCentralGlow(fR);
+    t+=0.016;requestAnimationFrame(drawFrame);
+  }
+  resize();window.addEventListener('resize',resize);drawFrame();
+})();
+</script>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+let preguntas=[], _usadas=new Set(), _actual=null;
+
+async function init(){
+  const {data}=await _sb.from('comunidad_contenido').select('id,data');
+  preguntas=(data||[])
+    .map(r=>({...r.data,id:r.id}))
+    .filter(c=>c.tipo==='pregunta'&&c.activo!==false&&c.texto);
+
+  if(!preguntas.length){
+    document.getElementById('preguntaTexto').textContent='Próximamente habrá preguntas para vos ✨';
+    document.getElementById('btnNueva').style.display='none';
+    return;
+  }
+  nuevaPregunta();
+}
+
+function nuevaPregunta(){
+  if(!preguntas.length)return;
+  const btn=document.getElementById('btnNueva');
+  const icono=document.getElementById('iconSpinner');
+  btn.classList.add('spinning');
+  btn.disabled=true;
+
+  // Si ya usamos todas, resetear
+  if(_usadas.size>=preguntas.length) _usadas.clear();
+
+  const disponibles=preguntas.filter(p=>!_usadas.has(p.id)&&p.id!==_actual?.id);
+  const pool=disponibles.length?disponibles:preguntas.filter(p=>p.id!==_actual?.id);
+  const elegida=pool[Math.floor(Math.random()*pool.length)]||preguntas[0];
+
+  const el=document.getElementById('preguntaTexto');
+  el.style.opacity='0';
+
+  setTimeout(()=>{
+    _actual=elegida;
+    _usadas.add(elegida.id);
+    el.textContent=elegida.texto;
+    el.classList.remove('loading');
+    el.style.opacity='1';
+    document.getElementById('contador').textContent=`${_usadas.size} de ${preguntas.length} preguntas exploradas`;
+    btn.classList.remove('spinning');
+    btn.disabled=false;
+  },300);
+}
+
+document.getElementById('preguntaTexto').style.transition='opacity .3s';
+init();
+</script>
+</body>
+</html>
