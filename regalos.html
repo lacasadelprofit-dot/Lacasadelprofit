@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Regalos — La Casa del Profit</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#C9A84C">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#06060A;
+  --card:rgba(18,14,30,0.58);
+  --card2:rgba(26,20,44,0.48);
+  --border:rgba(201,168,76,0.20);
+  --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;
+  --gold-pale:#F5E4A8;--gold-rose:#C4895A;
+  --text:#EDE5C8;--muted:#7A7260;
+  --green:#3DAA6A;--red:#E05555;--purple:#9B82D4;
+  --blur:blur(20px);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+#spiralCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#globalOverlay{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(4,5,2,0.28);z-index:1;pointer-events:none;}
+
+#page{position:relative;z-index:2;max-width:640px;margin:0 auto;padding:24px 16px 60px;}
+
+/* HEADER */
+.page-header{text-align:center;padding:32px 16px 28px;}
+.back-btn{display:inline-flex;align-items:center;gap:6px;background:var(--card);backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:10px;color:var(--muted);padding:8px 14px;
+  font-size:13px;cursor:pointer;text-decoration:none;margin-bottom:24px;transition:border-color .2s,color .2s;}
+.back-btn:hover{border-color:var(--gold);color:var(--gl);}
+.page-icon{font-size:48px;margin-bottom:12px;display:block;}
+.page-title{font-size:22px;font-weight:800;color:var(--gl);letter-spacing:1px;margin-bottom:8px;}
+.page-sub{font-size:13px;color:var(--muted);line-height:1.7;max-width:400px;margin:0 auto;}
+
+/* REGALO CARD */
+.regalo-list{display:flex;flex-direction:column;gap:14px;}
+.regalo-card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:20px;overflow:hidden;
+  box-shadow:0 4px 24px rgba(0,0,0,.4),0 0 0 0 rgba(201,168,76,0);
+  transition:border-color .2s,box-shadow .2s;}
+.regalo-card:hover{border-color:rgba(232,201,106,.35);box-shadow:0 6px 32px rgba(201,168,76,.1);}
+.regalo-card::before{content:'';display:block;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold-pale),var(--gl),var(--gold-pale),transparent);}
+.regalo-body{padding:20px 20px 16px;}
+.regalo-ico{font-size:36px;margin-bottom:10px;display:block;}
+.regalo-nombre{font-size:17px;font-weight:700;color:var(--gl);margin-bottom:6px;}
+.regalo-desc{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:16px;}
+.regalo-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.btn-regalo{padding:12px 10px;border:none;border-radius:12px;font-size:13px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity .2s;text-decoration:none;}
+.btn-regalo:hover{opacity:.85;}
+.btn-wa{background:rgba(37,211,102,.15);color:#4ADE80;border:1px solid rgba(37,211,102,.3);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
+.btn-email{background:rgba(245,228,168,.10);color:var(--gold-pale);border:1px solid rgba(245,228,168,.28);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
+
+/* LOADER */
+#loader{display:none;position:fixed;inset:0;background:rgba(6,6,10,.92);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner{width:40px;height:40px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.empty .ei{font-size:44px;margin-bottom:12px;}
+
+@media(max-width:480px){
+  .regalo-btns{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="spiralCanvas"></canvas>
+<div id="globalOverlay"></div>
+<div id="loader"><div class="spinner"></div></div>
+
+<div id="page">
+  <a class="back-btn" href="/portal_ser.html">← Volver al portal</a>
+
+  <div class="page-header">
+    <span class="page-icon">✦</span>
+    <div class="page-title">Regalos para vos</div>
+    <div class="page-sub">Herramientas y recursos especiales que preparé para acompañar tu camino de transformación.</div>
+  </div>
+
+  <div class="regalo-list" id="regaloList">
+    <div class="empty"><div class="ei">🎁</div><p>Cargando regalos...</p></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const canvas=document.getElementById('spiralCanvas');
+  const ctx=canvas.getContext('2d');
+  const TWO_PI=Math.PI*2;
+  let W,H,cx,cy,t=0;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;cx=W/2;cy=H/2;}
+  function lerp(a,b,v){return a+(b-a)*v;}
+  function clamp(v,mn,mx){return v<mn?mn:v>mx?mx:v;}
+  function pulse(speed,phase){return(Math.sin(t*speed+phase)+1)*0.5;}
+  function drawBackground(){
+    const grd=ctx.createRadialGradient(cx,cy*0.85,0,cx,cy,Math.max(W,H)*0.75);
+    const p=pulse(0.4,0)*0.08;
+    grd.addColorStop(0,`rgba(${Math.round(48+p*20)},${Math.round(34+p*10)},4,1)`);
+    grd.addColorStop(0.25,'rgba(22,18,3,1)');grd.addColorStop(0.55,'rgba(10,13,5,1)');grd.addColorStop(1,'rgba(5,6,2,1)');
+    ctx.fillStyle=grd;ctx.fillRect(0,0,W,H);
+  }
+  function drawRays(){
+    const numRays=24,rayLength=Math.max(W,H)*0.85,rot=t*0.008,baseAlpha=0.030+pulse(0.5,1)*0.02;
+    for(let i=0;i<numRays;i++){
+      const a=(i/numRays)*TWO_PI+rot,x2=cx+rayLength*Math.cos(a),y2=cy+rayLength*Math.sin(a);
+      const grd=ctx.createLinearGradient(cx,cy,x2,y2);
+      grd.addColorStop(0,`rgba(232,201,106,${(baseAlpha*2).toFixed(3)})`);
+      grd.addColorStop(0.15,`rgba(232,201,106,${baseAlpha.toFixed(3)})`);
+      grd.addColorStop(1,'rgba(232,201,106,0)');
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(x2,y2);ctx.strokeStyle=grd;ctx.lineWidth=1;ctx.stroke();
+    }
+  }
+  function drawFlowerOfLife(fR){
+    const alpha=0.50+pulse(0.6,0.5)*0.18;
+    ctx.strokeStyle=`rgba(232,201,106,${alpha.toFixed(3)})`;ctx.lineWidth=0.9;ctx.globalAlpha=1;
+    function circ(x,y){ctx.beginPath();ctx.arc(x,y,fR,0,TWO_PI);ctx.stroke();}
+    circ(cx,cy);
+    for(let i=0;i<6;i++){const a=(i/6)*TWO_PI;circ(cx+fR*Math.cos(a),cy+fR*Math.sin(a));}
+    for(let i=0;i<6;i++){const a=(i/6)*TWO_PI+Math.PI/6,d=Math.sqrt(3)*fR;circ(cx+d*Math.cos(a),cy+d*Math.sin(a));}
+    for(let i=0;i<6;i++){const a=(i/6)*TWO_PI;circ(cx+2*fR*Math.cos(a),cy+2*fR*Math.sin(a));}
+    const encR=2*fR;
+    ctx.globalAlpha=alpha*1.2;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(cx,cy,encR,0,TWO_PI);ctx.stroke();
+    ctx.lineWidth=0.7;ctx.globalAlpha=alpha*0.8;
+    ctx.beginPath();ctx.arc(cx,cy,encR+fR*0.12,0,TWO_PI);ctx.stroke();
+    ctx.beginPath();ctx.arc(cx,cy,encR+fR*0.28,0,TWO_PI);ctx.stroke();
+    ctx.globalAlpha=1;
+  }
+  function drawCentralGlow(fR){
+    const p=pulse(0.6,1.2);
+    const grd1=ctx.createRadialGradient(cx,cy,0,cx,cy,fR*1.6);
+    grd1.addColorStop(0,`rgba(255,210,80,${(0.18+p*0.12).toFixed(3)})`);
+    grd1.addColorStop(0.5,`rgba(201,168,76,${(0.06+p*0.04).toFixed(3)})`);
+    grd1.addColorStop(1,'rgba(201,168,76,0)');
+    ctx.fillStyle=grd1;ctx.fillRect(0,0,W,H);
+    const vig=ctx.createRadialGradient(cx,cy,Math.min(W,H)*0.4,cx,cy,Math.max(W,H)*0.8);
+    vig.addColorStop(0,'rgba(5,6,2,0)');vig.addColorStop(1,'rgba(4,5,1,0.80)');
+    ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
+  }
+  function drawFrame(){
+    const fR=Math.min(W,H)*0.082;
+    drawBackground();drawRays();drawFlowerOfLife(fR);drawCentralGlow(fR);
+    t+=0.016;requestAnimationFrame(drawFrame);
+  }
+  resize();window.addEventListener('resize',resize);drawFrame();
+})();
+</script>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+function fill(template, nombre, nombreRegalo, pdfUrl){
+  return template
+    .replace(/\{nombre\}/g, nombre||'')
+    .replace(/\{nombre_regalo\}/g, nombreRegalo||'')
+    .replace(/\{pdfUrl\}/g, pdfUrl||'');
+}
+
+async function init(){
+  document.getElementById('loader').style.display='flex';
+
+  // Obtener nombre del ser desde sessionStorage
+  let serNombre='';
+  let serEmail='';
+  try{
+    const ser=JSON.parse(sessionStorage.getItem('lcdp_portal_ser')||'{}');
+    serNombre=ser.nombre||'';
+    serEmail=ser.email||'';
+  }catch(e){}
+
+  // Cargar regalos activos desde Supabase
+  let lista=[];
+  try{
+    const {data,error}=await _sb.from('regalos').select('id,data');
+    if(!error&&data?.length){
+      lista=data.map(r=>({id:r.id,...r.data})).filter(r=>r.activo!==false);
+    }
+  }catch(e){console.warn('regalos:',e);}
+
+  document.getElementById('loader').style.display='none';
+
+  if(!lista.length){
+    document.getElementById('regaloList').innerHTML=`
+      <div class="empty"><div class="ei">✦</div><p>Próximamente habrá regalos especiales para vos.</p></div>`;
+    return;
+  }
+
+  document.getElementById('regaloList').innerHTML=lista.map(r=>{
+    const msgWA=fill(r.mensajeWA||'', serNombre, r.nombre, r.pdfUrl);
+    const asunto=fill(r.emailAsunto||'Tu regalo: '+r.nombre+' ✨', serNombre, r.nombre, r.pdfUrl);
+    const msgEmail=fill(r.mensajeEmail||'', serNombre, r.nombre, r.pdfUrl);
+
+    const hrefWA=`https://wa.me/?text=${encodeURIComponent(msgWA)}`;
+    const hrefEmail=serEmail
+      ?`mailto:${serEmail}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msgEmail)}`
+      :`mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msgEmail)}`;
+
+    return`<div class="regalo-card">
+      <div class="regalo-body">
+        <span class="regalo-ico">${r.icono||'🎁'}</span>
+        <div class="regalo-nombre">${r.nombre}</div>
+        ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
+        <div class="regalo-btns">
+          <a class="btn-regalo btn-wa" href="${hrefWA}" target="_blank">💬 WhatsApp</a>
+          <a class="btn-regalo btn-email" href="${hrefEmail}">✉️ Email</a>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+init();
+</script>
+</body>
+</html>
