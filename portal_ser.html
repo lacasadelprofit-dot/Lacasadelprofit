@@ -83,6 +83,25 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .b-gy{background:rgba(122,114,96,.15);color:#9A9080;}
 .b-pu{background:rgba(155,130,212,.15);color:#C4AEFF;}
 
+/* ── PRÓXIMA SESIÓN ── */
+.prox-card{background:var(--card);border:1px solid rgba(201,168,76,.4);border-radius:18px;
+  padding:18px;margin-bottom:20px;position:relative;overflow:hidden;
+  box-shadow:0 0 24px rgba(201,168,76,.08);}
+.prox-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.prox-label{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;
+  letter-spacing:1.5px;margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.prox-label::after{content:'';flex:1;height:1px;background:rgba(201,168,76,.2);}
+.prox-body{display:grid;grid-template-columns:52px 1fr auto;gap:12px;align-items:center;}
+.prox-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;
+  justify-content:center;font-size:26px;flex-shrink:0;}
+.prox-tipo{font-size:16px;font-weight:700;color:var(--gl);}
+.prox-meta{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.6;}
+.prox-dias{text-align:center;padding:8px 12px;background:rgba(201,168,76,.12);
+  border:1px solid rgba(201,168,76,.25);border-radius:12px;min-width:72px;flex-shrink:0;}
+.prox-dias .num{font-size:20px;font-weight:800;color:var(--gl);line-height:1.1;}
+.prox-dias .lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:3px;}
+
 /* intake strip at bottom of session card */
 .ses-intake{border-top:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .ses-intake.pending{background:rgba(201,168,76,.04);}
@@ -134,9 +153,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 /* ── AGENDA BUTTON ── */
 .btn-agenda{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gd));
   border:none;border-radius:14px;color:#050401;font-size:15px;font-weight:800;cursor:pointer;
-  margin-bottom:24px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-bottom:12px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;
   transition:opacity .2s;box-shadow:0 4px 20px rgba(201,168,76,.25);}
 .btn-agenda:hover{opacity:.9;}
+
+/* ── SECONDARY ACTION BUTTONS ── */
+.sec-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
+.btn-sec{padding:13px 10px;border:none;border-radius:14px;font-size:13px;font-weight:700;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity .2s;text-decoration:none;}
+.btn-sec:hover{opacity:.85;}
+.btn-sec-wapp{background:rgba(37,211,102,.15);color:#4ADE80;border:1px solid rgba(37,211,102,.3);}
+.btn-sec-vision{background:rgba(155,130,212,.15);color:var(--purple);border:1px solid rgba(155,130,212,.3);}
 
 /* ── AGENDA MODAL ── */
 .agenda-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.88);z-index:9000;
@@ -207,7 +235,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
   </div>
   <div class="stats-row" id="statsRow"></div>
+  <div id="proximaBox"></div>
   <button class="btn-agenda" onclick="openAgenda()">📅 Agendá tu próxima sesión</button>
+  <div class="sec-btns">
+    <a class="btn-sec btn-sec-wapp" href="https://chat.whatsapp.com/TU_LINK_COMUNIDAD" target="_blank">💬 Comunidad</a>
+    <a class="btn-sec btn-sec-vision" href="/vision.html" target="_blank">🌀 Visión</a>
+  </div>
   <div class="sec-title">✨ Mis Sesiones</div>
   <div class="filter-row" id="filterRow"></div>
   <div class="ses-list" id="sesList"></div>
@@ -380,8 +413,63 @@ function showAppScreen(){
   showOnly('app');
   renderHeader();
   renderStats();
+  renderProximaSesion();
   renderFilters();
   renderSessions();
+}
+
+function daysUntil(fechaStr){
+  try{
+    const[y,m,d]=fechaStr.split('-').map(Number);
+    const hoy=new Date();hoy.setHours(0,0,0,0);
+    const ses=new Date(y,m-1,d);
+    return Math.round((ses-hoy)/864e5);
+  }catch{return null;}
+}
+
+function renderProximaSesion(){
+  const box=document.getElementById('proximaBox');
+  if(!box)return;
+
+  const pendientes=allSessions
+    .filter(s=>s.estado==='Pendiente'&&s.fecha&&s.fecha!=='None')
+    .sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+
+  if(!pendientes.length){box.innerHTML='';return;}
+
+  const s=pendientes[0];
+  const tipo=s.sesion||s.tipo||'Sesión';
+  const ico=TIPO_ICO[tipo]||'✨';
+  const col=TIPO_COL[tipo]||'#C9A84C';
+  const diff=daysUntil(s.fecha);
+
+  let diasHtml='';
+  if(diff!==null){
+    let main,sub='';
+    if(diff===0){main='HOY';}
+    else if(diff===1){main='MAÑANA';}
+    else if(diff>1){main=diff;sub='días';}
+    else{main=Math.abs(diff);sub='días atrás';}
+    diasHtml=`<div class="prox-dias"><div class="num">${main}</div>${sub?`<div class="lbl">${sub}</div>`:''}</div>`;
+  }
+
+  const metaLinea2=s.facilitador
+    ?`<div class="prox-meta">👤 ${s.facilitador}${s.modalidad?' · '+s.modalidad:''}</div>`
+    :(s.modalidad?`<div class="prox-meta">${s.modalidad}</div>`:'');
+
+  box.innerHTML=`
+    <div class="prox-card">
+      <div class="prox-label">✦ Próxima sesión</div>
+      <div class="prox-body">
+        <div class="prox-icon" style="background:${col}22;color:${col}">${ico}</div>
+        <div>
+          <div class="prox-tipo">${tipo}</div>
+          <div class="prox-meta">📅 ${fDate(s.fecha)}${s.hora?' · '+s.hora+' hs':''}</div>
+          ${metaLinea2}
+        </div>
+        ${diasHtml}
+      </div>
+    </div>`;
 }
 
 function renderHeader(){
@@ -637,9 +725,9 @@ async function submitIntake(){
   const idx=allSessions.findIndex(s=>String(s.id)===String(intakeSesActual.id));
   if(idx>=0)allSessions[idx]=intakeSesActual;
 
-  // Save via Netlify function
+  // Save via Vercel API
   try{
-    await fetch('/.netlify/functions/save-intake',{
+    await fetch('/api/save-intake',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
