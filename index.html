@@ -5169,10 +5169,27 @@ function setMktTab(t){
 /* ── REGALOS ── */
 let _curRegaloId=null;
 
-function renderMktRegalos(){
+async function renderMktRegalos(){
   const el=document.getElementById('mktRegalos');
   if(!el)return;
   const activos=regalos.filter(r=>r.activo!==false).length;
+
+  // Load tracking stats from regalo_eventos
+  let stats={};
+  try{
+    const {data:evs}=await _sb.from('regalo_eventos').select('data');
+    if(evs?.length){
+      evs.forEach(e=>{
+        const d=e.data||{};
+        const rid=d.regaloId;
+        const tipo=d.tipo;
+        if(!rid||!tipo)return;
+        if(!stats[rid])stats[rid]={envio_wa:0,envio_email:0,descarga:0};
+        if(stats[rid][tipo]!==undefined)stats[rid][tipo]++;
+      });
+    }
+  }catch(e){console.warn('regalo_eventos:',e);}
+
   el.innerHTML=`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
       <div style="font-size:13px;color:var(--muted)">${regalos.length} regalo${regalos.length!==1?'s':''} · ${activos} activo${activos!==1?'s':''}</div>
@@ -5180,8 +5197,10 @@ function renderMktRegalos(){
     </div>
     ${!regalos.length
       ?`<div class="es"><div class="ei">🎁</div><p>No hay regalos configurados. Creá el primero con el botón de arriba.</p></div>`
-      :`<div style="display:flex;flex-direction:column;gap:12px">${regalos.map(r=>`
-        <div class="card" style="padding:16px 18px">
+      :`<div style="display:flex;flex-direction:column;gap:12px">${regalos.map(r=>{
+        const s=stats[r.id]||{envio_wa:0,envio_email:0,descarga:0};
+        const totalEnvios=(s.envio_wa||0)+(s.envio_email||0);
+        return`<div class="card" style="padding:16px 18px">
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="font-size:30px;flex-shrink:0;line-height:1">${r.icono||'🎁'}</div>
             <div style="flex:1;min-width:0">
@@ -5190,15 +5209,29 @@ function renderMktRegalos(){
                 <span class="bdg ${r.activo!==false?'b-gr':'b-gy'}">${r.activo!==false?'Activo':'Inactivo'}</span>
               </div>
               ${r.descripcion?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${r.descripcion}</div>`:''}
-              ${r.pdfUrl?`<div style="font-size:11px;color:var(--blue);margin-bottom:4px">📎 <a href="${r.pdfUrl}" target="_blank" style="color:var(--blue)">${r.pdfUrl.length>70?r.pdfUrl.slice(0,70)+'…':r.pdfUrl}</a></div>`:'<div style="font-size:11px;color:var(--red);margin-bottom:4px">⚠️ Sin URL de PDF</div>'}
-              <div style="font-size:11px;color:var(--muted);margin-bottom:8px;white-space:pre-wrap;border-left:2px solid var(--border);padding-left:8px;margin-top:8px">${(r.mensajeWA||'').slice(0,120)}${(r.mensajeWA||'').length>120?'…':''}</div>
+              <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
+                <div style="background:rgba(37,211,102,.08);border:1px solid rgba(37,211,102,.2);border-radius:10px;padding:8px;text-align:center">
+                  <div style="font-size:18px;font-weight:800;color:#4ADE80">${s.envio_wa||0}</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:2px">💬 WA</div>
+                </div>
+                <div style="background:rgba(201,168,76,.08);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:8px;text-align:center">
+                  <div style="font-size:18px;font-weight:800;color:var(--gl)">${s.envio_email||0}</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:2px">✉️ Email</div>
+                </div>
+                <div style="background:rgba(155,130,212,.08);border:1px solid rgba(155,130,212,.2);border-radius:10px;padding:8px;text-align:center">
+                  <div style="font-size:18px;font-weight:800;color:var(--purple)">${s.descarga||0}</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:2px">⬇️ Descargas</div>
+                </div>
+              </div>
+              ${r.pdfUrl?`<div style="font-size:11px;color:var(--blue);margin-bottom:8px">📎 <a href="${r.pdfUrl}" target="_blank" style="color:var(--blue)">${r.pdfUrl.length>70?r.pdfUrl.slice(0,70)+'…':r.pdfUrl}</a></div>`:'<div style="font-size:11px;color:var(--red);margin-bottom:8px">⚠️ Sin URL de PDF</div>'}
               <div style="display:flex;gap:8px">
                 <button class="btn btn-s" onclick="openRegaloModal('${r.id}')">✏️ Editar</button>
                 <button class="btn btn-s" style="color:var(--red)" onclick="delRegalo('${r.id}')">🗑️ Eliminar</button>
               </div>
             </div>
           </div>
-        </div>`).join('')}</div>`
+        </div>`;
+      }).join('')}</div>`
     }`;
 }
 

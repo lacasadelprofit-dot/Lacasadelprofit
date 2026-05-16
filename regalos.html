@@ -164,26 +164,38 @@ const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
-function fill(template, nombre, nombreRegalo, pdfUrl){
+function fill(template, nombre, nombreRegalo, trackUrl){
   return template
     .replace(/\{nombre\}/g, nombre||'')
     .replace(/\{nombre_regalo\}/g, nombreRegalo||'')
-    .replace(/\{pdfUrl\}/g, pdfUrl||'');
+    .replace(/\{pdfUrl\}/g, trackUrl||'');
 }
+
+function trackUrl(regaloId, serNombre, serEmail){
+  const base=window.location.origin;
+  return `${base}/api/track-regalo?rid=${encodeURIComponent(regaloId)}&sn=${encodeURIComponent(serNombre)}&se=${encodeURIComponent(serEmail)}`;
+}
+
+async function logEvento(regaloId, regaloNombre, tipo, serNombre, serEmail){
+  try{
+    await _sb.from('regalo_eventos').insert({data:{
+      regaloId, regaloNombre, tipo, serNombre, serEmail,
+      fecha: new Date().toISOString().split('T')[0]
+    }});
+  }catch(e){console.warn('logEvento:',e);}
+}
+
+let _serNombre='', _serEmail='';
 
 async function init(){
   document.getElementById('loader').style.display='flex';
 
-  // Obtener nombre del ser desde sessionStorage
-  let serNombre='';
-  let serEmail='';
   try{
     const ser=JSON.parse(sessionStorage.getItem('lcdp_portal_ser')||'{}');
-    serNombre=ser.nombre||'';
-    serEmail=ser.email||'';
+    _serNombre=ser.nombre||'';
+    _serEmail=ser.email||'';
   }catch(e){}
 
-  // Cargar regalos activos desde Supabase
   let lista=[];
   try{
     const {data,error}=await _sb.from('regalos').select('id,data');
@@ -201,13 +213,14 @@ async function init(){
   }
 
   document.getElementById('regaloList').innerHTML=lista.map(r=>{
-    const msgWA=fill(r.mensajeWA||'', serNombre, r.nombre, r.pdfUrl);
-    const asunto=fill(r.emailAsunto||'Tu regalo: '+r.nombre+' ✨', serNombre, r.nombre, r.pdfUrl);
-    const msgEmail=fill(r.mensajeEmail||'', serNombre, r.nombre, r.pdfUrl);
+    const tUrl=trackUrl(r.id, _serNombre, _serEmail);
+    const msgWA=fill(r.mensajeWA||'', _serNombre, r.nombre, tUrl);
+    const asunto=fill(r.emailAsunto||'Tu regalo: '+r.nombre+' ✨', _serNombre, r.nombre, tUrl);
+    const msgEmail=fill(r.mensajeEmail||'', _serNombre, r.nombre, tUrl);
 
     const hrefWA=`https://wa.me/?text=${encodeURIComponent(msgWA)}`;
-    const hrefEmail=serEmail
-      ?`mailto:${serEmail}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msgEmail)}`
+    const hrefEmail=_serEmail
+      ?`mailto:${_serEmail}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msgEmail)}`
       :`mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msgEmail)}`;
 
     return`<div class="regalo-card">
@@ -216,8 +229,14 @@ async function init(){
         <div class="regalo-nombre">${r.nombre}</div>
         ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
         <div class="regalo-btns">
-          <a class="btn-regalo btn-wa" href="${hrefWA}" target="_blank">💬 WhatsApp</a>
-          <a class="btn-regalo btn-email" href="${hrefEmail}">✉️ Email</a>
+          <a class="btn-regalo btn-wa" href="${hrefWA}" target="_blank"
+            onclick="logEvento('${r.id}','${(r.nombre||'').replace(/'/g,"\\'")}','envio_wa',_serNombre,_serEmail)">
+            💬 WhatsApp
+          </a>
+          <a class="btn-regalo btn-email" href="${hrefEmail}"
+            onclick="logEvento('${r.id}','${(r.nombre||'').replace(/'/g,"\\'")}','envio_email',_serNombre,_serEmail)">
+            ✉️ Email
+          </a>
         </div>
       </div>
     </div>`;
