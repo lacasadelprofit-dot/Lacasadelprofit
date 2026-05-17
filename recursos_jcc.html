@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Preguntas Expansivas — Juan Cruz Consciencia</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="theme-color" content="#C17A48">
+<meta property="og:title" content="Preguntas Expansivas — Juan Cruz Consciencia">
+<meta property="og:description" content="60 preguntas para expandir tu consciencia y mover lo que está quieto.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
+  --terra:#C17A48;--terra-d:#9A5C30;--terra-l:#F0E4D6;
+  --text:#1C1200;--muted:#7A6E60;--green:#3DAA6A;
+  /* Dimensión colors */
+  --c-id:#C17A48;--c-di:#6B8F5E;--c-cu:#5E8FAD;
+  --c-re:#B87878;--c-pr:#C4964A;--c-co:#8A7AB8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── HEADER ── */
+.site-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;
+  border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:100;}
+.brand{font-size:15px;font-weight:800;color:var(--text);}
+.brand span{color:var(--terra);}
+.nav-link{font-size:13px;color:var(--muted);text-decoration:none;font-weight:600;
+  padding:6px 14px;border:1px solid var(--border);border-radius:20px;transition:all .2s;}
+.nav-link:hover{border-color:var(--terra);color:var(--terra);}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:56px 20px 40px;max-width:620px;margin:0 auto;}
+.hero .pill{display:inline-block;font-size:12px;font-weight:700;padding:5px 18px;border-radius:20px;
+  background:var(--terra-l);border:1px solid rgba(193,122,72,.35);color:var(--terra-d);
+  margin-bottom:20px;letter-spacing:.3px;}
+.hero h1{font-size:30px;font-weight:800;color:var(--text);line-height:1.22;margin-bottom:14px;}
+.hero p{font-size:15px;color:var(--muted);line-height:1.75;max-width:460px;margin:0 auto;}
+
+/* ── FEATURED QUESTION ── */
+.featured-wrap{max-width:620px;margin:0 auto 48px;padding:0 16px;}
+.featured-card{background:var(--text);border-radius:24px;padding:36px 32px;position:relative;overflow:hidden;}
+.featured-card::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;
+  border-radius:50%;background:rgba(193,122,72,.14);pointer-events:none;}
+.featured-card::after{content:'';position:absolute;bottom:-40px;left:-40px;width:120px;height:120px;
+  border-radius:50%;background:rgba(193,122,72,.08);pointer-events:none;}
+.featured-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(193,122,72,.8);margin-bottom:16px;}
+.featured-q{font-size:22px;font-weight:700;color:#fff;line-height:1.4;position:relative;margin-bottom:20px;}
+.featured-dim{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;
+  background:rgba(193,122,72,.2);color:var(--terra-l);letter-spacing:.5px;position:relative;}
+.featured-next{display:flex;align-items:center;gap:8px;margin-top:20px;position:relative;}
+.btn-next{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;
+  color:rgba(255,255,255,.75);font-size:12px;font-weight:600;padding:6px 16px;cursor:pointer;transition:all .2s;}
+.btn-next:hover{background:rgba(255,255,255,.18);color:#fff;}
+.featured-count{font-size:11px;color:rgba(255,255,255,.4);margin-left:4px;}
+
+/* ── DIMENSION FILTER ── */
+.sec-wrap{max-width:680px;margin:0 auto;padding:0 16px;}
+.sec-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
+  color:var(--terra-d);margin-bottom:16px;}
+.dim-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
+.dim-pill{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
+  border:1px solid var(--border);background:var(--card2);color:var(--muted);transition:all .2s;}
+.dim-pill:hover{border-color:var(--terra);color:var(--terra);}
+.dim-pill.active{color:#fff;border-color:transparent;}
+.dim-pill[data-d="Identidad"].active{background:var(--c-id);}
+.dim-pill[data-d="Dinero"].active{background:var(--c-di);}
+.dim-pill[data-d="Cuerpo"].active{background:var(--c-cu);}
+.dim-pill[data-d="Relaciones"].active{background:var(--c-re);}
+.dim-pill[data-d="Propósito"].active{background:var(--c-pr);}
+.dim-pill[data-d="Consciencia"].active{background:var(--c-co);}
+.dim-pill[data-d="Todas"].active{background:var(--terra);}
+
+/* ── QUESTIONS GRID ── */
+.q-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:48px;}
+.q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 18px;
+  border-left-width:4px;transition:box-shadow .2s;}
+.q-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+.q-card[data-d="Identidad"]{border-left-color:var(--c-id);}
+.q-card[data-d="Dinero"]{border-left-color:var(--c-di);}
+.q-card[data-d="Cuerpo"]{border-left-color:var(--c-cu);}
+.q-card[data-d="Relaciones"]{border-left-color:var(--c-re);}
+.q-card[data-d="Propósito"]{border-left-color:var(--c-pr);}
+.q-card[data-d="Consciencia"]{border-left-color:var(--c-co);}
+.q-dim-tag{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+  margin-bottom:8px;opacity:.6;}
+.q-card[data-d="Identidad"] .q-dim-tag{color:var(--c-id);}
+.q-card[data-d="Dinero"] .q-dim-tag{color:var(--c-di);}
+.q-card[data-d="Cuerpo"] .q-dim-tag{color:var(--c-cu);}
+.q-card[data-d="Relaciones"] .q-dim-tag{color:var(--c-re);}
+.q-card[data-d="Propósito"] .q-dim-tag{color:var(--c-pr);}
+.q-card[data-d="Consciencia"] .q-dim-tag{color:var(--c-co);}
+.q-texto{font-size:14px;font-weight:600;color:var(--text);line-height:1.5;}
+
+/* ── SEPARATOR ── */
+.page-sep{border:none;border-top:1px solid var(--border);margin:8px 0 44px;}
+
+/* ── REGALOS ── */
+.regalos-wrap{max-width:680px;margin:0 auto;padding:0 16px 60px;}
+.regalo-card{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  overflow:hidden;margin-bottom:14px;transition:box-shadow .2s;}
+.regalo-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);}
+.regalo-card::before{content:'';display:block;height:3px;
+  background:linear-gradient(90deg,var(--terra-l),var(--terra),var(--terra-l));}
+.regalo-body{padding:22px 22px 18px;}
+.regalo-ico{font-size:34px;margin-bottom:10px;display:block;}
+.regalo-nombre{font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.regalo-desc{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:16px;}
+.btn-dl-jcc{width:100%;padding:12px;background:var(--terra);border:none;border-radius:12px;
+  color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:7px;text-decoration:none;transition:background .2s;}
+.btn-dl-jcc:hover{background:var(--terra-d);}
+
+/* ── CTA ── */
+.cta-wrap{max-width:540px;margin:0 auto 60px;padding:0 16px;}
+.cta-card{background:var(--text);border-radius:20px;padding:36px 28px;text-align:center;}
+.cta-card h2{font-size:20px;font-weight:800;color:#fff;margin-bottom:10px;}
+.cta-card p{font-size:14px;color:rgba(255,255,255,.65);line-height:1.7;margin-bottom:24px;}
+.btn-cta{display:inline-block;padding:14px 32px;background:var(--terra);border:none;border-radius:12px;
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;transition:background .2s;}
+.btn-cta:hover{background:var(--terra-d);}
+
+/* ── LOADER ── */
+#loader{display:none;position:fixed;inset:0;background:rgba(250,250,248,.94);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner{width:44px;height:44px;border:3px solid rgba(193,122,72,.2);border-top-color:var(--terra);
+  border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+.empty{text-align:center;padding:48px 20px;color:var(--muted);}
+.empty .ei{font-size:40px;margin-bottom:12px;}
+
+@media(max-width:540px){
+  .q-grid{grid-template-columns:1fr;}
+  .hero h1{font-size:24px;}
+  .featured-q{font-size:18px;}
+  .site-header{padding:14px 16px;}
+}
+</style>
+</head>
+<body>
+
+<div id="loader"><div class="spinner"></div></div>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="brand">Juan Cruz <span>Consciencia</span></div>
+  <a class="nav-link" href="/registro_jcc.html">Agendá una sesión ↗</a>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="pill">✦ Herramientas de expansión</div>
+  <h1>60 preguntas que<br>mueven lo que está quieto</h1>
+  <p>No son preguntas para responder. Son preguntas para sostener. Para que algo en vos empiece a moverse desde adentro.</p>
+</div>
+
+<!-- FEATURED QUESTION -->
+<div class="featured-wrap">
+  <div class="featured-card">
+    <div class="featured-label">✦ Pregunta del momento</div>
+    <div class="featured-q" id="featuredQ">Cargando...</div>
+    <div class="featured-dim" id="featuredDim"></div>
+    <div class="featured-next">
+      <button class="btn-next" onclick="nextFeatured()">Otra pregunta →</button>
+      <span class="featured-count" id="featuredCount"></span>
+    </div>
+  </div>
+</div>
+
+<!-- QUESTIONS SECTION -->
+<div class="sec-wrap">
+  <div class="sec-title">Explorá por dimensión</div>
+  <div class="dim-pills" id="dimPills"></div>
+  <div class="q-grid" id="qGrid">
+    <div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Cargando preguntas...</p></div>
+  </div>
+</div>
+
+<hr class="page-sep" style="max-width:680px;margin:0 auto 44px;">
+
+<!-- REGALOS SECTION -->
+<div class="regalos-wrap">
+  <div class="sec-title" style="margin-bottom:8px">Recursos para vos</div>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.65">Herramientas y materiales que preparé especialmente para acompañar tu camino.</p>
+  <div id="regalosWrap">
+    <div class="empty"><div class="ei">🎁</div><p>Cargando recursos...</p></div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="cta-wrap">
+  <div class="cta-card">
+    <h2>¿Querés ir más profundo?</h2>
+    <p>Una sesión de Barras de Access, Proceso de Cuerpos o Sesión Profit puede ser el próximo paso en tu camino de expansión.</p>
+    <a class="btn-cta" href="/registro_jcc.html">Reservar una sesión ✨</a>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+const DIM_ORDER=['Todas','Identidad','Dinero','Cuerpo','Relaciones','Propósito','Consciencia'];
+const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
+
+let allPregs=[], curDim='Todas', featIdx=0;
+
+/* ── FEATURED ── */
+function showFeatured(){
+  const pool=curDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===curDim);
+  if(!pool.length)return;
+  const p=pool[featIdx%pool.length];
+  document.getElementById('featuredQ').textContent=p.texto;
+  document.getElementById('featuredDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+p.matiz;
+  document.getElementById('featuredCount').textContent=`${(featIdx%pool.length)+1} / ${pool.length}`;
+}
+function nextFeatured(){
+  const pool=curDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===curDim);
+  featIdx=(featIdx+1)%Math.max(1,pool.length);
+  showFeatured();
+}
+
+/* ── DIM FILTER ── */
+function buildPills(){
+  document.getElementById('dimPills').innerHTML=DIM_ORDER.map(d=>`
+    <button class="dim-pill${d===curDim?' active':''}" data-d="${d}" onclick="setDim('${d}')">${DIM_ICO[d]||''} ${d}</button>
+  `).join('');
+}
+function setDim(d){
+  curDim=d;featIdx=0;
+  buildPills();showFeatured();renderGrid();
+}
+
+/* ── GRID ── */
+function renderGrid(){
+  const pool=curDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===curDim);
+  if(!pool.length){
+    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>No hay preguntas en esta dimensión.</p></div>';
+    return;
+  }
+  document.getElementById('qGrid').innerHTML=pool.map(p=>`
+    <div class="q-card" data-d="${p.matiz}">
+      <div class="q-dim-tag">${DIM_ICO[p.matiz]||''} ${p.matiz}</div>
+      <div class="q-texto">${p.texto}</div>
+    </div>
+  `).join('');
+}
+
+/* ── REGALOS ── */
+async function loadRegalos(){
+  try{
+    const {data,error}=await _sb.from('regalos').select('id,data');
+    const lista=(error||!data?.length)?[]:data
+      .map(r=>({id:r.id,...r.data}))
+      .filter(r=>r.activo!==false&&(!r.marca||r.marca==='jcc'||r.marca==='ambos'))
+      .sort((a,b)=>(a.orden??9999)-(b.orden??9999));
+    if(!lista.length){
+      document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
+      return;
+    }
+    document.getElementById('regalosWrap').innerHTML=lista.map(r=>{
+      const tUrl=`${window.location.origin}/api/track-regalo?rid=${encodeURIComponent(r.id)}&canal=recursos_jcc`;
+      return`<div class="regalo-card">
+        <div class="regalo-body">
+          <span class="regalo-ico">${r.icono||'🎁'}</span>
+          <div class="regalo-nombre">${r.nombre||'Regalo'}</div>
+          ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
+          <a class="btn-dl-jcc" href="${tUrl}" target="_blank">⬇️ Descargar gratis</a>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
+  }
+}
+
+/* ── INIT ── */
+async function init(){
+  document.getElementById('loader').style.display='flex';
+  try{
+    const {data,error}=await _sb.from('comunidad_contenido').select('id,data');
+    allPregs=(error||!data?.length)?[]:data
+      .map(r=>r.data||{})
+      .filter(p=>p.tipo==='pregunta'&&p.activo!==false);
+    // Shuffle for variety
+    for(let i=allPregs.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [allPregs[i],allPregs[j]]=[allPregs[j],allPregs[i]];
+    }
+  }catch(e){console.warn('preguntas:',e);}
+
+  document.getElementById('loader').style.display='none';
+
+  if(!allPregs.length){
+    document.getElementById('featuredQ').textContent='¿Qué elegiría si confiara en mí?';
+    document.getElementById('featuredDim').textContent='🪞 Identidad';
+    document.getElementById('featuredCount').textContent='1 / 1';
+    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Las preguntas estarán disponibles pronto.</p></div>';
+  } else {
+    showFeatured();
+    buildPills();
+    renderGrid();
+  }
+
+  await loadRegalos();
+}
+
+init();
+</script>
+</body>
+</html>

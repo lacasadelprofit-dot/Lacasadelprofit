@@ -708,6 +708,24 @@ select.fi:focus{border-color:var(--gold);}
           <span class="acceso-ext">↗</span>
         </a>
 
+        <a href="/recursos_jcc.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">🌿</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Recursos JCC</div>
+            <div class="acceso-desc">Preguntas expansivas y regalos — tonos JCC</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="/onboarding.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">◈</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Registro Programa Emprendedor</div>
+            <div class="acceso-desc">Onboarding de 6 preguntas para nuevos clientes PDC</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
         <a href="/generar_imagen_comunidad.html" target="_blank" class="acceso-card" style="text-decoration:none">
           <div class="acceso-ico">🖼️</div>
           <div class="acceso-info">
@@ -1571,7 +1589,7 @@ async function loadData(){
     campañas     = cc.data?.length  ? _unwrap(cc.data)  : [];
     inscripciones= ii.data?.length  ? _unwrap(ii.data)  : [];
     egresos      = eg.data?.length  ? _unwrap(eg.data)  : [];
-    regalos      = rg.data?.length  ? _unwrap(rg.data)  : [];
+    regalos      = rg.data?.length  ? _unwrap(rg.data).sort((a,b)=>(a.orden??9999)-(b.orden??9999))  : [];
     comunidad    = cm.data?.length  ? _unwrap(cm.data)  : [];
     // First-time seed (populate from embedded defaults)
     if(!sr.data?.length && SR.length)           await _sb.from('seres').upsert(_wrap(SR));
@@ -6027,7 +6045,7 @@ function _renderRgLista(){
     </div>
     ${!regalos.length
       ?`<div class="es"><div class="ei">🎁</div><p>No hay regalos configurados.</p></div>`
-      :`<div style="display:flex;flex-direction:column;gap:12px">${regalos.map(r=>{
+      :`<div style="display:flex;flex-direction:column;gap:12px">${regalos.map((r,idx)=>{
         const s=stats[r.id]||{envio_wa:0,envio_email:0,descarga:0};
         return`<div class="card" style="padding:16px 18px">
           <div style="display:flex;align-items:flex-start;gap:14px">
@@ -6054,7 +6072,9 @@ function _renderRgLista(){
                 </div>
               </div>
               ${r.pdfUrl?`<div style="font-size:11px;color:var(--blue);margin-bottom:8px">📎 <a href="${r.pdfUrl}" target="_blank" style="color:var(--blue)">${r.pdfUrl.length>70?r.pdfUrl.slice(0,70)+'…':r.pdfUrl}</a></div>`:'<div style="font-size:11px;color:var(--red);margin-bottom:8px">⚠️ Sin URL de PDF</div>'}
-              <div style="display:flex;gap:8px">
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                <button class="btn btn-s" style="padding:4px 10px;font-size:13px;opacity:${idx===0?'.35':'1'}" onclick="moveRegalo('${r.id}',-1)" ${idx===0?'disabled':''} title="Subir">↑</button>
+                <button class="btn btn-s" style="padding:4px 10px;font-size:13px;opacity:${idx===regalos.length-1?'.35':'1'}" onclick="moveRegalo('${r.id}',1)" ${idx===regalos.length-1?'disabled':''} title="Bajar">↓</button>
                 <button class="btn btn-s" onclick="openRegaloModal('${r.id}')">✏️ Editar</button>
                 <button class="btn btn-s" style="color:var(--red)" onclick="delRegalo('${r.id}')">🗑️ Eliminar</button>
               </div>
@@ -6102,6 +6122,7 @@ function saveRegalo(){
     if(idx>=0)regalos[idx]={...regalos[idx],...data};
   }else{
     data.id=crypto.randomUUID();
+    data.orden=regalos.length;
     regalos.push(data);
   }
   save();
@@ -6117,6 +6138,16 @@ function delRegalo(id){
   save();
   renderMktRegalos();
   toast('🗑️ Regalo eliminado');
+}
+function moveRegalo(id,dir){
+  const idx=regalos.findIndex(r=>r.id===id);
+  if(idx<0)return;
+  const ni=idx+dir;
+  if(ni<0||ni>=regalos.length)return;
+  [regalos[idx],regalos[ni]]=[regalos[ni],regalos[idx]];
+  regalos.forEach((r,i)=>r.orden=i);
+  save();
+  _renderRgTab();
 }
 
 /* ═══════════════════════════════════════════════════
