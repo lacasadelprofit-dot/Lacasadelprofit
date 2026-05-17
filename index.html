@@ -314,7 +314,7 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- DASHBOARD -->
     <div id="sec-dashboard" class="sec active">
-     <div id="dKPIs" class="kpi-grid"></div>
+     <div id="dKPIs" class="kpi-grid" style="grid-template-columns:1fr 1fr"></div>
      <div id="dToday" style="margin-bottom:18px"></div>
      <div id="dWeekView" style="margin-bottom:18px"></div>
      <div class="cg22" style="margin-bottom:18px">
@@ -552,6 +552,33 @@ select.fi:focus{border-color:var(--gold);}
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
           <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
           <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
+        </div>
+        <!-- Configuración de hora de envío -->
+        <div class="cc" style="margin-bottom:18px">
+          <h3 style="font-size:13px;color:var(--muted);margin-bottom:14px">⏰ <span style="color:var(--gl)">Configuración de envío diario</span></h3>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
+            <div>
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Hora de envío</label>
+              <input type="time" id="comHoraEnvio" value="08:00"
+                style="padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:700;outline:none;width:120px"
+                onchange="saveComConfig()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Días de envío</label>
+              <div style="display:flex;flex-wrap:wrap;gap:6px" id="comDiasEnvio">
+                <label id="comDiaLabel0" onclick="toggleComDia(0)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia0" style="display:none" checked><span>Lu</span></label>
+                <label id="comDiaLabel1" onclick="toggleComDia(1)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia1" style="display:none" checked><span>Ma</span></label>
+                <label id="comDiaLabel2" onclick="toggleComDia(2)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia2" style="display:none" checked><span>Mi</span></label>
+                <label id="comDiaLabel3" onclick="toggleComDia(3)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia3" style="display:none" checked><span>Ju</span></label>
+                <label id="comDiaLabel4" onclick="toggleComDia(4)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia4" style="display:none" checked><span>Vi</span></label>
+                <label id="comDiaLabel5" onclick="toggleComDia(5)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia5" style="display:none" checked><span>Sa</span></label>
+                <label id="comDiaLabel6" onclick="toggleComDia(6)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia6" style="display:none"><span>Do</span></label>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding:10px 14px;background:rgba(155,130,212,.08);border:1px solid rgba(155,130,212,.2);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
+            💡 <strong style="color:var(--text)">Recordatorio manual:</strong> A la hora configurada, andá a <em>"Para enviar hoy"</em> y presioná el botón 💬 de cada contenido para abrirlo en WhatsApp y enviarlo al grupo.
+          </div>
         </div>
       </div>
       <div id="comList" style="display:none"></div>
@@ -1091,7 +1118,7 @@ select.fi:focus{border-color:var(--gold);}
   <div class="fg-row">
    <div class="fg">
     <label>Tipo *</label>
-    <select id="cmTipo">
+    <select id="cmTipo" onchange="toggleCmMatiz()">
      <option value="pregunta">💬 Pregunta Expansiva</option>
      <option value="consciencia">✨ Consciencia</option>
      <option value="reflexion">🌿 Reflexión</option>
@@ -1103,6 +1130,21 @@ select.fi:focus{border-color:var(--gold);}
     <label>Fecha programada</label>
     <input type="date" id="cmFecha">
    </div>
+  </div>
+  <div class="fg" id="cmMatizRow">
+   <label>Matiz / Categoría</label>
+   <input id="cmMatiz" list="dlMatiz" placeholder="Ej: Identidad, Propósito, Emociones...">
+   <datalist id="dlMatiz">
+    <option value="Identidad"></option>
+    <option value="Propósito"></option>
+    <option value="Emociones"></option>
+    <option value="Relaciones"></option>
+    <option value="Dinero"></option>
+    <option value="Cuerpo"></option>
+    <option value="Consciencia"></option>
+    <option value="Expansión"></option>
+    <option value="Integración"></option>
+   </datalist>
   </div>
   <div class="fg">
    <label>Texto / Contenido *</label>
@@ -5538,6 +5580,7 @@ function renderComunidad(){
   }
 
   _renderComList();
+  loadComConfig();
 }
 
 function _renderComCalendar(){
@@ -5586,7 +5629,10 @@ function _comCardMini(c){
   return `<div style="background:${t.bg};border:1px solid ${t.border};border-radius:12px;padding:12px;margin-bottom:8px">
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
       <span style="font-size:12px;font-weight:700;color:${t.col}">${t.ico} ${t.l}</span>
-      ${c.enviado?'<span style="font-size:10px;color:var(--green)">✅ Enviado</span>':''}
+      <div style="display:flex;align-items:center;gap:6px">
+        ${c.matiz&&c.tipo==='pregunta'?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(155,130,212,.15);color:#C4AEFF;font-style:italic">${c.matiz}</span>`:''}
+        ${c.enviado?'<span style="font-size:10px;color:var(--green)">✅ Enviado</span>':''}
+      </div>
     </div>
     <div style="font-size:13px;color:var(--text);line-height:1.6;margin-bottom:10px">${c.texto||''}</div>
     <div style="display:flex;gap:6px">
@@ -5613,6 +5659,7 @@ function _comCardFull(c){
           ${esHoy?'<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(201,168,76,.15);color:var(--gl);font-weight:700">HOY</span>':''}
           ${esPasado&&!c.enviado?'<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(224,85,85,.12);color:#F08080">Pasado</span>':''}
           ${c.enviado?'<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(61,170,106,.15);color:#5DD89A">✅ Enviado</span>':''}
+          ${c.matiz&&c.tipo==='pregunta'?`<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:rgba(155,130,212,.15);color:#C4AEFF;font-style:italic">${c.matiz}</span>`:''}
         </div>
         <div style="font-size:13px;color:var(--text);line-height:1.65;margin-bottom:10px;white-space:pre-wrap">${c.texto||''}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap">
@@ -5643,6 +5690,40 @@ function marcarEnviado(id){
   if(item){item.enviado=true;save();setTimeout(()=>renderComunidad(),400);}
 }
 
+function loadComConfig(){
+  const cfg=JSON.parse(localStorage.getItem('comConfig')||'{}');
+  if(cfg.hora) document.getElementById('comHoraEnvio').value=cfg.hora;
+  const dias=cfg.dias??[true,true,true,true,true,true,false];
+  dias.forEach((v,i)=>{
+    document.getElementById('comDia'+i).checked=v;
+    _updateDiaLabel(i,v);
+  });
+}
+function saveComConfig(){
+  const hora=document.getElementById('comHoraEnvio').value;
+  const dias=[0,1,2,3,4,5,6].map(i=>document.getElementById('comDia'+i).checked);
+  localStorage.setItem('comConfig',JSON.stringify({hora,dias}));
+  toast('✅ Configuración guardada');
+}
+function toggleComDia(i){
+  const cb=document.getElementById('comDia'+i);
+  cb.checked=!cb.checked;
+  _updateDiaLabel(i,cb.checked);
+  saveComConfig();
+}
+function _updateDiaLabel(i,checked){
+  const lbl=document.getElementById('comDiaLabel'+i);
+  if(!lbl)return;
+  lbl.style.background=checked?'rgba(155,130,212,.2)':'var(--card2)';
+  lbl.style.borderColor=checked?'rgba(155,130,212,.5)':'var(--border)';
+  lbl.style.color=checked?'#C4AEFF':'var(--muted)';
+}
+
+function toggleCmMatiz(){
+  const esPregunta=document.getElementById('cmTipo').value==='pregunta';
+  document.getElementById('cmMatizRow').style.display=esPregunta?'':'none';
+}
+
 function openComunidadModal(id, fechaDefault){
   _curComId=id;
   const c=id?comunidad.find(x=>x.id===id):null;
@@ -5650,8 +5731,10 @@ function openComunidadModal(id, fechaDefault){
   document.getElementById('cmTipo').value=c?.tipo||'pregunta';
   document.getElementById('cmFecha').value=c?.fechaProgramada||(fechaDefault||'');
   document.getElementById('cmTexto').value=c?.texto||'';
+  document.getElementById('cmMatiz').value=c?.matiz||'';
   document.getElementById('cmActivo').checked=c?.activo!==false;
   document.getElementById('cmEnviado').checked=c?.enviado||false;
+  toggleCmMatiz();
   document.getElementById('moComunidad').classList.add('open');
 }
 
@@ -5661,6 +5744,7 @@ function saveComunidad(){
   const data={
     tipo:document.getElementById('cmTipo').value,
     texto,
+    matiz:document.getElementById('cmMatiz').value.trim()||null,
     fechaProgramada:document.getElementById('cmFecha').value||null,
     activo:document.getElementById('cmActivo').checked,
     enviado:document.getElementById('cmEnviado').checked,
