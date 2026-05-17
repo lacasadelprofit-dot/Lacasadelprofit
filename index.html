@@ -139,6 +139,7 @@ select.fi:focus{border-color:var(--gold);}
 .cd:hover{border-color:rgba(201,168,76,.4);}
 .cd.om{opacity:.25;}.cd.tod{border-color:var(--gold);box-shadow:0 0 8px rgba(201,168,76,.2);}
 .cd.tod .dn{color:var(--gold);font-weight:800;}
+.cd.csw{min-height:160px;}
 .dn{font-size:12px;font-weight:600;margin-bottom:3px;color:var(--muted);}
 .ce{font-size:10px;padding:2px 4px;border-radius:4px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:rgba(201,168,76,.2);color:var(--gl);}
 .ce.ba{background:rgba(61,170,106,.2);color:#5DD89A;}
@@ -383,6 +384,10 @@ select.fi:focus{border-color:var(--gold);}
     <!-- CALENDARIO -->
     <div id="sec-calendario" class="sec">
      <div class="kpi-grid" id="calKPIs" style="margin-bottom:16px"></div>
+     <div style="display:flex;gap:6px;margin-bottom:10px">
+      <button class="tab-btn calViewBtn active" data-v="mes" onclick="setCalView('mes')">📅 Mensual</button>
+      <button class="tab-btn calViewBtn" data-v="sem" onclick="setCalView('sem')">📆 Semanal</button>
+     </div>
      <div class="cal-nav">
       <button onclick="calPrev()">&#8249;</button>
       <h2 id="calTitle"></h2>
@@ -2401,29 +2406,36 @@ function cobrarSaldo(id){
 
 /* CALENDARIO */
 let calDate=new Date();
+let _calView='mes';
+function setCalView(v){
+  _calView=v;
+  document.querySelectorAll('.calViewBtn').forEach(b=>b.classList.toggle('active',b.dataset.v===v));
+  renderCal();
+}
+function _renderCalKPIs(){
+  const calKpiEl=document.getElementById('calKPIs');
+  if(!calKpiEl)return;
+  const today=new Date(); today.setHours(0,0,0,0);
+  const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+  const wStart=new Date(today); wStart.setDate(today.getDate()-today.getDay());
+  const wEnd=new Date(wStart); wEnd.setDate(wStart.getDate()+6);
+  const d7=new Date(today); d7.setDate(today.getDate()+7);
+  const sesHoy=sessions.filter(s=>s.fecha===todayStr).length;
+  const sesSemana=sessions.filter(s=>{const f=new Date(s.fecha+'T00:00:00');return f>=wStart&&f<=wEnd;}).length;
+  const ses7=sessions.filter(s=>{const f=new Date(s.fecha+'T00:00:00');return f>=today&&f<=d7;}).length;
+  const pendCal=sessions.filter(s=>s.fecha>=todayStr&&(s.estado==='pendiente'||s.estado==='confirmada'||!s.estado)).length;
+  calKpiEl.innerHTML=`
+    <div class="kc go"><div class="ki">☀️</div><div class="kl">Sesiones Hoy</div><div class="kv">${sesHoy}</div><div class="ks">${todayStr}</div></div>
+    <div class="kc bl"><div class="ki">📅</div><div class="kl">Esta Semana</div><div class="kv">${sesSemana}</div><div class="ks">Dom–Sáb</div></div>
+    <div class="kc or"><div class="ki">🔮</div><div class="kl">Próximos 7 días</div><div class="kv">${ses7}</div><div class="ks">Desde hoy</div></div>
+    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes/Conf.</div><div class="kv">${pendCal}</div><div class="ks">Sin completar</div></div>`;
+}
 function renderCal(){
+  _renderCalKPIs();
+  if(_calView==='sem'){renderCalSemana();return;}
   const yr=calDate.getFullYear(),mo=calDate.getMonth();
   const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   document.getElementById('calTitle').textContent=`${MES[mo]} ${yr}`;
-  // ── KPIs de Calendario ──
-  const calKpiEl=document.getElementById('calKPIs');
-  if(calKpiEl){
-    const today=new Date(); today.setHours(0,0,0,0);
-    const todayStr=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
-    const wStart=new Date(today); wStart.setDate(today.getDate()-today.getDay());
-    const wEnd=new Date(wStart); wEnd.setDate(wStart.getDate()+6);
-    const d7=new Date(today); d7.setDate(today.getDate()+7);
-    const toDateStr=d=>d.toISOString().slice(0,10);
-    const sesHoy=sessions.filter(s=>s.fecha===todayStr).length;
-    const sesSemana=sessions.filter(s=>{const f=new Date(s.fecha+'T00:00:00');return f>=wStart&&f<=wEnd;}).length;
-    const ses7=sessions.filter(s=>{const f=new Date(s.fecha+'T00:00:00');return f>=today&&f<=d7;}).length;
-    const pendCal=sessions.filter(s=>s.fecha>=todayStr&&(s.estado==='pendiente'||s.estado==='confirmada'||!s.estado)).length;
-    calKpiEl.innerHTML=`
-      <div class="kc go"><div class="ki">☀️</div><div class="kl">Sesiones Hoy</div><div class="kv">${sesHoy}</div><div class="ks">${todayStr}</div></div>
-      <div class="kc bl"><div class="ki">📅</div><div class="kl">Esta Semana</div><div class="kv">${sesSemana}</div><div class="ks">Lun–Dom</div></div>
-      <div class="kc or"><div class="ki">🔮</div><div class="kl">Próximos 7 días</div><div class="kv">${ses7}</div><div class="ks">Desde hoy</div></div>
-      <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes/Conf.</div><div class="kv">${pendCal}</div><div class="ks">Sin completar</div></div>`;
-  }
   const first=new Date(yr,mo,1).getDay(),days=new Date(yr,mo+1,0).getDate(),prev=new Date(yr,mo,0).getDate();
   const tod=new Date();
   const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -2443,12 +2455,41 @@ function renderCal(){
   for(let i=1;i<=rem;i++)h+=`<div class="cd om"><div class="dn">${i}</div></div>`;
   document.getElementById('calGrid').innerHTML=h;
 }
+function renderCalSemana(){
+  const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const MES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const anchor=new Date(calDate); anchor.setHours(0,0,0,0);
+  const wStart=new Date(anchor); wStart.setDate(anchor.getDate()-anchor.getDay());
+  const wEnd=new Date(wStart); wEnd.setDate(wStart.getDate()+6);
+  const sameMonth=wStart.getMonth()===wEnd.getMonth();
+  const title=sameMonth
+    ?`${wStart.getDate()} — ${wEnd.getDate()} de ${MES[wStart.getMonth()]} ${wStart.getFullYear()}`
+    :`${wStart.getDate()} ${MES[wStart.getMonth()].slice(0,3)} — ${wEnd.getDate()} ${MES[wEnd.getMonth()].slice(0,3)} ${wEnd.getFullYear()}`;
+  document.getElementById('calTitle').textContent=title;
+  const tod=new Date(); tod.setHours(0,0,0,0);
+  let h='';
+  for(let i=0;i<7;i++){
+    const d=new Date(wStart); d.setDate(wStart.getDate()+i);
+    h+=`<div class="cdh">${DIAS[i]}<br><span style="font-size:14px;font-weight:700;color:var(--text)">${d.getDate()}</span></div>`;
+  }
+  for(let i=0;i<7;i++){
+    const d=new Date(wStart); d.setDate(wStart.getDate()+i);
+    const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const ev=sessions.filter(s=>s.fecha===ds);
+    const isT=d.getTime()===tod.getTime();
+    const evH=ev.length
+      ?ev.map(s=>{const c=s.sesion==='Barras de Access'?'ba':s.sesion==='Sesión Profit'?'pr':s.sesion==='Proceso de Cuerpos'?'po':'';return `<div class="ce ${c}" title="${s.ser} — ${s.sesion}${s.hora?' '+s.hora:''}">${s.ser.split(' ')[0]}${s.hora?`<br><span style="font-size:9px;opacity:.8">${s.hora}</span>`:''}</div>`;}).join('')
+      :`<div style="color:var(--muted);font-size:11px;text-align:center;padding:14px 0">—</div>`;
+    h+=`<div class="cd csw ${isT?'tod':''}" onclick="calClick('${ds}',${ev.length})"><div class="dn" style="margin-bottom:6px">${fd(ds)}</div>${evH}</div>`;
+  }
+  document.getElementById('calGrid').innerHTML=h;
+}
 function calClick(date,cnt){
   if(cnt>0){alert('Sesiones del '+fd(date)+':\n\n'+sessions.filter(s=>s.fecha===date).map(s=>`• ${s.ser} — ${s.sesion}${s.hora?' '+s.hora:''}${s.estado?' ['+s.estado+']':''}`).join('\n'));}
   else{if(confirm('¿Agendar sesión para el '+fd(date)+'?')){document.getElementById('nsFecha').value=date;openModal('ses');}}
 }
-function calPrev(){calDate.setMonth(calDate.getMonth()-1);renderCal();}
-function calNext(){calDate.setMonth(calDate.getMonth()+1);renderCal();}
+function calPrev(){if(_calView==='sem'){calDate.setDate(calDate.getDate()-7);}else{calDate.setMonth(calDate.getMonth()-1);}renderCal();}
+function calNext(){if(_calView==='sem'){calDate.setDate(calDate.getDate()+7);}else{calDate.setMonth(calDate.getMonth()+1);}renderCal();}
 function calToday(){calDate=new Date();renderCal();}
 
 /* FACTURACIÓN */
