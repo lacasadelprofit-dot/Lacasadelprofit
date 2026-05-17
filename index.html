@@ -5539,10 +5539,11 @@ const COM_TIPOS={
   concepto:    {l:'Concepto',            ico:'📖', col:'#5B9BD5', bg:'rgba(91,155,213,.12)',  border:'rgba(91,155,213,.28)'},
   info:        {l:'Info de Valor',       ico:'💡', col:'#3DB8A8', bg:'rgba(61,184,168,.12)',  border:'rgba(61,184,168,.28)'},
 };
-let _comTab='resumen', _curComId=null;
+let _comTab='resumen', _comMatizTab='todos', _curComId=null;
 
 function setComTab(t){
   _comTab=t;
+  _comMatizTab='todos';
   ['resumen','todos','pregunta','consciencia','reflexion','concepto','info'].forEach(k=>{
     document.getElementById('comTab'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active',k===t);
   });
@@ -5610,18 +5611,53 @@ function _renderComCalendar(){
   document.getElementById('comCal').innerHTML=html;
 }
 
+function setComMatiz(m){
+  _comMatizTab=m;
+  _renderComList();
+}
+
 function _renderComList(){
   const el=document.getElementById('comList');
   if(!el)return;
+
+  // Sub-tabs de matiz — solo cuando estamos en "Preguntas"
+  let matizBar='';
+  if(_comTab==='pregunta'){
+    const MATICES=['todos','Identidad','Dinero','Cuerpo','Relaciones','Propósito','Consciencia'];
+    const MATIZ_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'🤝',Propósito:'🌟',Consciencia:'✨'};
+    matizBar=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+      ${MATICES.map(m=>{
+        const activo=_comMatizTab===m;
+        const count=m==='todos'
+          ?comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false).length
+          :comunidad.filter(c=>c.tipo==='pregunta'&&c.matiz===m&&c.activo!==false).length;
+        return `<button onclick="setComMatiz('${m}')"
+          style="padding:5px 13px;border-radius:20px;border:1px solid ${activo?'rgba(155,130,212,.6)':'rgba(155,130,212,.2)'};
+          background:${activo?'rgba(155,130,212,.2)':'transparent'};
+          color:${activo?'#C4AEFF':'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px">
+          ${m==='todos'?'Todas':`${MATIZ_ICO[m]||''} ${m}`}
+          <span style="font-size:10px;padding:1px 5px;border-radius:10px;background:rgba(155,130,212,.15)">${count}</span>
+        </button>`;
+      }).join('')}
+    </div>`;
+  }
+
   let lista=_comTab==='todos'?[...comunidad]:comunidad.filter(c=>c.tipo===_comTab);
+  if(_comTab==='pregunta'&&_comMatizTab!=='todos'){
+    lista=lista.filter(c=>c.matiz===_comMatizTab);
+  }
   lista=lista.filter(c=>c.activo!==false).sort((a,b)=>(a.fechaProgramada||'').localeCompare(b.fechaProgramada||''));
   const inactivos=comunidad.filter(c=>c.activo===false);
-  if(!lista.length&&!inactivos.length){
+
+  if(!lista.length&&!inactivos.length&&!matizBar){
     el.innerHTML=`<div class="es"><div class="ei">✨</div><p>No hay contenido programado.<br>Usá "+ Nuevo Contenido" para empezar a cargar el mes.</p></div>`;
     return;
   }
+  const emptyMsg=lista.length===0?`<div class="es" style="padding:32px 0"><div class="ei">💬</div><p>No hay preguntas en esta categoría aún.</p></div>`:'';
   el.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px">
+    ${matizBar}
     ${lista.map(c=>_comCardFull(c)).join('')}
+    ${emptyMsg}
     ${inactivos.length?`<div style="font-size:11px;color:var(--muted);padding:8px 0">${inactivos.length} elemento${inactivos.length!==1?'s':''} inactivo${inactivos.length!==1?'s':''} oculto${inactivos.length!==1?'s':''}</div>`:''}
   </div>`;
 }
