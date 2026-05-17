@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bienvenida — Proyecta · Dirige · Construye</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0a;
+    --surface: #151512;
+    --surface2: #1e1e19;
+    --border: #2e2e26;
+    --border2: #3e3e34;
+    --accent: #c8a96e;
+    --accent2: #a08850;
+    --green: #4a7c59;
+    --text: #f0ece0;
+    --text2: #a0998a;
+    --text3: #5a5650;
+    --text4: #3a3a32;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+  }
+
+  /* GRAIN */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  /* SLIDES CONTAINER */
+  .slides {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 40px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    transform: translateY(20px);
+  }
+
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+    transform: translateY(0);
+  }
+
+  .slide.exit {
+    opacity: 0;
+    transform: translateY(-20px);
+    pointer-events: none;
+  }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.5s ease;
+    z-index: 100;
+  }
+
+  /* SLIDE NUMBER */
+  .slide-counter {
+    position: fixed;
+    top: 24px;
+    right: 32px;
+    font-size: 10px;
+    color: var(--text3);
+    letter-spacing: 0.15em;
+    z-index: 100;
+  }
+
+  /* LOGO fixed */
+  .logo-fixed {
+    position: fixed;
+    top: 20px;
+    left: 32px;
+    z-index: 100;
+  }
+
+  .logo-mark {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 14px;
+    font-weight: 300;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+  }
+
+  /* SLIDE INNER */
+  .slide-inner {
+    width: 100%;
+    max-width: 680px;
+  }
+
+  /* EYEBROW */
+  .eyebrow {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .eyebrow::before {
+    content: '';
+    width: 24px;
+    height: 1px;
+    background: var(--border2);
+  }
+
+  /* QUESTION */
+  .question-text {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 38px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.25;
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+  }
+
+  .question-hint {
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 32px;
+    line-height: 1.7;
+    font-style: italic;
+  }
+
+  /* TEXTAREA */
+  .answer-area {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 20px 22px;
+    resize: none;
+    min-height: 160px;
+    line-height: 1.8;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.02em;
+  }
+
+  .answer-area:focus {
+    outline: none;
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(200,169,110,0.06);
+  }
+
+  .answer-area::placeholder {
+    color: var(--text4);
+    font-style: italic;
+  }
+
+  /* OPTION PILLS */
+  .options-grid {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .options-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+  .options-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .options-grid.cols-1 { grid-template-columns: 1fr; }
+
+  .opt-pill {
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--surface);
+    color: var(--text2);
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+  }
+
+  .opt-pill:hover {
+    border-color: var(--accent2);
+    color: var(--text);
+    background: rgba(200,169,110,0.04);
+  }
+
+  .opt-pill.selected {
+    border-color: var(--accent);
+    background: rgba(200,169,110,0.08);
+    color: var(--accent);
+  }
+
+  .opt-pill .opt-label {
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 4px;
+    display: block;
+  }
+
+  .opt-pill.selected .opt-label { color: var(--accent2); }
+
+  /* TIME SELECTOR */
+  .time-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .time-opt {
+    padding: 20px 10px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: var(--surface);
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .time-opt:hover { border-color: var(--accent2); }
+
+  .time-opt.selected {
+    border-color: var(--accent);
+    background: rgba(200,169,110,0.08);
+  }
+
+  .time-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1;
+    display: block;
+  }
+
+  .time-lbl {
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-top: 6px;
+    display: block;
+  }
+
+  /* NAV */
+  .nav-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 28px;
+  }
+
+  .btn-next {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 28px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-next:hover { background: var(--accent2); }
+  .btn-next:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .btn-back {
+    padding: 14px 20px;
+    background: transparent;
+    border: none;
+    color: var(--text3);
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .btn-back:hover { color: var(--text2); }
+
+  .char-count {
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  /* WELCOME SLIDE */
+  .welcome-content { text-align: center; }
+
+  .welcome-symbol {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 72px;
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1;
+    margin-bottom: 32px;
+    display: block;
+    opacity: 0.6;
+  }
+
+  .welcome-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 52px;
+    font-weight: 300;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 20px;
+    letter-spacing: 0.03em;
+  }
+
+  .welcome-title em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .welcome-sub {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.9;
+    max-width: 480px;
+    margin: 0 auto 40px;
+    letter-spacing: 0.03em;
+  }
+
+  .welcome-meta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+    margin-bottom: 48px;
+  }
+
+  .meta-item {
+    text-align: center;
+  }
+
+  .meta-val {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    font-weight: 300;
+    color: var(--accent);
+    display: block;
+  }
+
+  .meta-lbl {
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+
+  .meta-dot {
+    width: 1px;
+    height: 32px;
+    background: var(--border);
+  }
+
+  .btn-start {
+    padding: 16px 40px;
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    border-radius: 2px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-start:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  /* CLOSING SLIDE */
+  .closing-content { text-align: center; }
+
+  .closing-symbol {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 64px;
+    font-weight: 300;
+    color: var(--green);
+    margin-bottom: 28px;
+    display: block;
+  }
+
+  .closing-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 46px;
+    font-weight: 300;
+    color: var(--text);
+    margin-bottom: 16px;
+    letter-spacing: 0.03em;
+  }
+
+  .closing-sub {
+    font-size: 12px;
+    color: var(--text2);
+    line-height: 1.9;
+    max-width: 500px;
+    margin: 0 auto 40px;
+  }
+
+  .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+    text-align: left;
+    max-width: 560px;
+    margin: 0 auto 40px;
+  }
+
+  .summary-row {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 16px;
+    padding: 12px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    font-size: 11px;
+    align-items: start;
+  }
+
+  .summary-key {
+    color: var(--text3);
+    letter-spacing: 0.05em;
+    padding-top: 1px;
+  }
+
+  .summary-val {
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  /* INTERNAL NOTES SLIDE */
+  .internal-header-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+  }
+
+  .lock-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+  }
+
+  .internal-badge {
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+
+  .internal-note-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .internal-field label {
+    display: block;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* RATING */
+  .rating-row {
+    display: flex;
+    gap: 6px;
+  }
+
+  .rating-dot {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 18px;
+    color: var(--text3);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .rating-dot:hover { border-color: var(--accent2); color: var(--accent); }
+  .rating-dot.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+  /* SCROLLABLE for long slides */
+  .slide-inner.scrollable {
+    max-height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding-right: 8px;
+  }
+
+  .slide-inner.scrollable::-webkit-scrollbar { width: 2px; }
+  .slide-inner.scrollable::-webkit-scrollbar-track { background: transparent; }
+  .slide-inner.scrollable::-webkit-scrollbar-thumb { background: var(--border2); }
+</style>
+</head>
+<body>
+
+<div class="progress-bar" id="progress-bar" style="width:0%"></div>
+<div class="slide-counter" id="slide-counter"></div>
+<div class="logo-fixed"><div class="logo-mark">PDC · La Casa del Profit</div></div>
+
+<div class="slides" id="slides">
+
+  <!-- SLIDE 0: BIENVENIDA -->
+  <div class="slide active" id="slide-0">
+    <div class="slide-inner" style="max-width:620px;">
+      <div class="welcome-content">
+        <span class="welcome-symbol">◈</span>
+        <div class="welcome-title">Antes de<br>empezar,<br><em>un momento.</em></div>
+        <p class="welcome-sub">Este formulario es el primer acto de tu proceso.<br>No es burocracia — es el espacio donde empezás a clarificar<br>qué venís a crear en estos 90 días.</p>
+        <div class="welcome-meta">
+          <div class="meta-item">
+            <span class="meta-val">6</span>
+            <span class="meta-lbl">preguntas</span>
+          </div>
+          <div class="meta-dot"></div>
+          <div class="meta-item">
+            <span class="meta-val">10'</span>
+            <span class="meta-lbl">estimado</span>
+          </div>
+          <div class="meta-dot"></div>
+          <div class="meta-item">
+            <span class="meta-val">90</span>
+            <span class="meta-lbl">días por delante</span>
+          </div>
+        </div>
+        <button class="btn-start" onclick="nextSlide()">Comenzar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 1: OBJETIVOS -->
+  <div class="slide" id="slide-1">
+    <div class="slide-inner">
+      <div class="eyebrow">Pregunta 1 de 6</div>
+      <div class="question-text">¿Cuáles son tus principales objetivos para este programa?</div>
+      <p class="question-hint">Podés elegir más de uno. Estos son los territorios que vamos a explorar juntos.</p>
+
+      <div class="options-grid cols-2" id="objetivos-grid">
+        <button class="opt-pill" onclick="togglePill(this, 'objetivos')">
+          <span class="opt-label">Proyección</span>
+          Lanzar o clarificar mi proyecto / negocio
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'objetivos')">
+          <span class="opt-label">Ingresos</span>
+          Generar o escalar mis ingresos
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'objetivos')">
+          <span class="opt-label">Identidad</span>
+          Reconectarme con quién soy y mi propósito
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'objetivos')">
+          <span class="opt-label">Claridad</span>
+          Salir del ruido mental y tomar decisiones
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'objetivos')">
+          <span class="opt-label">Expansión</span>
+          Llevar mi vida o negocio al siguiente nivel
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'objetivos')">
+          <span class="opt-label">Equilibrio</span>
+          Integrar lo personal y lo profesional
+        </button>
+      </div>
+
+      <div style="margin-top:14px;">
+        <textarea class="answer-area" id="objetivos-extra" placeholder="¿Querés agregar algo más con tus propias palabras?" style="min-height:80px;" oninput="updateChar(this,'char-obj')"></textarea>
+        <div class="char-count" id="char-obj"></div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="prevSlide()">← Atrás</button>
+        <button class="btn-next" onclick="nextSlide()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 2: SITUACIÓN ACTUAL -->
+  <div class="slide" id="slide-2">
+    <div class="slide-inner">
+      <div class="eyebrow">Pregunta 2 de 6</div>
+      <div class="question-text">¿Cuál es tu situación actual?</div>
+      <p class="question-hint">Desde dónde empezás. No hay respuesta correcta — solo tu realidad de hoy.</p>
+
+      <div class="options-grid cols-1" id="situacion-grid" style="margin-bottom:16px;">
+        <button class="opt-pill" onclick="selectPill(this, 'situacion')">
+          <span class="opt-label">Comienzo</span>
+          Tengo una idea pero no sé cómo arrancar
+        </button>
+        <button class="opt-pill" onclick="selectPill(this, 'situacion')">
+          <span class="opt-label">En movimiento</span>
+          Ya estoy haciendo cosas pero me siento disperso/a o sin dirección clara
+        </button>
+        <button class="opt-pill" onclick="selectPill(this, 'situacion')">
+          <span class="opt-label">Estancado/a</span>
+          Sé lo que quiero pero algo me frena y no logro avanzar
+        </button>
+        <button class="opt-pill" onclick="selectPill(this, 'situacion')">
+          <span class="opt-label">En transición</span>
+          Estoy dejando algo atrás y construyendo algo nuevo
+        </button>
+        <button class="opt-pill" onclick="selectPill(this, 'situacion')">
+          <span class="opt-label">En expansión</span>
+          Tengo resultados, pero quiero llevarlos al siguiente nivel
+        </button>
+      </div>
+
+      <textarea class="answer-area" id="situacion-detalle" placeholder="Contame con más detalle tu situación actual. Cuanto más honesto/a seas, más útil será el proceso..." oninput="updateChar(this,'char-sit')"></textarea>
+      <div class="char-count" id="char-sit"></div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="prevSlide()">← Atrás</button>
+        <button class="btn-next" onclick="nextSlide()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 3: COMPROMISO -->
+  <div class="slide" id="slide-3">
+    <div class="slide-inner">
+      <div class="eyebrow">Pregunta 3 de 6</div>
+      <div class="question-text">¿A qué te comprometés durante los 90 días?</div>
+      <p class="question-hint">Este es el momento de ser honesto/a con vos mismo/a. Un compromiso real es el cimiento de todo lo que viene.</p>
+
+      <div class="options-grid cols-2" id="compromiso-grid" style="margin-bottom:16px;">
+        <button class="opt-pill" onclick="togglePill(this, 'compromiso')">
+          <span class="opt-label">Presencia</span>
+          Llegar a cada sesión preparado/a y con la mente abierta
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'compromiso')">
+          <span class="opt-label">Acción</span>
+          Ejecutar los compromisos que asuma en cada sesión
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'compromiso')">
+          <span class="opt-label">Honestidad</span>
+          Ser transparente sobre lo que siento, pienso y vivo
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'compromiso')">
+          <span class="opt-label">Constancia</span>
+          Sostener el proceso aunque aparezca resistencia
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'compromiso')">
+          <span class="opt-label">Apertura</span>
+          Cuestionar mis creencias y explorar nuevas perspectivas
+        </button>
+        <button class="opt-pill" onclick="togglePill(this, 'compromiso')">
+          <span class="opt-label">Prioridad</span>
+          Poner este proceso entre mis prioridades reales
+        </button>
+      </div>
+
+      <textarea class="answer-area" id="compromiso-propio" placeholder="¿Hay algo más específico a lo que te querés comprometer? Escribilo con tus palabras..." oninput="updateChar(this,'char-com')"></textarea>
+      <div class="char-count" id="char-com"></div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="prevSlide()">← Atrás</button>
+        <button class="btn-next" onclick="nextSlide()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 4: LOGRO ESPERADO -->
+  <div class="slide" id="slide-4">
+    <div class="slide-inner">
+      <div class="eyebrow">Pregunta 4 de 6</div>
+      <div class="question-text">¿Qué esperás lograr al finalizar los 90 días?</div>
+      <p class="question-hint">Cerrá los ojos un momento. Imaginá que ya pasaron los 90 días y el proceso fue exactamente lo que necesitabas. ¿Qué cambió? ¿Quién sos ahora?</p>
+
+      <textarea class="answer-area" id="logro-esperado" placeholder="Describí esa versión de vos al día 91. Puede ser algo concreto, algo que sentís, algo que tenés, algo que sos..." style="min-height:200px;" oninput="updateChar(this,'char-log')"></textarea>
+      <div class="char-count" id="char-log"></div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="prevSlide()">← Atrás</button>
+        <button class="btn-next" onclick="nextSlide()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 5: TIEMPO -->
+  <div class="slide" id="slide-5">
+    <div class="slide-inner">
+      <div class="eyebrow">Pregunta 5 de 6</div>
+      <div class="question-text">¿Cuánto tiempo podés dedicar por día?</div>
+      <p class="question-hint">Sé realista. No se trata de cuánto querés dedicar — sino de cuánto podés sostener de manera consistente durante 90 días.</p>
+
+      <div class="time-grid" id="tiempo-grid">
+        <div class="time-opt" onclick="selectTime(this, '15 min')">
+          <span class="time-num">15'</span>
+          <span class="time-lbl">por día</span>
+        </div>
+        <div class="time-opt" onclick="selectTime(this, '30 min')">
+          <span class="time-num">30'</span>
+          <span class="time-lbl">por día</span>
+        </div>
+        <div class="time-opt" onclick="selectTime(this, '1 hora')">
+          <span class="time-num">1h</span>
+          <span class="time-lbl">por día</span>
+        </div>
+        <div class="time-opt" onclick="selectTime(this, '2 horas')">
+          <span class="time-num">2h</span>
+          <span class="time-lbl">por día</span>
+        </div>
+        <div class="time-opt" onclick="selectTime(this, '+3 horas')">
+          <span class="time-num">3h+</span>
+          <span class="time-lbl">por día</span>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <textarea class="answer-area" id="tiempo-contexto" placeholder="¿Hay algo de tu rutina o agenda que sea importante que Juan Cruz conozca?" style="min-height:80px;" oninput="updateChar(this,'char-tpo')"></textarea>
+        <div class="char-count" id="char-tpo"></div>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="prevSlide()">← Atrás</button>
+        <button class="btn-next" onclick="nextSlide()">Continuar →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 6: NOTAS INTERNAS -->
+  <div class="slide" id="slide-6">
+    <div class="slide-inner scrollable">
+      <div class="internal-header-row">
+        <div class="lock-icon">🔒</div>
+        <span class="internal-badge">Solo para el facilitador</span>
+      </div>
+      <div class="eyebrow" style="margin-top:12px;">Pregunta 6 de 6</div>
+      <div class="question-text" style="font-size:30px;">Notas internas del facilitador</div>
+      <p class="question-hint" style="margin-bottom:24px;">Esta sección la completa Juan Cruz después de leer las respuestas del cliente. No es visible para el cliente.</p>
+
+      <div class="internal-note-grid">
+        <div class="internal-field">
+          <label>Primera impresión del cliente</label>
+          <textarea class="answer-area" id="nota-impresion" placeholder="¿Qué percibís de su energía, disposición, claridad?" style="min-height:100px;"></textarea>
+        </div>
+        <div class="internal-field">
+          <label>Principales bloqueos que observás</label>
+          <textarea class="answer-area" id="nota-bloqueos" placeholder="Creencias limitantes, miedos, patrones que ya se perciben..." style="min-height:100px;"></textarea>
+        </div>
+        <div class="internal-field">
+          <label>Hipótesis de trabajo inicial</label>
+          <textarea class="answer-area" id="nota-hipotesis" placeholder="¿Por dónde vas a empezar? ¿Cuál es tu intuición sobre este proceso?" style="min-height:100px;"></textarea>
+        </div>
+        <div class="internal-field">
+          <label>Atención especial / señales</label>
+          <textarea class="answer-area" id="nota-atencion" placeholder="¿Algo que requiera cuidado particular durante el proceso?" style="min-height:100px;"></textarea>
+        </div>
+      </div>
+
+      <div class="internal-field" style="margin-bottom:16px;">
+        <label>Potencial percibido (1–10)</label>
+        <div class="rating-row" id="rating-potencial">
+          <div class="rating-dot" onclick="setRating(this,'potencial',1)">1</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',2)">2</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',3)">3</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',4)">4</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',5)">5</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',6)">6</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',7)">7</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',8)">8</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',9)">9</div>
+          <div class="rating-dot" onclick="setRating(this,'potencial',10)">10</div>
+        </div>
+      </div>
+
+      <div class="internal-field" style="margin-bottom:16px;">
+        <label>Disposición al proceso (1–10)</label>
+        <div class="rating-row" id="rating-disposicion">
+          <div class="rating-dot" onclick="setRating(this,'disposicion',1)">1</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',2)">2</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',3)">3</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',4)">4</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',5)">5</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',6)">6</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',7)">7</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',8)">8</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',9)">9</div>
+          <div class="rating-dot" onclick="setRating(this,'disposicion',10)">10</div>
+        </div>
+      </div>
+
+      <div class="internal-field">
+        <label>Notas libres</label>
+        <textarea class="answer-area" id="nota-libre" placeholder="Todo lo que quieras registrar antes de la primera sesión..." style="min-height:80px;"></textarea>
+      </div>
+
+      <div class="nav-row">
+        <button class="btn-back" onclick="prevSlide()">← Atrás</button>
+        <button class="btn-next" onclick="finalize()" style="background:#4a7c59;">Guardar onboarding ✓</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SLIDE 7: CIERRE -->
+  <div class="slide" id="slide-7">
+    <div class="slide-inner" style="max-width:600px;">
+      <div class="closing-content">
+        <span class="closing-symbol">✦</span>
+        <div class="closing-title">Onboarding<br>completado.</div>
+        <p class="closing-sub">Todo lo que escribiste quedó registrado.<br>Juan Cruz va a leer cada respuesta antes de la primera sesión.<br><br>Esto que hiciste hoy ya es un acto de consciencia. El proceso empezó.</p>
+
+        <div class="summary-grid" id="closing-summary"></div>
+
+        <button class="btn-next" onclick="window.print()" style="margin: 0 auto;">Imprimir / Guardar PDF</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let current = 0;
+  const total = 7;
+  const selections = {
+    objetivos: [],
+    situacion: null,
+    compromiso: [],
+    tiempo: null,
+    ratings: { potencial: null, disposicion: null }
+  };
+
+  function updateProgress() {
+    const pct = (current / (total - 1)) * 100;
+    document.getElementById('progress-bar').style.width = pct + '%';
+    if (current === 0 || current === total - 1) {
+      document.getElementById('slide-counter').textContent = '';
+    } else {
+      document.getElementById('slide-counter').textContent = current + ' / ' + (total - 2);
+    }
+  }
+
+  function goTo(n) {
+    const curr = document.getElementById('slide-' + current);
+    curr.classList.remove('active');
+    curr.classList.add('exit');
+    setTimeout(() => curr.classList.remove('exit'), 600);
+
+    current = n;
+    const next = document.getElementById('slide-' + current);
+    next.classList.add('active');
+    updateProgress();
+  }
+
+  function nextSlide() {
+    if (current < total - 1) goTo(current + 1);
+  }
+
+  function prevSlide() {
+    if (current > 0) goTo(current - 1);
+  }
+
+  function togglePill(el, group) {
+    el.classList.toggle('selected');
+    const selected = [...document.querySelectorAll(`#${group}-grid .opt-pill.selected`)].map(p => p.textContent.trim());
+    selections[group] = selected;
+  }
+
+  function selectPill(el, group) {
+    document.querySelectorAll(`#${group}-grid .opt-pill`).forEach(p => p.classList.remove('selected'));
+    el.classList.add('selected');
+    selections[group] = el.textContent.trim();
+  }
+
+  function selectTime(el, val) {
+    document.querySelectorAll('#tiempo-grid .time-opt').forEach(t => t.classList.remove('selected'));
+    el.classList.add('selected');
+    selections.tiempo = val;
+  }
+
+  function setRating(el, type, val) {
+    const row = document.getElementById('rating-' + type);
+    const dots = row.querySelectorAll('.rating-dot');
+    dots.forEach((d, i) => {
+      d.classList.toggle('on', i < val);
+    });
+    selections.ratings[type] = val;
+  }
+
+  function updateChar(el, id) {
+    const count = el.value.length;
+    const el2 = document.getElementById(id);
+    if (count > 0) {
+      el2.textContent = count + ' caracteres';
+    } else {
+      el2.textContent = '';
+    }
+  }
+
+  function finalize() {
+    const summary = document.getElementById('closing-summary');
+    const items = [
+      { key: 'Objetivos', val: selections.objetivos.length > 0 ? selections.objetivos.map(o => o.split('\n').pop().trim()).join(' · ') : '—' },
+      { key: 'Situación actual', val: selections.situacion ? selections.situacion.split('\n').pop().trim() : '—' },
+      { key: 'Compromisos', val: selections.compromiso.length > 0 ? selections.compromiso.map(c => c.split('\n').pop().trim()).join(' · ') : '—' },
+      { key: 'Logro esperado', val: truncate(document.getElementById('logro-esperado').value) },
+      { key: 'Tiempo diario', val: selections.tiempo || '—' },
+    ];
+
+    summary.innerHTML = items.map(i => `
+      <div class="summary-row">
+        <span class="summary-key">${i.key}</span>
+        <span class="summary-val">${i.val || '—'}</span>
+      </div>
+    `).join('');
+
+    goTo(total - 1);
+  }
+
+  function truncate(str, len = 120) {
+    if (!str) return '—';
+    return str.length > len ? str.substring(0, len) + '...' : str;
+  }
+
+  updateProgress();
+</script>
+</body>
+</html>
