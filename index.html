@@ -538,20 +538,23 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- COMUNIDAD -->
     <div id="sec-comunidad" class="sec">
-      <div id="comKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
-        <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
-        <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
-      </div>
       <div class="tab-bar" style="margin-bottom:14px">
-        <button class="tab-btn active" id="comTabTodos"      onclick="setComTab('todos')">Todos</button>
-        <button class="tab-btn"        id="comTabPregunta"   onclick="setComTab('pregunta')">💬 Preguntas</button>
+        <button class="tab-btn active" id="comTabResumen"     onclick="setComTab('resumen')">📊 Resumen</button>
+        <button class="tab-btn"        id="comTabTodos"       onclick="setComTab('todos')">Todos</button>
+        <button class="tab-btn"        id="comTabPregunta"    onclick="setComTab('pregunta')">💬 Preguntas</button>
         <button class="tab-btn"        id="comTabConsciencia" onclick="setComTab('consciencia')">✨ Consciencia</button>
-        <button class="tab-btn"        id="comTabReflexion"  onclick="setComTab('reflexion')">🌿 Reflexiones</button>
-        <button class="tab-btn"        id="comTabConcepto"   onclick="setComTab('concepto')">📖 Conceptos</button>
-        <button class="tab-btn"        id="comTabInfo"       onclick="setComTab('info')">💡 Info</button>
+        <button class="tab-btn"        id="comTabReflexion"   onclick="setComTab('reflexion')">🌿 Reflexiones</button>
+        <button class="tab-btn"        id="comTabConcepto"    onclick="setComTab('concepto')">📖 Conceptos</button>
+        <button class="tab-btn"        id="comTabInfo"        onclick="setComTab('info')">💡 Info</button>
       </div>
-      <div id="comList"></div>
+      <div id="comResumen">
+        <div id="comKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
+          <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
+          <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
+        </div>
+      </div>
+      <div id="comList" style="display:none"></div>
     </div>
 
     <!-- MARKETING -->
@@ -5492,14 +5495,17 @@ const COM_TIPOS={
   concepto:    {l:'Concepto',            ico:'📖', col:'#5B9BD5', bg:'rgba(91,155,213,.12)',  border:'rgba(91,155,213,.28)'},
   info:        {l:'Info de Valor',       ico:'💡', col:'#3DB8A8', bg:'rgba(61,184,168,.12)',  border:'rgba(61,184,168,.28)'},
 };
-let _comTab='todos', _curComId=null;
+let _comTab='resumen', _curComId=null;
 
 function setComTab(t){
   _comTab=t;
-  ['todos','pregunta','consciencia','reflexion','concepto','info'].forEach(k=>{
+  ['resumen','todos','pregunta','consciencia','reflexion','concepto','info'].forEach(k=>{
     document.getElementById('comTab'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active',k===t);
   });
-  _renderComList();
+  const esResumen=t==='resumen';
+  document.getElementById('comResumen').style.display=esResumen?'':'none';
+  document.getElementById('comList').style.display=esResumen?'none':'';
+  if(!esResumen)_renderComList();
 }
 
 function renderComunidad(){
