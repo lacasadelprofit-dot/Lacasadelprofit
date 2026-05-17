@@ -499,13 +499,14 @@ select.fi:focus{border-color:var(--gold);}
       </div>
       <!-- Tabs del editor -->
       <div class="tab-bar" style="margin-bottom:14px;flex-wrap:wrap">
-       <button class="tab-btn active" id="ptabSemanas" onclick="setProgTab('semanas')">📅 Semanas</button>
-       <button class="tab-btn" id="ptabSesiones" onclick="setProgTab('sesiones')">✨ Sesiones</button>
-       <button class="tab-btn" id="ptabMateriales" onclick="setProgTab('materiales')">📖 Material</button>
-       <button class="tab-btn" id="ptabOnboarding" onclick="setProgTab('onboarding')">🚀 Onboarding</button>
-       <button class="tab-btn" id="ptabCalendario" onclick="setProgTab('calendario')">🗓 Calendario</button>
-       <button class="tab-btn" id="ptabNotas" onclick="setProgTab('notas')">📝 Notas</button>
-       <button class="tab-btn" id="ptabComunicacion" onclick="setProgTab('comunicacion')">💬 Comunicación</button>
+       <button class="tab-btn active" id="ptabSemanas"    onclick="setProgTab('semanas')">📅 Semanas</button>
+       <button class="tab-btn"        id="ptabInscritos"  onclick="setProgTab('inscritos')">🗺️ Inscritos</button>
+       <button class="tab-btn"        id="ptabSesiones"   onclick="setProgTab('sesiones')">✨ Sesiones</button>
+       <button class="tab-btn"        id="ptabMateriales" onclick="setProgTab('materiales')">📖 Material</button>
+       <button class="tab-btn"        id="ptabOnboarding" onclick="setProgTab('onboarding')">🚀 Onboarding</button>
+       <button class="tab-btn"        id="ptabCalendario" onclick="setProgTab('calendario')">🗓 Calendario</button>
+       <button class="tab-btn"        id="ptabNotas"      onclick="setProgTab('notas')">📝 Notas</button>
+       <button class="tab-btn"        id="ptabComunicacion" onclick="setProgTab('comunicacion')">💬 Comunicación</button>
       </div>
       <!-- Tab Semanas -->
       <div id="progTabSemanas">
@@ -513,6 +514,10 @@ select.fi:focus{border-color:var(--gold);}
         <div id="journeyWeekList" style="width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:6px"></div>
         <div id="journeyWeekContent" style="flex:1;min-width:0"></div>
        </div>
+      </div>
+      <!-- Tab Inscritos -->
+      <div id="progTabInscritos" style="display:none">
+       <div id="progInscritosView"></div>
       </div>
       <!-- Tab Sesiones -->
       <div id="progTabSesiones" style="display:none">
@@ -543,10 +548,24 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- JOURNEY ADMIN -->
     <div id="sec-journey" class="sec">
-     <div id="journeyAdminListView">
-      <div id="journeyAdminKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
-      <div id="journeyAdminGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px"></div>
+     <!-- Sub-tabs (se ocultan cuando se abre el detalle) -->
+     <div id="jTabBar" class="tab-bar" style="margin-bottom:18px">
+       <button class="tab-btn active" id="jTabResumen"   onclick="setJourneyTab('resumen')">📊 Resumen</button>
+       <button class="tab-btn"        id="jTabActivos"   onclick="setJourneyTab('activos')">🔥 Activos</button>
+       <button class="tab-btn"        id="jTabHistorial" onclick="setJourneyTab('historial')">📋 Historial</button>
      </div>
+     <!-- Lista (contenido de cada sub-tab) -->
+     <div id="journeyAdminListView">
+       <div id="jSecResumen"></div>
+       <div id="jSecActivos" style="display:none">
+         <div id="journeyAdminKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
+         <div id="journeyAdminGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px"></div>
+       </div>
+       <div id="jSecHistorial" style="display:none">
+         <div id="journeyHistGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px"></div>
+       </div>
+     </div>
+     <!-- Detalle de inscripción (overlay completo) -->
      <div id="journeyAdminDetailView" style="display:none"></div>
     </div>
 
@@ -3331,7 +3350,7 @@ function refreshJView(){
 let _curProgTab='semanas';
 function setProgTab(tab){
   _curProgTab=tab;
-  ['semanas','sesiones','materiales','onboarding','calendario','notas','comunicacion'].forEach(t=>{
+  ['semanas','inscritos','sesiones','materiales','onboarding','calendario','notas','comunicacion'].forEach(t=>{
     const btn=document.getElementById('ptab'+t.charAt(0).toUpperCase()+t.slice(1));
     const panel=document.getElementById('progTab'+t.charAt(0).toUpperCase()+t.slice(1));
     if(btn)btn.classList.toggle('active',t===tab);
@@ -3339,6 +3358,7 @@ function setProgTab(tab){
   });
   const btnSem=document.getElementById('btnNuevaSemana');
   if(btnSem)btnSem.style.display=tab==='semanas'?'':'none';
+  if(tab==='inscritos')renderProgInscritos();
   if(tab==='sesiones')renderProgSesionesTab();
   if(tab==='materiales')renderProgMaterialesTab();
   if(tab==='onboarding')renderProgOnboardingTab();
@@ -3642,6 +3662,49 @@ function closeJourneyView(){
   document.getElementById('progListView').style.display='block';
   document.getElementById('progJourneyView').style.display='none';
   curJourneyProgId=null;
+}
+function renderProgInscritos(){
+  const el=document.getElementById('progInscritosView');if(!el)return;
+  const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
+  const col=p.col||'#C9A84C';
+  const isActivo=x=>{const sem=calcSemanaAuto(x);return sem<=(p.semanas_dur||(p.semanas||[]).length||999);};
+  const lista=inscripciones.filter(i=>i.programaId===curJourneyProgId);
+  const activos=lista.filter(isActivo);
+  const finalizados=lista.filter(x=>!isActivo(x));
+  if(!lista.length){
+    el.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">🗺️</div><div>Ningún ser inscripto en este programa aún.<br>Usá <strong>+ Inscribir Ser</strong> desde el Journey.</div></div>`;
+    return;
+  }
+  const kpis=`<div class="kpi-grid" style="margin-bottom:18px">
+    <div class="kc go"><div class="ki">👥</div><div class="kl">Inscritos</div><div class="kv">${lista.length}</div><div class="ks">Total</div></div>
+    <div class="kc bl"><div class="ki">🔥</div><div class="kl">Activos</div><div class="kv">${activos.length}</div><div class="ks">En progreso</div></div>
+    <div class="kc pu"><div class="ki">✅</div><div class="kl">Finalizados</div><div class="kv">${finalizados.length}</div><div class="ks">Completaron</div></div>
+  </div>`;
+  const cards=lista.sort((a,b)=>(isActivo(b)?1:0)-(isActivo(a)?1:0)).map(insc=>{
+    const ser=seres.find(x=>x.id===insc.serId);if(!ser)return '';
+    const activo=isActivo(insc);
+    const totalSem=p.semanas_dur||(p.semanas||[]).length||1;
+    const semAuto=calcSemanaAuto(insc);
+    const semActual=Math.min(semAuto,totalSem);
+    const sems=insc.semanas||p.semanas||[];
+    const pr=insc.progreso||{};
+    const desDone=Object.values(pr).reduce((a,pp)=>a+Object.values(pp.desafios||{}).filter(Boolean).length,0);
+    const desTotal=sems.reduce((a,s)=>a+(s.desafios||[]).length,0);
+    const pct=desTotal?Math.round(desDone/desTotal*100):Math.round(semActual/totalSem*100);
+    return `<div onclick="navToInscDetail('${insc.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border-radius:10px;border:1px solid ${activo?col+'33':'var(--border)'};cursor:pointer;transition:.15s;margin-bottom:7px" onmouseover="this.style.borderColor='${col}'" onmouseout="this.style.borderColor='${activo?col+'33':'var(--border)'}'">
+      <div style="width:36px;height:36px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${ser.nombre}</div>
+        <div style="font-size:10px;color:var(--muted)">Sem ${semActual}/${totalSem}${desTotal?' · '+desDone+'/'+desTotal+' desafíos':''}</div>
+        <div style="background:var(--border);border-radius:20px;height:4px;overflow:hidden;margin-top:4px"><div style="background:${col};height:100%;width:${pct}%;border-radius:20px;transition:.4s"></div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:15px;font-weight:800;color:${col}">${pct}%</div>
+        <div style="font-size:9px;font-weight:600;color:${activo?'#10B981':'#6B7280'}">${activo?'● ACTIVO':'✓ FIN'}</div>
+      </div>
+    </div>`;
+  }).join('');
+  el.innerHTML=kpis+`<div>${cards}</div>`;
 }
 function renderJourney(){
   const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
@@ -4025,124 +4088,281 @@ function calcAreaProgress(insc,prog){
 }
 
 let _journeyFilter=''; // id de programa seleccionado como filtro
+let _jTab='resumen';
 
+// Navega a Journey y abre el detalle de una inscripción (desde Programas u otro contexto)
+function navToInscDetail(id){
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+  document.getElementById('sec-journey').classList.add('active');
+  // Resaltar item sidebar de Journey
+  document.querySelectorAll('.ni').forEach(n=>{if(n.textContent.includes('Journey'))n.classList.add('active');});
+  curSec='journey';
+  document.getElementById('pgTitle').textContent=TITLES['journey'];
+  document.getElementById('pgActs').innerHTML=BTNS['journey'];
+  openInscDetail(id);
+}
+
+/* ── Punto de entrada principal del Journey ───────────────── */
 function renderJourneyAdmin(){
-  const total=inscripciones.length;
-  const activos=inscripciones.filter(x=>{const sem=calcSemanaAuto(x);const p=programas.find(pp=>pp.id===x.programaId);return p&&sem<=(p.semanas_dur||(p.semanas||[]).length||999);}).length;
+  const lv=document.getElementById('journeyAdminListView');
+  const dv=document.getElementById('journeyAdminDetailView');
+  const tb=document.getElementById('jTabBar');
+  if(lv)lv.style.display='';
+  if(dv)dv.style.display='none';
+  if(tb)tb.style.display='';
+  setJourneyTab(_jTab||'resumen');
+}
 
-  document.getElementById('journeyAdminKPIs').innerHTML=`
-    <div class="kc go"><div class="ki">🗺️</div><div class="kl">Total Inscripciones</div><div class="kv">${total}</div><div class="ks">En programas</div></div>
-    <div class="kc bl"><div class="ki">🔥</div><div class="kl">En Progreso</div><div class="kv">${activos}</div><div class="ks">Seres activos</div></div>
-    <div class="kc pu"><div class="ki">✅</div><div class="kl">Finalizados</div><div class="kv">${total-activos}</div><div class="ks">Completaron el programa</div></div>`;
-
-  if(total===0){
-    document.getElementById('journeyAdminGrid').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">🗺️</div><div>Todavía no hay seres inscriptos en programas.<br>Hacé clic en <strong>+ Inscribir Ser</strong> para empezar.</div></div>`;
-    return;
-  }
-
-  // Filtros por programa
-  const progsConInsc=[...new Set(inscripciones.map(i=>i.programaId))].map(pid=>programas.find(p=>p.id===pid)).filter(Boolean);
-  const filtroHtml=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
-    <span style="font-size:11px;color:var(--muted);font-weight:600">FILTRAR:</span>
-    <button onclick="setJourneyFilter('')" style="padding:4px 12px;border-radius:20px;border:1px solid ${!_journeyFilter?'var(--gold)':'var(--border)'};background:${!_journeyFilter?'var(--gold)22':'var(--card2)'};color:${!_journeyFilter?'var(--gold)':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">Todos</button>
-    ${progsConInsc.map(p=>`<button onclick="setJourneyFilter('${p.id}')" style="padding:4px 12px;border-radius:20px;border:1px solid ${_journeyFilter===p.id?p.col||'#C9A84C':'var(--border)'};background:${_journeyFilter===p.id?(p.col||'#C9A84C')+'22':'var(--card2)'};color:${_journeyFilter===p.id?p.col||'#C9A84C':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${p.ico||'📚'} ${p.nombre}</button>`).join('')}
-  </div>`;
-
-  // Inscripciones filtradas
-  const lista=_journeyFilter?inscripciones.filter(i=>i.programaId===_journeyFilter):inscripciones;
-
-  // Resumen global de áreas (sumatorio de todas las inscripciones filtradas)
-  const globalAreas={espiritual:{done:0,total:0},mental:{done:0,total:0},fisica:{done:0,total:0},social:{done:0,total:0}};
-  lista.forEach(insc=>{
-    const prog=programas.find(p=>p.id===insc.programaId);if(!prog)return;
-    const ap=calcAreaProgress(insc,prog);
-    Object.keys(globalAreas).forEach(k=>{globalAreas[k].done+=ap[k].done;globalAreas[k].total+=ap[k].total;});
+function setJourneyTab(tab){
+  _jTab=tab;
+  ['Resumen','Activos','Historial'].forEach(t=>{
+    const lt=t.toLowerCase();
+    document.getElementById('jTab'+t)?.classList.toggle('active',lt===tab);
+    const sec=document.getElementById('jSec'+t);
+    if(sec)sec.style.display=lt===tab?'':'none';
   });
+  if(tab==='resumen')  renderJourneyResumen();
+  else if(tab==='activos')   renderJourneyActivos();
+  else if(tab==='historial') renderJourneyHistorial();
+}
 
-  const resumenHtml='';
+/* ── TAB: RESUMEN ─────────────────────────────────────────── */
+function renderJourneyResumen(){
+  const el=document.getElementById('jSecResumen');if(!el)return;
+  const total=inscripciones.length;
+  const isActivo=x=>{const sem=calcSemanaAuto(x);const p=programas.find(pp=>pp.id===x.programaId);return p&&sem<=(p.semanas_dur||(p.semanas||[]).length||999);};
+  const activos=inscripciones.filter(isActivo);
+  const finalizados=inscripciones.filter(x=>!isActivo(x));
 
-  // Cards de inscripciones
-  const cardsHtml=lista.map(insc=>{
-    const ser=seres.find(x=>x.id===insc.serId);
-    const prog=programas.find(x=>x.id===insc.programaId);
-    if(!ser||!prog)return '';
-    const totalSem=prog.semanas_dur||(prog.semanas||[]).length||1;
-    const semAuto=calcSemanaAuto(insc);
-    const semActual=Math.min(semAuto,totalSem);
-    const pct=Math.round(semActual/totalSem*100);
-    const col=prog.col||'#C9A84C';
-    // Estado del programa
-    const esActivo=semAuto<=totalSem;
-    const estadoBadge=esActivo
-      ?`<span style="background:#10B98122;color:#10B981;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">● ACTIVO</span>`
-      :`<span style="background:#6B728022;color:#6B7280;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">✓ FINALIZADO</span>`;
-    // Días restantes
-    let diasInfoHtml='';
-    if(insc.fechaFin){
-      const fin=new Date(insc.fechaFin+'T12:00:00');const hoy=new Date();hoy.setHours(12,0,0,0);
-      const dRest=Math.ceil((fin-hoy)/(1000*60*60*24));
-      diasInfoHtml=dRest>0?`<span style="font-size:10px;color:var(--muted)">⏳ ${dRest} días restantes</span>`:`<span style="font-size:10px;color:#EF4444">⚠️ Finalizó hace ${Math.abs(dRest)}d</span>`;
-    }
-    // 4 áreas mini
-    const ap=calcAreaProgress(insc,prog);
-    const areasMini=['espiritual','mental','fisica','social'].map((k,ki)=>{
-      const icons=['🌀','🧠','💪','🤝'];const cols=['#8B5CF6','#3B82F6','#10B981','#F59E0B'];
-      const pctA=ap[k].total?Math.round(ap[k].done/ap[k].total*100):0;
-      return `<div style="flex:1;text-align:center">
-        <div style="font-size:14px">${icons[ki]}</div>
-        <div style="font-size:10px;font-weight:700;color:${cols[ki]}">${pctA}%</div>
-        <div style="background:var(--card2);border-radius:20px;height:3px;overflow:hidden;margin-top:2px"><div style="background:${cols[ki]};height:100%;width:${pctA}%;border-radius:20px"></div></div>
-      </div>`;
-    }).join('');
-    return `<div class="cc" style="border-left:3px solid ${col};cursor:pointer;transition:.2s" onclick="openInscDetail('${insc.id}')">
-      <!-- Header -->
-      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
-        <div style="width:40px;height:40px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:15px;font-weight:700;color:var(--gl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ser.nombre}</div>
-          <div style="font-size:11px;color:var(--muted)">${prog.ico||'📚'} ${prog.nombre}</div>
-        </div>
-        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">${estadoBadge}
-          <span style="background:${col}22;color:${col};font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px">S${semActual}/${totalSem}</span>
-        </div>
+  // Promedio completado (desafíos)
+  let sumPct=0,cntPct=0;
+  activos.forEach(insc=>{
+    const prog=programas.find(p=>p.id===insc.programaId);if(!prog)return;
+    const sems=insc.semanas||prog.semanas||[];
+    const pr=insc.progreso||{};
+    const total=sems.reduce((a,s)=>a+(s.desafios||[]).length,0);
+    const done=Object.values(pr).reduce((a,p)=>a+Object.values(p.desafios||{}).filter(Boolean).length,0);
+    if(total>0){sumPct+=Math.round(done/total*100);cntPct++;}
+  });
+  const avgPct=cntPct?Math.round(sumPct/cntPct):0;
+
+  // Distribución por programa (activos)
+  const byProg={};
+  activos.forEach(insc=>{const p=programas.find(pp=>pp.id===insc.programaId);if(!p)return;if(!byProg[p.id])byProg[p.id]={p,count:0};byProg[p.id].count++;});
+  const progBars=Object.values(byProg).sort((a,b)=>b.count-a.count).map(({p,count})=>{
+    const pct=activos.length?Math.round(count/activos.length*100):0;
+    const col=p.col||'#C9A84C';
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:7px">
+      <span style="font-size:14px;flex-shrink:0">${p.ico||'📚'}</span>
+      <div style="flex:1;min-width:0"><div style="font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.nombre}</div>
+        <div style="background:var(--card2);border-radius:20px;height:6px;overflow:hidden;margin-top:3px"><div style="background:${col};height:100%;width:${pct}%;border-radius:20px;transition:.5s"></div></div>
       </div>
-      <!-- Para qué -->
-      ${insc.paraQue?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic;border-left:2px solid ${col};padding-left:8px;line-height:1.4">"${insc.paraQue}"</div>`:''}
-      <!-- Progress bar -->
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
-        <span>Semana ${semActual} de ${totalSem} · ${pct}%</span>${diasInfoHtml}
-      </div>
-      <div style="background:var(--card2);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px">
-        <div style="background:${col};height:100%;width:${pct}%;border-radius:20px;transition:.5s"></div>
-      </div>
-      <!-- 4 áreas -->
-      <div style="display:flex;gap:6px;padding:8px;background:var(--card2);border-radius:10px;margin-bottom:10px">${areasMini}</div>
-      <!-- Fechas -->
-      ${insc.fechaInicio?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px">📅 ${insc.fechaInicio}${insc.fechaFin?' → '+insc.fechaFin:''}</div>`:''}
-      <!-- Acciones -->
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-s btn-sm" style="flex:1" onclick="event.stopPropagation();openInscDetail('${insc.id}')">👁 Ver ficha</button>
-        <button class="btn btn-s btn-sm" onclick="event.stopPropagation();openModal('insc','${insc.id}')">✏️</button>
-        <button class="btn btn-s btn-sm" onclick="event.stopPropagation();delInsc('${insc.id}')">🗑</button>
-      </div>
+      <span style="font-size:12px;font-weight:700;color:${col};flex-shrink:0">${count}</span>
     </div>`;
   }).join('');
 
-  document.getElementById('journeyAdminGrid').innerHTML=`
-    <div style="grid-column:1/-1">${filtroHtml}${resumenHtml}</div>
-    ${cardsHtml||'<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)">Sin inscripciones para este programa.</div>'}`;
+  // Top seres por % completado
+  const topSeres=activos.map(insc=>{
+    const ser=seres.find(x=>x.id===insc.serId);
+    const prog=programas.find(p=>p.id===insc.programaId);
+    if(!ser||!prog)return null;
+    const sems=insc.semanas||prog.semanas||[];
+    const pr=insc.progreso||{};
+    const tot=sems.reduce((a,s)=>a+(s.desafios||[]).length,0);
+    const done=Object.values(pr).reduce((a,p)=>a+Object.values(p.desafios||{}).filter(Boolean).length,0);
+    const pct=tot?Math.round(done/tot*100):0;
+    const semAuto=calcSemanaAuto(insc);
+    const totalSem=prog.semanas_dur||(prog.semanas||[]).length||1;
+    return {insc,ser,prog,pct,semActual:Math.min(semAuto,totalSem),totalSem,done,tot};
+  }).filter(Boolean).sort((a,b)=>b.pct-a.pct).slice(0,6);
+
+  const topHtml=topSeres.length?topSeres.map(({insc,ser,prog,pct,semActual,totalSem})=>{
+    const col=prog.col||'#C9A84C';
+    return `<div onclick="openInscDetail('${insc.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 11px;background:var(--card2);border-radius:10px;cursor:pointer;border:1px solid var(--border);transition:.15s" onmouseover="this.style.borderColor='${col}'" onmouseout="this.style.borderColor='var(--border)'">
+      <div style="width:34px;height:34px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ser.nombre}</div>
+        <div style="font-size:10px;color:var(--muted)">${prog.ico||'📚'} ${prog.nombre} · Sem ${semActual}/${totalSem}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:14px;font-weight:800;color:${col}">${pct}%</div>
+        <div style="font-size:9px;color:var(--muted)">completado</div>
+      </div>
+    </div>`;
+  }).join(''):`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">Sin seres activos aún.</div>`;
+
+  el.innerHTML=`
+    <div class="kpi-grid" style="margin-bottom:20px">
+      <div class="kc go"><div class="ki">🗺️</div><div class="kl">Total</div><div class="kv">${total}</div><div class="ks">Inscripciones</div></div>
+      <div class="kc bl"><div class="ki">🔥</div><div class="kl">Activos</div><div class="kv">${activos.length}</div><div class="ks">En progreso</div></div>
+      <div class="kc pu"><div class="ki">✅</div><div class="kl">Finalizados</div><div class="kv">${finalizados.length}</div><div class="ks">Completados</div></div>
+      <div class="kc or"><div class="ki">📊</div><div class="kl">Promedio</div><div class="kv">${avgPct}%</div><div class="ks">Desafíos completados</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+      <div class="cc">
+        <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:14px">📚 Activos por programa</div>
+        ${progBars||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}
+      </div>
+      <div class="cc">
+        <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:14px">🏅 Top seres</div>
+        <div style="display:flex;flex-direction:column;gap:6px">${topHtml}</div>
+      </div>
+    </div>`;
 }
 
-function setJourneyFilter(progId){_journeyFilter=progId;renderJourneyAdmin();}
+/* ── TAB: ACTIVOS ─────────────────────────────────────────── */
+function renderJourneyActivos(){
+  const isActivo=x=>{const sem=calcSemanaAuto(x);const p=programas.find(pp=>pp.id===x.programaId);return p&&sem<=(p.semanas_dur||(p.semanas||[]).length||999);};
+  const lista_activos=inscripciones.filter(isActivo);
+  const total=lista_activos.length;
 
-function openInscDetail(id,tab){
+  document.getElementById('journeyAdminKPIs').innerHTML=`
+    <div class="kc go"><div class="ki">🗺️</div><div class="kl">Total Activos</div><div class="kv">${total}</div><div class="ks">En progreso</div></div>
+    <div class="kc bl"><div class="ki">🔥</div><div class="kl">En Progreso</div><div class="kv">${total}</div><div class="ks">Seres activos</div></div>
+    <div class="kc pu"><div class="ki">✅</div><div class="kl">Finalizados</div><div class="kv">${inscripciones.length-total}</div><div class="ks">Completaron el programa</div></div>`;
+
+  if(total===0){
+    document.getElementById('journeyAdminGrid').innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">🗺️</div><div>No hay seres activos en programas.<br>Hacé clic en <strong>+ Inscribir Ser</strong> para empezar.</div></div>`;
+    return;
+  }
+
+  // Filtros por programa (solo programas con inscritos activos)
+  const progsActivos=[...new Set(lista_activos.map(i=>i.programaId))].map(pid=>programas.find(p=>p.id===pid)).filter(Boolean);
+  const filtroHtml=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+    <span style="font-size:11px;color:var(--muted);font-weight:600">FILTRAR:</span>
+    <button onclick="setJourneyFilter('')" style="padding:4px 12px;border-radius:20px;border:1px solid ${!_journeyFilter?'var(--gold)':'var(--border)'};background:${!_journeyFilter?'var(--gold)22':'var(--card2)'};color:${!_journeyFilter?'var(--gold)':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">Todos</button>
+    ${progsActivos.map(p=>`<button onclick="setJourneyFilter('${p.id}')" style="padding:4px 12px;border-radius:20px;border:1px solid ${_journeyFilter===p.id?p.col||'#C9A84C':'var(--border)'};background:${_journeyFilter===p.id?(p.col||'#C9A84C')+'22':'var(--card2)'};color:${_journeyFilter===p.id?p.col||'#C9A84C':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${p.ico||'📚'} ${p.nombre}</button>`).join('')}
+  </div>`;
+
+  // Filtrar lista activos por programa seleccionado
+  const lista=_journeyFilter?lista_activos.filter(i=>i.programaId===_journeyFilter):lista_activos;
+
+  document.getElementById('journeyAdminGrid').innerHTML=`
+    <div style="grid-column:1/-1">${filtroHtml}</div>
+    ${lista.map(insc=>_buildInscCard(insc,true)).join('')||'<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--muted)">Sin inscripciones activas para este programa.</div>'}`;
+}
+
+/* ── TAB: HISTORIAL ───────────────────────────────────────── */
+function renderJourneyHistorial(){
+  const isActivo=x=>{const sem=calcSemanaAuto(x);const p=programas.find(pp=>pp.id===x.programaId);return p&&sem<=(p.semanas_dur||(p.semanas||[]).length||999);};
+  const finalizados=inscripciones.filter(x=>!isActivo(x));
+  const el=document.getElementById('journeyHistGrid');if(!el)return;
+
+  if(!finalizados.length){
+    el.innerHTML=`<div style="grid-column:1/-1;text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:10px">📋</div><div>Ningún ser ha finalizado un programa todavía.</div></div>`;
+    return;
+  }
+  // Filtros por programa en historial
+  const progsFin=[...new Set(finalizados.map(i=>i.programaId))].map(pid=>programas.find(p=>p.id===pid)).filter(Boolean);
+  const filtroHtml=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+    <span style="font-size:11px;color:var(--muted);font-weight:600">FILTRAR:</span>
+    <button onclick="setJourneyFilterHist('')" style="padding:4px 12px;border-radius:20px;border:1px solid ${!_journeyFilterHist?'var(--gold)':'var(--border)'};background:${!_journeyFilterHist?'var(--gold)22':'var(--card2)'};color:${!_journeyFilterHist?'var(--gold)':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">Todos</button>
+    ${progsFin.map(p=>`<button onclick="setJourneyFilterHist('${p.id}')" style="padding:4px 12px;border-radius:20px;border:1px solid ${_journeyFilterHist===p.id?p.col||'#C9A84C':'var(--border)'};background:${_journeyFilterHist===p.id?(p.col||'#C9A84C')+'22':'var(--card2)'};color:${_journeyFilterHist===p.id?p.col||'#C9A84C':'var(--muted)'};font-size:11px;font-weight:600;cursor:pointer">${p.ico||'📚'} ${p.nombre}</button>`).join('')}
+  </div>`;
+  const listaFin=_journeyFilterHist?finalizados.filter(i=>i.programaId===_journeyFilterHist):finalizados;
+  el.innerHTML=`<div style="grid-column:1/-1">${filtroHtml}</div>${listaFin.map(insc=>_buildInscCard(insc,false)).join('')}`;
+}
+let _journeyFilterHist='';
+function setJourneyFilter(progId){_journeyFilter=progId;renderJourneyActivos();}
+function setJourneyFilterHist(progId){_journeyFilterHist=progId;renderJourneyHistorial();}
+
+/* ── Card compartida entre Activos e Historial ────────────── */
+function _buildInscCard(insc,esActivo){
+  const ser=seres.find(x=>x.id===insc.serId);
+  const prog=programas.find(x=>x.id===insc.programaId);
+  if(!ser||!prog)return '';
+  const totalSem=prog.semanas_dur||(prog.semanas||[]).length||1;
+  const semAuto=calcSemanaAuto(insc);
+  const semActual=Math.min(semAuto,totalSem);
+  const col=prog.col||'#C9A84C';
+  // Progreso real desde desafíos completados
+  const sems=insc.semanas||prog.semanas||[];
+  const pr=insc.progreso||{};
+  const desDone=Object.values(pr).reduce((a,p)=>a+Object.values(p.desafios||{}).filter(Boolean).length,0);
+  const desTotal=sems.reduce((a,s)=>a+(s.desafios||[]).length,0);
+  const pct=desTotal?Math.round(desDone/desTotal*100):Math.round(semActual/totalSem*100);
+  const estadoBadge=esActivo
+    ?`<span style="background:#10B98122;color:#10B981;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">● ACTIVO</span>`
+    :`<span style="background:#6B728022;color:#6B7280;font-size:9px;font-weight:700;padding:2px 8px;border-radius:20px">✓ FINALIZADO</span>`;
+  let diasInfoHtml='';
+  if(insc.fechaFin){
+    const fin=new Date(insc.fechaFin+'T12:00:00');const hoy=new Date();hoy.setHours(12,0,0,0);
+    const dRest=Math.ceil((fin-hoy)/(1000*60*60*24));
+    diasInfoHtml=esActivo&&dRest>0?`<span style="font-size:10px;color:var(--muted)">⏳ ${dRest}d restantes</span>`
+      :!esActivo?`<span style="font-size:10px;color:var(--muted)">Finalizó ${insc.fechaFin}</span>`
+      :`<span style="font-size:10px;color:#EF4444">⚠️ Vencido hace ${Math.abs(dRest)}d</span>`;
+  }
+  const ap=calcAreaProgress(insc,prog);
+  const areasMini=['espiritual','mental','fisica','social'].map((k,ki)=>{
+    const icons=['🌀','🧠','💪','🤝'];const cols=['#8B5CF6','#3B82F6','#10B981','#F59E0B'];
+    const pctA=ap[k].total?Math.round(ap[k].done/ap[k].total*100):0;
+    return `<div style="flex:1;text-align:center"><div style="font-size:14px">${icons[ki]}</div>
+      <div style="font-size:10px;font-weight:700;color:${cols[ki]}">${pctA}%</div>
+      <div style="background:var(--card2);border-radius:20px;height:3px;overflow:hidden;margin-top:2px"><div style="background:${cols[ki]};height:100%;width:${pctA}%;border-radius:20px"></div></div>
+    </div>`;
+  }).join('');
+  return `<div class="cc" style="border-left:3px solid ${col};cursor:pointer;transition:.2s" onclick="openInscDetail('${insc.id}')">
+    <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:10px">
+      <div style="width:40px;height:40px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:800;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:15px;font-weight:700;color:var(--gl);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${ser.nombre}</div>
+        <div style="font-size:11px;color:var(--muted)">${prog.ico||'📚'} ${prog.nombre}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:3px">${estadoBadge}
+        <span style="background:${col}22;color:${col};font-size:11px;font-weight:700;padding:1px 8px;border-radius:20px">S${semActual}/${totalSem}</span>
+      </div>
+    </div>
+    ${insc.paraQue?`<div style="font-size:11px;color:var(--muted);margin-bottom:8px;font-style:italic;border-left:2px solid ${col};padding-left:8px;line-height:1.4">"${insc.paraQue}"</div>`:''}
+    <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:3px">
+      <span>${desTotal?desDone+'/'+desTotal+' desafíos · ':'Semana '+semActual+'/'+totalSem+' · '}${pct}%</span>${diasInfoHtml}
+    </div>
+    <div style="background:var(--card2);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px">
+      <div style="background:${col};height:100%;width:${pct}%;border-radius:20px;transition:.5s"></div>
+    </div>
+    <div style="display:flex;gap:6px;padding:8px;background:var(--card2);border-radius:10px;margin-bottom:10px">${areasMini}</div>
+    ${insc.fechaInicio?`<div style="font-size:10px;color:var(--muted);margin-bottom:8px">📅 ${insc.fechaInicio}${insc.fechaFin?' → '+insc.fechaFin:''}</div>`:''}
+    <div style="display:flex;gap:6px">
+      <button class="btn btn-s btn-sm" style="flex:1" onclick="event.stopPropagation();openInscDetail('${insc.id}')">👁 Ver ficha</button>
+      <button class="btn btn-s btn-sm" onclick="event.stopPropagation();openModal('insc','${insc.id}')">✏️</button>
+      <button class="btn btn-s btn-sm" onclick="event.stopPropagation();delInsc('${insc.id}')">🗑</button>
+    </div>
+  </div>`;
+}
+
+async function openInscDetail(id,tab){
   curInscId=id;
   journeyMode='ser';
   curInscSemIdx=0;
+
+  // Mostrar esqueleto inmediato con los datos en caché
+  document.getElementById('journeyAdminListView').style.display='none';
+  document.getElementById('jTabBar').style.display='none';
+  document.getElementById('journeyAdminDetailView').style.display='block';
+  document.getElementById('journeyAdminDetailView').innerHTML=`<div style="padding:40px;text-align:center;color:var(--muted)"><div class="spinner" style="margin:0 auto 10px"></div>Cargando datos actualizados…</div>`;
+
+  // Recargar la inscripción fresca desde Supabase para ver cambios del portal
+  try{
+    const {data:rows,error}=await _sb.from('inscripciones').select('id,data').eq('id',String(id));
+    if(!error && rows && rows.length){
+      const fresh=_unwrap(rows)[0];
+      const idx=inscripciones.findIndex(x=>x.id===id);
+      if(idx>=0){
+        // Preservar semanas del admin si el registro fresco no las tiene
+        if(!fresh.semanas||!fresh.semanas.length) fresh.semanas=inscripciones[idx].semanas;
+        inscripciones[idx]={...inscripciones[idx],...fresh};
+      }
+    }
+  }catch(e){console.warn('refresh inscripcion:',e);}
+
+  _renderInscDetail(id,tab);
+}
+
+function _renderInscDetail(id,tab){
   const insc=inscripciones.find(x=>x.id===id);
-  const ser=seres.find(x=>x.id===insc.serId);
-  const prog=programas.find(x=>x.id===insc.programaId);
-  if(!insc||!ser||!prog)return;
+  const ser=seres.find(x=>x.id===insc?.serId);
+  const prog=programas.find(x=>x.id===insc?.programaId);
+  if(!insc||!ser||!prog){document.getElementById('journeyAdminDetailView').innerHTML='<div style="padding:30px;color:var(--muted)">No se encontró la inscripción.</div>';return;}
   if(!insc.semanas||!insc.semanas.length){
     insc.semanas=(prog.semanas||[]).map(s=>JSON.parse(JSON.stringify(s)));
     save();
@@ -4153,8 +4373,11 @@ function openInscDetail(id,tab){
   const semActual=Math.min(semAuto,totalSem);
   const pct=Math.round(semActual/totalSem*100);
 
-  document.getElementById('journeyAdminListView').style.display='none';
-  document.getElementById('journeyAdminDetailView').style.display='block';
+  // Calcular progreso real desde el objeto progreso del ser
+  const progObj=insc.progreso||{};
+  const desDone=Object.values(progObj).reduce((a,p)=>a+Object.values(p.desafios||{}).filter(Boolean).length,0);
+  const desTotal=(insc.semanas||[]).reduce((a,s)=>a+(s.desafios||[]).length,0);
+  const pctReal=desTotal?Math.round(desDone/desTotal*100):pct;
 
   const allTabs=[
     {k:'onboarding',l:'🚀 Onboarding'},
@@ -4170,6 +4393,7 @@ function openInscDetail(id,tab){
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
       <button class="btn btn-s" onclick="closeInscDetail()">← Volver</button>
       <div style="flex:1;font-size:17px;font-weight:700;color:var(--gl)">${ser.nombre}</div>
+      <button class="btn btn-s btn-sm" title="Recargar datos del portal" onclick="openInscDetail('${id}',_journeyActiveTab)">🔄</button>
       <button class="btn btn-s btn-sm" onclick="openModal('insc','${id}')">✏️ Datos</button>
     </div>
     <div class="cc" style="border-left:3px solid ${col};margin-bottom:14px;padding:12px 14px">
@@ -4177,18 +4401,19 @@ function openInscDetail(id,tab){
         <span style="font-size:22px">${prog.ico||'📚'}</span>
         <div style="flex:1">
           <div style="font-weight:700;color:${col}">${prog.nombre}</div>
-          <div style="font-size:11px;color:var(--muted)">Semana ${semActual} de ${totalSem}</div>
+          <div style="font-size:11px;color:var(--muted)">Semana ${semActual} de ${totalSem} · ${desDone}/${desTotal} desafíos</div>
         </div>
         <div style="text-align:right">
-          <div style="font-size:18px;font-weight:800;color:${col}">${pct}%</div>
+          <div style="font-size:18px;font-weight:800;color:${col}">${pctReal}%</div>
           <div style="font-size:10px;color:var(--muted)">completado</div>
         </div>
       </div>
       <div style="margin-top:8px;background:var(--card2);border-radius:20px;height:5px;overflow:hidden">
-        <div style="background:${col};height:100%;width:${pct}%;border-radius:20px"></div>
+        <div style="background:${col};height:100%;width:${pctReal}%;border-radius:20px;transition:.5s"></div>
       </div>
       ${insc.fechaInicio?`<div style="font-size:10px;color:var(--muted);margin-top:4px">📅 ${insc.fechaInicio}${insc.fechaFin?' → '+insc.fechaFin:''}</div>`:''}
       ${insc.code?`<div style="font-size:10px;color:var(--muted);margin-top:2px">🔑 <code style="background:var(--card2);padding:1px 6px;border-radius:4px">${insc.code}</code></div>`:''}
+      ${insc.paraQue?`<div style="font-size:11px;color:var(--muted);margin-top:6px;font-style:italic;border-left:2px solid ${col};padding-left:8px">"${insc.paraQue}"</div>`:''}
     </div>
     <div id="journeyTabsNav" style="display:flex;gap:3px;flex-wrap:wrap;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px">
       ${allTabs.map(t=>`<button id="jtab_${t.k}" onclick="switchJourneyTab('${t.k}')" style="padding:5px 10px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:10px;font-weight:600;cursor:pointer;transition:.2s;white-space:nowrap">${t.l}</button>`).join('')}
@@ -4803,7 +5028,28 @@ function renderInscWeekContent(){
   if(!insc.semanas||!insc.semanas.length){el.innerHTML=`<div style="color:var(--muted);padding:20px;text-align:center">Sin semanas. Editá la inscripción para sincronizar.</div>`;return;}
   if(curInscSemIdx>=insc.semanas.length)curInscSemIdx=0;
   const sem=insc.semanas[curInscSemIdx];
-  el.innerHTML=buildWeekEditorHTML(sem,col,curInscSemIdx,'ser');
+  const semP=(insc.progreso||{})[String(curInscSemIdx)]||{};
+  const desP=semP.desafios||{};
+  const habP=semP.habitos||{};
+  const nota=semP.nota||'';
+
+  // Progreso del ser (readonly)
+  const desDoneCount=(sem.desafios||[]).filter(d=>desP[d.id]).length;
+  const desTotal=(sem.desafios||[]).length;
+  const progresoBadge=desTotal?`<span style="font-size:10px;background:${col}22;color:${col};border-radius:20px;padding:2px 8px;font-weight:600">${desDoneCount}/${desTotal} desafíos</span>`:'';
+
+  const desProgresoHTML=(sem.desafios||[]).length?`
+    <div style="margin-bottom:14px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">${progresoBadge}<span style="font-size:11px;font-weight:700;color:var(--gl)">📊 Progreso del Ser</span></div>
+      ${(sem.desafios||[]).map(d=>{const done=!!desP[d.id];return`<div style="display:flex;align-items:center;gap:8px;padding:7px 9px;border-radius:8px;background:${done?col+'11':'var(--card2)'};border:1px solid ${done?col+'33':'var(--border)'};margin-bottom:5px">
+        <div style="width:16px;height:16px;border-radius:4px;border:1.5px solid ${done?col:'var(--border)'};background:${done?col:'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0"><span style="font-size:9px;color:#050401;font-weight:800">${done?'✓':''}</span></div>
+        <span style="font-size:12px;color:${done?'var(--text)':'var(--muted)'};${done?'':'opacity:.6'};flex:1">${d.texto}</span>
+        <span style="font-size:10px;color:${done?col:'var(--border)'};font-weight:600">${done?'✅':''}</span>
+      </div>`}).join('')}
+      ${nota?`<div style="margin-top:8px;padding:8px 10px;background:var(--card2);border-radius:8px;border-left:2px solid ${col}"><div style="font-size:9px;color:var(--muted);font-weight:600;margin-bottom:3px">NOTA DEL SER</div><div style="font-size:11px;color:var(--text);white-space:pre-wrap">${nota}</div></div>`:''}
+    </div>`:'';
+
+  el.innerHTML=desProgresoHTML+buildWeekEditorHTML(sem,col,curInscSemIdx,'ser');
 }
 
 function restoreSemToTemplate(semIdx){
@@ -4818,9 +5064,10 @@ function restoreSemToTemplate(semIdx){
 function closeInscDetail(){
   journeyMode='tmpl';curInscId=null;_journeyActiveTab='onboarding';
   const moCD=document.getElementById('moCalDay');if(moCD)moCD.style.display='none';
-  document.getElementById('journeyAdminListView').style.display='block';
   document.getElementById('journeyAdminDetailView').style.display='none';
-  renderJourneyAdmin();
+  document.getElementById('journeyAdminListView').style.display='';
+  document.getElementById('jTabBar').style.display='';
+  setJourneyTab(_jTab||'resumen');
 }
 
 function avanzarSemana(id){
