@@ -179,11 +179,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;}
 
 /* ── AGENDA BUTTON ── */
-.btn-agenda{width:100%;padding:15px;background:linear-gradient(135deg,var(--gold),var(--gd));
-  border:none;border-radius:14px;color:#050401;font-size:15px;font-weight:800;cursor:pointer;
-  margin-bottom:12px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:opacity .2s;box-shadow:0 4px 20px rgba(201,168,76,.25);}
-.btn-agenda:hover{opacity:.9;}
+.btn-agenda{width:100%;padding:13px;background:rgba(201,168,76,.16);
+  border:1px solid rgba(201,168,76,.45);border-radius:14px;color:var(--gl);font-size:14px;font-weight:700;cursor:pointer;
+  margin-bottom:0;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;
+  transition:all .2s;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
+.btn-agenda:hover{background:rgba(201,168,76,.26);border-color:rgba(201,168,76,.7);}
 
 /* ── SECONDARY ACTION BUTTONS ── */
 .sec-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
@@ -198,6 +198,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 /* ── AGENDA MODAL ── */
 .agenda-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.88);z-index:9000;
   overflow-y:auto;padding:20px 16px 40px;}
+
+/* ── REGALOS OVERLAY ── */
+.regalos-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.88);z-index:9000;overflow-y:auto;padding:20px 16px 40px;}
+.regalos-overlay.open{display:block;}
+.regalos-modal{max-width:600px;margin:0 auto;background:rgba(14,12,26,0.82);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(232,201,106,.25);border-radius:24px;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.8);}
+.regalo-card{background:rgba(22,18,38,0.55);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;}
+.regalo-card::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--gold-pale),var(--gl),var(--gold-pale),transparent);}
+.regalo-body{padding:18px 18px 14px;}
+.regalo-ico{font-size:32px;margin-bottom:8px;display:block;}
+.regalo-nombre{font-size:16px;font-weight:700;color:var(--gl);margin-bottom:5px;}
+.regalo-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;}
+.btn-regalo-dl{width:100%;padding:11px;background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.45);border-radius:12px;color:var(--gl);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;transition:all .2s;}
+.btn-regalo-dl:hover{background:rgba(201,168,76,.28);}
 .agenda-overlay.open{display:block;}
 .agenda-modal{max-width:600px;margin:0 auto;background:rgba(14,12,26,0.82);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
@@ -272,7 +285,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="stats-row" id="statsRow"></div>
   <div id="proximaBox"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
-    <a class="btn-sec btn-sec-regalos" href="/regalos.html" target="_blank">
+    <button class="btn-sec btn-sec-regalos" onclick="openRegalos()">
       <svg width="17" height="17" viewBox="0 0 18 18" fill="none" style="flex-shrink:0">
         <rect x="2" y="7" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
         <rect x="1" y="4.5" width="16" height="3" rx="1" stroke="currentColor" stroke-width="1.2"/>
@@ -281,7 +294,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         <path d="M9 4.5C10 3 11.5 1.5 12.5 2C13.5 2.5 13 4 12 4.5C11 5 9 4.5 9 4.5Z" stroke="currentColor" stroke-width="1" stroke-linejoin="round"/>
       </svg>
       Regalos
-    </a>
+    </button>
     <button class="btn-agenda" onclick="openAgenda()" style="margin-bottom:0">
       <svg width="17" height="17" viewBox="0 0 18 18" fill="none" style="flex-shrink:0">
         <rect x="1.5" y="3.5" width="15" height="13" rx="2" stroke="currentColor" stroke-width="1.2"/>
@@ -321,6 +334,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <button class="btn-close-agenda" onclick="closeAgenda()">✕ Cerrar</button>
     </div>
     <div class="tools-grid" id="toolsGrid"></div>
+  </div>
+</div>
+
+<!-- REGALOS OVERLAY -->
+<div class="regalos-overlay" id="regalosOverlay" onclick="closeRegalosOutside(event)">
+  <div class="regalos-modal">
+    <div class="agenda-top">
+      <div>
+        <h2>✦ Regalos para vos</h2>
+        <p>Herramientas y recursos especiales para tu camino</p>
+      </div>
+      <button class="btn-close-agenda" onclick="closeRegalos()">✕ Cerrar</button>
+    </div>
+    <div id="regalosGrid" style="padding:16px"></div>
   </div>
 </div>
 
@@ -577,6 +604,44 @@ function closeAgenda(){
   document.body.style.overflow='';
 }
 function closeAgendaOutside(e){if(e.target===document.getElementById('agendaOverlay'))closeAgenda();}
+
+/* ── REGALOS ── */
+async function openRegalos(){
+  document.getElementById('regalosOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  const grid=document.getElementById('regalosGrid');
+  if(grid.dataset.loaded==='1')return;
+  grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">🎁</div><p>Cargando regalos...</p></div>';
+  try{
+    const {data,error}=await _sb.from('regalos').select('id,data');
+    const lista=(error||!data?.length)?[]:data.map(r=>({id:r.id,...r.data})).filter(r=>r.activo!==false);
+    if(!lista.length){
+      grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">✦</div><p>Próximamente habrá regalos especiales para vos.</p></div>';
+      return;
+    }
+    const sn=encodeURIComponent(curSer?.nombre||'');
+    const se=encodeURIComponent(curSer?.email||'');
+    grid.innerHTML=lista.map(r=>{
+      const tUrl=`${window.location.origin}/api/track-regalo?rid=${encodeURIComponent(r.id)}&sn=${sn}&se=${se}&canal=portal_lcp`;
+      return`<div class="regalo-card">
+        <div class="regalo-body">
+          <span class="regalo-ico">${r.icono||'🎁'}</span>
+          <div class="regalo-nombre">${r.nombre||'Regalo'}</div>
+          ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
+          <a class="btn-regalo-dl" href="${tUrl}" target="_blank">⬇️ Descargar PDF</a>
+        </div>
+      </div>`;
+    }).join('');
+    grid.dataset.loaded='1';
+  }catch(e){
+    grid.innerHTML='<div style="text-align:center;padding:32px;color:var(--muted)">Error al cargar. Intentá de nuevo.</div>';
+  }
+}
+function closeRegalos(){
+  document.getElementById('regalosOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeRegalosOutside(e){if(e.target===document.getElementById('regalosOverlay'))closeRegalos();}
 
 /* ── DATA ── */
 async function loadHerramientas(){
@@ -956,5 +1021,6 @@ async function submitIntake(){
   }
 })();
 </script>
+
 </body>
 </html>
