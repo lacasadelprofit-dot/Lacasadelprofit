@@ -315,7 +315,6 @@ select.fi:focus{border-color:var(--gold);}
     <!-- DASHBOARD -->
     <div id="sec-dashboard" class="sec active">
      <div id="dKPIs" class="kpi-grid"></div>
-     <div id="dAccionables" style="margin-bottom:18px"></div>
      <div id="dToday" style="margin-bottom:18px"></div>
      <div id="dWeekView" style="margin-bottom:18px"></div>
      <div class="cg22" style="margin-bottom:18px">
@@ -1697,25 +1696,16 @@ function renderDash(){
   }).length;
 
   document.getElementById('dKPIs').innerHTML=`
-    <div class="kc go" style="grid-column:span 1">
-      <div class="ki">✨</div>
-      <div class="kl">Sesiones Experimentales</div>
-      <div class="kv">${tot.toLocaleString('es-AR')}</div>
-      <div style="display:flex;gap:14px;margin-top:8px;flex-wrap:wrap">
-        <div><div style="font-size:18px;font-weight:800;color:var(--gl)">${totSeres}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">Seres atendidos</div></div>
-        <div style="width:1px;background:var(--border)"></div>
-        <div><div style="font-size:18px;font-weight:800;color:var(--gl)">${pvTot}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px">1° vez</div></div>
-      </div>
-    </div>
+    <div class="kc go"><div class="ki">✨</div><div class="kl">Sesiones Experimentales</div><div class="kv">${tot.toLocaleString('es-AR')}</div><div class="ks">Total desde el inicio</div></div>
+    <div class="kc pu"><div class="ki">💫</div><div class="kl">Seres Atendidos</div><div class="kv">${totSeres}</div><div class="ks">Activos ${yr}: ${activeSerNamesYr.size} · Este mes: ${activeSerNamesMo.size}</div></div>
+    <div class="kc or"><div class="ki">⭐</div><div class="kl">1° Vez</div><div class="kv">${pvTot}</div><div class="ks">Primeras veces en la herramienta</div></div>
     <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${thisMo}</div><div class="kch ${chg>=0?'up':'dn'}">${chg>=0?'↑':'↓'} ${Math.abs(chg)}% vs mes anterior</div></div>
     <div class="kc bl"><div class="ki">🌟</div><div class="kl">Sesiones ${yr}</div><div class="kv">${thisYr}</div><div class="ks">Promedio: ${Math.round(thisYr/Math.max(1,mo))} por mes</div></div>
     <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${prospectos.length}</div><div class="ks">Nuevos seres este mes: ${seresNuevosMes}</div></div>
-    <div class="kc or"><div class="ki">🔮</div><div class="kl">Próximas 7 días</div><div class="kv">${prox}</div><div class="ks">${inscActivas} inscripciones activas en programas</div></div>
-    <div class="kc rd"><div class="ki">⚠️</div><div class="kl">Seres en Riesgo</div><div class="kv">${seresEnRiesgo}</div><div class="ks">Sin sesión hace +60 días</div></div>
-    <div class="kc pu"><div class="ki">💡</div><div class="kl">Productos Digitales</div><div class="kv">${sessions.filter(s=>comp(s)&&esProd(s)).length.toLocaleString('es-AR')}</div><div class="ks">No suman a la visión</div></div>`;
+    <div class="kc or" style="border-top-color:#3DB8A8"><div class="ki">🔮</div><div class="kl">Próximas 7 días</div><div class="kv">${prox}</div><div class="ks">${inscActivas} inscripciones activas en programas</div></div>
+    <div class="kc pu" style="border-top-color:#5B9BD5"><div class="ki">💡</div><div class="kl">Productos Digitales</div><div class="kv">${sessions.filter(s=>comp(s)&&esProd(s)).length.toLocaleString('es-AR')}</div><div class="ks">No suman a la visión</div></div>`;
 
   renderVision(tot);
-  renderAccionables(now);
   renderToday(now);
   renderWeekView(now);
   renderBday(now);
