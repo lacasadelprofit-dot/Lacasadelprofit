@@ -190,6 +190,13 @@ select.fi:focus{border-color:var(--gold);}
 .invsm{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;}
 .es{text-align:center;padding:48px 20px;color:var(--muted);}
 .es .ei{font-size:40px;margin-bottom:10px;}
+.acceso-card{display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 20px;cursor:pointer;transition:all .2s;color:var(--text);}
+.acceso-card:hover{border-color:var(--gold);background:rgba(201,168,76,.06);transform:translateY(-1px);}
+.acceso-ico{font-size:28px;flex-shrink:0;width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:rgba(201,168,76,.08);border-radius:12px;}
+.acceso-info{flex:1;min-width:0;}
+.acceso-titulo{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:3px;}
+.acceso-desc{font-size:12px;color:var(--muted);line-height:1.4;}
+.acceso-ext{font-size:16px;color:var(--gd);flex-shrink:0;}
 .avsm{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;margin-right:5px;}
 ::-webkit-scrollbar{width:5px;}
 ::-webkit-scrollbar-track{background:var(--bg);}
@@ -285,12 +292,8 @@ select.fi:focus{border-color:var(--gold);}
     <div class="nl">Marketing</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
     <div class="ni" onclick="nav('comunidad',this)"><span class="ico">🫂</span><span>Comunidad</span></div>
-    <div class="nl">Accesos rápidos</div>
-    <div class="ni" onclick="window.open('/portal_ser.html','_blank')" title="Abrir portal del ser en nueva pestaña"><span class="ico">💫</span><span>Portal del Ser</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
-    <div class="ni" onclick="window.open('/registro.html','_blank')" title="Abrir formulario público en nueva pestaña"><span class="ico">📋</span><span>Formulario registro</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
-    <div class="ni" onclick="window.open('https://registro.juancruzconsciencia.lat','_blank')" title="Abrir formulario Juan Cruz Consciencia en nueva pestaña"><span class="ico">🌿</span><span>Registro JCC</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
-    <div class="ni" onclick="window.open('/portal_programa.html','_blank')" title="Abrir portal de programas en nueva pestaña"><span class="ico">📚</span><span>Portal Programas</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
-    <div class="ni" onclick="window.open('/vision.html','_blank')" title="Ver página pública de Visión"><span class="ico">🌟</span><span>Visión Pública</span><span style="font-size:9px;color:var(--gd);margin-left:auto">↗</span></div>
+    <div class="nl">Portales</div>
+    <div class="ni" onclick="nav('accesos',this)"><span class="ico">🔗</span><span>Accesos Rápidos</span></div>
    </div>
    <div class="s-foot">
     <div class="uinfo">
@@ -344,24 +347,35 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- SESIONES -->
     <div id="sec-sesiones" class="sec">
-     <div class="kpi-grid" id="sesKPIs" style="margin-bottom:14px"></div>
-     <div class="tc">
-      <div class="filters">
-       <input class="si" id="sesSrch" placeholder="🔍 Buscar por ser, tipo o facilitador..." oninput="renderSes()">
-       <select class="fi" id="sesTipo" onchange="renderSes()"><option value="">Todos los tipos</option></select>
-       <select class="fi" id="sesFac" onchange="renderSes()"><option value="">Todos los facilitadores</option></select>
-       <select class="fi" id="sesAno" onchange="renderSes()"><option value="">Todos los años</option></select>
-       <select class="fi" id="sesEst" onchange="renderSes()"><option value="">Todos los estados</option><option>Completado</option><option>Confirmado</option><option>Pendiente</option><option>Cancelado</option></select>
-       <select class="fi" id="sesProg" onchange="renderSes()"><option value="">Todos los programas</option><option value="__none__">Solo sueltas</option>${['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'].map(p=>`<option>${p}</option>`).join('')}</select>
-       <select class="fi" id="sesPV" onchange="renderSes()"><option value="">Todas las sesiones</option><option value="1">Solo 1° Vez</option></select>
-      </div>
-      <table>
-       <thead><tr><th>Fecha / Hora</th><th>Ser</th><th>Herramienta</th><th>1°Vez</th><th>Facilitador</th><th>Provincia</th><th>Modalidad</th><th>Estado</th><th>Obs.</th><th></th></tr></thead>
-       <tbody id="sesBody"></tbody>
-      </table>
-      <div style="padding:10px 16px;border-top:1px solid #1E1C10;display:flex;justify-content:space-between;align-items:center;">
-       <span id="sesTot" style="font-size:12px;color:var(--muted)"></span>
-       <div style="display:flex;gap:5px" id="sesPag"></div>
+     <div class="tab-bar" style="margin-bottom:18px">
+      <button class="tab-btn active" id="sesTabResumen"   onclick="setSesTab('resumen')">📊 Resumen</button>
+      <button class="tab-btn"        id="sesTabHistorial" onclick="setSesTab('historial')">📋 Historial</button>
+     </div>
+     <!-- RESUMEN -->
+     <div id="sesSec-resumen">
+      <div class="kpi-grid" id="sesKPIs" style="margin-bottom:18px"></div>
+      <div id="sesResumenBody"></div>
+     </div>
+     <!-- HISTORIAL -->
+     <div id="sesSec-historial" style="display:none">
+      <div class="tc">
+       <div class="filters">
+        <input class="si" id="sesSrch" placeholder="🔍 Buscar por ser, tipo o facilitador..." oninput="renderSes()">
+        <select class="fi" id="sesTipo" onchange="renderSes()"><option value="">Todos los tipos</option></select>
+        <select class="fi" id="sesFac" onchange="renderSes()"><option value="">Todos los facilitadores</option></select>
+        <select class="fi" id="sesAno" onchange="renderSes()"><option value="">Todos los años</option></select>
+        <select class="fi" id="sesEst" onchange="renderSes()"><option value="">Todos los estados</option><option>Completado</option><option>Confirmado</option><option>Pendiente</option><option>Cancelado</option></select>
+        <select class="fi" id="sesProg" onchange="renderSes()"><option value="">Todos los programas</option><option value="__none__">Solo sueltas</option>${['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'].map(p=>`<option>${p}</option>`).join('')}</select>
+        <select class="fi" id="sesPV" onchange="renderSes()"><option value="">Todas las sesiones</option><option value="1">Solo 1° Vez</option></select>
+       </div>
+       <table>
+        <thead><tr><th>Fecha / Hora</th><th>Ser</th><th>Herramienta</th><th>1°Vez</th><th>Facilitador</th><th>Provincia</th><th>Modalidad</th><th>Estado</th><th>Obs.</th><th></th></tr></thead>
+        <tbody id="sesBody"></tbody>
+       </table>
+       <div style="padding:10px 16px;border-top:1px solid #1E1C10;display:flex;justify-content:space-between;align-items:center;">
+        <span id="sesTot" style="font-size:12px;color:var(--muted)"></span>
+        <div style="display:flex;gap:5px" id="sesPag"></div>
+       </div>
       </div>
      </div>
     </div>
@@ -601,6 +615,85 @@ select.fi:focus{border-color:var(--gold);}
      <div id="mktMeta" style="display:none"></div>
      <div id="mktProsp" style="display:none"></div>
      <div id="mktRegalos" style="display:none"></div>
+    </div>
+
+    <!-- ACCESOS RÁPIDOS -->
+    <div id="sec-accesos" class="sec">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;max-width:900px">
+
+        <a href="/portal_ser.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">💫</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Portal del Ser</div>
+            <div class="acceso-desc">Página pública para los seres de la comunidad</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="/pregunta.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">💬</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Preguntas Expansivas</div>
+            <div class="acceso-desc">Página pública de preguntas por categoría</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="/registro.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">📋</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Formulario de Registro</div>
+            <div class="acceso-desc">Formulario público de ingreso al sistema</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="https://registro.juancruzconsciencia.lat" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">🌿</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Registro JCC</div>
+            <div class="acceso-desc">Formulario Juan Cruz Consciencia</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="/portal_programa.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">📚</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Portal de Programas</div>
+            <div class="acceso-desc">Acceso público al seguimiento de programas</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="/vision.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">🌟</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Visión Pública</div>
+            <div class="acceso-desc">Página pública del camino hacia 1.000.000</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="/regalos.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">🎁</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Regalos Digitales</div>
+            <div class="acceso-desc">Página pública de regalos y recursos</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="/generar_imagen_comunidad.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">🖼️</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Imagen Comunidad</div>
+            <div class="acceso-desc">Generador de imagen para el grupo de WhatsApp</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+      </div>
     </div>
 
    </div>
@@ -1186,6 +1279,14 @@ select.fi:focus{border-color:var(--gold);}
    <textarea id="rgMsgEmail" style="min-height:100px" placeholder="Hola {nombre}, te comparto..."></textarea>
    <div style="font-size:11px;color:var(--muted);margin-top:4px">Variables: <code>{nombre}</code> <code>{nombre_regalo}</code> <code>{pdfUrl}</code></div>
   </div>
+  <div class="fg">
+   <label>Marca / Portal</label>
+   <select id="rgMarca">
+    <option value="lcp">🏠 La Casa del Profit</option>
+    <option value="jcc">🌿 Juancruz Consciencia</option>
+    <option value="ambos">✦ Ambos portales</option>
+   </select>
+  </div>
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
    <input type="checkbox" id="rgActivo" checked style="width:16px;height:16px;accent-color:var(--gold)">
    <label for="rgActivo" style="font-size:13px;cursor:pointer">Activo (visible en el portal)</label>
@@ -1602,7 +1703,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',comunidad:'🫂 Comunidad'};
+const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',comunidad:'🫂 Comunidad',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   sesiones:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -1615,6 +1716,7 @@ const BTNS={
   journey:"<button class=\"btn btn-p\" onclick=\"openModal('insc',null)\">+ Inscribir Ser</button>",
   marketing:"<button class=\"btn btn-p\" onclick=\"openModal('camp',null)\">+ Nueva Campaña</button>",
   comunidad:"<button class=\"btn btn-p\" onclick=\"openComunidadModal(null)\">+ Nuevo Contenido</button>",
+  accesos:'',
 };
 function nav(name,el){
   document.querySelectorAll('.sec').forEach(s=>s.classList.remove('active'));
@@ -2110,8 +2212,18 @@ function buildChFac(){
 }
 
 /* SESIONES */
+let _sesTab='resumen';
+function setSesTab(t){
+  _sesTab=t;
+  document.getElementById('sesTabResumen')?.classList.toggle('active',t==='resumen');
+  document.getElementById('sesTabHistorial')?.classList.toggle('active',t==='historial');
+  document.getElementById('sesSec-resumen').style.display=t==='resumen'?'':'none';
+  document.getElementById('sesSec-historial').style.display=t==='historial'?'':'none';
+  renderSes();
+}
+
 function renderSes(){
-  // ── KPIs ──
+  // ── KPIs (siempre) ──
   const now2=new Date(),yr2=now2.getFullYear(),mesStr2=now2.toISOString().slice(0,7);
   const lm2=now2.getMonth()===0?12:now2.getMonth(),ly2=now2.getMonth()===0?yr2-1:yr2;
   const lmStr2=`${ly2}-${String(lm2).padStart(2,'0')}`;
@@ -2120,6 +2232,7 @@ function renderSes(){
   const lmesSes=compSes.filter(s=>s.fecha&&s.fecha.startsWith(lmStr2));
   const yrSes=compSes.filter(s=>new Date(s.fecha).getFullYear()===yr2);
   const pvMes=mesSes.filter(s=>s.primeraVez).length;
+  const pvTot=compSes.filter(s=>s.primeraVez).length;
   const chg2=lmesSes.length>0?Math.round((mesSes.length-lmesSes.length)/lmesSes.length*100):0;
   const pendSes=sessions.filter(s=>(s.estado||'Completado')==='Pendiente'||(s.estado||'')==='Confirmado').length;
   const sesMesARS=mesSes.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
@@ -2128,10 +2241,76 @@ function renderSes(){
   if(kpiEl)kpiEl.innerHTML=`
     <div class="kc go"><div class="ki">✨</div><div class="kl">Total Completadas</div><div class="kv">${compSes.length}</div><div class="ks">${yrSes.length} en ${yr2}</div></div>
     <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${mesSes.length}</div><div class="kch ${chg2>=0?'up':'dn'}">${chg2>=0?'↑':'↓'} ${Math.abs(chg2)}% vs anterior</div></div>
-    <div class="kc or"><div class="ki">⭐</div><div class="kl">1° Vez este mes</div><div class="kv">${pvMes}</div><div class="ks">Seres nuevos</div></div>
-    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes/Confirmadas</div><div class="kv">${pendSes}</div><div class="ks">Sin completar</div></div>
+    <div class="kc or"><div class="ki">⭐</div><div class="kl">1° Vez este mes</div><div class="kv">${pvMes}</div><div class="ks">Total histórico: ${pvTot}</div></div>
+    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes</div><div class="kv">${pendSes}</div><div class="ks">Sin completar</div></div>
     <div class="kc go" style="border-top-color:#5DD89A"><div class="ki">🇦🇷</div><div class="kl">Cobrado ARS (mes)</div><div class="kv" style="font-size:18px">$${Math.round(sesMesARS).toLocaleString('es-AR')}</div></div>
     <div class="kc bl"><div class="ki">🇺🇸</div><div class="kl">Cobrado USD (mes)</div><div class="kv" style="font-size:18px">USD ${sesMesUSD.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>`;
+
+  // ── RESUMEN ──
+  if(_sesTab==='resumen'){
+    // Últimos 6 meses
+    const meses={};
+    for(let i=5;i>=0;i--){const d=new Date(now2.getFullYear(),now2.getMonth()-i,1);meses[d.toISOString().slice(0,7)]=0;}
+    compSes.forEach(s=>{const m=s.fecha?.slice(0,7);if(m in meses)meses[m]++;});
+    const maxM=Math.max(1,...Object.values(meses));
+    const mesBar=Object.entries(meses).map(([m,n])=>`
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <div style="font-size:11px;color:var(--muted);width:42px">${m.slice(5)}</div>
+        <div style="flex:1;background:rgba(201,168,76,.08);border-radius:4px;height:20px;overflow:hidden">
+          <div style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));width:${Math.round(n/maxM*100)}%;border-radius:4px;transition:width .4s"></div>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--gl);width:24px;text-align:right">${n}</div>
+      </div>`).join('');
+
+    // Top herramientas
+    const porHerr={};
+    compSes.forEach(s=>{if(s.sesion){porHerr[s.sesion]=(porHerr[s.sesion]||0)+1;}});
+    const topHerr=Object.entries(porHerr).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([n,c])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+        <span style="font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--gl);margin-left:8px">${c}</span>
+      </div>`).join('');
+
+    // Top facilitadores
+    const porFac={};
+    compSes.forEach(s=>{if(s.facilitador){porFac[s.facilitador]=(porFac[s.facilitador]||0)+1;}});
+    const topFac=Object.entries(porFac).sort((a,b)=>b[1]-a[1]).map(([n,c])=>`
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+        <span style="font-size:12px">${n}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--purple)">${c}</span>
+      </div>`).join('');
+
+    // Últimas 5 sesiones
+    const recientes=compSes.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5).map(s=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+        <span style="font-size:11px;color:var(--muted);width:64px;flex-shrink:0">${fd(s.fecha)}</span>
+        <span style="font-size:13px;font-weight:600;flex:1">${s.ser}</span>
+        <span class="bdg ${bc(s.sesion)}" style="font-size:10px">${s.sesion}</span>
+        ${s.primeraVez?'<span class="bdg b-or" style="font-size:9px">⭐</span>':''}
+      </div>`).join('');
+
+    document.getElementById('sesResumenBody').innerHTML=`
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+        <div class="cc">
+          <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes</h3>
+          ${mesBar}
+        </div>
+        <div class="cc">
+          <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Top herramientas</h3>
+          ${topHerr||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}
+        </div>
+        <div class="cc">
+          <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🙋 Por facilitador</h3>
+          ${topFac||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}
+        </div>
+      </div>
+      <div class="cc" style="margin-top:14px">
+        <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🕐 Últimas sesiones</h3>
+        ${recientes||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}
+        <button class="btn btn-s btn-sm" style="margin-top:8px" onclick="setSesTab('historial')">Ver historial completo →</button>
+      </div>`;
+    return;
+  }
   const srch=document.getElementById('sesSrch').value.toLowerCase();
   const tipo=document.getElementById('sesTipo').value;
   const fac=document.getElementById('sesFac').value;
@@ -2599,10 +2778,14 @@ function waLink(cel, nombre){
 }
 function convertProsp(id){const s=seres.find(x=>x.id===id);if(s&&confirm(`¿Convertir a ${s.nombre} en Ser atendido?`)){s.prospecto=false;save();renderSeres();toast('¡'+s.nombre.split(' ')[0]+' ahora es un Ser ✨');}}
 let _showSerTab='resumen';
-function showSer(id,tab){
+async function showSer(id,tab){
   const s=seres.find(x=>String(x.id)===String(id));if(!s)return;
   _showSerTab=tab||'resumen';
   document.getElementById('serDetEditBtn').onclick=()=>{closeModal('moSerDet');openModal('ser',String(id));};
+  // Cargar eventos de regalos si aún no están
+  if(!_rgEvs.length){
+    try{const {data}=await _sb.from('regalo_eventos').select('data');_rgEvs=(data||[]).map(r=>r.data||{});}catch(e){}
+  }
   _renderSerDet(s);
   openModal('serDet');
 }
@@ -2623,6 +2806,7 @@ function _renderSerDet(s){
     {k:'resumen',l:'📋 Resumen'},
     {k:'sesiones',l:`✨ Sesiones (${ss.length})`},
     {k:'formularios',l:`💫 Formularios (${sesIntakes.length+(s.intakeCompletado?1:0)})`},
+    {k:'regalos',l:'🎁 Regalos'},
   ];
   const tabBar=`<div style="display:flex;gap:6px;margin-bottom:16px;border-bottom:1px solid var(--border);padding-bottom:0">
     ${tabs.map(t=>`<button onclick="setSerDetTab('${t.k}','${id}')" style="font-size:12px;padding:7px 14px;border-radius:8px 8px 0 0;cursor:pointer;border:1px solid ${_showSerTab===t.k?'var(--border)':'transparent'};border-bottom:${_showSerTab===t.k?'1px solid var(--card)':'none'};background:${_showSerTab===t.k?'var(--card)':'transparent'};color:${_showSerTab===t.k?'var(--gl)':'var(--muted)'};margin-bottom:-1px">${t.l}</button>`).join('')}
@@ -2721,6 +2905,35 @@ function _renderSerDet(s){
         <div style="font-size:32px;margin-bottom:10px">💫</div>
         <p style="color:var(--muted);font-size:13px">Esta persona aún no completó ningún formulario de integración.</p>
       </div>`}
+    </div>`;
+  }
+
+  if(_showSerTab==='regalos'){
+    // Buscar eventos de este ser por email o nombre
+    const email=(s.email&&s.email!=='None'?s.email:'').toLowerCase();
+    const nombre=s.nombre.toLowerCase();
+    const misEvs=_rgEvs.filter(e=>{
+      const em=(e.serEmail||'').toLowerCase();
+      const nm=(e.serNombre||'').toLowerCase();
+      return (email&&em===email)||(nombre&&nm===nombre);
+    });
+    const descargas=misEvs.filter(e=>e.tipo==='descarga');
+    const CANAL_L={'portal_lcp':'🏠 LCP','portal_jcc':'🌿 JCC','directo':'🔗 Directo','admin':'⚙️ Admin'};
+    body=`<div style="max-height:380px;overflow-y:auto">
+      ${descargas.length
+        ?descargas.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(e=>`
+          <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
+            <span style="font-size:22px">🎁</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:13px;font-weight:700;color:var(--gl)">${e.regaloNombre||'Regalo'}</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">${e.fecha||'—'} · ${CANAL_L[e.canal]||e.canal||'—'}</div>
+            </div>
+            <span style="font-size:10px;padding:3px 8px;border-radius:10px;background:rgba(155,130,212,.15);color:#C4AEFF">⬇️ Descarga</span>
+          </div>`).join('')
+        :`<div style="text-align:center;padding:32px">
+          <div style="font-size:32px;margin-bottom:10px">🎁</div>
+          <p style="color:var(--muted);font-size:13px">Este ser no ha descargado ningún regalo aún.</p>
+        </div>`}
     </div>`;
   }
 
@@ -5409,39 +5622,125 @@ function setMktTab(t){
 }
 
 /* ── REGALOS ── */
-let _curRegaloId=null;
+let _curRegaloId=null, _rgTab='resumen', _rgEvs=[];
 
 async function renderMktRegalos(){
   const el=document.getElementById('mktRegalos');
   if(!el)return;
-  const activos=regalos.filter(r=>r.activo!==false).length;
-
-  // Load tracking stats from regalo_eventos
-  let stats={};
   try{
-    const {data:evs}=await _sb.from('regalo_eventos').select('data');
-    if(evs?.length){
-      evs.forEach(e=>{
-        const d=e.data||{};
-        const rid=d.regaloId;
-        const tipo=d.tipo;
-        if(!rid||!tipo)return;
-        if(!stats[rid])stats[rid]={envio_wa:0,envio_email:0,descarga:0};
-        if(stats[rid][tipo]!==undefined)stats[rid][tipo]++;
-      });
-    }
+    const {data}=await _sb.from('regalo_eventos').select('data');
+    _rgEvs=(data||[]).map(r=>r.data||{});
   }catch(e){console.warn('regalo_eventos:',e);}
+  _renderRgTab();
+}
 
-  el.innerHTML=`
+function setRgTab(t){
+  _rgTab=t;
+  _renderRgTab();
+}
+
+function _renderRgTab(){
+  const el=document.getElementById('mktRegalos');
+  if(!el)return;
+
+  const tabBar=`<div style="display:flex;gap:6px;margin-bottom:18px">
+    <button class="tab-btn ${_rgTab==='resumen'?'active':''}" onclick="setRgTab('resumen')">📊 Resumen</button>
+    <button class="tab-btn ${_rgTab==='lista'?'active':''}" onclick="setRgTab('lista')">🎁 Regalos</button>
+  </div>`;
+
+  el.innerHTML = tabBar + (_rgTab==='resumen' ? _renderRgResumen() : _renderRgLista());
+}
+
+function _renderRgResumen(){
+  const now=new Date();
+  const mesStr=now.toISOString().slice(0,7);
+  const yr=now.getFullYear();
+  const descTotal=_rgEvs.filter(e=>e.tipo==='descarga').length;
+  const descMes=_rgEvs.filter(e=>e.tipo==='descarga'&&e.mes===mesStr).length;
+  const descAnio=_rgEvs.filter(e=>e.tipo==='descarga'&&e.fecha?.startsWith(yr)).length;
+  const waTotal=_rgEvs.filter(e=>e.tipo==='envio_wa').length;
+  const emailTotal=_rgEvs.filter(e=>e.tipo==='envio_email').length;
+
+  // Por canal
+  const canales={};
+  _rgEvs.filter(e=>e.tipo==='descarga').forEach(e=>{
+    const c=e.canal||'directo';
+    canales[c]=(canales[c]||0)+1;
+  });
+  const CANAL_LABEL={'portal_lcp':'🏠 Portal LCP','portal_jcc':'🌿 Portal JCC','directo':'🔗 Directo','admin':'⚙️ Admin'};
+  const canalBar=Object.entries(canales).sort((a,b)=>b[1]-a[1]).map(([c,n])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card2);border-radius:8px;margin-bottom:6px">
+      <span style="font-size:13px">${CANAL_LABEL[c]||c}</span>
+      <span style="font-size:14px;font-weight:700;color:var(--gl)">${n}</span>
+    </div>`).join('')||`<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Sin datos aún</div>`;
+
+  // Por mes (últimos 6 meses)
+  const meses={};
+  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);meses[d.toISOString().slice(0,7)]=0;}
+  _rgEvs.filter(e=>e.tipo==='descarga'&&e.mes).forEach(e=>{if(e.mes in meses)meses[e.mes]++;});
+  const maxMes=Math.max(1,...Object.values(meses));
+  const mesBar=Object.entries(meses).map(([m,n])=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+      <div style="font-size:11px;color:var(--muted);width:42px">${m.slice(5)}</div>
+      <div style="flex:1;background:rgba(201,168,76,.08);border-radius:4px;height:18px;overflow:hidden">
+        <div style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));width:${Math.round(n/maxMes*100)}%;border-radius:4px"></div>
+      </div>
+      <div style="font-size:11px;font-weight:700;color:var(--gl);width:22px;text-align:right">${n}</div>
+    </div>`).join('');
+
+  // Top regalos por descargas
+  const porRegalo={};
+  _rgEvs.filter(e=>e.tipo==='descarga').forEach(e=>{
+    const k=e.regaloNombre||e.regaloId||'—';
+    porRegalo[k]=(porRegalo[k]||0)+1;
+  });
+  const topRegalos=Object.entries(porRegalo).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([n,c])=>`
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;background:var(--card2);border-radius:8px;margin-bottom:6px">
+      <span style="font-size:13px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</span>
+      <span style="font-size:14px;font-weight:700;color:var(--purple);margin-left:8px">${c} ⬇️</span>
+    </div>`).join('')||`<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Sin descargas registradas</div>`;
+
+  return`
+    <div class="kpi-grid" style="margin-bottom:18px">
+      <div class="kc pu"><div class="ki">⬇️</div><div class="kl">Descargas totales</div><div class="kv">${descTotal}</div></div>
+      <div class="kc gr"><div class="ki">📅</div><div class="kl">Este mes</div><div class="kv">${descMes}</div></div>
+      <div class="kc bl"><div class="ki">📆</div><div class="kl">Este año</div><div class="kv">${descAnio}</div></div>
+      <div class="kc go"><div class="ki">💬</div><div class="kl">Compartidos WA</div><div class="kv">${waTotal}</div></div>
+      <div class="kc or"><div class="ki">✉️</div><div class="kl">Enviados email</div><div class="kv">${emailTotal}</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
+      <div class="cc">
+        <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📡 Por canal de descarga</h3>
+        ${canalBar}
+      </div>
+      <div class="cc">
+        <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Descargas por mes</h3>
+        ${mesBar}
+      </div>
+      <div class="cc">
+        <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏆 Top regalos</h3>
+        ${topRegalos}
+      </div>
+    </div>`;
+}
+
+function _renderRgLista(){
+  const stats={};
+  _rgEvs.forEach(e=>{
+    const rid=e.regaloId;if(!rid)return;
+    if(!stats[rid])stats[rid]={envio_wa:0,envio_email:0,descarga:0};
+    if(stats[rid][e.tipo]!==undefined)stats[rid][e.tipo]++;
+  });
+  const MARCA_L={lcp:'🏠 LCP',jcc:'🌿 JCC',ambos:'✦ Ambos'};
+  return`
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div style="font-size:13px;color:var(--muted)">${regalos.length} regalo${regalos.length!==1?'s':''} · ${activos} activo${activos!==1?'s':''}</div>
+      <div style="font-size:13px;color:var(--muted)">${regalos.length} regalo${regalos.length!==1?'s':''} · ${regalos.filter(r=>r.activo!==false).length} activo${regalos.filter(r=>r.activo!==false).length!==1?'s':''}</div>
       <button class="btn btn-p" onclick="openRegaloModal(null)">+ Nuevo regalo</button>
     </div>
     ${!regalos.length
-      ?`<div class="es"><div class="ei">🎁</div><p>No hay regalos configurados. Creá el primero con el botón de arriba.</p></div>`
+      ?`<div class="es"><div class="ei">🎁</div><p>No hay regalos configurados.</p></div>`
       :`<div style="display:flex;flex-direction:column;gap:12px">${regalos.map(r=>{
         const s=stats[r.id]||{envio_wa:0,envio_email:0,descarga:0};
-        const totalEnvios=(s.envio_wa||0)+(s.envio_email||0);
         return`<div class="card" style="padding:16px 18px">
           <div style="display:flex;align-items:flex-start;gap:14px">
             <div style="font-size:30px;flex-shrink:0;line-height:1">${r.icono||'🎁'}</div>
@@ -5449,6 +5748,7 @@ async function renderMktRegalos(){
               <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px">
                 <span style="font-size:15px;font-weight:700;color:var(--gl)">${r.nombre||'Sin nombre'}</span>
                 <span class="bdg ${r.activo!==false?'b-gr':'b-gy'}">${r.activo!==false?'Activo':'Inactivo'}</span>
+                ${r.marca?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:rgba(201,168,76,.12);color:var(--gold)">${MARCA_L[r.marca]||r.marca}</span>`:''}
               </div>
               ${r.descripcion?`<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${r.descripcion}</div>`:''}
               <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px">
@@ -5474,7 +5774,7 @@ async function renderMktRegalos(){
           </div>
         </div>`;
       }).join('')}</div>`
-    }`;
+    }`
 }
 
 function openRegaloModal(id){
@@ -5488,6 +5788,7 @@ function openRegaloModal(id){
   document.getElementById('rgMsgWA').value=r?.mensajeWA||'Hola {nombre}! ✨\n\nTe comparto este regalo especial de La Casa del Profit:\n\n📄 *{nombre_regalo}*\n\nDescargalo acá: {pdfUrl}\n\n¡Que lo disfrutes! 🌀\nJuan Cruz';
   document.getElementById('rgEmailAsunto').value=r?.emailAsunto||'Tu regalo: {nombre_regalo} ✨';
   document.getElementById('rgMsgEmail').value=r?.mensajeEmail||'Hola {nombre},\n\nTe comparto este regalo especial de La Casa del Profit:\n\n📄 {nombre_regalo}\n\nDescargalo acá: {pdfUrl}\n\n¡Que lo disfrutes!\n\n✨ Juan Cruz\nLa Casa del Profit';
+  document.getElementById('rgMarca').value=r?.marca||'lcp';
   document.getElementById('rgActivo').checked=r?.activo!==false;
   document.getElementById('moRegalo').classList.add('open');
 }
@@ -5505,6 +5806,7 @@ function saveRegalo(){
     mensajeWA:document.getElementById('rgMsgWA').value.trim(),
     emailAsunto:document.getElementById('rgEmailAsunto').value.trim(),
     mensajeEmail:document.getElementById('rgMsgEmail').value.trim(),
+    marca:document.getElementById('rgMarca').value,
     activo:document.getElementById('rgActivo').checked
   };
   if(_curRegaloId){
