@@ -120,6 +120,15 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .gen-stat .sv{font-size:18px;font-weight:800;color:var(--gl);}
 .gen-stat .sl{font-size:8px;color:var(--muted);text-transform:uppercase;margin-top:1px;}
 .pq-block{background:var(--card);border:1px solid #1E1C10;border-radius:12px;padding:16px;margin-bottom:12px;}
+.preg-dia{background:linear-gradient(135deg,#14102A,#1C1730);border:1px solid rgba(155,130,212,.3);
+  border-radius:12px;padding:16px 18px;margin-bottom:12px;position:relative;overflow:hidden;}
+.preg-dia::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,transparent,var(--esp),var(--gl),var(--esp),transparent);}
+.preg-dia-label{font-size:10px;font-weight:700;color:var(--esp);text-transform:uppercase;
+  letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.preg-dia-label::after{content:'';flex:1;height:1px;background:rgba(155,130,212,.2);}
+.preg-dia-texto{font-size:15px;font-weight:600;color:var(--text);line-height:1.6;font-style:italic;}
+.preg-dia-dim{font-size:11px;color:rgba(155,130,212,.6);margin-top:8px;}
 .pq-lbl{font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
 .pq-row{display:flex;gap:7px;align-items:flex-start;}
 .pq-row .fg{flex:1;margin:0;}
@@ -416,12 +425,14 @@ async function _doSave(cb){
   const idx=allInscList.findIndex(i=>i.id===curInsc.id);
   if(idx>=0)allInscList[idx]={...allInscList[idx],progreso:{...progreso},paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||''};
   sessionStorage.setItem('pp_all_insc',JSON.stringify(allInscList));
-  // Save to Supabase via API (sends progreso + extraData with paraQue/resultadoDeseado)
+  // Save to Supabase via API
+  const _code=sessionStorage.getItem('pp_code')||'';
   try{
-    const body={recordId:curInsc.id,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[],habitosElegidos:curInsc.habitosElegidos||{},semanas:curInsc.semanas||[]}};
+    const body={recordId:curInsc.id,code:_code,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[],habitosElegidos:curInsc.habitosElegidos||{}}};
     const resp=await fetch(SAVE_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
     if(!resp.ok)console.warn('save-progreso HTTP',resp.status);
-  }catch(e){console.warn('save error:',e.message);}
+    else _showSyncDot(true);
+  }catch(e){console.warn('save error:',e.message);_showSyncDot(false);}
   if(cb)cb();
 }
 
@@ -548,6 +559,18 @@ function updateProgressBar(){
   if(fill){fill.style.width=pct+'%';fill.style.background=curProg?.col||'#C9A84C';}
   if(pctEl)pctEl.textContent=pct+'% completado';
 }
+let _syncDotTimer;
+function _showSyncDot(ok){
+  let dot=document.getElementById('syncDot');
+  if(!dot){dot=document.createElement('div');dot.id='syncDot';dot.style.cssText='position:fixed;bottom:56px;right:16px;font-size:10px;padding:3px 8px;border-radius:20px;z-index:9000;transition:opacity .4s;pointer-events:none';document.body.appendChild(dot);}
+  dot.textContent=ok?'✅ Guardado':'⚠️ Sin conexión';
+  dot.style.background=ok?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)';
+  dot.style.color=ok?'#10B981':'#EF4444';
+  dot.style.border=`1px solid ${ok?'#10B98133':'#EF444433'}`;
+  dot.style.opacity='1';
+  clearTimeout(_syncDotTimer);
+  _syncDotTimer=setTimeout(()=>{dot.style.opacity='0';},2500);
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // GENERAL
@@ -573,6 +596,7 @@ function renderGeneral(){
         <div class="gen-stat"><div class="sv">${best?'🔥'+best:'—'}</div><div class="sl">Mejor racha</div></div>
       </div>
     </div>
+    <div id="pregDiaBox"></div>
     <div class="pq-block">
       <div class="sec-title" style="margin-bottom:8px"><span class="ico">🌟</span> Mi Para Qué</div>
       <div class="pq-lbl">¿Por qué estoy haciendo este programa?</div>
@@ -587,7 +611,25 @@ function renderGeneral(){
     </div>
     ${totInc?`<div class="sec-block"><div class="sec-title"><span class="ico">✨</span> Sesiones incluidas</div><div style="display:flex;flex-wrap:wrap;gap:7px">${Object.entries(sesInc).map(([n,q])=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;display:flex;align-items:center;gap:6px"><span style="font-size:11px">${n}</span><span style="font-size:11px;font-weight:800;color:var(--gl)">${q}x</span></div>`).join('')}</div></div>`:''}
   `;
+  loadPregDia();
 }
+async function loadPregDia(){
+  try{
+    const{data}=await _sb.from('comunidad_contenido').select('id,data');
+    const pregs=(data||[]).map(r=>r.data||{}).filter(p=>p.tipo==='pregunta'&&p.activo!==false);
+    const box=document.getElementById('pregDiaBox');
+    if(!pregs.length||!box)return;
+    const hoy=new Date().toISOString().split('T')[0];
+    let h=0;for(let i=0;i<hoy.length;i++)h=(Math.imul(31,h)+hoy.charCodeAt(i))|0;
+    const p=pregs[Math.abs(h)%pregs.length];
+    box.innerHTML=`<div class="preg-dia">
+      <div class="preg-dia-label">✦ Pregunta del día</div>
+      <div class="preg-dia-texto">${p.texto||''}</div>
+      ${p.matiz?`<div class="preg-dia-dim">${p.matiz}</div>`:''}
+    </div>`;
+  }catch(e){}
+}
+
 function savePQ(){
   const txt=document.getElementById('pqText').value;curInsc.paraQue=txt;progreso._paraQue=txt;
   saveProgress(()=>{const el=document.getElementById('pqOk');if(el){el.style.display='block';setTimeout(()=>el.style.display='none',2000);}});
