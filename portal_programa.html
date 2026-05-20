@@ -235,6 +235,33 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .btn-save-nota:hover{opacity:.9;}
 .nota-saved{font-size:10px;color:var(--green);display:none;}
 
+/* ── STREAK ── */
+.streak-block{background:linear-gradient(135deg,#1A1200,#0E0A00);border:1px solid rgba(201,168,76,.25);border-radius:14px;padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;gap:14px;position:relative;overflow:hidden;}
+.streak-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.streak-fire{font-size:38px;flex-shrink:0;}
+.streak-num{font-size:34px;font-weight:900;color:var(--gl);line-height:1;}
+.streak-lbl{font-size:11px;color:var(--muted);margin-top:2px;}
+.streak-best{font-size:10px;color:var(--gd);margin-top:5px;}
+/* ── REFLEXIÓN SEMANAL ── */
+.reflexion-block{background:linear-gradient(135deg,#14102A,#0E0C1A);border:1px solid rgba(155,130,212,.22);border-radius:14px;padding:16px;margin-bottom:12px;position:relative;overflow:hidden;}
+.reflexion-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--esp),transparent);}
+.reflexion-lbl{font-size:10px;font-weight:700;color:var(--esp);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.reflexion-lbl::after{content:'';flex:1;height:1px;background:rgba(155,130,212,.2);}
+.reflexion-pregunta{font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px;font-style:italic;}
+.reflexion-saved{font-size:10px;color:var(--green);display:none;}
+/* ── CARTA FUTURO ── */
+.carta-block{border-radius:14px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
+.carta-block.pendiente{background:linear-gradient(135deg,#0E0A1A,#1A1230);border:1px dashed rgba(201,168,76,.22);}
+.carta-block.sellada{background:linear-gradient(135deg,#0A100E,#141F1A);border:1px solid rgba(61,170,106,.2);}
+.carta-block.revelada{background:linear-gradient(135deg,#14102A,#1A1230);border:1px solid rgba(201,168,76,.4);}
+.carta-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--esp),transparent);}
+.carta-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.carta-lbl::after{content:'';flex:1;height:1px;background:rgba(201,168,76,.12);}
+.carta-titulo{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:4px;}
+.carta-sub{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:12px;}
+.carta-texto{font-size:13px;color:var(--text);line-height:1.8;white-space:pre-wrap;font-style:italic;padding:12px;background:rgba(0,0,0,.25);border-radius:8px;border-left:3px solid rgba(201,168,76,.3);margin-bottom:8px;}
+.carta-fecha{font-size:10px;color:var(--muted);text-align:right;}
+
 /* ── CALENDARIO ── */
 .cal-timeline{background:var(--card);border:1px solid #1E1C10;border-radius:12px;padding:14px;margin-bottom:12px;display:flex;align-items:center;gap:16px;}
 .cal-tl-item{text-align:center;}
@@ -580,10 +607,43 @@ function renderGeneral(){
   const ses=allSessions.filter(s=>s.serId===curSer.id||s.ser===curSer.nombre);
   const doneSes=ses.filter(s=>(s.estado||'').toLowerCase().includes('comp')).length;
   let best=0;sems.forEach((_,i)=>{const p=getP(i);(sems[i].habitos||[]).forEach(h=>{const hid=h.id||h.texto||h;const s=calcStreak((p.habitos||{})[hid]||[]);if(s>best)best=s;});});
+  const gStreak=calcGlobalStreak();const streak=Math.max(best,gStreak);
   const sesInc=curProg.sesionesIncluidas_v2||{};const totInc=Object.values(sesInc).reduce((a,n)=>a+n,0);
   const durLine=[];if(curProg.meses)durLine.push(curProg.meses+' mes'+(curProg.meses>1?'es':''));if(curProg.semanas_dur)durLine.push(curProg.semanas_dur+' sem.');
   const paraQue=curInsc.paraQue||progreso._paraQue||'';
   const resultado=curInsc.resultadoDeseado||progreso._resultadoDeseado||'';
+  const streakBlock=`<div class="streak-block">
+    <div class="streak-fire">${streak>0?'🔥':'🌱'}</div>
+    <div>
+      <div class="streak-num">${streak}</div>
+      <div class="streak-lbl">${streak===1?'día consecutivo':'días consecutivos'}</div>
+      <div class="streak-best">${streak===0?'Completá hábitos hoy para empezar tu racha':'🏆 ¡Seguí así, vas muy bien!'}</div>
+    </div>
+  </div>`;
+  const cs=cartaStatus();
+  const cartaHTML=cs==='pendiente'?`<div class="carta-block pendiente">
+    <div class="carta-lbl" style="color:var(--gold)">✉ Carta a mi futuro yo</div>
+    <div style="font-size:22px;margin-bottom:8px">💌</div>
+    <div class="carta-titulo">Escribí una carta a quien vas a ser al terminar</div>
+    <div class="carta-sub">Se sella al guardarla. Solo la vas a poder leer cuando completes el programa.</div>
+    <textarea id="cartaInput" style="width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);border-radius:9px;color:var(--text);font-size:13px;padding:10px;outline:none;resize:vertical;font-family:inherit;line-height:1.7;box-sizing:border-box;margin-bottom:10px" placeholder="Querido yo del futuro..."></textarea>
+    <button onclick="guardarCarta()" style="width:100%;padding:10px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer">✉ Sellar mi carta</button>
+  </div>`
+  :cs==='sellada'?`<div class="carta-block sellada">
+    <div class="carta-lbl" style="color:var(--green)">✉ Carta a mi futuro yo</div>
+    <div style="font-size:22px;margin-bottom:8px">🔒</div>
+    <div class="carta-titulo">Tu carta está sellada</div>
+    <div class="carta-sub">Escrita el ${progreso._carta.fecha}. Se abrirá cuando completes el programa.</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)"><span>📊</span>${calcPct()}% del programa completado</div>
+  </div>`
+  :`<div class="carta-block revelada">
+    <div class="carta-lbl" style="color:var(--gold)">✉ Carta a mi futuro yo</div>
+    <div style="font-size:22px;margin-bottom:8px">🎉</div>
+    <div class="carta-titulo">¡Completaste el programa!</div>
+    <div class="carta-sub">Escrita el ${progreso._carta.fecha} — por quien eras al empezar.</div>
+    <div class="carta-texto">${(progreso._carta.texto||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+    <div class="carta-fecha">Escrita el ${progreso._carta.fecha}</div>
+  </div>`;
   document.getElementById('mainContent').innerHTML=`
     <div class="gen-hero">
       <span class="gen-hero-ico">${curProg.ico||'📚'}</span>
@@ -593,10 +653,12 @@ function renderGeneral(){
       <div class="gen-stats">
         <div class="gen-stat"><div class="sv">${doneSem}/${sems.length}</div><div class="sl">Semanas</div></div>
         <div class="gen-stat"><div class="sv">${doneSes}${totInc?'/'+totInc:''}</div><div class="sl">Sesiones</div></div>
-        <div class="gen-stat"><div class="sv">${best?'🔥'+best:'—'}</div><div class="sl">Mejor racha</div></div>
+        <div class="gen-stat"><div class="sv">${streak?'🔥'+streak:'—'}</div><div class="sl">Racha</div></div>
       </div>
     </div>
+    ${streakBlock}
     <div id="pregDiaBox"></div>
+    ${cartaHTML}
     <div class="pq-block">
       <div class="sec-title" style="margin-bottom:8px"><span class="ico">🌟</span> Mi Para Qué</div>
       <div class="pq-lbl">¿Por qué estoy haciendo este programa?</div>
@@ -842,6 +904,15 @@ function renderSemana(idx){
       <div class="nota-wrap"><textarea id="notaText" placeholder="Anotá reflexiones, aprendizajes, preguntas…">${p.nota||''}</textarea>
       <div class="nota-save-row"><button class="btn-save-nota" onclick="saveNota()">Guardar nota</button><span class="nota-saved" id="notaSaved">✓ Guardado</span></div></div>
     </div>
+    <div class="reflexion-block">
+      <div class="reflexion-lbl">✦ Reflexión de la semana</div>
+      <div class="reflexion-pregunta">Mi gran aprendizaje esta semana fue...</div>
+      <textarea id="reflexionText" style="width:100%;min-height:60px;background:rgba(0,0,0,.3);border:1px solid rgba(155,130,212,.2);border-radius:9px;color:var(--text);font-size:13px;padding:10px;outline:none;resize:vertical;font-family:inherit;line-height:1.6;transition:border-color .2s;box-sizing:border-box" placeholder="Escribí en una línea..." onfocus="this.style.borderColor='var(--esp)'" onblur="this.style.borderColor='rgba(155,130,212,.2)'">${p.reflexion||''}</textarea>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
+        <button onclick="saveReflexion()" style="padding:7px 16px;background:rgba(155,130,212,.15);border:1px solid rgba(155,130,212,.3);border-radius:7px;color:var(--esp);font-size:12px;font-weight:700;cursor:pointer">Guardar</button>
+        <span class="reflexion-saved" id="reflexionSaved">✓ Guardado</span>
+      </div>
+    </div>
   `;
 }
 function toggleDes(dId,semIdx){
@@ -876,7 +947,33 @@ function saveNota(){
   getP(curSemIdx).nota=txt;
   saveProgress(()=>{const el=document.getElementById('notaSaved');if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}});
 }
-function saveNotaImmediate(){const el=document.getElementById('notaText');if(el)getP(curSemIdx).nota=el.value;}
+function saveNotaImmediate(){const el=document.getElementById('notaText');if(el)getP(curSemIdx).nota=el.value;const re=document.getElementById('reflexionText');if(re)getP(curSemIdx).reflexion=re.value;}
+function saveReflexion(){
+  const txt=(document.getElementById('reflexionText')||{}).value;if(txt===undefined)return;
+  getP(curSemIdx).reflexion=txt;
+  saveProgress(()=>{const el=document.getElementById('reflexionSaved');if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}});
+}
+
+function calcGlobalStreak(){
+  const ht=(curInsc&&curInsc.habTrack)||{};
+  let s=0;const d=new Date();
+  while(s<365){
+    const k=d.toISOString().slice(0,10);
+    if(Object.values(ht[k]||{}).some(Boolean)){s++;d.setDate(d.getDate()-1);}else break;
+  }
+  return s;
+}
+function cartaStatus(){
+  if(!progreso._carta||!progreso._carta.texto)return'pendiente';
+  const sems=curInsc.semanas||[];let done=0;sems.forEach((_,i)=>{if(semDone(i))done++;});
+  return(done>=sems.length&&sems.length>0)?'revelada':'sellada';
+}
+function guardarCarta(){
+  const el=document.getElementById('cartaInput');if(!el)return;
+  const texto=el.value.trim();if(!texto){toast('Escribí algo antes de sellar tu carta ✉️');return;}
+  progreso._carta={texto,fecha:new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})};
+  saveProgress(()=>{renderGeneral();toast('Tu carta fue sellada. Se abrirá al terminar el programa 💛',3200);});
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // CALENDARIO
