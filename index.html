@@ -639,6 +639,7 @@ select.fi:focus{border-color:var(--gold);}
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabProsp" onclick="setMktTab('prosp')">🌱 Prospectos</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
+      <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Estadísticas</button>
      </div>
      <div id="mktPub"></div>
      <div id="mktConv" style="display:none"></div>
@@ -646,6 +647,7 @@ select.fi:focus{border-color:var(--gold);}
      <div id="mktMeta" style="display:none"></div>
      <div id="mktProsp" style="display:none"></div>
      <div id="mktRegalos" style="display:none"></div>
+     <div id="mktStats" style="display:none"></div>
     </div>
 
     <!-- ACCESOS RÁPIDOS -->
@@ -738,6 +740,15 @@ select.fi:focus{border-color:var(--gold);}
           <div class="acceso-info">
             <div class="acceso-titulo">Imagen Comunidad</div>
             <div class="acceso-desc">Generador de imagen para el grupo de WhatsApp</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
+        <a href="manual.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">📖</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Manual de Uso</div>
+            <div class="acceso-desc">Guía completa del sistema — cómo usar cada módulo</div>
           </div>
           <span class="acceso-ext">↗</span>
         </a>
@@ -6080,7 +6091,7 @@ function doImport(){
 let mktTab='pub';
 function setMktTab(t){
   mktTab=t;
-  ['pub','conv','ret','meta','prosp','regalos'].forEach(x=>{
+  ['pub','conv','ret','meta','prosp','regalos','stats'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
@@ -6091,7 +6102,85 @@ function setMktTab(t){
   else if(t==='ret')renderMktRet();
   else if(t==='prosp')renderMktProsp();
   else if(t==='regalos')renderMktRegalos();
+  else if(t==='stats')renderMktStats();
   else renderMetaTab();
+}
+
+/* ── ESTADÍSTICAS DE CLICKS ── */
+async function renderMktStats(){
+  const el=document.getElementById('mktStats');
+  if(!el)return;
+  el.innerHTML=`<div class="es"><div class="ei">⏳</div><p>Cargando estadísticas...</p></div>`;
+  try{
+    const{data}=await _sb.from('regalo_eventos').select('data');
+    const evs=(data||[]).map(r=>r.data||{}).filter(e=>e.tipo==='click_btn'&&e.boton);
+    if(!evs.length){
+      el.innerHTML=`<div class="es"><div class="ei">📊</div><p>Aún no hay clicks registrados.<br><span style="font-size:12px;color:var(--muted)">Los clicks de recursos_jcc.html aparecerán acá una vez que la página esté activa.</span></p></div>`;
+      return;
+    }
+    // Agrupar por botón
+    const byBtn={};
+    evs.forEach(e=>{
+      byBtn[e.boton]=(byBtn[e.boton]||0)+1;
+    });
+    const sorted=Object.entries(byBtn).sort((a,b)=>b[1]-a[1]);
+    const total=evs.length;
+
+    // Agrupar por fecha (últimos 30 días)
+    const byDate={};
+    evs.forEach(e=>{if(e.fecha)byDate[e.fecha]=(byDate[e.fecha]||0)+1;});
+    const fechas=Object.entries(byDate).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
+
+    // Labels legibles
+    const LABELS={
+      'header_agendar_sesion':'Header — Agendá una sesión',
+      'pregunta_siguiente':'Pregunta — Otra pregunta →',
+      'cta_quiero_ir_mas_profundo':'CTA — Quiero ir más profundo',
+    };
+    const label=b=>{
+      if(LABELS[b])return LABELS[b];
+      if(b.startsWith('regalo_'))return'🎁 '+b.replace(/^regalo_[^_]+_/,'').replace(/-/g,' ');
+      return b;
+    };
+
+    el.innerHTML=`
+      <div class="kpi-grid" style="margin-bottom:20px">
+        <div class="kpi-card"><div class="kv">${total}</div><div class="kl">Clicks totales</div></div>
+        <div class="kpi-card"><div class="kv">${sorted.length}</div><div class="kl">Botones distintos</div></div>
+        <div class="kpi-card"><div class="kv">${sorted[0]?sorted[0][1]:0}</div><div class="kl">Más clickeado</div></div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px;padding:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">Clicks por botón</div>
+        ${sorted.map(([btn,n])=>{
+          const pct=Math.round(n/total*100);
+          return`<div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:13px;color:var(--text)">${label(btn)}</span>
+              <span style="font-size:13px;font-weight:700;color:var(--gl)">${n} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pct}%)</span></span>
+            </div>
+            <div style="height:6px;background:var(--card2);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:4px;transition:width .4s"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+
+      ${fechas.length?`<div class="card" style="padding:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">Clicks por día (últimos 14 días)</div>
+        <div style="display:flex;align-items:flex-end;gap:6px;height:80px">
+          ${(()=>{const mx=Math.max(...fechas.map(([,n])=>n),1);return fechas.map(([f,n])=>`
+            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px" title="${f}: ${n} clicks">
+              <span style="font-size:9px;color:var(--muted)">${n}</span>
+              <div style="width:100%;background:linear-gradient(180deg,var(--gl),var(--gold));border-radius:3px 3px 0 0;height:${Math.round(n/mx*60)}px;min-height:3px"></div>
+              <span style="font-size:8px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">${f.slice(5)}</span>
+            </div>`).join('');})()}
+        </div>
+      </div>`:''}
+    `;
+  }catch(e){
+    el.innerHTML=`<div class="es"><div class="ei">⚠️</div><p>Error al cargar estadísticas</p></div>`;
+  }
 }
 
 /* ── REGALOS ── */
