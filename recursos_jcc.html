@@ -136,7 +136,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <!-- HEADER -->
 <header class="site-header">
   <div class="brand">Juan Cruz <span>Consciencia</span></div>
-  <a class="nav-link" href="/registro_jcc.html">Agendá una sesión ↗</a>
+  <a class="nav-link" href="/registro_jcc.html" onclick="trackClick('header_agendar_sesion')">Agendá una sesión ↗</a>
 </header>
 
 <!-- HERO -->
@@ -153,7 +153,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="featured-q" id="featuredQ">Cargando...</div>
     <div class="featured-dim" id="featuredDim"></div>
     <div class="featured-next">
-      <button class="btn-next" onclick="nextFeatured()">Otra pregunta →</button>
+      <button class="btn-next" onclick="nextFeatured();trackClick('pregunta_siguiente')">Otra pregunta →</button>
     </div>
   </div>
 </div>
@@ -170,8 +170,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <!-- REGALOS SECTION -->
 <div class="regalos-wrap">
-  <div class="sec-title" style="margin-bottom:8px">Recursos gratuitos para vos</div>
-  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.65">Materiales que preparé para acompañar tu proceso de expansión. Descargalos sin costo.</p>
+  <div class="sec-title" style="margin-bottom:8px">Regalos para vos</div>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.65">Preparé estos materiales para vos. Son un regalo — descargalos y que te sirvan.</p>
   <div id="regalosWrap">
     <div class="empty"><div class="ei">🎁</div><p>Cargando recursos...</p></div>
   </div>
@@ -182,7 +182,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="cta-card">
     <h2>¿Querés ir más profundo?</h2>
     <p>Una sesión de Barras de Access, Proceso de Cuerpos o Sesión Profit puede ser el próximo paso en tu camino de expansión.</p>
-    <a class="btn-cta" href="/registro_jcc.html">Reservar una sesión ✨</a>
+    <a class="btn-cta" href="/registro_jcc.html" onclick="trackClick('cta_quiero_ir_mas_profundo')">Reservar una sesión ✨</a>
   </div>
 </div>
 
@@ -191,46 +191,44 @@ const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
-const DIM_ORDER=['Todas','Identidad','Dinero','Cuerpo','Relaciones','Propósito','Consciencia'];
+function trackClick(boton){
+  try{
+    _sb.from('regalo_eventos').insert({data:{
+      tipo:'click_btn',
+      boton,
+      pagina:'recursos_jcc',
+      fecha:new Date().toISOString().split('T')[0],
+      ts:new Date().toISOString()
+    }});
+  }catch(e){}
+}
+
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 
-let allPregs=[], curDim='Todas', featIdx=0;
+let allPregs=[], featIdx=0;
 
 /* ── FEATURED ── */
 function showFeatured(){
-  const pool=curDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===curDim);
-  if(!pool.length)return;
-  const p=pool[featIdx%pool.length];
+  if(!allPregs.length)return;
+  const p=allPregs[featIdx%allPregs.length];
   document.getElementById('featuredQ').textContent=p.texto;
-  document.getElementById('featuredDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+p.matiz;
+  document.getElementById('featuredDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+(p.matiz||'');
 }
 function nextFeatured(){
-  const pool=curDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===curDim);
-  featIdx=(featIdx+1)%Math.max(1,pool.length);
+  featIdx=(featIdx+1)%Math.max(1,allPregs.length);
   showFeatured();
-}
-
-/* ── DIM FILTER ── */
-function buildPills(){
-  document.getElementById('dimPills').innerHTML=DIM_ORDER.map(d=>`
-    <button class="dim-pill${d===curDim?' active':''}" data-d="${d}" onclick="setDim('${d}')">${DIM_ICO[d]||''} ${d}</button>
-  `).join('');
-}
-function setDim(d){
-  curDim=d;featIdx=0;
-  buildPills();showFeatured();renderGrid();
 }
 
 /* ── GRID ── */
 function renderGrid(){
-  const pool=curDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===curDim);
-  if(!pool.length){
-    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>No hay preguntas en esta dimensión.</p></div>';
+  if(!allPregs.length){
+    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Las preguntas estarán disponibles pronto.</p></div>';
     return;
   }
-  document.getElementById('qGrid').innerHTML=pool.map(p=>`
-    <div class="q-card" data-d="${p.matiz}">
-      <div class="q-dim-tag">${DIM_ICO[p.matiz]||''} ${p.matiz}</div>
+  document.getElementById('qCount').textContent=`${allPregs.length} preguntas expansivas`;
+  document.getElementById('qGrid').innerHTML=allPregs.map(p=>`
+    <div class="q-card" data-d="${p.matiz||''}">
+      ${p.matiz?`<div class="q-dim-tag">${DIM_ICO[p.matiz]||''} ${p.matiz}</div>`:''}
       <div class="q-texto">${p.texto}</div>
     </div>
   `).join('');
@@ -248,17 +246,17 @@ async function loadRegalos(){
       document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
       return;
     }
-    document.getElementById('regalosWrap').innerHTML=lista.map(r=>{
+    document.getElementById('regalosWrap').innerHTML=`<div class="regalos-grid">${lista.map(r=>{
       const tUrl=`${window.location.origin}/api/track-regalo?rid=${encodeURIComponent(r.id)}&canal=recursos_jcc`;
       return`<div class="regalo-card">
         <div class="regalo-body">
           <span class="regalo-ico">${r.icono||'🎁'}</span>
           <div class="regalo-nombre">${r.nombre||'Regalo'}</div>
           ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
-          <a class="btn-dl-jcc" href="${tUrl}" target="_blank">⬇️ Descargar gratis</a>
+          <a class="btn-dl-jcc" href="${tUrl}" target="_blank" onclick="trackClick('regalo_${r.id}_${(r.nombre||'').replace(/\\s+/g,'-').toLowerCase().slice(0,30)}')">🎁 Recibir regalo</a>
         </div>
       </div>`;
-    }).join('');
+    }).join('')}</div>`;
   }catch(e){
     document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
   }
@@ -284,13 +282,10 @@ async function init(){
   if(!allPregs.length){
     document.getElementById('featuredQ').textContent='¿Qué elegiría si confiara en mí?';
     document.getElementById('featuredDim').textContent='🪞 Identidad';
-
-    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Las preguntas estarán disponibles pronto.</p></div>';
   } else {
     showFeatured();
-    buildPills();
-    renderGrid();
   }
+  renderGrid();
 
   await loadRegalos();
 }
