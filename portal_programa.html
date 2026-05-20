@@ -318,6 +318,12 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 @keyframes spin{to{transform:rotate(360deg);}}
 #loader p{color:var(--gl);font-size:12px;letter-spacing:1px;}
 
+/* ── MI PROCESO ── */
+.proc-section{background:var(--card);border:1px solid #1E1C10;border-radius:14px;padding:16px;margin-bottom:12px;}
+.proc-label{font-size:9px;font-weight:700;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+.proc-value{font-size:14px;color:var(--text);line-height:1.65;}
+.proc-tag{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);margin:3px 3px 3px 0;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:720px){
   #app{height:auto;overflow:visible;}
@@ -374,6 +380,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
         <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
         <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
         <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
+        <div class="s-tab"        id="tab-proceso"      onclick="switchTab('proceso')"><span class="ti">📋</span>Mi Proceso</div>
       </div>
       <div id="weekListWrap" style="flex:1;display:none;flex-direction:column;overflow-y:auto;">
         <div class="s-sec-lbl">Semanas</div>
@@ -397,7 +404,7 @@ const SAVE_FN  = '/api/save-progreso';
 let _sb, curSer=null, curInsc=null, curProg=null;
 let curSemIdx=0, curTab='general', progreso={};
 let calDate=new Date(), selDay=null;
-let _pCalView='mes', _pCalYear=new Date().getFullYear(), _pCalMonth=new Date().getMonth(), _pCalWeek=0;
+let _pCalView='sem', _pCalYear=new Date().getFullYear(), _pCalMonth=new Date().getMonth(), _pCalWeek=0;
 let _habSelections={};
 let allSessions=[], allInscList=[], allProgsList=[];
 
@@ -564,7 +571,7 @@ function launchApp(ser,insc,prog){
 function switchTab(tab){
   if(curTab==='semanas')saveNotaImmediate();
   curTab=tab;
-  ['general','avance','semanas','calendario','habitos','material','notas','comunicacion'].forEach(t=>{
+  ['general','avance','semanas','calendario','habitos','material','notas','comunicacion','proceso'].forEach(t=>{
     document.getElementById('tab-'+t)?.classList.toggle('active',t===tab);
   });
   const ww=document.getElementById('weekListWrap');const sp=document.getElementById('sSpacer');
@@ -578,6 +585,7 @@ function switchTab(tab){
   else if(tab==='material')renderMaterialTab();
   else if(tab==='notas')renderNotasTab();
   else if(tab==='comunicacion')renderComunicacionTab();
+  else if(tab==='proceso')renderProcesoTab();
   document.getElementById('mainContent').scrollTop=0;
 }
 function updateProgressBar(){
@@ -1077,9 +1085,10 @@ function renderHabitosTab(){
       <div style="font-size:18px;font-weight:800;color:var(--gl)">🗓 Hábitos & Desafíos</div>
       <div style="font-size:12px;color:var(--muted)">Registrá tu progreso — sincronizado con tu facilitador</div>
     </div>
-    <div id="pCalSubNav" style="display:flex;gap:6px;margin-bottom:14px">
-      <button id="pcaltab_mes" onclick="switchPortalCalView('mes')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📅 Mensual</button>
+    <div id="pCalSubNav" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
       <button id="pcaltab_sem" onclick="switchPortalCalView('sem')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📆 Semanal</button>
+      <button id="pcaltab_mes" onclick="switchPortalCalView('mes')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📅 Mensual</button>
+      <button id="pcaltab_res" onclick="switchPortalCalView('res')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📊 Resumen</button>
     </div>
     <div id="pCalViewContainer"></div>
   `;
@@ -1241,7 +1250,7 @@ function initPortalCal(){
 function switchPortalCalView(view){
   _pCalView=view;
   const col=curProg&&curProg.col?curProg.col:'#C9A84C';
-  ['mes','sem'].forEach(v=>{
+  ['mes','sem','res'].forEach(v=>{
     const btn=document.getElementById('pcaltab_'+v);if(!btn)return;
     const isActive=v===view;
     btn.style.background=isActive?col+'22':'transparent';
@@ -1250,6 +1259,7 @@ function switchPortalCalView(view){
   });
   const container=document.getElementById('pCalViewContainer');if(!container)return;
   if(view==='mes') container.innerHTML=renderPortalCalMensual();
+  else if(view==='res') container.innerHTML=renderResumen();
   else container.innerHTML=renderPortalCalSemanal();
 }
 
@@ -1370,6 +1380,134 @@ function renderPortalCalSemanal(){
   </div>`;
 }
 
+function renderResumen(){
+  if(!curInsc||!curProg)return'';
+  const col=curProg.col||'#C9A84C';
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AI={espiritual:'🌀 Espiritual',mental:'🧠 Mental',fisica:'💪 Física',social:'🤝 Social'};
+  const AK=['espiritual','mental','fisica','social'];
+  const habTrack=curInsc.habTrack||{};
+  const days90=lastNDays(90);
+
+  // KPIs
+  const gStreak=calcGlobalStreak();
+  const activeDays=days90.filter(ds=>AK.some(k=>habTrack[ds]&&habTrack[ds][k])).length;
+  let totalDone=0;
+  days90.forEach(ds=>{AK.forEach(k=>{if(habTrack[ds]&&habTrack[ds][k])totalDone++;});});
+  const adherencia=Math.round(totalDone/(days90.length*4)*100);
+
+  // Per-area
+  const areaStats=AK.map(k=>{
+    const done=days90.filter(ds=>habTrack[ds]&&habTrack[ds][k]).length;
+    return{k,done,pct:Math.round(done/90*100)};
+  });
+
+  // Per-week (from program start or last 13 weeks)
+  const sems=curInsc.semanas||[];
+  const weekStats=[];
+  if(curInsc.fechaInicio&&sems.length){
+    const ini=new Date(curInsc.fechaInicio+'T12:00:00');
+    sems.forEach((_,i)=>{
+      const ws=new Date(ini);ws.setDate(ws.getDate()+i*7);
+      const wDays=[];for(let d=0;d<7;d++){const dd=new Date(ws);dd.setDate(dd.getDate()+d);wDays.push(dd.toISOString().slice(0,10));}
+      let done=0,possible=0;
+      wDays.forEach(ds=>{AK.forEach(k=>{possible++;if(habTrack[ds]&&habTrack[ds][k])done++;});});
+      weekStats.push({label:'S'+(i+1),pct:possible?Math.round(done/possible*100):0,done,possible});
+    });
+  } else {
+    for(let w=12;w>=0;w--){
+      const wDays=[];
+      for(let d=0;d<7;d++){const dd=new Date();dd.setDate(dd.getDate()-(w*7+d));wDays.push(dd.toISOString().slice(0,10));}
+      let done=0,possible=0;
+      wDays.forEach(ds=>{AK.forEach(k=>{possible++;if(habTrack[ds]&&habTrack[ds][k])done++;});});
+      weekStats.push({label:'S'+(13-w),pct:possible?Math.round(done/possible*100):0,done,possible});
+    }
+  }
+
+  const validWeeks=weekStats.filter(w=>w.done>0);
+  const bestWeek=validWeeks.length?validWeeks.reduce((a,b)=>a.pct>=b.pct?a:b):null;
+  const worstWeek=validWeeks.length?validWeeks.reduce((a,b)=>a.pct<=b.pct?a:b):null;
+
+  // SVG bar chart
+  const svgH=120,svgW=300;
+  const n=weekStats.length||1;
+  const slotW=Math.floor((svgW-20)/n);
+  const barW=Math.max(6,slotW-4);
+  const bars=weekStats.map((w,i)=>{
+    const barH=Math.max(2,Math.round(w.pct/100*(svgH-32)));
+    const barColor=w.pct>=80?'#10B981':w.pct>=50?col:'#2A2410';
+    const x=10+i*slotW;const y=svgH-22-barH;
+    return `<rect x="${x}" y="${y}" width="${barW}" height="${barH}" rx="3" fill="${barColor}" opacity="0.9"/>
+      <text x="${x+barW/2}" y="${svgH-6}" text-anchor="middle" font-size="7" fill="#6B6040" font-family="inherit">${w.label}</text>
+      ${w.pct>0?`<text x="${x+barW/2}" y="${y-3}" text-anchor="middle" font-size="7" fill="${barColor}" font-family="inherit">${w.pct}%</text>`:''}`;
+  }).join('');
+
+  // Area bars HTML
+  const areaBarsHTML=areaStats.map(({k,done,pct})=>`<div style="margin-bottom:11px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <div style="font-size:12px;color:var(--text);font-weight:600">${AI[k]}</div>
+      <div style="font-size:13px;font-weight:800;color:${AC[k]}">${pct}%<span style="font-size:10px;font-weight:400;color:var(--muted);margin-left:4px">${done}/90 días</span></div>
+    </div>
+    <div style="background:var(--border);border-radius:20px;height:8px;overflow:hidden">
+      <div style="background:linear-gradient(90deg,${AC[k]}99,${AC[k]});height:100%;width:${pct}%;border-radius:20px;transition:.8s ease"></div>
+    </div>
+  </div>`).join('');
+
+  return `<div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Resumen — últimos 90 días</div>
+
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:900;color:${col};line-height:1">${gStreak}</div>
+        <div style="font-size:18px;margin:4px 0">🔥</div>
+        <div style="font-size:9px;color:var(--muted)">Racha actual</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:900;color:${col};line-height:1">${activeDays}</div>
+        <div style="font-size:18px;margin:4px 0">📅</div>
+        <div style="font-size:9px;color:var(--muted)">Días activos</div>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
+        <div style="font-size:24px;font-weight:900;color:${col};line-height:1">${adherencia}%</div>
+        <div style="font-size:18px;margin:4px 0">⭐</div>
+        <div style="font-size:9px;color:var(--muted)">Adherencia</div>
+      </div>
+    </div>
+
+    <div style="background:var(--card);border:1px solid #1E1C10;border-radius:14px;padding:14px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Por Área</div>
+      ${areaBarsHTML}
+    </div>
+
+    <div style="background:var(--card);border:1px solid #1E1C10;border-radius:14px;padding:14px;margin-bottom:10px">
+      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Por Semana</div>
+      <div style="overflow-x:auto">
+        <svg width="${Math.max(svgW,n*slotW+20)}" height="${svgH}" viewBox="0 0 ${Math.max(svgW,n*slotW+20)} ${svgH}" style="display:block">${bars}</svg>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;border-radius:2px;background:#10B981"></div><span style="font-size:10px;color:var(--muted)">≥ 80%</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;border-radius:2px;background:${col}"></div><span style="font-size:10px;color:var(--muted)">≥ 50%</span></div>
+        <div style="display:flex;align-items:center;gap:4px"><div style="width:8px;height:8px;border-radius:2px;background:#2A2410;border:1px solid #3A3010"></div><span style="font-size:10px;color:var(--muted)">&lt; 50%</span></div>
+      </div>
+    </div>
+
+    ${bestWeek||worstWeek?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+      ${bestWeek?`<div style="background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.3);border-radius:12px;padding:12px">
+        <div style="font-size:9px;color:#10B981;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Mejor semana</div>
+        <div style="font-size:22px;font-weight:900;color:#10B981;line-height:1">${bestWeek.label}</div>
+        <div style="font-size:13px;color:#10B981;margin-top:4px">${bestWeek.pct}% ✨</div>
+      </div>`:''}
+      ${worstWeek&&worstWeek.label!==bestWeek?.label?`<div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.18);border-radius:12px;padding:12px">
+        <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">A mejorar</div>
+        <div style="font-size:22px;font-weight:900;color:var(--muted);line-height:1">${worstWeek.label}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:4px">${worstWeek.pct}%</div>
+      </div>`:''}
+    </div>`:''}
+
+    ${totalDone===0?`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Empezá a registrar hábitos para ver tu progreso 💛</div>`:''}
+  </div>`;
+}
+
 function portalCalNavMonth(dir){
   _pCalMonth+=dir;
   if(_pCalMonth<0){_pCalMonth=11;_pCalYear--;}
@@ -1428,7 +1566,7 @@ function portalToggleHab(area,dateStr){
   const mo=document.getElementById('pMoCalDay');
   if(mo&&mo.style.display!=='none')showPortalCalDayModal(dateStr);
   const c=document.getElementById('pCalViewContainer');
-  if(c){if(_pCalView==='mes')c.innerHTML=renderPortalCalMensual();else c.innerHTML=renderPortalCalSemanal();}
+  if(c){if(_pCalView==='mes')c.innerHTML=renderPortalCalMensual();else if(_pCalView==='res')c.innerHTML=renderResumen();else c.innerHTML=renderPortalCalSemanal();}
 }
 function portalToggleDes(area,dateStr){
   if(!curInsc.desTrack)curInsc.desTrack={};
@@ -1438,7 +1576,7 @@ function portalToggleDes(area,dateStr){
   const mo=document.getElementById('pMoCalDay');
   if(mo&&mo.style.display!=='none')showPortalCalDayModal(dateStr);
   const c=document.getElementById('pCalViewContainer');
-  if(c){if(_pCalView==='mes')c.innerHTML=renderPortalCalMensual();else c.innerHTML=renderPortalCalSemanal();}
+  if(c){if(_pCalView==='mes')c.innerHTML=renderPortalCalMensual();else if(_pCalView==='res')c.innerHTML=renderResumen();else c.innerHTML=renderPortalCalSemanal();}
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1558,6 +1696,49 @@ function sendPortalMsg(){
   if(!curInsc.comunicacion)curInsc.comunicacion=[];
   curInsc.comunicacion.push({fecha:new Date().toLocaleDateString('es-AR'),de:'ser',texto,tipo:'mensaje'});
   saveProgress(()=>{renderComunicacionTab();toast('Mensaje enviado ✅');});
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MI PROCESO (onboarding)
+// ══════════════════════════════════════════════════════════════════════════════
+let _procesoLoaded=false;
+async function renderProcesoTab(){
+  const el=document.getElementById('mainContent');if(!el)return;
+  if(_procesoLoaded&&el.dataset.procesoOk==='1')return;
+  el.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">📋</div><p>Cargando tu proceso...</p></div>';
+  try{
+    const email=(curSer.email||'').toLowerCase().trim();
+    const{data,error}=await _sb.from('onboardings').select('id,data');
+    if(error)throw error;
+    const onbs=(data||[]).map(r=>({id:r.id,...(r.data||{})}))
+      .filter(o=>(o.email||'').toLowerCase().trim()===email)
+      .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+    if(!onbs.length){
+      el.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✦</div><p style="font-size:13px">Todavía no hay un proceso registrado para vos.</p><p style="font-size:11px;margin-top:8px">Completá el formulario de onboarding con Juan Cruz.</p></div>';
+      return;
+    }
+    el.innerHTML=buildProcesoHTML(onbs[0]);
+    el.dataset.procesoOk='1';
+    _procesoLoaded=true;
+  }catch(e){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Error al cargar. Intentá de nuevo.</div>';
+  }
+}
+function buildProcesoHTML(o){
+  const col=curProg&&curProg.col?curProg.col:'#C9A84C';
+  const tags=arr=>(arr||[]).map(x=>`<span class="proc-tag" style="border-color:${col}33;color:${col}">${String(x).split('\n').pop().trim()}</span>`).join('');
+  const sec=(label,content)=>content?`<div class="proc-section"><div class="proc-label">${label}</div>${content}</div>`:'';
+  return`
+    <div style="margin-bottom:14px;display:flex;align-items:baseline;gap:10px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">📋 Mi Proceso</div>
+      <div style="font-size:11px;color:var(--muted)">Registrado el ${o.fecha||'—'}</div>
+    </div>
+    ${sec('🎯 Mis objetivos',o.objetivos?.length?`<div style="margin-top:4px">${tags(o.objetivos)}</div>${o.objetivosExtra?`<div class="proc-value" style="margin-top:10px;font-size:13px;color:var(--muted)">${o.objetivosExtra}</div>`:''}`:'') }
+    ${sec('🌱 Mi situación al comenzar',o.situacion?`<span class="proc-tag" style="border-color:${col}33;color:${col}">${String(o.situacion).split('\n').pop().trim()}</span>${o.situacionDetalle?`<div class="proc-value" style="margin-top:8px;font-size:13px;color:var(--muted)">${o.situacionDetalle}</div>`:''}`:'') }
+    ${sec('🤝 Mis compromisos',o.compromiso?.length?`<div style="margin-top:4px">${tags(o.compromiso)}</div>${o.compromisoPropio?`<div class="proc-value" style="margin-top:8px;font-size:13px;color:var(--muted)">${o.compromisoPropio}</div>`:''}`:'') }
+    ${sec('✨ Mi logro esperado',o.logroEsperado?`<div class="proc-value" style="margin-top:6px;font-size:15px;font-style:italic;line-height:1.7;">"${o.logroEsperado}"</div>`:'')}
+    ${sec('⏱ Tiempo diario disponible',o.tiempo?`<span class="proc-tag" style="border-color:${col}33;color:${col}">${o.tiempo}</span>${o.tiempoContexto?`<div class="proc-value" style="margin-top:8px;font-size:13px;color:var(--muted)">${o.tiempoContexto}</div>`:''}`:'') }
+  `;
 }
 
 // ── AUTO-RESTORE ──────────────────────────────────────────────────────────────
