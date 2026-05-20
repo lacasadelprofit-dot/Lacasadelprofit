@@ -54,24 +54,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn-next{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;
   color:rgba(255,255,255,.75);font-size:12px;font-weight:600;padding:6px 16px;cursor:pointer;transition:all .2s;}
 .btn-next:hover{background:rgba(255,255,255,.18);color:#fff;}
-.featured-count{font-size:11px;color:rgba(255,255,255,.4);margin-left:4px;}
 
-/* ── DIMENSION FILTER ── */
+/* ── QUESTIONS SECTION TITLE ── */
 .sec-wrap{max-width:680px;margin:0 auto;padding:0 16px;}
 .sec-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
   color:var(--terra-d);margin-bottom:16px;}
-.dim-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:24px;}
-.dim-pill{padding:7px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;
-  border:1px solid var(--border);background:var(--card2);color:var(--muted);transition:all .2s;}
-.dim-pill:hover{border-color:var(--terra);color:var(--terra);}
-.dim-pill.active{color:#fff;border-color:transparent;}
-.dim-pill[data-d="Identidad"].active{background:var(--c-id);}
-.dim-pill[data-d="Dinero"].active{background:var(--c-di);}
-.dim-pill[data-d="Cuerpo"].active{background:var(--c-cu);}
-.dim-pill[data-d="Relaciones"].active{background:var(--c-re);}
-.dim-pill[data-d="Propósito"].active{background:var(--c-pr);}
-.dim-pill[data-d="Consciencia"].active{background:var(--c-co);}
-.dim-pill[data-d="Todas"].active{background:var(--terra);}
 
 /* ── QUESTIONS GRID ── */
 .q-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:48px;}
@@ -99,19 +86,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* ── REGALOS ── */
 .regalos-wrap{max-width:680px;margin:0 auto;padding:0 16px 60px;}
+.regalos-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 .regalo-card{background:var(--card);border:1px solid var(--border);border-radius:20px;
-  overflow:hidden;margin-bottom:14px;transition:box-shadow .2s;}
+  overflow:hidden;transition:box-shadow .2s;display:flex;flex-direction:column;}
 .regalo-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);}
 .regalo-card::before{content:'';display:block;height:3px;
   background:linear-gradient(90deg,var(--terra-l),var(--terra),var(--terra-l));}
-.regalo-body{padding:22px 22px 18px;}
-.regalo-ico{font-size:34px;margin-bottom:10px;display:block;}
-.regalo-nombre{font-size:17px;font-weight:700;color:var(--text);margin-bottom:6px;}
-.regalo-desc{font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:16px;}
-.btn-dl-jcc{width:100%;padding:12px;background:var(--terra);border:none;border-radius:12px;
-  color:#fff;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;
-  justify-content:center;gap:7px;text-decoration:none;transition:background .2s;}
+.regalo-body{padding:20px 18px 16px;flex:1;display:flex;flex-direction:column;}
+.regalo-ico{font-size:30px;margin-bottom:8px;display:block;}
+.regalo-nombre{font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px;}
+.regalo-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;flex:1;}
+.btn-dl-jcc{width:100%;padding:11px;background:var(--terra);border:none;border-radius:10px;
+  color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;gap:7px;text-decoration:none;transition:background .2s;margin-top:auto;}
 .btn-dl-jcc:hover{background:var(--terra-d);}
+@media(max-width:540px){.regalos-grid{grid-template-columns:1fr;}}
 
 /* ── CTA ── */
 .cta-wrap{max-width:540px;margin:0 auto 60px;padding:0 16px;}
@@ -152,9 +141,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <!-- HERO -->
 <div class="hero">
-  <div class="pill">✦ Herramientas de expansión</div>
-  <h1>60 preguntas que<br>mueven lo que está quieto</h1>
-  <p>No son preguntas para responder. Son preguntas para sostener. Para que algo en vos empiece a moverse desde adentro.</p>
+  <div class="pill">✦ Preguntas expansivas · Juan Cruz Consciencia</div>
+  <h1>Preguntas que abren<br>lo que está cerrado</h1>
+  <p>No son para responder. Son para sostener — para que algo en vos empiece a expandirse desde adentro.</p>
 </div>
 
 <!-- FEATURED QUESTION -->
@@ -165,15 +154,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="featured-dim" id="featuredDim"></div>
     <div class="featured-next">
       <button class="btn-next" onclick="nextFeatured()">Otra pregunta →</button>
-      <span class="featured-count" id="featuredCount"></span>
     </div>
   </div>
 </div>
 
 <!-- QUESTIONS SECTION -->
 <div class="sec-wrap">
-  <div class="sec-title">Explorá por dimensión</div>
-  <div class="dim-pills" id="dimPills"></div>
+  <div class="sec-title" id="qCount">Preguntas expansivas</div>
   <div class="q-grid" id="qGrid">
     <div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Cargando preguntas...</p></div>
   </div>
@@ -183,8 +170,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <!-- REGALOS SECTION -->
 <div class="regalos-wrap">
-  <div class="sec-title" style="margin-bottom:8px">Recursos para vos</div>
-  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.65">Herramientas y materiales que preparé especialmente para acompañar tu camino.</p>
+  <div class="sec-title" style="margin-bottom:8px">Recursos gratuitos para vos</div>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.65">Materiales que preparé para acompañar tu proceso de expansión. Descargalos sin costo.</p>
   <div id="regalosWrap">
     <div class="empty"><div class="ei">🎁</div><p>Cargando recursos...</p></div>
   </div>
@@ -216,7 +203,6 @@ function showFeatured(){
   const p=pool[featIdx%pool.length];
   document.getElementById('featuredQ').textContent=p.texto;
   document.getElementById('featuredDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+p.matiz;
-  document.getElementById('featuredCount').textContent=`${(featIdx%pool.length)+1} / ${pool.length}`;
 }
 function nextFeatured(){
   const pool=curDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===curDim);
@@ -298,7 +284,7 @@ async function init(){
   if(!allPregs.length){
     document.getElementById('featuredQ').textContent='¿Qué elegiría si confiara en mí?';
     document.getElementById('featuredDim').textContent='🪞 Identidad';
-    document.getElementById('featuredCount').textContent='1 / 1';
+
     document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Las preguntas estarán disponibles pronto.</p></div>';
   } else {
     showFeatured();

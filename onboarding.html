@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Bienvenida — Proyecta · Dirige · Construye</title>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   :root {
     --bg: #0d0d0a;
@@ -553,6 +554,40 @@
   .slide-inner.scrollable::-webkit-scrollbar { width: 2px; }
   .slide-inner.scrollable::-webkit-scrollbar-track { background: transparent; }
   .slide-inner.scrollable::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  /* REG FIELDS — nombre / email en slide 0 */
+  .reg-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .reg-label {
+    display: block;
+    font-size: 9px;
+    color: var(--text3);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .reg-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    padding: 13px 16px;
+    letter-spacing: 0.02em;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .reg-input:focus {
+    outline: none;
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 3px rgba(200,169,110,0.06);
+  }
+  .reg-input::placeholder { color: var(--text4); font-style: italic; }
 </style>
 </head>
 <body>
@@ -570,9 +605,21 @@
         <span class="welcome-symbol">◈</span>
         <div class="welcome-title">Antes de<br>empezar,<br><em>un momento.</em></div>
         <p class="welcome-sub">Este formulario es el primer acto de tu proceso.<br>No es burocracia — es el espacio donde empezás a clarificar<br>qué venís a crear en estos 90 días.</p>
+
+        <div class="reg-fields">
+          <div>
+            <span class="reg-label">Tu nombre</span>
+            <input class="reg-input" id="reg-nombre" type="text" placeholder="Nombre y apellido">
+          </div>
+          <div>
+            <span class="reg-label">Tu email</span>
+            <input class="reg-input" id="reg-email" type="email" placeholder="correo@ejemplo.com">
+          </div>
+        </div>
+
         <div class="welcome-meta">
           <div class="meta-item">
-            <span class="meta-val">6</span>
+            <span class="meta-val">5</span>
             <span class="meta-lbl">preguntas</span>
           </div>
           <div class="meta-dot"></div>
@@ -594,7 +641,7 @@
   <!-- SLIDE 1: OBJETIVOS -->
   <div class="slide" id="slide-1">
     <div class="slide-inner">
-      <div class="eyebrow">Pregunta 1 de 6</div>
+      <div class="eyebrow">Pregunta 1 de 5</div>
       <div class="question-text">¿Cuáles son tus principales objetivos para este programa?</div>
       <p class="question-hint">Podés elegir más de uno. Estos son los territorios que vamos a explorar juntos.</p>
 
@@ -640,7 +687,7 @@
   <!-- SLIDE 2: SITUACIÓN ACTUAL -->
   <div class="slide" id="slide-2">
     <div class="slide-inner">
-      <div class="eyebrow">Pregunta 2 de 6</div>
+      <div class="eyebrow">Pregunta 2 de 5</div>
       <div class="question-text">¿Cuál es tu situación actual?</div>
       <p class="question-hint">Desde dónde empezás. No hay respuesta correcta — solo tu realidad de hoy.</p>
 
@@ -680,7 +727,7 @@
   <!-- SLIDE 3: COMPROMISO -->
   <div class="slide" id="slide-3">
     <div class="slide-inner">
-      <div class="eyebrow">Pregunta 3 de 6</div>
+      <div class="eyebrow">Pregunta 3 de 5</div>
       <div class="question-text">¿A qué te comprometés durante los 90 días?</div>
       <p class="question-hint">Este es el momento de ser honesto/a con vos mismo/a. Un compromiso real es el cimiento de todo lo que viene.</p>
 
@@ -724,7 +771,7 @@
   <!-- SLIDE 4: LOGRO ESPERADO -->
   <div class="slide" id="slide-4">
     <div class="slide-inner">
-      <div class="eyebrow">Pregunta 4 de 6</div>
+      <div class="eyebrow">Pregunta 4 de 5</div>
       <div class="question-text">¿Qué esperás lograr al finalizar los 90 días?</div>
       <p class="question-hint">Cerrá los ojos un momento. Imaginá que ya pasaron los 90 días y el proceso fue exactamente lo que necesitabas. ¿Qué cambió? ¿Quién sos ahora?</p>
 
@@ -741,7 +788,7 @@
   <!-- SLIDE 5: TIEMPO -->
   <div class="slide" id="slide-5">
     <div class="slide-inner">
-      <div class="eyebrow">Pregunta 5 de 6</div>
+      <div class="eyebrow">Pregunta 5 de 5</div>
       <div class="question-text">¿Cuánto tiempo podés dedicar por día?</div>
       <p class="question-hint">Sé realista. No se trata de cuánto querés dedicar — sino de cuánto podés sostener de manera consistente durante 90 días.</p>
 
@@ -775,12 +822,12 @@
 
       <div class="nav-row">
         <button class="btn-back" onclick="prevSlide()">← Atrás</button>
-        <button class="btn-next" onclick="nextSlide()">Continuar →</button>
+        <button class="btn-next" onclick="finalize()" style="background:#4a7c59;">Finalizar ✓</button>
       </div>
     </div>
   </div>
 
-  <!-- SLIDE 6: NOTAS INTERNAS -->
+  <!-- SLIDE 6: NOTAS INTERNAS (solo facilitador — no accesible desde el flujo público) -->
   <div class="slide" id="slide-6">
     <div class="slide-inner scrollable">
       <div class="internal-header-row">
@@ -873,7 +920,7 @@
 
 <script>
   let current = 0;
-  const total = 7;
+  const total = 8; // slides 0–7; cliente ve 0–5, cierre en 7
   const selections = {
     objetivos: [],
     situacion: null,
@@ -885,10 +932,10 @@
   function updateProgress() {
     const pct = (current / (total - 1)) * 100;
     document.getElementById('progress-bar').style.width = pct + '%';
-    if (current === 0 || current === total - 1) {
+    if (current === 0 || current >= total - 2) {
       document.getElementById('slide-counter').textContent = '';
     } else {
-      document.getElementById('slide-counter').textContent = current + ' / ' + (total - 2);
+      document.getElementById('slide-counter').textContent = current + ' / 5';
     }
   }
 
@@ -949,14 +996,18 @@
     }
   }
 
-  function finalize() {
+  async function finalize() {
+    const nombre = document.getElementById('reg-nombre')?.value?.trim() || '';
+    const email  = document.getElementById('reg-email')?.value?.trim()  || '';
+
     const summary = document.getElementById('closing-summary');
     const items = [
-      { key: 'Objetivos', val: selections.objetivos.length > 0 ? selections.objetivos.map(o => o.split('\n').pop().trim()).join(' · ') : '—' },
-      { key: 'Situación actual', val: selections.situacion ? selections.situacion.split('\n').pop().trim() : '—' },
-      { key: 'Compromisos', val: selections.compromiso.length > 0 ? selections.compromiso.map(c => c.split('\n').pop().trim()).join(' · ') : '—' },
-      { key: 'Logro esperado', val: truncate(document.getElementById('logro-esperado').value) },
-      { key: 'Tiempo diario', val: selections.tiempo || '—' },
+      { key: 'Nombre',          val: nombre || '—' },
+      { key: 'Objetivos',       val: selections.objetivos.length > 0 ? selections.objetivos.map(o => o.split('\n').pop().trim()).join(' · ') : '—' },
+      { key: 'Situación actual',val: selections.situacion ? selections.situacion.split('\n').pop().trim() : '—' },
+      { key: 'Compromisos',     val: selections.compromiso.length > 0 ? selections.compromiso.map(c => c.split('\n').pop().trim()).join(' · ') : '—' },
+      { key: 'Logro esperado',  val: truncate(document.getElementById('logro-esperado').value) },
+      { key: 'Tiempo diario',   val: selections.tiempo || '—' },
     ];
 
     summary.innerHTML = items.map(i => `
@@ -965,6 +1016,39 @@
         <span class="summary-val">${i.val || '—'}</span>
       </div>
     `).join('');
+
+    try {
+      const _sb = supabase.createClient(
+        'https://vffmnyjjawvvctcqzkvj.supabase.co',
+        'sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t'
+      );
+      await _sb.from('onboardings').insert({ data: {
+        nombre,
+        email,
+        fecha:            new Date().toISOString().split('T')[0],
+        estado:           'pendiente',
+        objetivos:        selections.objetivos,
+        objetivosExtra:   document.getElementById('objetivos-extra').value.trim(),
+        situacion:        selections.situacion,
+        situacionDetalle: document.getElementById('situacion-detalle').value.trim(),
+        compromiso:       selections.compromiso,
+        compromisoPropio: document.getElementById('compromiso-propio').value.trim(),
+        logroEsperado:    document.getElementById('logro-esperado').value.trim(),
+        tiempo:           selections.tiempo,
+        tiempoContexto:   document.getElementById('tiempo-contexto').value.trim(),
+        notasInternas: {
+          impresion:   document.getElementById('nota-impresion').value.trim(),
+          bloqueos:    document.getElementById('nota-bloqueos').value.trim(),
+          hipotesis:   document.getElementById('nota-hipotesis').value.trim(),
+          atencion:    document.getElementById('nota-atencion').value.trim(),
+          notaLibre:   document.getElementById('nota-libre').value.trim(),
+          potencial:   selections.ratings.potencial,
+          disposicion: selections.ratings.disposicion,
+        }
+      }});
+    } catch(e) {
+      console.warn('onboarding save:', e);
+    }
 
     goTo(total - 1);
   }
