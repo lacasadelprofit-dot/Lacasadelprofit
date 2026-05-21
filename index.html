@@ -7192,16 +7192,25 @@ async function syncProgramTemplates(){
 
 function initApp(){renderDash();updateOfflineUI();startInscPolling();}
 
-// ── POLLING DE INSCRIPCIONES (hábitos en tiempo casi-real) ───────────────────
+// ── POLLING EN TIEMPO CASI-REAL (notas, desafíos, hábitos, comunicación) ─────
 let _pollTimer=null;
-async function refreshInscripciones(){
+async function refreshLiveData(){
   try{
-    const{data,error}=await _sb.from('inscripciones').select('id,data');
-    if(error||!data)return;
-    inscripciones=_unwrap(data);
-    // Re-render silencioso solo si el admin está en journey o dashboard
-    if(curSec==='journey')renderJourneyAdmin();
-    else if(curSec==='dashboard')renderDash();
+    const[ii,ss]=await Promise.all([
+      _sb.from('inscripciones').select('id,data'),
+      _sb.from('sessions').select('id,data'),
+    ]);
+    if(!ii.error&&ii.data) inscripciones=_unwrap(ii.data);
+    if(!ss.error&&ss.data) sessions=_unwrap(ss.data);
+    // Re-render silencioso según la sección activa
+    const renders={
+      journey:    renderJourneyAdmin,
+      dashboard:  renderDash,
+      sesiones:   renderSes,
+      calendario: renderCal,
+      seres:      renderSeres,
+    };
+    if(renders[curSec])renders[curSec]();
     _showPollDot();
   }catch(e){}
 }
@@ -7220,7 +7229,7 @@ function _showPollDot(){
 }
 function startInscPolling(){
   if(_pollTimer)clearInterval(_pollTimer);
-  _pollTimer=setInterval(refreshInscripciones,30000); // cada 30 segundos
+  _pollTimer=setInterval(refreshLiveData,30000); // cada 30 segundos
 }
 </script>
 </body>

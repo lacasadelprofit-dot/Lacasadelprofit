@@ -174,53 +174,55 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .gv2-btn-save{padding:6px 16px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:7px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;}
 
 /* ── MI AVANCE — compact, no scroll ── */
-.av-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
-.av-areas{display:flex;flex-direction:column;gap:6px;}
-.av-area-row{display:flex;align-items:center;gap:8px;}
-.av-area-ico{font-size:14px;width:20px;text-align:center;flex-shrink:0;}
-.av-area-lbl{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;width:80px;flex-shrink:0;}
-.av-area-lbl.esp{color:var(--esp);}
-.av-area-lbl.men{color:var(--men);}
-.av-area-lbl.fis{color:var(--fis);}
-.av-area-lbl.soc{color:var(--soc);}
-.av-bar{flex:1;height:8px;background:#1E1C10;border-radius:4px;overflow:hidden;}
-.av-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
-.av-pct{font-size:10px;color:var(--muted);min-width:34px;text-align:right;}
-.av-global{background:var(--card2);border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;}
-.av-circle{position:relative;width:70px;height:70px;}
-.av-circle svg{transform:rotate(-90deg);}
-.av-circle-lbl{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
-.av-circle-pct{font-size:16px;font-weight:800;color:var(--gl);}
-.av-circle-sub{font-size:8px;color:var(--muted);}
-.av-mini-stats{display:flex;gap:12px;font-size:10px;color:var(--muted);text-align:center;}
-.av-mini-stat .v{font-size:14px;font-weight:800;color:var(--gl);}
+/* ── AVANCE V2 ── */
+.av2-hero{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
+.av2-area-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.av2-area-card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:14px;padding:14px;position:relative;overflow:hidden;border:1px solid;}
+.av2-area-icon{font-size:30px;margin-bottom:6px;display:block;line-height:1;}
+.av2-area-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;}
+.av2-area-desc{font-size:10px;color:var(--muted);line-height:1.4;margin-bottom:10px;min-height:28px;}
+.av2-area-bar{height:5px;border-radius:20px;background:rgba(255,255,255,.06);margin-bottom:5px;overflow:hidden;}
+.av2-area-bar-fill{height:100%;border-radius:20px;transition:.8s ease;}
+.av2-area-counts{font-size:10px;color:var(--muted);display:flex;justify-content:space-between;}
+.av2-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.av2-stat{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:12px;padding:12px 8px;text-align:center;}
+.av2-stat-ico{font-size:22px;margin-bottom:4px;}
+.av2-stat-val{font-size:22px;font-weight:900;line-height:1;margin-bottom:3px;}
+.av2-stat-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.av2-journey{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;}
+.av2-journey-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px;}
+.av2-weeks{display:flex;flex-wrap:wrap;gap:7px;}
+.av2-week{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;cursor:default;}
+.av2-week.done{background:rgba(201,168,76,.12);border:1.5px solid var(--gold);color:var(--gold);}
+.av2-week.current{background:rgba(201,168,76,.18);border:2px solid var(--gold);color:var(--gl);box-shadow:0 0 14px rgba(201,168,76,.35);}
+.av2-week.future{background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.07);color:rgba(255,255,255,.18);}
+.av2-badge-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;}
+.av2-badge{border-radius:12px;padding:11px 12px;border:1px solid;display:flex;align-items:center;gap:10px;}
+.av2-badge.unlocked{border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.06);}
+.av2-badge.locked{border-color:var(--border);background:rgba(255,255,255,.02);opacity:.38;filter:grayscale(.9);}
+.av2-badge-ico{font-size:26px;flex-shrink:0;}
+.av2-badge-name{font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;line-height:1.2;}
+.av2-badge-desc{font-size:9px;color:var(--muted);line-height:1.4;}
 
-/* Heatmap */
-.heatmap-section{background:var(--card);border:1px solid #1E1C10;border-radius:14px;padding:14px;margin-bottom:10px;}
-.heatmap-title{font-size:12px;font-weight:700;color:var(--gl);margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+/* Heatmap (kept for internal use) */
 .hm-wrap{overflow-x:auto;}
 .hm-table{display:flex;flex-direction:column;gap:3px;}
 .hm-row{display:flex;align-items:center;gap:3px;}
 .hm-lbl{font-size:10px;color:var(--muted);width:110px;min-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex-shrink:0;}
 .hm-cells{display:flex;gap:2px;}
-.hm-cell{width:13px;height:13px;border-radius:2px;flex-shrink:0;transition:transform .1s;cursor:default;}
-.hm-cell:hover{transform:scale(1.4);}
-.hm-cell.l0{background:#1E1C10;}
-.hm-cell.l1{background:rgba(201,168,76,.3);}
-.hm-cell.l3{background:var(--gold);}
-.hm-cell.future{background:#15141F;}
+.hm-cell{width:13px;height:13px;border-radius:2px;flex-shrink:0;cursor:default;}
+.hm-cell.l0{background:#1E1C10;}.hm-cell.l3{background:var(--gold);}.hm-cell.future{background:#15141F;}
 .hm-week-labels{display:flex;gap:2px;margin-left:113px;margin-bottom:2px;}
 .hm-wlbl{font-size:8px;color:var(--muted);width:13px;text-align:center;overflow:visible;white-space:nowrap;}
 
-/* Badges */
+/* Legacy (kept for other uses) */
+.av-bar{flex:1;height:8px;background:#1E1C10;border-radius:4px;overflow:hidden;}
+.av-bar-fill{height:100%;border-radius:4px;transition:width .6s ease;}
 .badges-section{background:var(--card);border:1px solid #1E1C10;border-radius:14px;padding:14px;margin-bottom:10px;}
-.badges-row{display:flex;flex-wrap:wrap;gap:6px;}
-.badge{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:10px;border:1px solid;transition:all .2s;}
+.badge{display:flex;align-items:center;gap:6px;padding:7px 10px;border-radius:10px;border:1px solid;}
 .badge.unlocked{border-color:rgba(201,168,76,.3);background:rgba(201,168,76,.06);}
 .badge.locked{border-color:var(--border);background:var(--card2);opacity:.35;filter:grayscale(1);}
-.badge-ico{font-size:18px;}
-.badge-name{font-size:11px;font-weight:700;color:var(--text);}
-.badge-desc{font-size:9px;color:var(--muted);}
+.badge-ico{font-size:18px;}.badge-name{font-size:11px;font-weight:700;color:var(--text);}.badge-desc{font-size:9px;color:var(--muted);}
 
 /* ── SEMANAS ── */
 .week-header{margin-bottom:14px;}
@@ -901,7 +903,10 @@ const AREAS=[
 
 function renderAvance(){
   const sems=curInsc.semanas||[];
-  // Area desafio counts
+  const col=curProg&&curProg.col?curProg.col:'#C9A84C';
+  const nombre=(curSer&&curSer.nombre||'').split(' ')[0];
+
+  // Desafíos por área
   const ad={espiritual:{t:0,d:0},mental:{t:0,d:0},fisica:{t:0,d:0},social:{t:0,d:0},general:{t:0,d:0}};
   const habMap={};
   sems.forEach((sem,i)=>{
@@ -913,70 +918,124 @@ function renderAvance(){
   const totDes=Object.values(ad).reduce((a,x)=>a+x.t,0);
   const doneDes=Object.values(ad).reduce((a,x)=>a+x.d,0);
   const pctGlobal=totDes?Math.round(doneDes/totDes*100):calcPct();
-  // Program weeks
   const progWeeks=parseInt(curProg.semanas_dur)||Math.round((parseFloat(curProg.meses)||3)*4.3)||sems.length||12;
+  const semsDone=sems.filter((_,i)=>semDone(i)).length;
+
+  // Hábitos & racha
+  const gStreak=calcGlobalStreak();
+  const habTrack=curInsc.habTrack||{};
+  const AK2=['espiritual','mental','fisica','social'];
+  const days90=lastNDays(90);
+  const activeDays=days90.filter(ds=>AK2.some(k=>habTrack[ds]&&habTrack[ds][k])).length;
+
   // Badges
   const badges=buildBadges(habList,doneDes,totDes,progWeeks);
   const unlockedCount=badges.filter(b=>b.ok).length;
+  const nextBadge=badges.find(b=>!b.ok);
+
+  // Mensaje motivacional según progreso
+  const mots=[
+    {max:10, msg:`¡Bienvenido, ${nombre}! Cada gran transformación empieza así 🌱`,sub:'El primer paso ya lo diste'},
+    {max:30, msg:`¡Vas arrancando, ${nombre}! Estás construyendo el hábito 🔥`,sub:'La constancia es más poderosa que la intensidad'},
+    {max:50, msg:`¡Muy bien, ${nombre}! Ya tenés ritmo propio ⚡`,sub:'Estás en el punto donde el cambio se vuelve real'},
+    {max:70, msg:`¡La mitad del camino, ${nombre}! Ya sentís el cambio 💎`,sub:'Las personas que llegan aquí raramente se detienen'},
+    {max:90, msg:`¡Imparable, ${nombre}! La recta final 🌟`,sub:'Ya no sos quien empezó este programa'},
+    {max:101,msg:`¡Lo lograste, ${nombre}! Sos otra versión de vos 🏆`,sub:'La transformación ya ocurrió. Felicitaciones'},
+  ];
+  const mot=mots.find(m=>pctGlobal<m.max)||mots[mots.length-1];
+
+  // SVG círculo hero
+  const circ=Math.round(pctGlobal*2.0106); // 2π*32
+  const heroSVG=`<svg width="84" height="84" viewBox="0 0 84 84">
+    <circle cx="42" cy="42" r="32" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="7"/>
+    <circle cx="42" cy="42" r="32" fill="none" stroke="${col}" stroke-width="7"
+      stroke-dasharray="${circ} 201" stroke-linecap="round" transform="rotate(-90 42 42)" opacity=".9"/>
+    <text x="42" y="47" text-anchor="middle" fill="${col}" font-size="17" font-weight="900" font-family="Segoe UI,sans-serif">${pctGlobal}%</text>
+  </svg>`;
+
+  // Cards de área
+  const areaDescs={espiritual:'Tu conexión con lo que te trasciende',mental:'Tu claridad y poder de foco',fisica:'Tu energía y vitalidad',social:'Tus vínculos y presencia'};
+  const areaGlows={espiritual:'rgba(199,125,255,.07)',mental:'rgba(96,165,250,.07)',fisica:'rgba(74,222,128,.07)',social:'rgba(251,191,36,.07)'};
+  const areaCols={espiritual:'var(--esp)',mental:'var(--men)',fisica:'var(--fis)',social:'var(--soc)'};
+  const areaBorderCols={espiritual:'rgba(199,125,255,.22)',mental:'rgba(96,165,250,.22)',fisica:'rgba(74,222,128,.22)',social:'rgba(251,191,36,.22)'};
+  const areaCards=AREAS.map(a=>{
+    const x=ad[a.key];const pct=x.t?Math.round(x.d/x.t*100):0;
+    return `<div class="av2-area-card" style="border-color:${areaBorderCols[a.key]}">
+      <div style="position:absolute;inset:0;background:${areaGlows[a.key]};pointer-events:none;border-radius:14px"></div>
+      <div style="position:relative">
+        <div class="av2-area-icon">${a.ico}</div>
+        <div class="av2-area-name" style="color:${areaCols[a.key]}">${a.lbl}</div>
+        <div class="av2-area-desc">${areaDescs[a.key]||''}</div>
+        <div class="av2-area-bar"><div class="av2-area-bar-fill" style="width:${pct}%;background:${areaCols[a.key]}"></div></div>
+        <div class="av2-area-counts"><span>${x.d}/${x.t} desafíos</span><span style="color:${areaCols[a.key]};font-weight:700">${pct}%</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Semanas — camino visual
+  const weekDots=sems.map((_,i)=>{
+    const done=semDone(i);const isCur=i===curSemIdx;
+    return `<div class="av2-week ${done?'done':isCur?'current':'future'}" title="Semana ${i+1}: ${sems[i].titulo||''}">${done?'✓':i+1}</div>`;
+  }).join('');
+
   document.getElementById('mainContent').innerHTML=`
-    <div style="margin-bottom:10px;display:flex;align-items:baseline;gap:10px">
-      <div style="font-size:18px;font-weight:800;color:var(--gl)">📊 Mi Avance</div>
-      <div style="font-size:11px;color:var(--muted)">${curProg.nombre}</div>
-    </div>
-
-    <!-- FILA SUPERIOR: areas + global -->
-    <div class="av-top">
-      <!-- Barras por área -->
-      <div class="sec-block" style="margin-bottom:0">
-        <div class="sec-title" style="margin-bottom:10px"><span class="ico">🎯</span> Desafíos por área</div>
-        <div class="av-areas">
-          ${AREAS.map(a=>{const x=ad[a.key];const pct=x.t?Math.round(x.d/x.t*100):0;return `<div class="av-area-row">
-            <span class="av-area-ico">${a.ico}</span>
-            <span class="av-area-lbl ${a.cls}">${a.lbl}</span>
-            <div class="av-bar"><div class="av-bar-fill" style="width:${pct}%;background:${a.col}"></div></div>
-            <span class="av-pct">${x.t?x.d+'/'+x.t:'—'}</span>
-          </div>`;}).join('')}
-          ${ad.general.t?`<div class="av-area-row">
-            <span class="av-area-ico">📋</span>
-            <span class="av-area-lbl" style="color:var(--muted)">GENERAL</span>
-            <div class="av-bar"><div class="av-bar-fill" style="width:${ad.general.t?Math.round(ad.general.d/ad.general.t*100):0}%;background:var(--gold)"></div></div>
-            <span class="av-pct">${ad.general.d}/${ad.general.t}</span>
-          </div>`:''}
-        </div>
-      </div>
-      <!-- Global stats -->
-      <div class="sec-block" style="margin-bottom:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px">
-        <div class="av-circle">
-          <svg width="70" height="70" viewBox="0 0 70 70">
-            <circle cx="35" cy="35" r="28" fill="none" stroke="#1E1C10" stroke-width="7"/>
-            <circle cx="35" cy="35" r="28" fill="none" stroke="${curProg.col||'#C9A84C'}" stroke-width="7"
-              stroke-dasharray="${Math.round(pctGlobal*1.759)} 175.9" stroke-linecap="round"/>
-          </svg>
-          <div class="av-circle-lbl">
-            <div class="av-circle-pct">${pctGlobal}%</div>
-            <div class="av-circle-sub">completado</div>
+    <!-- HERO -->
+    <div class="av2-hero">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 85% 40%,${col}12,transparent 65%);pointer-events:none"></div>
+      <div style="display:flex;align-items:center;gap:16px;position:relative">
+        <div style="flex-shrink:0">${heroSVG}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:15px;font-weight:800;color:var(--text);line-height:1.35;margin-bottom:5px">${mot.msg}</div>
+          <div style="font-size:11px;color:var(--muted);font-style:italic;line-height:1.5;margin-bottom:10px">"${mot.sub}"</div>
+          <div style="background:rgba(255,255,255,.05);border-radius:20px;height:5px;overflow:hidden;margin-bottom:5px">
+            <div style="height:100%;border-radius:20px;background:${col};width:${pctGlobal}%;transition:.8s ease"></div>
           </div>
-        </div>
-        <div class="av-mini-stats">
-          <div class="av-mini-stat"><div class="v">${doneDes}</div><div style="font-size:9px;color:var(--muted)">Desafíos</div></div>
-          <div class="av-mini-stat"><div class="v">${habList.length}</div><div style="font-size:9px;color:var(--muted)">Hábitos</div></div>
-          <div class="av-mini-stat"><div class="v">${unlockedCount}/${badges.length}</div><div style="font-size:9px;color:var(--muted)">Logros</div></div>
+          <div style="font-size:10px;color:var(--muted)">${semsDone} de ${sems.length} semanas · ${doneDes} desafíos completados</div>
         </div>
       </div>
     </div>
 
-    <!-- HEATMAP: semanas del programa -->
-    ${habList.length?buildHeatmapHTML(habList,progWeeks):''}
+    <!-- STATS -->
+    <div class="av2-stats">
+      <div class="av2-stat">
+        <div class="av2-stat-ico">🔥</div>
+        <div class="av2-stat-val" style="color:${col}">${gStreak}</div>
+        <div class="av2-stat-lbl">Racha días</div>
+      </div>
+      <div class="av2-stat">
+        <div class="av2-stat-ico">📅</div>
+        <div class="av2-stat-val" style="color:${col}">${activeDays}</div>
+        <div class="av2-stat-lbl">Días activos</div>
+      </div>
+      <div class="av2-stat">
+        <div class="av2-stat-ico">🏅</div>
+        <div class="av2-stat-val" style="color:${col}">${unlockedCount}<span style="font-size:12px;font-weight:400;color:var(--muted)">/${badges.length}</span></div>
+        <div class="av2-stat-lbl">Logros</div>
+      </div>
+    </div>
+
+    <!-- ÁREAS -->
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">🎯 Progreso por área</div>
+    <div class="av2-area-grid">${areaCards}</div>
+
+    <!-- CAMINO DE SEMANAS -->
+    <div class="av2-journey">
+      <div class="av2-journey-title">🗺 Tu camino — ${sems.length} semanas</div>
+      <div class="av2-weeks">${weekDots}</div>
+      ${nextBadge?`<div style="margin-top:12px;padding:10px 12px;background:rgba(255,255,255,.02);border-radius:9px;border:1px dashed rgba(255,255,255,.07);display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">🎯</span>
+        <div><div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px">Próximo logro: ${nextBadge.name}</div>
+        <div style="font-size:10px;color:var(--muted)">${nextBadge.desc}</div></div>
+      </div>`:'<div style="margin-top:10px;font-size:12px;color:var(--gold);text-align:center">🏆 ¡Todos los logros desbloqueados!</div>'}
+    </div>
 
     <!-- LOGROS -->
-    <div class="badges-section">
-      <div class="sec-title" style="margin-bottom:10px"><span class="ico">🏅</span> Logros <span class="count">${unlockedCount}/${badges.length} desbloqueados</span></div>
-      <div class="badges-row">
-        ${badges.map(b=>`<div class="badge ${b.ok?'unlocked':'locked'}">
-          <div class="badge-ico">${b.ico}</div>
-          <div><div class="badge-name">${b.name}</div><div class="badge-desc">${b.desc}</div></div>
-        </div>`).join('')}
-      </div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">🏅 Logros · ${unlockedCount} de ${badges.length} desbloqueados</div>
+    <div class="av2-badge-grid">
+      ${badges.map(b=>`<div class="av2-badge ${b.ok?'unlocked':'locked'}">
+        <div class="av2-badge-ico">${b.ico}</div>
+        <div><div class="av2-badge-name">${b.name}</div><div class="av2-badge-desc">${b.desc}</div></div>
+      </div>`).join('')}
     </div>
   `;
 }
