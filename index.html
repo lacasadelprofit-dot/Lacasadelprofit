@@ -203,6 +203,18 @@ select.fi:focus{border-color:var(--gold);}
 ::-webkit-scrollbar-track{background:var(--bg);}
 ::-webkit-scrollbar-thumb{background:#2A2810;border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+/* ── FONDO MÍSTICO ── */
+html{background:#06060A;}
+body{background:transparent!important;}
+#loginScreen{position:relative;z-index:2;}
+#app{position:relative!important;z-index:1;}
+.kc,.cc,.tc,.fc,.hc{background:rgba(14,13,20,.78)!important;border:1px solid rgba(201,168,76,.14)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.kc:hover{box-shadow:0 0 22px rgba(201,168,76,.07);}
+.sidebar{background:rgba(10,9,18,.97)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
+.cd{background:rgba(14,13,20,.65)!important;border-color:rgba(201,168,76,.09)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
+.cd:hover{border-color:rgba(201,168,76,.38)!important;}
+th{background:rgba(28,26,46,.88)!important;}
+.mb{background:rgba(12,11,22,.94)!important;border-color:rgba(201,168,76,.22)!important;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);}
 @keyframes slideIn{from{transform:translateY(16px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 @keyframes spin{to{transform:rotate(360deg);}}
 /* BDAY */
@@ -252,6 +264,8 @@ select.fi:focus{border-color:var(--gold);}
 </style>
 </head>
 <body>
+
+<canvas id="bgCvs" style="position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none"></canvas>
 
 <!-- LOGIN -->
 <div id="loginScreen">
@@ -7238,6 +7252,92 @@ function startInscPolling(){
   if(_pollTimer)clearInterval(_pollTimer);
   _pollTimer=setInterval(refreshLiveData,30000); // cada 30 segundos
 }
+
+// ── FONDO: ESPIRAL + FLOR DE LA VIDA + LA CASA ───────────────
+(function(){
+  const cvs=document.getElementById('bgCvs');
+  const ctx=cvs.getContext('2d');
+
+  function draw(){
+    cvs.width=window.innerWidth;cvs.height=window.innerHeight;
+    const W=cvs.width,H=cvs.height;
+    ctx.clearRect(0,0,W,H);
+
+    // Base oscura
+    ctx.fillStyle='#06060A';ctx.fillRect(0,0,W,H);
+    // Degradado radial sutil
+    const rg=ctx.createRadialGradient(W*.28,H*.25,0,W*.28,H*.25,W*.65);
+    rg.addColorStop(0,'rgba(28,20,4,.65)');rg.addColorStop(1,'transparent');
+    ctx.fillStyle=rg;ctx.fillRect(0,0,W,H);
+
+    // Flor de la vida
+    function fol(cx,cy,r,alpha){
+      ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle='#C9A84C';ctx.lineWidth=.75;
+      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3;
+        ctx.beginPath();ctx.arc(cx+r*Math.cos(a),cy+r*Math.sin(a),r,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.beginPath();ctx.arc(cx,cy,r*2,0,Math.PI*2);ctx.stroke();
+      for(let i=0;i<6;i++){
+        const a=i*Math.PI/3+Math.PI/6;
+        ctx.beginPath();ctx.arc(cx+r*2*Math.cos(a),cy+r*2*Math.sin(a),r,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // Espiral dorada (Fibonacci)
+    function spiral(cx,cy,alpha){
+      ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle='#C9A84C';ctx.lineWidth=1.1;
+      ctx.beginPath();
+      const phi=1.618033;let r=4;let first=true;
+      for(let t=0;t<Math.PI*10;t+=0.025){
+        const x=cx+r*Math.cos(t),y=cy+r*Math.sin(t);
+        if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+        r*=Math.pow(phi,0.025/(Math.PI*2));
+        if(r>Math.min(W,H)*.32)break;
+      }
+      ctx.stroke();ctx.restore();
+    }
+
+    // La Casa
+    function casa(x,y,sz,alpha){
+      ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle='#C9A84C';ctx.lineWidth=1.1;
+      ctx.lineCap='round';ctx.lineJoin='round';
+      // Techo
+      ctx.beginPath();ctx.moveTo(x-sz*.55,y);ctx.lineTo(x,y-sz*.5);ctx.lineTo(x+sz*.55,y);ctx.stroke();
+      // Paredes
+      ctx.strokeRect(x-sz*.42,y,sz*.84,sz*.64);
+      // Puerta con arco
+      ctx.beginPath();
+      ctx.moveTo(x-sz*.12,y+sz*.64);ctx.lineTo(x-sz*.12,y+sz*.32);
+      ctx.arc(x,y+sz*.32,sz*.12,Math.PI,0);
+      ctx.lineTo(x+sz*.12,y+sz*.64);
+      ctx.stroke();
+      // Ventanas
+      ctx.strokeRect(x-sz*.36,y+sz*.09,sz*.17,sz*.15);
+      ctx.strokeRect(x+sz*.19,y+sz*.09,sz*.17,sz*.15);
+      // Cruz en ventanas
+      ctx.beginPath();ctx.moveTo(x-sz*.275,y+sz*.09);ctx.lineTo(x-sz*.275,y+sz*.24);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x-sz*.36,y+sz*.165);ctx.lineTo(x-sz*.19,y+sz*.165);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x+sz*.275,y+sz*.09);ctx.lineTo(x+sz*.275,y+sz*.24);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(x+sz*.19,y+sz*.165);ctx.lineTo(x+sz*.36,y+sz*.165);ctx.stroke();
+      ctx.restore();
+    }
+
+    // Composición
+    fol(W*.82,H*.18,130,.045);   // Grande, arriba derecha
+    fol(W*.06,H*.78,80,.032);    // Mediana, abajo izquierda
+    fol(W*.5,H*.52,210,.016);    // Gigante centrada, muy tenue
+    spiral(W*.88,H*.74,.048);    // Espiral abajo derecha
+    spiral(W*.14,H*.22,.032);    // Espiral arriba izquierda, más sutil
+    casa(W*.5,H*.46,180,.026);   // Casa centrada grande, muy tenue
+    casa(W*.1,H*.6,70,.038);     // Casa pequeña izquierda
+  }
+
+  draw();
+  window.addEventListener('resize',draw);
+})();
 </script>
 </body>
 </html>
