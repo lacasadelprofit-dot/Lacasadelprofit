@@ -497,7 +497,20 @@ async function _doSave(cb){
   // KEY FIX: persist progreso + paraQue + resultadoDeseado to sessionStorage
   curInsc.progreso={...progreso};
   const idx=allInscList.findIndex(i=>i.id===curInsc.id);
-  if(idx>=0)allInscList[idx]={...allInscList[idx],progreso:{...progreso},paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||''};
+  if(idx>=0){
+    allInscList[idx]={
+      ...allInscList[idx],
+      progreso:{...progreso},
+      paraQue:curInsc.paraQue||'',
+      resultadoDeseado:curInsc.resultadoDeseado||'',
+      habTrack:curInsc.habTrack||{},
+      desTrack:curInsc.desTrack||{},
+      notasSer:curInsc.notasSer||[],
+      comunicacion:curInsc.comunicacion||[]
+    };
+    if(curInsc.habitosElegidos&&Object.keys(curInsc.habitosElegidos).length)
+      allInscList[idx].habitosElegidos=curInsc.habitosElegidos;
+  }
   sessionStorage.setItem('pp_all_insc',JSON.stringify(allInscList));
   // Save to Supabase via API
   const _code=sessionStorage.getItem('pp_code')||'';
@@ -513,18 +526,21 @@ async function _doSave(cb){
 // ── LOGIN ────────────────────────────────────────────────────────────────────
 async function doLogin(){
   const email=document.getElementById('lEmail').value.trim().toLowerCase();
-  const code=document.getElementById('lCode').value.trim();
+  const code=document.getElementById('lCode').value.trim().toUpperCase().replace(/\s/g,'');
   const errEl=document.getElementById('lerr');errEl.style.display='none';
   if(!email||!code){errEl.textContent='Completá email y código.';errEl.style.display='block';return;}
   document.getElementById('btnLogin').disabled=true;showLoader();
   try{
+    if(typeof supabase==='undefined')throw new Error('lib');
     _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-    const seres=await sbQ('seres',{email});if(!seres.length)throw new Error('nf');
+    const withTimeout=(p,ms=12000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
+    const seres=await withTimeout(sbQ('seres',{email}));
+    if(!seres.length)throw new Error('nf');
     const ser=seres[0];
-    const inscList=await sbQ('inscripciones',{serId:ser.id});
-    const insc=inscList.find(i=>String(i.code||'').trim()===code);if(!insc)throw new Error('bc');
-    const progs=await sbQ('programas',{});
-    try{allSessions=await sbQ('sessions',{serId:ser.id});}catch{allSessions=[];}
+    const inscList=await withTimeout(sbQ('inscripciones',{serId:ser.id}));
+    const insc=inscList.find(i=>String(i.code||'').trim().toUpperCase()===code);if(!insc)throw new Error('bc');
+    const progs=await withTimeout(sbQ('programas',{}));
+    try{allSessions=await withTimeout(sbQ('sessions',{serId:ser.id}));}catch{allSessions=[];}
     allInscList=inscList;allProgsList=progs;
     sessionStorage.setItem('pp_ser',JSON.stringify(ser));
     sessionStorage.setItem('pp_all_insc',JSON.stringify(inscList));
@@ -535,7 +551,11 @@ async function doLogin(){
     if(inscList.length===1){const prog=progs.find(p=>p.id===insc.programaId);if(!prog)throw new Error('np');launchApp(ser,insc,prog);}
     else showSelector(ser,inscList,progs);
   }catch(e){
-    errEl.textContent=e.message==='nf'||e.message==='bc'||e.message==='np'?'Email o código incorrecto. Contactá al equipo.':'Error de conexión. Intentá de nuevo.';
+    const msg=e.message;
+    if(msg==='nf'||msg==='bc'||msg==='np')errEl.textContent='Email o código incorrecto. Contactá al equipo.';
+    else if(msg==='timeout')errEl.textContent='La conexión tardó mucho. Revisá tu red e intentá de nuevo.';
+    else if(msg==='lib')errEl.textContent='Error al cargar. Recargá la página.';
+    else errEl.textContent='Error de conexión ('+msg+'). Intentá de nuevo.';
     errEl.style.display='block';console.error(e);
   }finally{hideLoader();document.getElementById('btnLogin').disabled=false;}
 }
@@ -1272,9 +1292,12 @@ function renderHabitosTab(){
   const hasChosen = curInsc.habitosElegidos && Object.keys(curInsc.habitosElegidos).length >= 4;
   if(!hasChosen){ renderHabitosForm(false); return; }
   document.getElementById('mainContent').innerHTML=`
-    <div style="margin-bottom:14px">
-      <div style="font-size:18px;font-weight:800;color:var(--gl)">🗓 Hábitos & Desafíos</div>
-      <div style="font-size:12px;color:var(--muted)">Registrá tu progreso — sincronizado con tu facilitador</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <div>
+        <div style="font-size:18px;font-weight:800;color:var(--gl)">🗓 Hábitos & Desafíos</div>
+        <div style="font-size:12px;color:var(--muted)">Registrá tu progreso — sincronizado con tu facilitador</div>
+      </div>
+      <button onclick="renderHabitosForm(true)" style="padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer">✏️ Editar</button>
     </div>
     <div id="pCalSubNav" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
       <button id="pcaltab_sem" onclick="switchPortalCalView('sem')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📆 Semanal</button>

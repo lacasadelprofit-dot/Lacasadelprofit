@@ -7190,7 +7190,38 @@ async function syncProgramTemplates(){
   renderProg();
 }
 
-function initApp(){renderDash();updateOfflineUI();}
+function initApp(){renderDash();updateOfflineUI();startInscPolling();}
+
+// ── POLLING DE INSCRIPCIONES (hábitos en tiempo casi-real) ───────────────────
+let _pollTimer=null;
+async function refreshInscripciones(){
+  try{
+    const{data,error}=await _sb.from('inscripciones').select('id,data');
+    if(error||!data)return;
+    inscripciones=_unwrap(data);
+    // Re-render silencioso solo si el admin está en journey o dashboard
+    if(curSec==='journey')renderJourneyAdmin();
+    else if(curSec==='dashboard')renderDash();
+    _showPollDot();
+  }catch(e){}
+}
+function _showPollDot(){
+  let dot=document.getElementById('_pollDot');
+  if(!dot){
+    dot=document.createElement('span');
+    dot.id='_pollDot';
+    dot.style.cssText='position:fixed;bottom:14px;right:18px;font-size:10px;color:var(--muted);opacity:0;transition:opacity .4s;z-index:9999;pointer-events:none';
+    document.body.appendChild(dot);
+  }
+  const now=new Date();
+  dot.textContent='↻ '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0');
+  dot.style.opacity='1';
+  setTimeout(()=>dot.style.opacity='0',2500);
+}
+function startInscPolling(){
+  if(_pollTimer)clearInterval(_pollTimer);
+  _pollTimer=setInterval(refreshInscripciones,30000); // cada 30 segundos
+}
 </script>
 </body>
 </html>
