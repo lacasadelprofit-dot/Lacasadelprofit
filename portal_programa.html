@@ -136,6 +136,38 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .btn-pq:hover{background:rgba(201,168,76,.2);}
 .pq-ok{font-size:9px;color:var(--green);display:none;margin-top:3px;}
 
+/* ── GENERAL V2 ── */
+.gv2-hero{background:var(--card);border:1px solid #1E1C10;border-radius:16px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
+.gv2-hero-wash{position:absolute;inset:0;pointer-events:none;}
+.gv2-hero-row{display:flex;align-items:center;gap:14px;position:relative;margin-bottom:14px;}
+.gv2-prog-name{font-size:17px;font-weight:800;line-height:1.2;margin-bottom:3px;}
+.gv2-greeting{font-size:12px;color:var(--muted);line-height:1.5;}
+.gv2-bar-wrap{background:rgba(255,255,255,.05);border-radius:20px;height:5px;overflow:hidden;margin-bottom:6px;}
+.gv2-bar-fill{height:100%;border-radius:20px;transition:.8s ease;}
+.gv2-bar-meta{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);}
+.gv2-semana{background:var(--card);border:1px solid #1E1C10;border-left:3px solid;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+.gv2-sem-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;}
+.gv2-sem-row{display:flex;align-items:baseline;gap:10px;margin-bottom:2px;}
+.gv2-sem-num{font-size:42px;font-weight:900;line-height:1;}
+.gv2-sem-titulo{font-size:15px;font-weight:700;color:var(--text);}
+.gv2-sem-desc{font-size:12px;color:var(--muted);line-height:1.65;margin:6px 0 10px;}
+.gv2-sem-footer{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);border-top:1px solid rgba(255,255,255,.04);padding-top:8px;}
+.gv2-anchor{background:var(--card);border:1px solid #1E1C10;border-left:3px solid;border-radius:12px;padding:14px 16px;margin-bottom:12px;}
+.gv2-anchor-lbl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:8px;}
+.gv2-anchor-quote{font-size:14px;color:var(--text);line-height:1.75;font-style:italic;}
+.gv2-anchor-invite{font-size:12px;color:var(--muted);line-height:1.6;}
+.gv2-rd-texto{font-size:13px;color:var(--text);line-height:1.7;}
+.gv2-link-btn{background:none;border:none;font-size:10px;color:var(--muted);cursor:pointer;padding:4px 0;text-decoration:underline;display:block;margin-top:7px;}
+.gv2-vitals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.gv2-vital{background:var(--card);border:1px solid #1E1C10;border-radius:12px;padding:12px 8px;text-align:center;}
+.gv2-vital-ico{font-size:20px;margin-bottom:4px;}
+.gv2-vital-num{font-size:22px;font-weight:900;line-height:1;margin-bottom:3px;}
+.gv2-vital-lbl{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+.gv2-textarea{width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;line-height:1.65;resize:vertical;font-family:inherit;outline:none;box-sizing:border-box;min-height:70px;transition:border-color .2s;}
+.gv2-textarea:focus{border-color:var(--gold);}
+.gv2-save-row{display:flex;align-items:center;gap:8px;margin-top:7px;}
+.gv2-btn-save{padding:6px 16px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:7px;color:var(--gold);font-size:11px;font-weight:700;cursor:pointer;}
+
 /* ── MI AVANCE — compact, no scroll ── */
 .av-top{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
 .av-areas{display:flex;flex-direction:column;gap:6px;}
@@ -610,24 +642,56 @@ function _showSyncDot(ok){
 // ══════════════════════════════════════════════════════════════════════════════
 // GENERAL
 // ══════════════════════════════════════════════════════════════════════════════
+function makeSpiralSVG(col,pct){
+  const sz=72,cx=36,cy=36,maxR=29,turns=2.5;
+  const pts=[];
+  for(let t=0.01;t<=turns*Math.PI*2;t+=0.06){
+    const r=(t/(turns*Math.PI*2))*maxR;
+    pts.push([cx+r*Math.cos(t-Math.PI/2),cy+r*Math.sin(t-Math.PI/2)]);
+  }
+  const fill=Math.max(1,Math.round(pts.length*(Math.max(0,Math.min(100,pct))/100)));
+  const mk=arr=>arr.map((p,i)=>(i===0?'M'+p[0].toFixed(1)+','+p[1].toFixed(1):'L'+p[0].toFixed(1)+','+p[1].toFixed(1))).join('');
+  const tip=pts[Math.min(fill,pts.length)-1];
+  return '<svg width="'+sz+'" height="'+sz+'" viewBox="0 0 '+sz+' '+sz+'">'
+    +'<path d="'+mk(pts)+'" fill="none" stroke="rgba(255,255,255,0.07)" stroke-width="2.5" stroke-linecap="round"/>'
+    +(pct>0?'<path d="'+mk(pts.slice(0,fill))+'" fill="none" stroke="'+col+'" stroke-width="2.5" stroke-linecap="round" opacity="0.88"/>'
+      +'<circle cx="'+tip[0].toFixed(1)+'" cy="'+tip[1].toFixed(1)+'" r="4.5" fill="'+col+'" opacity="0.92"/>'
+      +'<circle cx="'+tip[0].toFixed(1)+'" cy="'+tip[1].toFixed(1)+'" r="9" fill="'+col+'" opacity="0.18"/>'
+    :'')
+    +'</svg>';
+}
+
 function renderGeneral(){
   const sems=curInsc.semanas||[];const doneSem=sems.filter((_,i)=>semDone(i)).length;
-  const ses=allSessions.filter(s=>s.serId===curSer.id||s.ser===curSer.nombre);
-  const doneSes=ses.filter(s=>(s.estado||'').toLowerCase().includes('comp')).length;
-  let best=0;sems.forEach((_,i)=>{const p=getP(i);(sems[i].habitos||[]).forEach(h=>{const hid=h.id||h.texto||h;const s=calcStreak((p.habitos||{})[hid]||[]);if(s>best)best=s;});});
-  const gStreak=calcGlobalStreak();const streak=Math.max(best,gStreak);
+  const pct=calcPct();
+  const col=curProg.col||'#C9A84C';
+  const gStreak=calcGlobalStreak();
   const sesInc=curProg.sesionesIncluidas_v2||{};const totInc=Object.values(sesInc).reduce((a,n)=>a+n,0);
-  const durLine=[];if(curProg.meses)durLine.push(curProg.meses+' mes'+(curProg.meses>1?'es':''));if(curProg.semanas_dur)durLine.push(curProg.semanas_dur+' sem.');
   const paraQue=curInsc.paraQue||progreso._paraQue||'';
   const resultado=curInsc.resultadoDeseado||progreso._resultadoDeseado||'';
-  const streakBlock=`<div class="streak-block">
-    <div class="streak-fire">${streak>0?'🔥':'🌱'}</div>
-    <div>
-      <div class="streak-num">${streak}</div>
-      <div class="streak-lbl">${streak===1?'día consecutivo':'días consecutivos'}</div>
-      <div class="streak-best">${streak===0?'Completá hábitos hoy para empezar tu racha':'🏆 ¡Seguí así, vas muy bien!'}</div>
-    </div>
-  </div>`;
+  const nombre=(curSer.nombre||curSer.email||'').split(' ')[0];
+
+  // Days in program & current week
+  let diasEnPrograma=0,curWeekIdx=0;
+  if(curInsc.fechaInicio){
+    const ini=new Date(curInsc.fechaInicio+'T12:00:00');
+    diasEnPrograma=Math.max(0,Math.floor((new Date()-ini)/(1000*60*60*24)));
+    curWeekIdx=Math.min(sems.length-1,Math.floor(diasEnPrograma/7));
+  }
+  const curWeek=sems[curWeekIdx]||{};
+  const diasStr=diasEnPrograma>0?' · '+diasEnPrograma+' días en tu proceso':'';
+
+  // Active days & adherence (last 90 days)
+  const habTrack=curInsc.habTrack||{};
+  const AK=['espiritual','mental','fisica','social'];
+  const days90=lastNDays(90);
+  const activeDays=days90.filter(ds=>AK.some(k=>habTrack[ds]&&habTrack[ds][k])).length;
+  let totalDone=0;days90.forEach(ds=>{AK.forEach(k=>{if(habTrack[ds]&&habTrack[ds][k])totalDone++;});});
+  const adherencia=Math.round(totalDone/(90*4)*100);
+
+  const spiral=makeSpiralSVG(col,pct);
+
+  // Carta
   const cs=cartaStatus();
   const cartaHTML=cs==='pendiente'?`<div class="carta-block pendiente">
     <div class="carta-lbl" style="color:var(--gold)">✉ Carta a mi futuro yo</div>
@@ -642,7 +706,7 @@ function renderGeneral(){
     <div style="font-size:22px;margin-bottom:8px">🔒</div>
     <div class="carta-titulo">Tu carta está sellada</div>
     <div class="carta-sub">Escrita el ${progreso._carta.fecha}. Se abrirá cuando completes el programa.</div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)"><span>📊</span>${calcPct()}% del programa completado</div>
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)"><span>📊</span>${pct}% del programa completado</div>
   </div>`
   :`<div class="carta-block revelada">
     <div class="carta-lbl" style="color:var(--gold)">✉ Carta a mi futuro yo</div>
@@ -652,33 +716,95 @@ function renderGeneral(){
     <div class="carta-texto">${(progreso._carta.texto||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
     <div class="carta-fecha">Escrita el ${progreso._carta.fecha}</div>
   </div>`;
+
+  // Para Qué section
+  const pqSection=paraQue
+    ?`<div id="pqDisplay" class="gv2-anchor-quote">“${paraQue}”</div>
+      <div id="pqEditWrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)">
+        <textarea id="pqText" class="gv2-textarea" placeholder="Tu propósito profundo…">${paraQue}</textarea>
+        <div class="gv2-save-row"><button class="gv2-btn-save" onclick="savePQ()">Guardar</button><span class="pq-ok" id="pqOk">✓ Guardado</span></div>
+      </div>
+      <button class="gv2-link-btn" onclick="const w=document.getElementById('pqEditWrap');w.style.display=w.style.display==='none'?'block':'none'">Editar propósito</button>`
+    :`<div class="gv2-anchor-invite">Escribié tu propósito profundo — te da fuerza cuando el camino se pone difícil.</div>
+      <textarea id="pqText" class="gv2-textarea" style="margin-top:8px" placeholder="¿Por qué estoy haciendo este proceso?"></textarea>
+      <div class="gv2-save-row"><button class="gv2-btn-save" onclick="savePQ()">Guardar mi propósito</button><span class="pq-ok" id="pqOk">✓ Guardado</span></div>`;
+
+  // Resultado section
+  const rdSection=resultado
+    ?`<div id="rdDisplay" class="gv2-rd-texto">${resultado}</div>
+      <div id="rdEditWrap" style="display:none;margin-top:10px;padding-top:10px;border-top:1px solid rgba(255,255,255,.05)">
+        <textarea id="rdText" class="gv2-textarea" placeholder="Describí cómo querés estar, sentirte…">${resultado}</textarea>
+        <div class="gv2-save-row"><button class="gv2-btn-save" onclick="saveRD()">Guardar</button><span class="pq-ok" id="rdOk">✓ Guardado</span></div>
+      </div>
+      <button class="gv2-link-btn" onclick="const w=document.getElementById('rdEditWrap');w.style.display=w.style.display==='none'?'block':'none'">Editar</button>`
+    :`<div class="gv2-anchor-invite">¿Cómo te imaginás al terminar el programa?</div>
+      <textarea id="rdText" class="gv2-textarea" style="margin-top:8px" placeholder="Describí cómo querés estar, sentirte, vivir…"></textarea>
+      <div class="gv2-save-row"><button class="gv2-btn-save" onclick="saveRD()">Guardar</button><span class="pq-ok" id="rdOk">✓ Guardado</span></div>`;
+
   document.getElementById('mainContent').innerHTML=`
-    <div class="gen-hero">
-      <span class="gen-hero-ico">${curProg.ico||'📚'}</span>
-      <div class="gen-hero-name">${curProg.nombre}</div>
-      <div class="gen-hero-sub">${curProg.descripcion||curProg.objetivo||''}${durLine.length?` <span style="color:var(--muted)">· ${durLine.join(' · ')}</span>`:''}
+    <div class="gv2-hero">
+      <div class="gv2-hero-wash" style="background:radial-gradient(ellipse at top right,${col}1A 0%,transparent 65%)"></div>
+      <div class="gv2-hero-row">
+        <div style="flex-shrink:0">${spiral}</div>
+        <div style="flex:1;min-width:0">
+          <div class="gv2-prog-name" style="color:${col}">${curProg.nombre}</div>
+          <div class="gv2-greeting">Hola, ${nombre}${diasStr}</div>
+        </div>
       </div>
-      <div class="gen-stats">
-        <div class="gen-stat"><div class="sv">${doneSem}/${sems.length}</div><div class="sl">Semanas</div></div>
-        <div class="gen-stat"><div class="sv">${doneSes}${totInc?'/'+totInc:''}</div><div class="sl">Sesiones</div></div>
-        <div class="gen-stat"><div class="sv">${streak?'🔥'+streak:'—'}</div><div class="sl">Racha</div></div>
+      <div class="gv2-bar-wrap">
+        <div class="gv2-bar-fill" style="width:${pct}%;background:linear-gradient(90deg,${col}88,${col})"></div>
+      </div>
+      <div class="gv2-bar-meta">
+        <span style="color:${col};font-weight:700">${pct}% completado</span>
+        <span>${doneSem} de ${sems.length} semana${sems.length!==1?'s':''}</span>
       </div>
     </div>
-    ${streakBlock}
+
+    ${sems.length?`<div class="gv2-semana" style="border-left-color:${col}">
+      <div class="gv2-sem-lbl">📍 Tu semana actual</div>
+      <div class="gv2-sem-row">
+        <div class="gv2-sem-num" style="color:${col}">S${curWeekIdx+1}</div>
+        <div class="gv2-sem-titulo">${curWeek.titulo||'Semana '+(curWeekIdx+1)}</div>
+      </div>
+      ${curWeek.descripcion?`<div class="gv2-sem-desc">${curWeek.descripcion}</div>`:''}
+      <div class="gv2-sem-footer">
+        <span>${doneSem} de ${sems.length} completadas</span>
+        ${sems.length-doneSem>0?`<span style="color:${col}">${sems.length-doneSem} por delante →</span>`:`<span style="color:#10B981">¡Programa completo! 🎉</span>`}
+      </div>
+    </div>`:''}
+
+    <div class="gv2-anchor" style="border-left-color:${col}">
+      <div class="gv2-anchor-lbl">✶ Tu propósito</div>
+      ${pqSection}
+    </div>
+
+    <div class="gv2-vitals">
+      <div class="gv2-vital">
+        <div class="gv2-vital-ico">${gStreak>0?'🔥':'🌱'}</div>
+        <div class="gv2-vital-num" style="color:${gStreak>0?col:'var(--muted)'}">${gStreak}</div>
+        <div class="gv2-vital-lbl">Días racha</div>
+      </div>
+      <div class="gv2-vital">
+        <div class="gv2-vital-ico">📅</div>
+        <div class="gv2-vital-num" style="color:${col}">${activeDays}</div>
+        <div class="gv2-vital-lbl">Días activos</div>
+      </div>
+      <div class="gv2-vital">
+        <div class="gv2-vital-ico">⭐</div>
+        <div class="gv2-vital-num" style="color:${col}">${adherencia}%</div>
+        <div class="gv2-vital-lbl">Adherencia</div>
+      </div>
+    </div>
+
     <div id="pregDiaBox"></div>
+
     ${cartaHTML}
-    <div class="pq-block">
-      <div class="sec-title" style="margin-bottom:8px"><span class="ico">🌟</span> Mi Para Qué</div>
-      <div class="pq-lbl">¿Por qué estoy haciendo este programa?</div>
-      <div class="pq-row"><div class="fg"><textarea id="pqText" placeholder="Tu propósito profundo…">${paraQue}</textarea></div><button class="btn-pq" onclick="savePQ()">Guardar</button></div>
-      <div class="pq-ok" id="pqOk">✓ Guardado</div>
+
+    <div class="gv2-anchor" style="border-left-color:${col}44">
+      <div class="gv2-anchor-lbl">🎯 Tu resultado deseado</div>
+      ${rdSection}
     </div>
-    <div class="pq-block">
-      <div class="sec-title" style="margin-bottom:8px"><span class="ico">🎯</span> Resultado Deseado</div>
-      <div class="pq-lbl">¿Cómo te imaginás al terminar?</div>
-      <div class="pq-row"><div class="fg"><textarea id="rdText" placeholder="Describí cómo querés estar, sentirte…">${resultado}</textarea></div><button class="btn-pq" onclick="saveRD()">Guardar</button></div>
-      <div class="pq-ok" id="rdOk">✓ Guardado</div>
-    </div>
+
     ${totInc?`<div class="sec-block"><div class="sec-title"><span class="ico">✨</span> Sesiones incluidas</div><div style="display:flex;flex-wrap:wrap;gap:7px">${Object.entries(sesInc).map(([n,q])=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;display:flex;align-items:center;gap:6px"><span style="font-size:11px">${n}</span><span style="font-size:11px;font-weight:800;color:var(--gl)">${q}x</span></div>`).join('')}</div></div>`:''}
   `;
   loadPregDia();
@@ -701,12 +827,22 @@ async function loadPregDia(){
 }
 
 function savePQ(){
-  const txt=document.getElementById('pqText').value;curInsc.paraQue=txt;progreso._paraQue=txt;
-  saveProgress(()=>{const el=document.getElementById('pqOk');if(el){el.style.display='block';setTimeout(()=>el.style.display='none',2000);}});
+  const el=document.getElementById('pqText');if(!el)return;
+  const txt=el.value;curInsc.paraQue=txt;progreso._paraQue=txt;
+  saveProgress(()=>{
+    const ok=document.getElementById('pqOk');if(ok){ok.style.display='block';setTimeout(()=>ok.style.display='none',2000);}
+    const disp=document.getElementById('pqDisplay');if(disp)disp.textContent='“'+txt+'”';
+    const wrap=document.getElementById('pqEditWrap');if(wrap)wrap.style.display='none';
+  });
 }
 function saveRD(){
-  const txt=document.getElementById('rdText').value;curInsc.resultadoDeseado=txt;progreso._resultadoDeseado=txt;
-  saveProgress(()=>{const el=document.getElementById('rdOk');if(el){el.style.display='block';setTimeout(()=>el.style.display='none',2000);}});
+  const el=document.getElementById('rdText');if(!el)return;
+  const txt=el.value;curInsc.resultadoDeseado=txt;progreso._resultadoDeseado=txt;
+  saveProgress(()=>{
+    const ok=document.getElementById('rdOk');if(ok){ok.style.display='block';setTimeout(()=>ok.style.display='none',2000);}
+    const disp=document.getElementById('rdDisplay');if(disp)disp.textContent=txt;
+    const wrap=document.getElementById('rdEditWrap');if(wrap)wrap.style.display='none';
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -907,10 +1043,10 @@ function renderSemana(idx){
     }).join('')}</div>`:''}
     ${!hasAreas&&hasGen?`<div class="sec-block"><div class="sec-title"><span class="ico">🎯</span> Desafíos</div>${des.map(d=>{const done=!!(p.desafios||{})[d.id];return`<div class="des-item"><div class="d-chk ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dc_${d.id}"></div><div class="d-txt ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dt_${d.id}">${d.texto}</div></div>`;}).join('')}</div>${mat.length?`<div class="sec-block"><div class="sec-title"><span class="ico">📖</span> Materiales</div>${mat.map(m=>`<div class="mat-item"><div class="mat-ico">${iconForType(m.tipo)}</div><div><div class="mat-name">${m.nombre||'Material'}</div>${m.tipo?`<div class="mat-type">${m.tipo}</div>`:''}</div>${m.url?`<a class="mat-lnk" href="${m.url}" target="_blank" rel="noopener">Abrir ↗</a>`:''}</div>`).join('')}</div>`:''}`:''}
     ${!hasAreas&&!hasGen?`<div style="padding:30px;text-align:center;color:var(--muted)">El equipo cargará el contenido pronto.</div>`:''}
-    ${hab.length?`<div class="sec-block"><div class="sec-title"><span class="ico">🌱</span> Hábitos <span class="count">Últimos 7 días</span></div>${renderHabitos(hab,p,idx)}</div>`:''}
     <div class="sec-block"><div class="sec-title"><span class="ico">📝</span> Mis notas de la semana</div>
-      <div class="nota-wrap"><textarea id="notaText" placeholder="Anotá reflexiones, aprendizajes, preguntas…">${p.nota||''}</textarea>
-      <div class="nota-save-row"><button class="btn-save-nota" onclick="saveNota()">Guardar nota</button><span class="nota-saved" id="notaSaved">✓ Guardado</span></div></div>
+      <div id="semNotasList">${buildSemNotasListHTML(p.notas||[],idx)}</div>
+      <div class="nota-wrap"><textarea id="notaText" placeholder="Anotá reflexiones, aprendizajes, preguntas…" style="min-height:80px"></textarea>
+      <div class="nota-save-row"><button class="btn-save-nota" onclick="addNotaSemana()">Agregar nota</button><span class="nota-saved" id="notaSaved">✓ Guardado</span></div></div>
     </div>
     <div class="reflexion-block">
       <div class="reflexion-lbl">✦ Reflexión de la semana</div>
@@ -950,12 +1086,43 @@ function toggleHab(hId,date,semIdx){
   const se=document.getElementById('hs_'+hId);if(se)se.textContent=calcStreak(arr)?'🔥'+calcStreak(arr):'';
   saveProgress();
 }
-function saveNota(){
-  const txt=(document.getElementById('notaText')||{}).value;if(txt===undefined)return;
-  getP(curSemIdx).nota=txt;
-  saveProgress(()=>{const el=document.getElementById('notaSaved');if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}});
+function buildSemNotasListHTML(notas,semIdx){
+  if(!notas.length)return'<div style="font-size:12px;color:var(--muted);padding:2px 0 10px">Todavía no hay notas esta semana.</div>';
+  return[...notas].reverse().map(n=>`
+    <div style="background:var(--card2);border-radius:9px;padding:10px 36px 10px 12px;margin-bottom:7px;position:relative">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:4px">${n.fecha||''}</div>
+      <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${n.texto}</div>
+      <button onclick="deleteNotaSemana(${semIdx},'${n.id}')" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px" title="Eliminar">×</button>
+    </div>`).join('');
 }
-function saveNotaImmediate(){const el=document.getElementById('notaText');if(el)getP(curSemIdx).nota=el.value;const re=document.getElementById('reflexionText');if(re)getP(curSemIdx).reflexion=re.value;}
+function addNotaSemana(){
+  const el=document.getElementById('notaText');if(!el)return;
+  const txt=el.value.trim();if(!txt){toast('Escribí algo primero');return;}
+  const id=Date.now().toString(36);
+  const fecha=new Date().toLocaleDateString('es-AR');
+  const p=getP(curSemIdx);if(!p.notas)p.notas=[];
+  p.notas.push({id,texto:txt,fecha});
+  if(!curInsc.notasSer)curInsc.notasSer=[];
+  const sem=(curInsc.semanas||[])[curSemIdx];
+  const semTitulo=sem&&sem.titulo?sem.titulo:'';
+  curInsc.notasSer.push({id,fecha,de:'ser',texto:txt,tipo:'semana',semNum:curSemIdx+1,semTitulo});
+  el.value='';
+  saveProgress(()=>{
+    const list=document.getElementById('semNotasList');
+    if(list)list.innerHTML=buildSemNotasListHTML(getP(curSemIdx).notas||[],curSemIdx);
+    const saved=document.getElementById('notaSaved');
+    if(saved){saved.style.display='inline';setTimeout(()=>saved.style.display='none',2000);}
+  });
+}
+function deleteNotaSemana(semIdx,noteId){
+  const p=getP(semIdx);if(p.notas)p.notas=p.notas.filter(n=>n.id!==noteId);
+  if(curInsc.notasSer)curInsc.notasSer=curInsc.notasSer.filter(n=>n.id!==noteId);
+  saveProgress(()=>{
+    const list=document.getElementById('semNotasList');
+    if(list)list.innerHTML=buildSemNotasListHTML(getP(semIdx).notas||[],semIdx);
+  });
+}
+function saveNotaImmediate(){const re=document.getElementById('reflexionText');if(re)getP(curSemIdx).reflexion=re.value;}
 function saveReflexion(){
   const txt=(document.getElementById('reflexionText')||{}).value;if(txt===undefined)return;
   getP(curSemIdx).reflexion=txt;
@@ -1628,11 +1795,18 @@ function renderNotasTab(){
   const notas=curInsc.notasSer.filter(n=>n.de!=='admin');// ser solo ve sus propias notas
   const col=curProg.col||'#C9A84C';
 
-  const items=notas.length?[...notas].reverse().map((n,i)=>`
-    <div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${col};border-radius:12px;padding:14px;margin-bottom:8px">
-      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${n.fecha||''}</div>
+  // Sort: semana notes by semNum desc, then free notes by date (newest first)
+  const semNotas=[...notas].filter(n=>n.tipo==='semana').sort((a,b)=>(b.semNum||0)-(a.semNum||0));
+  const freeNotas=[...notas].filter(n=>n.tipo!=='semana').reverse();
+  const allSorted=[...freeNotas,...semNotas];
+  const items=allSorted.length?allSorted.map(n=>{
+    const isSem=n.tipo==='semana';
+    const badge=isSem?`<span style="display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;background:${col}22;border:1px solid ${col}44;color:${col};margin-right:6px">S${n.semNum}${n.semTitulo?' · '+n.semTitulo:''}</span>`:'';
+    return`<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${isSem?col:'var(--border)'};border-radius:12px;padding:14px 40px 14px 14px;margin-bottom:8px;position:relative">
+      <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px">${badge}<span style="font-size:10px;color:var(--muted)">${n.fecha||''}</span></div>
       <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${n.texto}</div>
-    </div>`).join('')
+      ${n.id?`<button onclick="deletePortalNota('${n.id}')" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px" title="Eliminar">×</button>`:''}
+    </div>`;}).join('')
     :`<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">Todavía no escribiste notas.</div>`;
 
   document.getElementById('mainContent').innerHTML=`
@@ -1652,8 +1826,17 @@ function savePortalNota(){
   const el=document.getElementById('portalNotaInput');if(!el)return;
   const texto=el.value.trim();if(!texto){return;}
   if(!curInsc.notasSer)curInsc.notasSer=[];
-  curInsc.notasSer.push({fecha:new Date().toLocaleDateString('es-AR'),de:'ser',texto});
+  curInsc.notasSer.push({id:Date.now().toString(36),fecha:new Date().toLocaleDateString('es-AR'),de:'ser',texto});
   saveProgress(()=>{renderNotasTab();toast('Nota guardada ✅');});
+}
+function deletePortalNota(noteId){
+  if(!curInsc.notasSer)return;
+  const n=curInsc.notasSer.find(x=>x.id===noteId);
+  curInsc.notasSer=curInsc.notasSer.filter(x=>x.id!==noteId);
+  if(n&&n.tipo==='semana'&&n.semNum!=null){
+    const p=getP(n.semNum-1);if(p.notas)p.notas=p.notas.filter(x=>x.id!==noteId);
+  }
+  saveProgress(()=>renderNotasTab());
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
