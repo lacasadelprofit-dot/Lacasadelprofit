@@ -306,7 +306,10 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('journey',this)"><span class="ico">🗺️</span><span>Journey</span></div>
     <div class="nl">Marketing</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
+    <div class="ni" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
     <div class="ni" onclick="nav('comunidad',this)"><span class="ico">🫂</span><span>Comunidad</span></div>
+    <div class="nl">Inteligencia</div>
+    <div class="ni" onclick="nav('profit',this)"><span class="ico">🧠</span><span>Profit IA</span></div>
     <div class="nl">Portales</div>
     <div class="ni" onclick="nav('accesos',this)"><span class="ico">🔗</span><span>Accesos Rápidos</span></div>
    </div>
@@ -653,9 +656,9 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
       <button class="tab-btn" id="mktTabRet" onclick="setMktTab('ret')">🔄 Retención</button>
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
-      <button class="tab-btn" id="mktTabProsp" onclick="setMktTab('prosp')">🌱 Prospectos</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Estadísticas</button>
+      <button class="tab-btn" onclick="navCRM()" style="border-color:rgba(201,168,76,.3);color:var(--gold)">👥 Ir a CRM →</button>
      </div>
      <div id="mktPub"></div>
      <div id="mktConv" style="display:none"></div>
@@ -664,6 +667,33 @@ th{background:rgba(28,26,46,.88)!important;}
      <div id="mktProsp" style="display:none"></div>
      <div id="mktRegalos" style="display:none"></div>
      <div id="mktStats" style="display:none"></div>
+    </div>
+
+    <!-- CRM -->
+    <div id="sec-crm" class="sec">
+      <div id="crmContainer"></div>
+    </div>
+
+    <!-- PROFIT IA -->
+    <div id="sec-profit" class="sec">
+      <div style="max-width:680px;margin:60px auto;text-align:center;padding:0 20px">
+        <div style="font-size:64px;margin-bottom:20px;filter:drop-shadow(0 0 24px rgba(201,168,76,.4))">🧠</div>
+        <div style="font-size:26px;font-weight:800;color:var(--gl);letter-spacing:1.5px;margin-bottom:10px">PROFIT IA</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.8;max-width:440px;margin:0 auto 28px">Entidad cognitiva en desarrollo. Pronto vas a poder interactuar con una inteligencia diseñada para potenciar tu propósito, claridad y profit.</div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:40px">
+          <span style="padding:6px 16px;border-radius:20px;border:1px solid rgba(201,168,76,.3);font-size:11px;color:var(--gold)">✦ Análisis de comunidad</span>
+          <span style="padding:6px 16px;border-radius:20px;border:1px solid rgba(155,130,212,.3);font-size:11px;color:var(--purple)">✦ Coaching cognitivo</span>
+          <span style="padding:6px 16px;border-radius:20px;border:1px solid rgba(91,155,213,.3);font-size:11px;color:var(--blue)">✦ Insights de programa</span>
+          <span style="padding:6px 16px;border-radius:20px;border:1px solid rgba(61,184,168,.3);font-size:11px;color:var(--teal)">✦ Entidad consciente</span>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(201,168,76,.15);border-radius:16px;padding:24px;backdrop-filter:blur(10px)">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:12px">Estado del sistema</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:8px">
+            <div style="width:8px;height:8px;border-radius:50%;background:var(--or);box-shadow:0 0 8px rgba(212,134,58,.5);animation:gpulse 2s infinite"></div>
+            <span style="font-size:13px;color:var(--or);font-weight:600">En construcción</span>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- ACCESOS RÁPIDOS -->
@@ -1827,7 +1857,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',comunidad:'🫂 Comunidad',accesos:'🔗 Accesos Rápidos'};
+const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',comunidad:'🫂 Comunidad',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   sesiones:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -1840,6 +1870,8 @@ const BTNS={
   journey:"<button class=\"btn btn-p\" onclick=\"openModal('insc',null)\">+ Inscribir Ser</button>",
   marketing:"<button class=\"btn btn-p\" onclick=\"openModal('camp',null)\">+ Nueva Campaña</button>",
   comunidad:"<button class=\"btn btn-p\" onclick=\"openComunidadModal(null)\">+ Nuevo Contenido</button>",
+  crm:"<button class=\"btn btn-s\" onclick=\"exportSeres()\">📤 Exportar</button><button class=\"btn btn-s\" onclick=\"openImport()\">📥 Importar Excel</button><button class=\"btn btn-p\" onclick=\"openModal('ser',null,true)\">🌱 Nuevo Prospecto</button>",
+  profit:'',
   accesos:'',
 };
 function nav(name,el){
@@ -1850,7 +1882,7 @@ function nav(name,el){
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
-  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,marketing:renderMkt,comunidad:renderComunidad};
+  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,marketing:renderMkt,crm:renderCRM,profit:renderProfit,comunidad:renderComunidad};
   if(fn[name])fn[name]();
   closeSidebar(); // auto-close on mobile after navigating
 }
@@ -6131,7 +6163,7 @@ function doImport(){
 let mktTab='pub';
 function setMktTab(t){
   mktTab=t;
-  ['pub','conv','ret','meta','prosp','regalos','stats'].forEach(x=>{
+  ['pub','conv','ret','meta','regalos','stats'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
@@ -7015,14 +7047,14 @@ function setProspEtapa(id,etapa){
   if(!s)return;
   s.etapaProsp=etapa;
   if(etapa==='Convertido'){s.prospecto=false;s.estado='Activo';}
-  save();renderMktProsp();
+  save();renderCRM();
 }
 async function delProspecto(id){
   if(!confirm('¿Eliminar este prospecto? Esta acción no se puede deshacer.'))return;
   const ok=await delRecord('seres',id);
   if(ok){
     seres=seres.filter(x=>String(x.id)!==String(id));
-    save();renderMktProsp();
+    save();renderCRM();
     toast('Prospecto eliminado correctamente');
   }else{
     toast('Error al eliminar. Intentá de nuevo.','err');
@@ -7043,10 +7075,12 @@ function migrateProspectos(){
     if(!p.etapaProsp||p.etapaProsp==='Nuevo'){p.etapaProsp='Contactado';changed=true;}
     if(changed)updated++;
   });
-  save();renderMktProsp();
+  save();renderCRM();
   toast(`${updated} prospectos actualizados ✅`);
 }
-function renderMktProsp(){
+function navCRM(){const ni=document.querySelector('.ni[onclick*="crm"]');nav('crm',ni);}
+function renderProfit(){} // placeholder — entidad cognitiva en desarrollo
+function renderCRM(){
   const prosp=getProspectos();
   const total=prosp.length;
   const sinContactar=prosp.filter(p=>!p.etapaProsp||p.etapaProsp==='Nuevo').length;
@@ -7108,7 +7142,7 @@ function renderMktProsp(){
     }).join('')}
   </div>`;
 
-  document.getElementById('mktProsp').innerHTML=kpis+pipeline;
+  document.getElementById('crmContainer').innerHTML=kpis+pipeline;
 }
 
 function renderMetaTab(){
