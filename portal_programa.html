@@ -176,7 +176,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 /* ── MI AVANCE — compact, no scroll ── */
 /* ── AVANCE V2 ── */
 .av2-hero{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
-.av2-area-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.av2-area-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px;}
 .av2-area-card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-radius:14px;padding:14px;position:relative;overflow:hidden;border:1px solid;}
 .av2-area-icon{font-size:30px;margin-bottom:6px;display:block;line-height:1;}
 .av2-area-name{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:3px;}
@@ -1004,14 +1004,13 @@ function renderAvance(){
   const areaBorderCols={espiritual:'rgba(199,125,255,.22)',mental:'rgba(96,165,250,.22)',fisica:'rgba(74,222,128,.22)',social:'rgba(251,191,36,.22)'};
   const areaCards=AREAS.map(a=>{
     const x=ad[a.key];const pct=x.t?Math.round(x.d/x.t*100):0;
-    return `<div class="av2-area-card" style="border-color:${areaBorderCols[a.key]}">
+    return `<div class="av2-area-card" style="border-color:${areaBorderCols[a.key]};padding:12px 10px">
       <div style="position:absolute;inset:0;background:${areaGlows[a.key]};pointer-events:none;border-radius:14px"></div>
-      <div style="position:relative">
-        <div class="av2-area-icon">${a.ico}</div>
-        <div class="av2-area-name" style="color:${areaCols[a.key]}">${a.lbl}</div>
-        <div class="av2-area-desc">${areaDescs[a.key]||''}</div>
+      <div style="position:relative;text-align:center">
+        <div class="av2-area-icon" style="font-size:24px;margin-bottom:4px">${a.ico}</div>
+        <div class="av2-area-name" style="color:${areaCols[a.key]};margin-bottom:8px">${a.lbl}</div>
         <div class="av2-area-bar"><div class="av2-area-bar-fill" style="width:${pct}%;background:${areaCols[a.key]}"></div></div>
-        <div class="av2-area-counts"><span>${x.d}/${x.t} desafíos</span><span style="color:${areaCols[a.key]};font-weight:700">${pct}%</span></div>
+        <div class="av2-area-counts" style="justify-content:center;gap:4px;margin-top:4px"><span>${x.d}/${x.t}</span><span style="color:${areaCols[a.key]};font-weight:700">${pct}%</span></div>
       </div>
     </div>`;
   }).join('');
@@ -1036,25 +1035,6 @@ function renderAvance(){
           </div>
           <div style="font-size:10px;color:var(--muted)">${semsDone} de ${sems.length} semanas · ${doneDes} desafíos completados</div>
         </div>
-      </div>
-    </div>
-
-    <!-- STATS -->
-    <div class="av2-stats">
-      <div class="av2-stat">
-        <div class="av2-stat-ico">🔥</div>
-        <div class="av2-stat-val" style="color:${col}">${gStreak}</div>
-        <div class="av2-stat-lbl">Racha días</div>
-      </div>
-      <div class="av2-stat">
-        <div class="av2-stat-ico">📅</div>
-        <div class="av2-stat-val" style="color:${col}">${activeDays}</div>
-        <div class="av2-stat-lbl">Días activos</div>
-      </div>
-      <div class="av2-stat">
-        <div class="av2-stat-ico">🏅</div>
-        <div class="av2-stat-val" style="color:${col}">${unlockedCount}<span style="font-size:12px;font-weight:400;color:var(--muted)">/${badges.length}</span></div>
-        <div class="av2-stat-lbl">Logros</div>
       </div>
     </div>
 
