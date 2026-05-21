@@ -1123,27 +1123,73 @@ function buildHeatmapHTML(habList,progWeeks){
 }
 
 function buildBadges(habList,doneDes,totDes,progWeeks){
-  const progDays=progWeeks*7;
   const pctDes=totDes?Math.round(doneDes/totDes*100):0;
   let maxStreak=0;habList.forEach(h=>{const s=calcStreak(h.dates);if(s>maxStreak)maxStreak=s;});
-  const totalHabDone=habList.reduce((a,h)=>a+h.dates.length,0);
   const notasCount=Object.keys(progreso).filter(k=>!k.startsWith('_')&&(progreso[k].nota||'').trim()).length;
-  const semsDone=((curInsc.semanas||[]).filter((_,i)=>semDone(i))).length;
-  const totalSems=(curInsc.semanas||[]).length;
-  // Dynamic milestones based on program duration
-  const streakM1=Math.min(3,Math.floor(progDays/10));        // ~10% of program
-  const streakM2=Math.round(progDays*0.25);                   // 25% of days
-  const streakM3=Math.round(progDays*0.5);                    // 50% of days
-  const semsHalf=Math.ceil(totalSems/2);
+  const cartaSealed=!!(progreso._carta&&progreso._carta.texto);
+  const carta45Sealed=!!(progreso._carta45&&progreso._carta45.texto);
+  const habElegidos4=!!(curInsc.habitosElegidos&&['espiritual','mental','fisica','social'].every(k=>curInsc.habitosElegidos[k]&&(curInsc.habitosElegidos[k].nom||curInsc.habitosElegidos[k].nombre)));
+  const visionFilled=!!(progreso._vision&&['espiritual','mental','fisica','social'].every(k=>{const v=progreso._vision[k]||{};return v.nivelIdeal||v.visionGeneral||v.fraseAncla;}));
+  const habTrack=curInsc.habTrack||{};
+  const HABAREAS=['espiritual','mental','fisica','social'];
+  // Total check-ins
+  let totalHabChecks=0;
+  Object.values(habTrack).forEach(dayObj=>{if(dayObj&&typeof dayObj==='object')totalHabChecks+=Object.values(dayObj).filter(v=>v).length;});
+  // Días distintos con al menos 1 hábito marcado
+  const distinctDays=Object.keys(habTrack).filter(d=>{const o=habTrack[d];return o&&typeof o==='object'&&HABAREAS.some(a=>o[a]);}).length;
+  // Semana perfecta: 28 marcas en una semana (4 áreas × 7 días)
+  let semanaPerfecta=false;
+  const semanas=curInsc.semanas||[];
+  for(let i=0;i<semanas.length&&!semanaPerfecta;i++){
+    const sem=semanas[i]||{};
+    if(!sem.inicio)continue;
+    const iniD=new Date(sem.inicio);
+    let weekChecks=0;
+    for(let d=0;d<7;d++){
+      const dt=new Date(iniD);dt.setDate(iniD.getDate()+d);
+      const ds=dt.toISOString().split('T')[0];
+      const day=habTrack[ds]||{};
+      HABAREAS.forEach(a=>{if(day[a])weekChecks++;});
+    }
+    if(weekChecks>=28)semanaPerfecta=true;
+  }
+  // Área dominante: una misma área marcada 60 días consecutivos
+  let maxAreaStreak=0;
+  HABAREAS.forEach(area=>{
+    const sortedDays=Object.keys(habTrack).filter(d=>habTrack[d]&&habTrack[d][area]).sort();
+    let streak=0,prev=null;
+    sortedDays.forEach(d=>{
+      if(prev){const diff=(new Date(d)-new Date(prev))/(864e5);streak=diff===1?streak+1:1;}else{streak=1;}
+      if(streak>maxAreaStreak)maxAreaStreak=streak;
+      prev=d;
+    });
+  });
   return[
-    {ico:'🌱',name:'Primera semilla',desc:'Completaste tu primer desafío',ok:doneDes>=1},
-    {ico:'🔥',name:`${streakM1} días seguidos`,desc:`Mantuviste un hábito ${streakM1} días`,ok:maxStreak>=streakM1},
-    {ico:'⚡',name:`${streakM2} días de racha`,desc:`${Math.round(progDays*0.25)}% del programa constante`,ok:maxStreak>=streakM2},
-    {ico:'📝',name:'Reflexivo',desc:'Escribiste 2 notas de semana',ok:notasCount>=2},
-    {ico:'🎯',name:'Mitad del camino',desc:`${semsHalf}/${totalSems} semanas completadas`,ok:semsDone>=semsHalf},
-    {ico:'💎',name:`${streakM3} días imparable`,desc:`Racha de ${streakM3} días seguidos`,ok:maxStreak>=streakM3},
-    {ico:'🏅',name:'Desafíos al 75%',desc:'75% de desafíos completados',ok:pctDes>=75},
-    {ico:'🌀',name:'Transformador',desc:'Todas las semanas completadas',ok:semsDone>=totalSems&&totalSems>0},
+    {ico:'✅',name:'Hábitos elegidos',   desc:'Elegiste tus 4 hábitos del programa',              ok:habElegidos4},
+    {ico:'✨',name:'Visionario',         desc:'Completaste tu visión en las 4 áreas',              ok:visionFilled},
+    {ico:'🌱',name:'Primera semilla',    desc:'Completaste tu primer desafío',                     ok:doneDes>=1},
+    {ico:'📩',name:'Carta sellada',      desc:'Le escribiste a tu yo del futuro',                  ok:cartaSealed},
+    {ico:'🌿',name:'25 hábitos',         desc:'25 hábitos completados en total',                   ok:totalHabChecks>=25},
+    {ico:'🔥',name:'7 días seguidos',    desc:'Racha de 7 días consecutivos',                      ok:maxStreak>=7},
+    {ico:'🐾',name:'15 días',            desc:'15 días distintos con al menos 1 hábito marcado',   ok:distinctDays>=15},
+    {ico:'🎯',name:'50 hábitos',         desc:'50 hábitos completados en total',                   ok:totalHabChecks>=50},
+    {ico:'📝',name:'Reflexivo',          desc:'3 notas de semana escritas',                        ok:notasCount>=3},
+    {ico:'🎖️',name:'Desafíos al 50%',   desc:'50% de desafíos completados',                      ok:pctDes>=50},
+    {ico:'🦁',name:'30 días',            desc:'30 días distintos con al menos 1 hábito marcado',   ok:distinctDays>=30},
+    {ico:'🔮',name:'100 hábitos',        desc:'100 hábitos completados en total',                  ok:totalHabChecks>=100},
+    {ico:'💎',name:'21 días imparable',  desc:'Racha de 21 días consecutivos',                     ok:maxStreak>=21},
+    {ico:'✍️',name:'Escritor habitual',  desc:'5 notas de semana acumuladas',                      ok:notasCount>=5},
+    {ico:'🌠',name:'150 hábitos',        desc:'150 hábitos completados en total',                  ok:totalHabChecks>=150},
+    {ico:'🏅',name:'Desafíos al 75%',    desc:'75% de desafíos completados',                      ok:pctDes>=75},
+    {ico:'📆',name:'Carta del día 45',   desc:'Escribiste tu carta de mitad de camino',            ok:carta45Sealed},
+    {ico:'🏆',name:'200 hábitos',        desc:'200 hábitos completados en total',                  ok:totalHabChecks>=200},
+    {ico:'📖',name:'Gran reflexivo',     desc:'8 notas de semana acumuladas',                      ok:notasCount>=8},
+    {ico:'🌊',name:'60 días',            desc:'60 días distintos con al menos 1 hábito marcado',   ok:distinctDays>=60},
+    {ico:'💫',name:'250 hábitos',        desc:'250 hábitos completados en total',                  ok:totalHabChecks>=250},
+    {ico:'🌟',name:'Semana perfecta',    desc:'28 marcas en una semana (4 áreas × 7 días)',        ok:semanaPerfecta},
+    {ico:'👑',name:'300 hábitos',        desc:'300 hábitos completados en total',                  ok:totalHabChecks>=300},
+    {ico:'⭐',name:'Desafíos completos', desc:'100% de desafíos completados',                      ok:totDes>0&&doneDes>=totDes},
+    {ico:'🧘',name:'Área dominante',     desc:'Una misma área marcada 60 días consecutivos',       ok:maxAreaStreak>=60},
   ];
 }
 
