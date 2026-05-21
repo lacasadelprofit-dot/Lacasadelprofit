@@ -208,7 +208,7 @@ html{background:#06060A;}
 body{background:transparent!important;}
 #loginScreen{position:relative;z-index:2;}
 #app{position:relative!important;z-index:1;}
-.kc,.cc,.tc,.fc,.hc{background:rgba(14,13,20,.78)!important;border:1px solid rgba(201,168,76,.14)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
+.kc,.cc,.tc,.fc,.hc{background:rgba(14,13,20,.58)!important;border:1px solid rgba(201,168,76,.18)!important;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);}
 .kc:hover{box-shadow:0 0 22px rgba(201,168,76,.07);}
 .sidebar{background:rgba(10,9,18,.97)!important;backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);}
 .cd{background:rgba(14,13,20,.65)!important;border-color:rgba(201,168,76,.09)!important;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);}
@@ -7358,13 +7358,13 @@ function startInscPolling(){
     }
 
     // Composición
-    fol(W*.82,H*.18,130,.045);   // Grande, arriba derecha
-    fol(W*.06,H*.78,80,.032);    // Mediana, abajo izquierda
-    fol(W*.5,H*.52,210,.016);    // Gigante centrada, muy tenue
-    spiral(W*.88,H*.74,.048);    // Espiral abajo derecha
-    spiral(W*.14,H*.22,.032);    // Espiral arriba izquierda, más sutil
-    casa(W*.5,H*.46,180,.026);   // Casa centrada grande, muy tenue
-    casa(W*.1,H*.6,70,.038);     // Casa pequeña izquierda
+    fol(W*.82,H*.18,130,.14);    // Grande, arriba derecha
+    fol(W*.06,H*.78,80,.10);     // Mediana, abajo izquierda
+    fol(W*.5,H*.52,210,.06);     // Gigante centrada, tenue
+    spiral(W*.88,H*.74,.12);     // Espiral abajo derecha
+    spiral(W*.14,H*.22,.08);     // Espiral arriba izquierda
+    casa(W*.5,H*.46,180,.07);    // Casa centrada grande
+    casa(W*.1,H*.6,70,.11);      // Casa pequeña izquierda
   }
 
   draw();
