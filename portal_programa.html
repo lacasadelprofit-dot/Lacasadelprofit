@@ -395,6 +395,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 <!-- SELECTOR -->
 <div id="progSelector">
   <div class="ps-header"><svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ppg2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A1E04"/><stop offset="100%" stop-color="#080A04"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ppg2)"/><g stroke="#C9A84C" stroke-width="1.2" fill="none" opacity="0.9"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="32" r="18"/><circle cx="65.6" cy="41" r="18"/><circle cx="65.6" cy="59" r="18"/><circle cx="50" cy="68" r="18"/><circle cx="34.4" cy="59" r="18"/><circle cx="34.4" cy="41" r="18"/></g><circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.5" fill="none" opacity="0.6"/><g stroke="#E8C96A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="34,50 50,37 66,50"/><line x1="37" y1="50" x2="37" y2="63"/><line x1="63" y1="50" x2="63" y2="63"/><line x1="37" y1="63" x2="63" y2="63"/><path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63" fill="none"/></g></svg><h2 id="psTitle">Tus Programas</h2><p id="psSub">Elegí el programa que querés ver</p></div>
+  <div id="psPregDia" style="max-width:960px;margin:0 auto 24px"></div>
   <div class="ps-grid" id="psGrid"></div>
 </div>
 
@@ -575,6 +576,7 @@ function showSelector(ser,inscList,progs){
     </div>`;
   }).join('');
   document.getElementById('progSelector').style.display='block';
+  loadPregDia('psPregDia');
 }
 function selectProgram(inscId){
   const insc=allInscList.find(i=>i.id===inscId);if(!insc)return;
@@ -816,11 +818,12 @@ function renderGeneral(){
   `;
   loadPregDia();
 }
-async function loadPregDia(){
+async function loadPregDia(boxId){
+  boxId=boxId||'pregDiaBox';
   try{
     const{data}=await _sb.from('comunidad_contenido').select('id,data');
     const pregs=(data||[]).map(r=>r.data||{}).filter(p=>p.tipo==='pregunta'&&p.activo!==false);
-    const box=document.getElementById('pregDiaBox');
+    const box=document.getElementById(boxId);
     if(!pregs.length||!box)return;
     const hoy=new Date().toISOString().split('T')[0];
     let h=0;for(let i=0;i<hoy.length;i++)h=(Math.imul(31,h)+hoy.charCodeAt(i))|0;

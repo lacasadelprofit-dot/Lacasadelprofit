@@ -318,6 +318,7 @@ select.fi:focus{border-color:var(--gold);}
 
     <!-- DASHBOARD -->
     <div id="sec-dashboard" class="sec active">
+     <div id="dPregDia" style="margin-bottom:18px"></div>
      <div id="dKPIs" class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr"></div>
      <div id="dToday" style="margin-bottom:18px"></div>
      <div id="dWeekView" style="margin-bottom:18px"></div>
@@ -1881,7 +1882,25 @@ function esProd(s){
 }
 // Sesiones experimentales completadas (servicios, no productos)
 function compServ(s){return comp(s)&&!esProd(s);}
+function renderPregDiaAdmin(){
+  const el=document.getElementById('dPregDia');if(!el)return;
+  const pregs=comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false);
+  if(!pregs.length){el.innerHTML='';return;}
+  const hoy=new Date().toISOString().split('T')[0];
+  let h=0;for(let i=0;i<hoy.length;i++)h=(Math.imul(31,h)+hoy.charCodeAt(i))|0;
+  const p=pregs[Math.abs(h)%pregs.length];
+  el.innerHTML=`<div style="background:var(--card2);border:1px solid #2A2840;border-left:3px solid var(--purple);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--pl))"></div>
+    <div style="font-size:10px;font-weight:700;color:var(--pl);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      <span>✦ Pregunta del día</span>
+      <span style="margin-left:auto;font-weight:400;color:var(--muted)">${hoy.split('-').reverse().join('/')}</span>
+    </div>
+    <div style="font-size:16px;color:var(--text);line-height:1.65;font-style:italic;font-weight:600">${p.texto||''}</div>
+    ${p.matiz?`<div style="font-size:11px;color:var(--muted);margin-top:8px">${p.matiz}</div>`:''}
+  </div>`;
+}
 function renderDash(){
+  renderPregDiaAdmin();
   const now=new Date(),yr=now.getFullYear(),mo=now.getMonth()+1;
   const mesStr=now.toISOString().slice(0,7);
   const lm=mo===1?12:mo-1,ly=mo===1?yr-1:yr;
