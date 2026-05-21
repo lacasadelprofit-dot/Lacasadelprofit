@@ -61,7 +61,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .ni.active{background:rgba(201,168,76,.12);color:var(--gl);border:1px solid rgba(201,168,76,.2);}
 .ni .ico{font-size:16px;width:20px;text-align:center;}
 .s-foot{padding:14px;border-top:1px solid #1E1C10;}
-.uinfo{display:flex;align-items:center;gap:8px;}
+.uinfo{display:flex;align-items:center;gap:8px;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.25);border-radius:11px;padding:8px 10px;backdrop-filter:blur(8px);}
 .uav{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#050401;}
 .uname{font-size:13px;font-weight:600;color:var(--text);}
 .urole{font-size:10px;color:var(--muted);}
@@ -498,6 +498,7 @@ select.fi:focus{border-color:var(--gold);}
        <button class="tab-btn" id="pmTabRegistros" onclick="setProgMainTab('registros')">📋 Registros</button>
       </div>
       <div id="pmSecProgramas">
+       <div id="progPregDia"></div>
        <div id="progKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
        <div id="progGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px"></div>
       </div>
@@ -1882,19 +1883,27 @@ function esProd(s){
 }
 // Sesiones experimentales completadas (servicios, no productos)
 function compServ(s){return comp(s)&&!esProd(s);}
+function _buildPregBoxes(){
+  const pregs=comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false);
+  if(!pregs.length)return'';
+  const pRand=pregs[Math.floor(Math.random()*pregs.length)];
+  const hoy=new Date().toISOString().split('T')[0];
+  let h=0;for(let i=0;i<hoy.length;i++)h=(Math.imul(31,h)+hoy.charCodeAt(i))|0;
+  const pDia=pregs[Math.abs(h)%pregs.length];
+  const box=(titulo,col,grad,p)=>`<div style="flex:1;min-width:200px;background:var(--card2);border:1px solid #2A2840;border-left:3px solid ${col};border-radius:14px;padding:16px 18px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,${grad})"></div>
+    <div style="font-size:9px;font-weight:700;color:${col};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">✦ ${titulo}</div>
+    <div style="font-size:14px;color:var(--text);line-height:1.65;font-style:italic;font-weight:600">${p.texto||''}</div>
+    ${p.matiz?`<div style="font-size:10px;color:var(--muted);margin-top:6px">${p.matiz}</div>`:''}
+  </div>`;
+  return`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
+    ${box('Pregunta aleatoria','var(--purple)','var(--purple),var(--pl)',pRand)}
+    ${box('Pregunta del día','#C9A84C','#C9A84C,var(--gold)',pDia)}
+  </div>`;
+}
 function renderPregDiaAdmin(){
   const el=document.getElementById('dPregDia');if(!el)return;
-  const pregs=comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false);
-  if(!pregs.length){el.innerHTML='';return;}
-  const p=pregs[Math.floor(Math.random()*pregs.length)];
-  el.innerHTML=`<div style="background:var(--card2);border:1px solid #2A2840;border-left:3px solid var(--purple);border-radius:14px;padding:18px 20px;position:relative;overflow:hidden;">
-    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--purple),var(--pl))"></div>
-    <div style="font-size:10px;font-weight:700;color:var(--pl);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:8px">
-      <span>✦ Pregunta aleatoria</span>
-    </div>
-    <div style="font-size:16px;color:var(--text);line-height:1.65;font-style:italic;font-weight:600">${p.texto||''}</div>
-    ${p.matiz?`<div style="font-size:11px;color:var(--muted);margin-top:8px">${p.matiz}</div>`:''}
-  </div>`;
+  el.innerHTML=_buildPregBoxes();
 }
 function renderDash(){
   renderPregDiaAdmin();
@@ -5881,6 +5890,7 @@ function renderFinBalance(){
 
 /* PROGRAMAS */
 function renderProg(){
+  const el=document.getElementById('progPregDia');if(el)el.innerHTML=_buildPregBoxes();
   const compSes=sessions.filter(comp);
   const withProg=compSes.filter(s=>s.programa).length;
   const standalone=compSes.filter(s=>!s.programa).length;

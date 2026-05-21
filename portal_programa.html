@@ -725,12 +725,11 @@ function renderGeneral(){
   // Carta
   const cs=cartaStatus();
   const cartaHTML=cs==='pendiente'?`<div class="carta-block pendiente">
-    <div class="carta-lbl" style="color:var(--gold)">✉ Carta a mi futuro yo</div>
-    <div style="font-size:22px;margin-bottom:8px">💌</div>
+    <div class="carta-lbl" style="color:var(--gold)">Carta a mi futuro yo</div>
     <div class="carta-titulo">Escribí una carta a quien vas a ser al terminar</div>
     <div class="carta-sub">Se sella al guardarla. Solo la vas a poder leer cuando completes el programa.</div>
     <textarea id="cartaInput" style="width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid rgba(201,168,76,.2);border-radius:9px;color:var(--text);font-size:13px;padding:10px;outline:none;resize:vertical;font-family:inherit;line-height:1.7;box-sizing:border-box;margin-bottom:10px" placeholder="Querido yo del futuro..."></textarea>
-    <button onclick="guardarCarta()" style="width:100%;padding:10px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer">✉ Sellar mi carta</button>
+    <button onclick="guardarCarta()" style="width:100%;padding:10px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer"Sellar mi carta</button>
   </div>`
   :cs==='sellada'?`<div class="carta-block sellada">
     <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
