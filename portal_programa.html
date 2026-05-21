@@ -415,12 +415,12 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
       <div class="s-back" id="sBack" onclick="goToSelector()" style="display:none">← Mis programas</div>
       <div class="s-tabs">
         <div class="s-tab active" id="tab-general"      onclick="switchTab('general')"><span class="ti">🏠</span>General</div>
+        <div class="s-tab"        id="tab-vision"       onclick="switchTab('vision')"><span class="ti">✨</span>Mi Visión</div>
         <div class="s-tab"        id="tab-habitos"      onclick="switchTab('habitos')"><span class="ti">✅</span>Hábitos</div>
         <div class="s-tab"        id="tab-avance"       onclick="switchTab('avance')"><span class="ti">📊</span>Mi Avance</div>
         <div class="s-tab"        id="tab-semanas"      onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
         <div class="s-tab"        id="tab-calendario"   onclick="switchTab('calendario')"><span class="ti">🗓</span>Calendario</div>
         <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
-        <div class="s-tab"        id="tab-vision"       onclick="switchTab('vision')"><span class="ti">✨</span>Mi Visión</div>
         <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
         <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
         <div class="s-tab"        id="tab-proceso"      onclick="switchTab('proceso')"><span class="ti">📋</span>Mi Proceso</div>
@@ -1118,9 +1118,18 @@ const AREA_DESCS={espiritual:'Tu conexión con lo que te trasciende',mental:'Tu 
 
 function renderVisionTab(){
   const vision=progreso._vision||{};
+  const _habByArea={espiritual:[],mental:[],fisica:[],social:[]};const _habSeen={};
+  (curProg&&curProg.semanas||[]).forEach(sem=>{(sem.habitos||[]).forEach(h=>{const hNom=h.nombre||h.nom;if(h.area&&hNom&&_habByArea[h.area]){const hk=h.area+'|'+hNom;if(!_habSeen[hk]){_habSeen[hk]=true;_habByArea[h.area].push(hNom);}}});});
+  const _habDef={espiritual:['Meditar diariamente','Oración / gratitud','Lectura espiritual','Journaling espiritual'],mental:['Leer 30 minutos','Aprender algo nuevo','Meditación mindfulness','Podcast educativo'],fisica:['Caminar / Ejercitar','Hidratarme bien','Dormir 8 horas','Estiramiento diario'],social:['Conectar con alguien','Tiempo en familia','Acto de servicio','Gratitud expresada']};
+  const _AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
   const cards=AREAS.map(a=>{
     const v=vision[a.key]||{};
     const vm=VISION_META[a.key];
+    const habOpts=_habByArea[a.key].length?_habByArea[a.key]:_habDef[a.key];
+    const curHab=curInsc.habitosElegidos&&curInsc.habitosElegidos[a.key];
+    const curHabNom=curHab?(curHab.nom||curHab.nombre||''):'';
+    const isHabCustom=curHabNom&&!habOpts.includes(curHabNom);
+    const habBtns=habOpts.map(nom=>{const safe=nom.replace(/'/g,"\\'");const isSel=nom===curHabNom;return`<button onclick="visionSelectHab('${a.key}','${safe}')" style="padding:6px 10px;border-radius:8px;border:1.5px solid ${isSel?_AC[a.key]:'var(--border)'};background:${isSel?_AC[a.key]+'22':'var(--card2)'};color:${isSel?_AC[a.key]:'var(--muted)'};font-size:11px;font-weight:${isSel?700:400};cursor:pointer;transition:.12s;white-space:nowrap">${isSel?'✅ ':''}${nom}</button>`;}).join('');
     const nAct=v.nivelActual||0;
     const nIdeal=v.nivelIdeal||0;
     const makeDots=(which,cur)=>Array.from({length:10},(_,i)=>{
@@ -1181,6 +1190,15 @@ function renderVisionTab(){
           <input id="vis_fr_${a.key}" type="text" value="${(v.fraseAncla||'').replace(/"/g,'&quot;')}" placeholder="Un mantra corto que resuma tu visión en esta área..." oninput="visionInput('${a.key}','fraseAncla',this.value)" style="width:100%;padding:11px 13px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:${vm.col};font-size:13px;font-weight:600;font-style:italic;outline:none;font-family:inherit;box-sizing:border-box" onfocus="this.style.borderColor='${vm.col}55'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
         </div>
 
+        <div style="border-top:1px solid rgba(255,255,255,.08);margin-top:16px;padding-top:16px" id="vhabsec_${a.key}">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:9px">🌱 Mi hábito para esta área</div>
+          <div id="vhab_list_${a.key}" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px">${habBtns}</div>
+          <input id="vhab_custom_${a.key}" type="text" value="${isHabCustom?curHabNom:''}" placeholder="O escribí tu propio hábito..."
+            oninput="visionHabCustom('${a.key}',this.value)"
+            style="width:100%;padding:8px 10px;background:rgba(0,0,0,.22);border:1px solid ${isHabCustom?_AC[a.key]+'88':'rgba(255,255,255,.08)'};border-radius:8px;color:var(--text);font-size:12px;outline:none;font-family:inherit;box-sizing:border-box">
+          <div id="vhab_status_${a.key}" style="margin-top:6px;font-size:11px;color:${_AC[a.key]};font-weight:600">${curHabNom?'✓ "'+curHabNom+'" elegido':''}</div>
+        </div>
+
       </div>
     </div>`;
   }).join('');
@@ -1225,6 +1243,37 @@ function visionSetLevel(area,which,val){
   const nIdeal=progreso._vision[area].nivelIdeal||0;
   // Re-render solo si ambos están seteados (para mostrar/ocultar el mensaje de diferencia)
   if(nAct&&nIdeal)renderVisionTab();
+  saveProgress();
+}
+
+function visionSelectHab(area,nom){
+  if(!curInsc.habitosElegidos)curInsc.habitosElegidos={};
+  curInsc.habitosElegidos[area]={nom,area};
+  // Si los 4 están completos, propagar a semanas (igual que saveHabitosElegidos)
+  const AK=['espiritual','mental','fisica','social'];
+  if(AK.every(k=>curInsc.habitosElegidos[k]&&curInsc.habitosElegidos[k].nom)){
+    if(!curInsc.semanas||!curInsc.semanas.length){if(curProg&&curProg.semanas)curInsc.semanas=JSON.parse(JSON.stringify(curProg.semanas));}
+    (curInsc.semanas||[]).forEach(sem=>{sem.habitos=sem.habitos||[];AK.forEach(k=>{sem.habitos=sem.habitos.filter(h=>h.area!==k);sem.habitos.push(Object.assign({},curInsc.habitosElegidos[k]));});});
+  }
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const list=document.getElementById('vhab_list_'+area);
+  if(list){list.querySelectorAll('button').forEach(btn=>{const bNom=btn.textContent.replace('✅ ','').trim();const isSel=bNom===nom;btn.style.border=`1.5px solid ${isSel?AC[area]:'var(--border)'}`;btn.style.background=isSel?AC[area]+'22':'var(--card2)';btn.style.color=isSel?AC[area]:'var(--muted)';btn.style.fontWeight=isSel?'700':'400';btn.textContent=(isSel?'✅ ':'')+bNom;});}
+  const inp=document.getElementById('vhab_custom_'+area);if(inp)inp.value='';
+  const st=document.getElementById('vhab_status_'+area);if(st){st.style.color=AC[area];st.textContent='✓ "'+nom+'" elegido';}
+  saveProgress();
+}
+function visionHabCustom(area,val){
+  if(!curInsc.habitosElegidos)curInsc.habitosElegidos={};
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  if(val.trim()){
+    curInsc.habitosElegidos[area]={nom:val.trim(),area};
+    const list=document.getElementById('vhab_list_'+area);
+    if(list){list.querySelectorAll('button').forEach(btn=>{const bNom=btn.textContent.replace('✅ ','').trim();btn.style.border='1.5px solid var(--border)';btn.style.background='var(--card2)';btn.style.color='var(--muted)';btn.style.fontWeight='400';btn.textContent=bNom;});}
+    const st=document.getElementById('vhab_status_'+area);if(st){st.style.color=AC[area];st.textContent='✓ "'+val.trim()+'" elegido';}
+  }else{
+    delete curInsc.habitosElegidos[area];
+    const st=document.getElementById('vhab_status_'+area);if(st)st.textContent='';
+  }
   saveProgress();
 }
 
@@ -1671,7 +1720,13 @@ function renderPortalCalMensual(){
   const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
   const AK=['espiritual','mental','fisica','social'];
   const habTrack=curInsc.habTrack||{};const desTrack=curInsc.desTrack||{};
-  const sesDates=new Set([...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[])].map(s=>(s.fecha||s.date||'').slice(0,10)).filter(Boolean));
+  const iniStr=curInsc.fechaInicio||'';
+  const finStr=curInsc.fechaFin||'';
+  const sesInfoMap={};
+  [...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[]),...(allSessions||[])].forEach(s=>{
+    const fd=(s.fecha||s.date||'').slice(0,10);if(!fd)return;
+    if(!sesInfoMap[fd])sesInfoMap[fd]={estado:s.estado||'',titulo:s.titulo||s.tipo||'Sesión'};
+  });
   const year=_pCalYear,month=_pCalMonth;
   const mNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
   const dNames=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -1683,14 +1738,20 @@ function renderPortalCalMensual(){
   for(let d=1;d<=daysInMonth;d++){
     const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const hd=habTrack[ds]||{};const dd=desTrack[ds]||{};
-    const isToday=ds===todayStr;const hasS=sesDates.has(ds);
+    const isToday=ds===todayStr;const isIni=ds===iniStr;const isFin=ds===finStr;
+    const sesInfo=sesInfoMap[ds];
+    const sesComp=sesInfo&&(sesInfo.estado||'').toLowerCase().includes('comp');
     const hdots=AK.map(k=>`<div style="width:5px;height:5px;border-radius:50%;background:${hd[k]?AC[k]:'var(--border)'};flex-shrink:0"></div>`).join('');
     const ddots=AK.map(k=>`<div style="width:5px;height:5px;border-radius:50%;background:${dd[k]?AC[k]:'var(--border)'};flex-shrink:0"></div>`).join('');
-    cells+=`<div onclick="portalCalDayClick('${ds}')" style="cursor:pointer;border:1px solid ${isToday?col:'var(--border)'};border-radius:8px;padding:4px 3px;background:${isToday?col+'11':'var(--card)'};min-height:54px;position:relative;transition:.15s">
-      <div style="font-size:10px;font-weight:${isToday?700:400};color:${isToday?col:'var(--muted)'};margin-bottom:2px">${d}</div>
-      ${hasS?`<div style="position:absolute;top:2px;right:3px;font-size:7px;font-weight:800;color:${col};background:${col}33;border-radius:3px;padding:1px 3px">S</div>`:''}
+    const border=isIni?`2px solid ${col}`:isFin?'2px solid rgba(239,68,68,.7)':isToday?`1px solid ${col}`:'1px solid var(--border)';
+    const bg=isIni?col+'18':isFin?'rgba(239,68,68,.07)':isToday?col+'11':'var(--card)';
+    const numCol=isIni?col:isFin?'#EF4444':isToday?col:'var(--muted)';
+    cells+=`<div onclick="portalCalDayClick('${ds}')" style="cursor:pointer;border:${border};border-radius:8px;padding:4px 3px;background:${bg};min-height:62px;position:relative;transition:.15s">
+      <div style="font-size:10px;font-weight:${isToday||isIni||isFin?700:400};color:${numCol};margin-bottom:2px">${d}</div>
+      ${sesInfo?`<div style="position:absolute;top:2px;right:3px;font-size:7px;font-weight:800;color:${sesComp?'#10B981':col};background:${sesComp?'rgba(16,185,129,.2)':col+'33'};border-radius:3px;padding:1px 3px">${sesComp?'✓':'🤝'}</div>`:''}
       <div style="display:flex;gap:2px;margin-bottom:2px;align-items:center"><span style="font-size:6px;color:var(--muted);width:7px;flex-shrink:0">H</span>${hdots}</div>
       <div style="display:flex;gap:2px;align-items:center"><span style="font-size:6px;color:var(--muted);width:7px;flex-shrink:0">D</span>${ddots}</div>
+      ${isIni?`<div style="font-size:6px;font-weight:800;color:${col};margin-top:3px;text-align:center;background:${col}22;border-radius:3px;padding:1px 2px">▶ Inicio</div>`:isFin?`<div style="font-size:6px;font-weight:800;color:#EF4444;margin-top:3px;text-align:center;background:rgba(239,68,68,.15);border-radius:3px;padding:1px 2px">■ Fin</div>`:''}
     </div>`;
   }
   const legend=AK.map(k=>`<div style="width:7px;height:7px;border-radius:50%;background:${AC[k]}"></div>`).join('');
@@ -1700,10 +1761,12 @@ function renderPortalCalMensual(){
       <div style="font-weight:700;color:var(--gl)">${mNames[month]} ${year}</div>
       <button onclick="portalCalNavMonth(1)" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:4px 10px;cursor:pointer">›</button>
     </div>
-    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;align-items:center;font-size:10px;color:var(--muted)">
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;align-items:center;font-size:10px;color:var(--muted)">
       <div style="display:flex;gap:3px;align-items:center">${legend}<span>H=hábitos</span></div>
       <div style="display:flex;gap:3px;align-items:center">${legend}<span>D=desafíos</span></div>
-      <div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}33;border-radius:3px;padding:1px 4px">S</span><span>=sesión</span></div>
+      <div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}33;border-radius:3px;padding:1px 4px">🤝</span><span>=sesión</span></div>
+      ${iniStr?`<div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}22;border-radius:3px;padding:1px 4px">▶ Inicio</span></div>`:''}
+      ${finStr?`<div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:#EF4444;background:rgba(239,68,68,.15);border-radius:3px;padding:1px 4px">■ Fin</span></div>`:''}
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">
       ${dNames.map(d=>`<div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px">${d}</div>`).join('')}
