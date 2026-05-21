@@ -2169,7 +2169,7 @@ window.addEventListener('load',()=>{
       _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
       curSer=JSON.parse(ser);allInscList=JSON.parse(ai);allProgsList=JSON.parse(ap);allSessions=ses?JSON.parse(ses):[];
       document.getElementById('loginScreen').style.display='none';
-      const insc=allInscList.find(i=>String(i.code||'').trim()===code);
+      const insc=allInscList.find(i=>String(i.code||'').trim().toUpperCase()===String(code||'').trim().toUpperCase());
       if(insc&&allInscList.length===1){const prog=allProgsList.find(p=>p.id===insc.programaId);if(prog)launchApp(curSer,insc,prog);}
       else if(allInscList.length>1)showSelector(curSer,allInscList,allProgsList);
     }catch(e){console.warn('Restore failed',e);}
@@ -2274,14 +2274,17 @@ document.addEventListener('keydown',ev=>{
     ctx.fillStyle=vig;ctx.fillRect(0,0,W,H);
   }
 
-  function drawFrame(){
+  const isMobile=('ontouchstart' in window||navigator.maxTouchPoints>0)&&window.innerWidth<900;
+
+  function drawFrame(loop){
     const fR=Math.min(W,H)*0.082;
     drawBackground();drawRays();drawGoldenArc(fR);
     drawFlowerOfLife(fR);drawCentralGlow(fR);
-    t+=0.016;requestAnimationFrame(drawFrame);
+    if(loop){t+=0.016;requestAnimationFrame(()=>drawFrame(true));}
   }
 
-  resize();window.addEventListener('resize',resize);drawFrame();
+  resize();window.addEventListener('resize',()=>{resize();if(isMobile)drawFrame(false);});
+  drawFrame(!isMobile);
 })();
 </script>
 </body>
