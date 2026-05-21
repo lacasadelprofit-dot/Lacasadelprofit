@@ -420,6 +420,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
         <div class="s-tab"        id="tab-semanas"      onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
         <div class="s-tab"        id="tab-calendario"   onclick="switchTab('calendario')"><span class="ti">🗓</span>Calendario</div>
         <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
+        <div class="s-tab"        id="tab-vision"       onclick="switchTab('vision')"><span class="ti">✨</span>Mi Visión</div>
         <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
         <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
         <div class="s-tab"        id="tab-proceso"      onclick="switchTab('proceso')"><span class="ti">📋</span>Mi Proceso</div>
@@ -634,7 +635,7 @@ function launchApp(ser,insc,prog){
 function switchTab(tab){
   if(curTab==='semanas')saveNotaImmediate();
   curTab=tab;
-  ['general','avance','semanas','calendario','habitos','material','notas','comunicacion','proceso'].forEach(t=>{
+  ['general','avance','semanas','calendario','habitos','material','vision','notas','comunicacion','proceso'].forEach(t=>{
     document.getElementById('tab-'+t)?.classList.toggle('active',t===tab);
   });
   const ww=document.getElementById('weekListWrap');const sp=document.getElementById('sSpacer');
@@ -646,6 +647,7 @@ function switchTab(tab){
   else if(tab==='calendario')renderCalendario();
   else if(tab==='habitos')renderHabitosTab();
   else if(tab==='material')renderMaterialTab();
+  else if(tab==='vision')renderVisionTab();
   else if(tab==='notas')renderNotasTab();
   else if(tab==='comunicacion')renderComunicacionTab();
   else if(tab==='proceso')renderProcesoTab();
@@ -1097,6 +1099,133 @@ function buildBadges(habList,doneDes,totDes,progWeeks){
     {ico:'🏅',name:'Desafíos al 75%',desc:'75% de desafíos completados',ok:pctDes>=75},
     {ico:'🌀',name:'Transformador',desc:'Todas las semanas completadas',ok:semsDone>=totalSems&&totalSems>0},
   ];
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// MI VISIÓN
+// ══════════════════════════════════════════════════════════════════════════════
+const VISION_META={
+  espiritual:{col:'var(--esp)',glow:'rgba(199,125,255,.07)',border:'rgba(199,125,255,.22)',
+    preguntas:['¿Cómo te conectás con algo más grande que vos?','¿Qué prácticas nutren tu alma y te dan paz?','¿Qué significado profundo tiene tu vida?','¿Quién querés ser en tu interior?']},
+  mental:{col:'var(--men)',glow:'rgba(96,165,250,.07)',border:'rgba(96,165,250,.22)',
+    preguntas:['¿Cómo funciona tu mente cuando estás en tu mejor versión?','¿Qué aprendés y cómo crecés?','¿Cómo manejás el estrés, las dudas y las emociones difíciles?','¿Qué creencias te definen en tu máximo potencial?']},
+  fisica:{col:'var(--fis)',glow:'rgba(74,222,128,.07)',border:'rgba(74,222,128,.22)',
+    preguntas:['¿Cómo se siente tu cuerpo cuando estás en tu mejor versión?','¿Qué energía tenés a lo largo del día?','¿Cómo te movés, dormís y te alimentás?','¿Qué hábitos físicos te definen?']},
+  social:{col:'var(--soc)',glow:'rgba(251,191,36,.07)',border:'rgba(251,191,36,.22)',
+    preguntas:['¿Cómo son tus relaciones cuando estás en tu mejor versión?','¿Qué impacto generás en las personas que querés?','¿Cómo aparecés, comunicás y conectás?','¿Cómo contribuís al mundo desde quien sos?']},
+};
+const AREA_DESCS={espiritual:'Tu conexión con lo que te trasciende',mental:'Tu claridad y poder de foco',fisica:'Tu energía y vitalidad',social:'Tus vínculos y presencia'};
+
+function renderVisionTab(){
+  const vision=progreso._vision||{};
+  const cards=AREAS.map(a=>{
+    const v=vision[a.key]||{};
+    const vm=VISION_META[a.key];
+    const nAct=v.nivelActual||0;
+    const nIdeal=v.nivelIdeal||0;
+    const makeDots=(which,cur)=>Array.from({length:10},(_,i)=>{
+      const n=i+1;const on=n<=cur;
+      const bg=on?(which==='ideal'?vm.col:'rgba(255,255,255,.28)'):'rgba(255,255,255,.04)';
+      const bc=on?'transparent':'rgba(255,255,255,.1)';
+      return `<button onclick="visionSetLevel('${a.key}','${which}',${n})" style="width:26px;height:26px;border-radius:50%;border:1.5px solid ${bc};background:${bg};cursor:pointer;font-size:10px;font-weight:700;color:${on?'#fff':'rgba(255,255,255,.2)'};transition:.12s;flex-shrink:0">${n}</button>`;
+    }).join('');
+    return `<div style="background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid ${vm.border};border-left:3px solid ${vm.col};border-radius:16px;padding:18px;margin-bottom:14px;position:relative;overflow:hidden">
+      <div style="position:absolute;inset:0;background:${vm.glow};pointer-events:none;border-radius:16px"></div>
+      <div style="position:relative">
+
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <span style="font-size:28px;line-height:1">${a.ico}</span>
+          <div>
+            <div style="font-size:13px;font-weight:800;color:${vm.col};text-transform:uppercase;letter-spacing:1.2px">${a.lbl}</div>
+            <div style="font-size:11px;color:var(--muted)">${AREA_DESCS[a.key]}</div>
+          </div>
+        </div>
+
+        <div style="margin-bottom:16px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">¿Dónde estoy hoy?</div>
+            <span id="vcount_${a.key}_actual" style="font-size:12px;font-weight:800;color:rgba(255,255,255,.35)">${nAct||'—'}/10</span>
+          </div>
+          <div id="vdots_${a.key}_actual" style="display:flex;gap:5px">${makeDots('actual',nAct)}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 7px">
+            <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px">¿Dónde quiero llegar?</div>
+            <span id="vcount_${a.key}_ideal" style="font-size:12px;font-weight:800;color:${vm.col}">${nIdeal||'—'}/10</span>
+          </div>
+          <div id="vdots_${a.key}_ideal" style="display:flex;gap:5px">${makeDots('ideal',nIdeal)}</div>
+          ${nAct&&nIdeal?`<div style="margin-top:10px;padding:8px 12px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06);font-size:11px;color:var(--muted)">
+            Querés avanzar <span style="color:${vm.col};font-weight:700">${nIdeal-nAct>0?'+':''}${nIdeal-nAct} punto${Math.abs(nIdeal-nAct)!==1?'s':''}</span>${nIdeal>nAct?' — ¡vas a lograrlo!':nIdeal===nAct?' — ¡ya estás donde querés!':' — revisá tu meta'}
+          </div>`:''}
+        </div>
+
+        <details style="margin-bottom:14px">
+          <summary style="font-size:11px;font-weight:700;color:var(--muted);cursor:pointer;list-style:none;display:flex;align-items:center;gap:7px;padding:9px 12px;background:rgba(255,255,255,.03);border-radius:9px;border:1px solid rgba(255,255,255,.06)">
+            <span>💡</span><span>Preguntas para inspirarte</span><span style="margin-left:auto;opacity:.5">▾</span>
+          </summary>
+          <div style="padding:10px 12px;background:rgba(255,255,255,.02);border-radius:0 0 9px 9px;border:1px solid rgba(255,255,255,.05);border-top:none">
+            ${vm.preguntas.map(q=>`<div style="font-size:12px;color:var(--muted);line-height:1.7;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04)">${q}</div>`).join('')}
+          </div>
+        </details>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">✍️ Mi visión general</div>
+          <textarea id="vis_gen_${a.key}" placeholder="¿Cómo soy en esta área cuando estoy en mi mejor versión?" oninput="visionInput('${a.key}','visionGeneral',this.value)" style="width:100%;min-height:85px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:var(--text);font-size:13px;padding:11px;outline:none;resize:vertical;font-family:inherit;line-height:1.75;box-sizing:border-box" onfocus="this.style.borderColor='${vm.col}55'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">${v.visionGeneral||''}</textarea>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">🗓 En estos 90 días quiero...</div>
+          <textarea id="vis_90_${a.key}" placeholder="¿Qué querés lograr en esta área durante el programa?" oninput="visionInput('${a.key}','vision90',this.value)" style="width:100%;min-height:70px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:var(--text);font-size:13px;padding:11px;outline:none;resize:vertical;font-family:inherit;line-height:1.75;box-sizing:border-box" onfocus="this.style.borderColor='${vm.col}55'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">${v.vision90||''}</textarea>
+        </div>
+
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px">🎯 Mi frase ancla</div>
+          <input id="vis_fr_${a.key}" type="text" value="${(v.fraseAncla||'').replace(/"/g,'&quot;')}" placeholder="Un mantra corto que resuma tu visión en esta área..." oninput="visionInput('${a.key}','fraseAncla',this.value)" style="width:100%;padding:11px 13px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.08);border-radius:10px;color:${vm.col};font-size:13px;font-weight:600;font-style:italic;outline:none;font-family:inherit;box-sizing:border-box" onfocus="this.style.borderColor='${vm.col}55'" onblur="this.style.borderColor='rgba(255,255,255,.08)'">
+        </div>
+
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:18px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">✨ Mi Visión</div>
+      <div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.6">Dale vida a tu imagen ideal en cada área — quién sos y quién estás siendo estos 90 días</div>
+    </div>
+    ${cards}
+    <div style="text-align:center;padding:6px 0 24px;font-size:11px;color:var(--muted)">Se guarda automáticamente 💛</div>
+  `;
+}
+
+function visionInput(area,field,val){
+  if(!progreso._vision)progreso._vision={};
+  if(!progreso._vision[area])progreso._vision[area]={};
+  progreso._vision[area][field]=val;
+  saveProgress();
+}
+
+function visionSetLevel(area,which,val){
+  if(!progreso._vision)progreso._vision={};
+  if(!progreso._vision[area])progreso._vision[area]={};
+  const key=which==='actual'?'nivelActual':'nivelIdeal';
+  progreso._vision[area][key]=val;
+  // Actualizar dots en-lugar sin re-renderizar el tab
+  const vm=VISION_META[area];
+  const container=document.getElementById('vdots_'+area+'_'+which);
+  if(container){
+    container.querySelectorAll('button').forEach((btn,i)=>{
+      const n=i+1;const on=n<=val;
+      btn.style.background=on?(which==='ideal'?vm.col:'rgba(255,255,255,.28)'):'rgba(255,255,255,.04)';
+      btn.style.borderColor=on?'transparent':'rgba(255,255,255,.1)';
+      btn.style.color=on?'#fff':'rgba(255,255,255,.2)';
+    });
+  }
+  const countEl=document.getElementById('vcount_'+area+'_'+which);
+  if(countEl)countEl.textContent=val+'/10';
+  // Actualizar mensaje de diferencia
+  const nAct=progreso._vision[area].nivelActual||0;
+  const nIdeal=progreso._vision[area].nivelIdeal||0;
+  // Re-render solo si ambos están seteados (para mostrar/ocultar el mensaje de diferencia)
+  if(nAct&&nIdeal)renderVisionTab();
+  saveProgress();
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
