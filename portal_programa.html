@@ -289,7 +289,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 /* ── CARTA FUTURO ── */
 .carta-block{border-radius:14px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden;}
 .carta-block.pendiente{background:rgba(14,10,26,0.58);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px dashed rgba(201,168,76,.25);}
-.carta-block.sellada{background:rgba(10,16,14,0.58);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(61,170,106,.22);}
+.carta-block.sellada{background:rgba(12,9,4,0.65);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(201,168,76,.22);}
 .carta-block.revelada{background:rgba(14,10,26,0.62);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(201,168,76,.42);}
 .carta-block::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),var(--esp),transparent);}
 .carta-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
@@ -576,7 +576,7 @@ function showSelector(ser,inscList,progs){
     </div>`;
   }).join('');
   document.getElementById('progSelector').style.display='block';
-  loadPregDia('psPregDia');
+  loadPregDia('psPregDia',ser.nombre||'');
 }
 function selectProgram(inscId){
   const insc=allInscList.find(i=>i.id===inscId);if(!insc)return;
@@ -711,11 +711,24 @@ function renderGeneral(){
     <button onclick="guardarCarta()" style="width:100%;padding:10px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer">✉ Sellar mi carta</button>
   </div>`
   :cs==='sellada'?`<div class="carta-block sellada">
-    <div class="carta-lbl" style="color:var(--green)">✉ Carta a mi futuro yo</div>
-    <div style="font-size:22px;margin-bottom:8px">🔒</div>
-    <div class="carta-titulo">Tu carta está sellada</div>
-    <div class="carta-sub">Escrita el ${progreso._carta.fecha}. Se abrirá cuando completes el programa.</div>
-    <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)"><span>📊</span>${pct}% del programa completado</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+      <span style="font-size:26px">🗝️</span>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px">Cápsula del tiempo</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Sellada el ${progreso._carta.fecha}</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:7px">Progreso hacia la apertura</div>
+    <div style="background:rgba(255,255,255,.06);border-radius:20px;height:6px;overflow:hidden;margin-bottom:6px">
+      <div style="height:100%;border-radius:20px;background:var(--gold);width:${pct}%;transition:.8s ease"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:12px">
+      <span>${doneSem} de ${sems.length} semanas completadas</span>
+      <span>${sems.length-doneSem>0?(sems.length-doneSem)+' restantes':'¡Casi!'}</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted);font-style:italic;border-top:1px solid rgba(255,255,255,.05);padding-top:10px">
+      🔓 Se abrirá al completar el programa
+    </div>
   </div>`
   :`<div class="carta-block revelada">
     <div class="carta-lbl" style="color:var(--gold)">✉ Carta a mi futuro yo</div>
@@ -816,9 +829,9 @@ function renderGeneral(){
 
     ${totInc?`<div class="sec-block"><div class="sec-title"><span class="ico">✨</span> Sesiones incluidas</div><div style="display:flex;flex-wrap:wrap;gap:7px">${Object.entries(sesInc).map(([n,q])=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;display:flex;align-items:center;gap:6px"><span style="font-size:11px">${n}</span><span style="font-size:11px;font-weight:800;color:var(--gl)">${q}x</span></div>`).join('')}</div></div>`:''}
   `;
-  loadPregDia();
+  loadPregDia('pregDiaBox',curSer&&curSer.nombre||'');
 }
-async function loadPregDia(boxId){
+async function loadPregDia(boxId,seed){
   boxId=boxId||'pregDiaBox';
   try{
     const{data}=await _sb.from('comunidad_contenido').select('id,data');
@@ -826,7 +839,8 @@ async function loadPregDia(boxId){
     const box=document.getElementById(boxId);
     if(!pregs.length||!box)return;
     const hoy=new Date().toISOString().split('T')[0];
-    let h=0;for(let i=0;i<hoy.length;i++)h=(Math.imul(31,h)+hoy.charCodeAt(i))|0;
+    const key=hoy+(seed||'');
+    let h=0;for(let i=0;i<key.length;i++)h=(Math.imul(31,h)+key.charCodeAt(i))|0;
     const p=pregs[Math.abs(h)%pregs.length];
     box.innerHTML=`<div class="preg-dia">
       <div class="preg-dia-label">✦ Pregunta del día</div>
