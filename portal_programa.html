@@ -416,13 +416,13 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
       <div class="s-tabs">
         <div class="s-tab active" id="tab-general"      onclick="switchTab('general')"><span class="ti">🏠</span>General</div>
         <div class="s-tab"        id="tab-vision"       onclick="switchTab('vision')"><span class="ti">✨</span>Mi Visión</div>
+        <div class="s-tab"        id="tab-proceso"      onclick="switchTab('proceso')"><span class="ti">📋</span>Mi Compromiso</div>
         <div class="s-tab"        id="tab-habitos"      onclick="switchTab('habitos')"><span class="ti">✅</span>Hábitos</div>
         <div class="s-tab"        id="tab-avance"       onclick="switchTab('avance')"><span class="ti">📊</span>Mi Avance</div>
         <div class="s-tab"        id="tab-semanas"      onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
         <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
         <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
         <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
-        <div class="s-tab"        id="tab-proceso"      onclick="switchTab('proceso')"><span class="ti">📋</span>Mi Proceso</div>
       </div>
       <div id="weekListWrap" style="flex:1;display:none;flex-direction:column;overflow-y:auto;">
         <div class="s-sec-lbl">Semanas</div>
@@ -816,11 +816,6 @@ function renderGeneral(){
       </div>
     </div>`:''}
 
-    <div class="gv2-anchor" style="border-left-color:${col}">
-      <div class="gv2-anchor-lbl">✶ Tu propósito</div>
-      ${pqSection}
-    </div>
-
     <div class="gv2-vitals">
       <div class="gv2-vital">
         <div class="gv2-vital-ico">${gStreak>0?'🔥':'🌱'}</div>
@@ -843,11 +838,6 @@ function renderGeneral(){
 
     ${cartaHTML}
 
-    <div class="gv2-anchor" style="border-left-color:${col}44">
-      <div class="gv2-anchor-lbl">🎯 Tu resultado deseado</div>
-      ${rdSection}
-    </div>
-
     ${totInc?`<div class="sec-block"><div class="sec-title"><span class="ico">✨</span> Sesiones incluidas</div><div style="display:flex;flex-wrap:wrap;gap:7px">${Object.entries(sesInc).map(([n,q])=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;display:flex;align-items:center;gap:6px"><span style="font-size:11px">${n}</span><span style="font-size:11px;font-weight:800;color:var(--gl)">${q}x</span></div>`).join('')}</div></div>`:''}
   `;
   loadPregDia('pregDiaBox',curSer&&curSer.nombre||'');
@@ -862,12 +852,28 @@ async function loadPregDia(boxId,seed){
     const hoy=new Date().toISOString().split('T')[0];
     const key=hoy+(seed||'');
     let h=0;for(let i=0;i<key.length;i++)h=(Math.imul(31,h)+key.charCodeAt(i))|0;
-    const p=pregs[Math.abs(h)%pregs.length];
-    box.innerHTML=`<div class="preg-dia">
-      <div class="preg-dia-label">✦ Pregunta del día</div>
-      <div class="preg-dia-texto">${p.texto||''}</div>
-      ${p.matiz?`<div class="preg-dia-dim">${p.matiz}</div>`:''}
-    </div>`;
+    const pDia=pregs[Math.abs(h)%pregs.length];
+    if(boxId==='pregDiaBox'){
+      const pRand=pregs[Math.floor(Math.random()*pregs.length)];
+      box.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
+        <div class="preg-dia" style="flex:1;min-width:200px">
+          <div class="preg-dia-label">✦ Pregunta aleatoria</div>
+          <div class="preg-dia-texto">${pRand.texto||''}</div>
+          ${pRand.matiz?`<div class="preg-dia-dim">${pRand.matiz}</div>`:''}
+        </div>
+        <div class="preg-dia" style="flex:1;min-width:200px">
+          <div class="preg-dia-label">✦ Pregunta del día</div>
+          <div class="preg-dia-texto">${pDia.texto||''}</div>
+          ${pDia.matiz?`<div class="preg-dia-dim">${pDia.matiz}</div>`:''}
+        </div>
+      </div>`;
+    }else{
+      box.innerHTML=`<div class="preg-dia">
+        <div class="preg-dia-label">✦ Pregunta del día</div>
+        <div class="preg-dia-texto">${pDia.texto||''}</div>
+        ${pDia.matiz?`<div class="preg-dia-dim">${pDia.matiz}</div>`:''}
+      </div>`;
+    }
   }catch(e){}
 }
 
@@ -2173,7 +2179,7 @@ function buildProcesoHTML(o){
   const sec=(label,content)=>content?`<div class="proc-section"><div class="proc-label">${label}</div>${content}</div>`:'';
   return`
     <div style="margin-bottom:14px;display:flex;align-items:baseline;gap:10px">
-      <div style="font-size:18px;font-weight:800;color:var(--gl)">📋 Mi Proceso</div>
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">📋 Mi Compromiso</div>
       <div style="font-size:11px;color:var(--muted)">Registrado el ${o.fecha||'—'}</div>
     </div>
     ${sec('🎯 Mis objetivos',o.objetivos?.length?`<div style="margin-top:4px">${tags(o.objetivos)}</div>${o.objetivosExtra?`<div class="proc-value" style="margin-top:10px;font-size:13px;color:var(--muted)">${o.objetivosExtra}</div>`:''}`:'') }
