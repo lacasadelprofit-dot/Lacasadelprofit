@@ -419,7 +419,6 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
         <div class="s-tab"        id="tab-habitos"      onclick="switchTab('habitos')"><span class="ti">✅</span>Hábitos</div>
         <div class="s-tab"        id="tab-avance"       onclick="switchTab('avance')"><span class="ti">📊</span>Mi Avance</div>
         <div class="s-tab"        id="tab-semanas"      onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
-        <div class="s-tab"        id="tab-calendario"   onclick="switchTab('calendario')"><span class="ti">🗓</span>Calendario</div>
         <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
         <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
         <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
@@ -635,7 +634,7 @@ function launchApp(ser,insc,prog){
 function switchTab(tab){
   if(curTab==='semanas')saveNotaImmediate();
   curTab=tab;
-  ['general','avance','semanas','calendario','habitos','material','vision','notas','comunicacion','proceso'].forEach(t=>{
+  ['general','avance','semanas','habitos','material','vision','notas','comunicacion','proceso'].forEach(t=>{
     document.getElementById('tab-'+t)?.classList.toggle('active',t===tab);
   });
   const ww=document.getElementById('weekListWrap');const sp=document.getElementById('sSpacer');
@@ -644,7 +643,6 @@ function switchTab(tab){
   if(tab==='general')renderGeneral();
   else if(tab==='avance')renderAvance();
   else if(tab==='semanas')renderSemana(curSemIdx);
-  else if(tab==='calendario')renderCalendario();
   else if(tab==='habitos')renderHabitosTab();
   else if(tab==='material')renderMaterialTab();
   else if(tab==='vision')renderVisionTab();
@@ -930,6 +928,45 @@ function renderAvance(){
   const days90=lastNDays(90);
   const activeDays=days90.filter(ds=>AK2.some(k=>habTrack[ds]&&habTrack[ds][k])).length;
 
+  // Progreso por hábito
+  const habElegidos=curInsc.habitosElegidos||{};
+  const AC_H={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AI_H={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
+  const AL_H={espiritual:'Espiritual',mental:'Mental',fisica:'Física',social:'Social'};
+  const progDiasH=Math.max(1,Math.min(Math.round((parseFloat(curProg.meses)||3)*30+(parseInt(curProg.semanas_dur)||0)*7),365));
+  const startDH=curInsc.fechaInicio?new Date(curInsc.fechaInicio+'T12:00:00'):(() => {const d=new Date();d.setDate(d.getDate()-progDiasH);return d;})();
+  const todayStrH=today();
+  const progDatesH=[];
+  for(let i=0;i<progDiasH;i++){const d=new Date(startDH);d.setDate(d.getDate()+i);const ds=d.toISOString().slice(0,10);if(ds<=todayStrH)progDatesH.push(ds);else break;}
+  const habProgCards=['espiritual','mental','fisica','social'].filter(k=>habElegidos[k]&&(habElegidos[k].nom||habElegidos[k].nombre)).map(k=>{
+    const nom=habElegidos[k].nom||habElegidos[k].nombre||'';
+    const cH=AC_H[k];
+    const doneArr=progDatesH.map(ds=>!!(habTrack[ds]&&habTrack[ds][k]));
+    const doneDaysH=doneArr.filter(Boolean).length;
+    const totalDaysH=progDatesH.length;
+    const pctH=totalDaysH?Math.round(doneDaysH/totalDaysH*100):0;
+    let streakH=0,maxStrH=0,curH=0;
+    doneArr.forEach(done=>{if(done){curH++;maxStrH=Math.max(maxStrH,curH);}else curH=0;});
+    for(let i=doneArr.length-1;i>=0;i--){if(doneArr[i])streakH++;else break;}
+    const last28=progDatesH.slice(-28);
+    const miniCells=last28.map(ds=>{const done=!!(habTrack[ds]&&habTrack[ds][k]);return`<div style="width:10px;height:10px;border-radius:2px;background:${done?cH:'rgba(255,255,255,.06)'}"></div>`;}).join('');
+    const lvl=pctH>=80?'💎':pctH>=60?'🏅':pctH>=40?'⚡':pctH>=20?'🌱':'⭕';
+    return`<div style="background:var(--card);border:1px solid ${cH}33;border-left:3px solid ${cH};border-radius:12px;padding:13px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:20px">${AI_H[k]}</span>
+        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">${AL_H[k]}</div></div>
+        <div style="text-align:right;flex-shrink:0"><div style="font-size:17px;font-weight:900;color:${cH}">${pctH}%</div><div style="font-size:9px;color:var(--muted)">${doneDaysH}/${totalDaysH} días</div></div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px"><div style="height:100%;border-radius:20px;background:${cH};width:${pctH}%;transition:.8s ease"></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:9px">${miniCells}</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div style="font-size:10px;color:var(--muted)">🔥 Racha actual: <span style="color:${cH};font-weight:700">${streakH} día${streakH!==1?'s':''}</span></div>
+        <div style="font-size:10px;color:var(--muted)">⭐ Mejor racha: <span style="color:${cH};font-weight:700">${maxStrH} día${maxStrH!==1?'s':''}</span></div>
+        <div style="margin-left:auto;font-size:14px" title="${pctH>=80?'Excelente':pctH>=60?'Muy bien':pctH>=40?'Bien':pctH>=20?'Empezando':'Sin datos'}">${lvl}</div>
+      </div>
+    </div>`;
+  }).join('');
+
   // Badges
   const badges=buildBadges(habList,doneDes,totDes,progWeeks);
   const unlockedCount=badges.filter(b=>b.ok).length;
@@ -1019,6 +1056,10 @@ function renderAvance(){
     <!-- ÁREAS -->
     <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">🎯 Progreso por área</div>
     <div class="av2-area-grid">${areaCards}</div>
+
+    <!-- HÁBITOS -->
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;margin-top:4px">🌱 Progreso por hábito</div>
+    ${habProgCards||`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px"><div style="font-size:12px;color:var(--muted)">Elegí tus hábitos en <strong style="color:var(--gold)">Mi Visión</strong> para ver tu progreso aquí</div></div>`}
 
     <!-- CAMINO DE SEMANAS -->
     <div class="av2-journey">
@@ -1432,92 +1473,6 @@ function guardarCarta(){
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// CALENDARIO
-// ══════════════════════════════════════════════════════════════════════════════
-function renderCalendario(){
-  const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-  const DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
-  const y=calDate.getFullYear(),m=calDate.getMonth();
-  const sesMap={};
-  [...allSessions,...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[])].forEach(s=>{
-    const k=(s.fecha||s.date||'').slice(0,10);if(!k)return;if(!sesMap[k])sesMap[k]=[];sesMap[k].push(s);
-  });
-  // Program start/end
-  const startDate=curInsc.fechaInicio||null;
-  let endDate=curInsc.fechaFin||null;
-  if(!endDate&&startDate){
-    const meses=parseFloat(curProg.meses)||0,semanas=parseInt(curProg.semanas_dur)||0;
-    const days=Math.round(meses*30)+semanas*7;
-    if(days>0){const d=new Date(startDate+'T12:00:00');d.setDate(d.getDate()+days);endDate=d.toISOString().slice(0,10);}
-  }
-  // Timeline progress
-  let tlPct=0,tlDaysTotal=0,tlDaysDone=0,tlDaysLeft=0;
-  if(startDate&&endDate){
-    const s=new Date(startDate+'T12:00:00'),e=new Date(endDate+'T12:00:00'),t=new Date();
-    tlDaysTotal=Math.round((e-s)/(1000*60*60*24));
-    tlDaysDone=Math.max(0,Math.round((Math.min(t,e)-s)/(1000*60*60*24)));
-    tlDaysLeft=Math.max(0,tlDaysTotal-tlDaysDone);
-    tlPct=Math.round(tlDaysDone/tlDaysTotal*100);
-  }
-  const todayStr=today();
-  const firstDay=new Date(y,m,1);let dow=firstDay.getDay();dow=dow===0?6:dow-1;
-  const lastDay=new Date(y,m+1,0);const cells=[];
-  for(let i=0;i<dow;i++){const d=new Date(y,m,1-dow+i);cells.push({date:d.toISOString().slice(0,10),day:d.getDate(),other:true});}
-  for(let d=1;d<=lastDay.getDate();d++){const dt=new Date(y,m,d);cells.push({date:dt.toISOString().slice(0,10),day:d,other:false});}
-  let ex=cells.length%7;if(ex)ex=7-ex;for(let i=1;i<=ex;i++){const dt=new Date(y,m+1,i);cells.push({date:dt.toISOString().slice(0,10),day:i,other:true});}
-  const calHTML=cells.map(c=>{
-    const isT=c.date===todayStr,isSel=c.date===selDay,isS=c.date===startDate,isE=c.date===endDate;
-    const inR=!c.other&&startDate&&endDate&&c.date>startDate&&c.date<endDate;
-    const ses=sesMap[c.date]||[];
-    return`<div class="cal-day ${c.other?'other-month':''} ${isT?'today':''} ${isS?'start-day':''} ${isE?'end-day':''} ${inR?'in-range':''} ${isSel?'selected':''}" onclick="selectDay('${c.date}')">
-      <div class="cd-num">${c.day}</div>
-      ${isS||isE?`<div class="cd-marks">${isS?'<div class="cd-mark s">Inicio</div>':''}${isE?'<div class="cd-mark e">Fin</div>':''}</div>`:''}
-      <div class="cd-ses">${ses.slice(0,2).map(s=>{const e=(s.estado||'pendiente').toLowerCase();const cl=e.includes('comp')?'done':e.includes('can')?'can':'pend';return`<div class="cd-pill ${cl}">${s.sesion||s.nombre||s.tipo||'Sesión'}</div>`;}).join('')}${ses.length>2?`<div style="font-size:7px;color:var(--muted)">+${ses.length-2}</div>`:''}</div>
-    </div>`;
-  }).join('');
-  const selSes=selDay&&sesMap[selDay]?sesMap[selDay]:[];
-  document.getElementById('mainContent').innerHTML=`
-    <!-- TIMELINE -->
-    ${startDate?`<div class="cal-timeline">
-      <div class="cal-tl-item"><span class="cal-tl-ico">🌱</span><div class="cal-tl-date">${fmtDate(startDate)}</div><div class="cal-tl-lbl">Inicio</div></div>
-      <div style="flex:1">
-        <div class="cal-tl-bar"><div class="cal-tl-fill" style="width:${tlPct}%"></div></div>
-        <div class="cal-tl-pct">${tlPct}% del programa · ${tlDaysDone}/${tlDaysTotal} días${tlDaysLeft>0?' · '+tlDaysLeft+' días restantes':' · ¡Completado!'}</div>
-      </div>
-      ${endDate?`<div class="cal-tl-item"><span class="cal-tl-ico">🎯</span><div class="cal-tl-date">${fmtDate(endDate)}</div><div class="cal-tl-lbl">Fin</div></div>`:''}
-    </div>`:''}
-    <!-- CALENDARIO -->
-    <div class="cal-wrap">
-      <div class="cal-header">
-        <div class="cal-month">${MESES[m]} ${y}</div>
-        <div class="cal-nav">
-          <button onclick="calNav(-1)">‹</button>
-          <button onclick="calNav(0)" style="font-size:10px;width:auto;padding:0 8px">Hoy</button>
-          <button onclick="calNav(1)">›</button>
-        </div>
-      </div>
-      <div class="cal-grid">${DIAS.map(d=>`<div class="cal-dow">${d}</div>`).join('')}${calHTML}</div>
-    </div>
-    <!-- DETALLE DÍA -->
-    ${selDay?`<div class="day-detail">
-      <div class="dd-title">${fmtDateLong(selDay)}${selSes.length?' — '+selSes.length+' sesión'+(selSes.length>1?'es':''):'  —  Sin sesiones'}</div>
-      ${selDay===startDate?`<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(74,222,128,.1);color:var(--fis);font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;margin-bottom:8px">🌱 Inicio del programa</div>`:``}
-      ${selDay===endDate?`<div style="display:inline-flex;align-items:center;gap:5px;background:rgba(199,125,255,.1);color:var(--esp);font-size:11px;font-weight:700;padding:3px 9px;border-radius:7px;margin-bottom:8px">🎯 Fin del programa</div>`:``}
-      ${selSes.map(s=>{const e=(s.estado||'pendiente').toLowerCase();const cl=e.includes('comp')?'done':e.includes('can')?'can':'pend';const lbl=e.includes('comp')?'Completada':e.includes('can')?'Cancelada':'Pendiente';return`<div class="dd-ses"><div class="dd-ses-ico">✨</div><div style="flex:1"><div class="dd-ses-name">${s.sesion||s.nombre||s.tipo||'Sesión'}</div>${s.facilitador?`<div class="dd-ses-fac">${s.facilitador}</div>`:''}</div><span class="ses-bdg ${cl}">${lbl}</span></div>`;}).join('')}
-      ${!selSes.length&&selDay!==startDate&&selDay!==endDate?`<div style="color:var(--muted);font-size:12px">No hay sesiones agendadas para este día.</div>`:''}
-    </div>`:''}
-    <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
-      ${startDate?`<div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:9px;height:9px;border-radius:50%;background:rgba(74,222,128,.3);outline:2px solid var(--fis)"></div> Inicio</div>`:''}
-      ${endDate?`<div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:9px;height:9px;border-radius:50%;background:rgba(199,125,255,.3);outline:2px solid var(--esp)"></div> Fin</div>`:''}
-      <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:9px;height:9px;border-radius:3px;background:rgba(61,170,106,.2)"></div> Completada</div>
-      <div style="display:flex;align-items:center;gap:4px;font-size:9px;color:var(--muted)"><div style="width:9px;height:9px;border-radius:3px;background:rgba(201,168,76,.15)"></div> Pendiente</div>
-    </div>
-  `;
-}
-function calNav(d){if(d===0)calDate=new Date();else calDate=new Date(calDate.getFullYear(),calDate.getMonth()+d,1);renderCalendario();}
-function selectDay(date){selDay=selDay===date?null:date;renderCalendario();}
-
-// ══════════════════════════════════════════════════════════════════════════════
 // HÁBITOS — registro diario sincronizado con Journey admin
 // ══════════════════════════════════════════════════════════════════════════════
 const AC_HAB={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
@@ -1721,7 +1676,10 @@ function renderPortalCalMensual(){
   const AK=['espiritual','mental','fisica','social'];
   const habTrack=curInsc.habTrack||{};const desTrack=curInsc.desTrack||{};
   const iniStr=curInsc.fechaInicio||'';
-  const finStr=curInsc.fechaFin||'';
+  let endDate=curInsc.fechaFin||'';
+  if(!endDate&&iniStr){const meses=parseFloat(curProg.meses)||0,semanas=parseInt(curProg.semanas_dur)||0;const days=Math.round(meses*30)+semanas*7;if(days>0){const d=new Date(iniStr+'T12:00:00');d.setDate(d.getDate()+days);endDate=d.toISOString().slice(0,10);}}
+  let tlPct=0,tlDaysTotal=0,tlDaysDone=0,tlDaysLeft=0;
+  if(iniStr&&endDate){const s=new Date(iniStr+'T12:00:00'),e=new Date(endDate+'T12:00:00'),t=new Date();tlDaysTotal=Math.round((e-s)/864e5);tlDaysDone=Math.max(0,Math.round((Math.min(t,e)-s)/864e5));tlDaysLeft=Math.max(0,tlDaysTotal-tlDaysDone);tlPct=Math.round(tlDaysDone/tlDaysTotal*100);}
   const sesInfoMap={};
   [...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[]),...(allSessions||[])].forEach(s=>{
     const fd=(s.fecha||s.date||'').slice(0,10);if(!fd)return;
@@ -1738,7 +1696,7 @@ function renderPortalCalMensual(){
   for(let d=1;d<=daysInMonth;d++){
     const ds=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const hd=habTrack[ds]||{};const dd=desTrack[ds]||{};
-    const isToday=ds===todayStr;const isIni=ds===iniStr;const isFin=ds===finStr;
+    const isToday=ds===todayStr;const isIni=ds===iniStr;const isFin=ds===endDate;
     const sesInfo=sesInfoMap[ds];
     const sesComp=sesInfo&&(sesInfo.estado||'').toLowerCase().includes('comp');
     const hdots=AK.map(k=>`<div style="width:5px;height:5px;border-radius:50%;background:${hd[k]?AC[k]:'var(--border)'};flex-shrink:0"></div>`).join('');
@@ -1756,6 +1714,11 @@ function renderPortalCalMensual(){
   }
   const legend=AK.map(k=>`<div style="width:7px;height:7px;border-radius:50%;background:${AC[k]}"></div>`).join('');
   return `<div>
+    ${iniStr?`<div class="cal-timeline">
+      <div class="cal-tl-item"><span class="cal-tl-ico">🌱</span><div class="cal-tl-date">${fmtDate(iniStr)}</div><div class="cal-tl-lbl">Inicio</div></div>
+      <div style="flex:1"><div class="cal-tl-bar"><div class="cal-tl-fill" style="width:${tlPct}%"></div></div><div class="cal-tl-pct">${tlPct}% del programa · ${tlDaysDone}/${tlDaysTotal} días${tlDaysLeft>0?' · '+tlDaysLeft+' restantes':' · ¡Completado!'}</div></div>
+      ${endDate?`<div class="cal-tl-item"><span class="cal-tl-ico">🎯</span><div class="cal-tl-date">${fmtDate(endDate)}</div><div class="cal-tl-lbl">Fin</div></div>`:''}
+    </div>`:''}
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <button onclick="portalCalNavMonth(-1)" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:4px 10px;cursor:pointer">‹</button>
       <div style="font-weight:700;color:var(--gl)">${mNames[month]} ${year}</div>
@@ -1766,7 +1729,7 @@ function renderPortalCalMensual(){
       <div style="display:flex;gap:3px;align-items:center">${legend}<span>D=desafíos</span></div>
       <div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}33;border-radius:3px;padding:1px 4px">🤝</span><span>=sesión</span></div>
       ${iniStr?`<div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}22;border-radius:3px;padding:1px 4px">▶ Inicio</span></div>`:''}
-      ${finStr?`<div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:#EF4444;background:rgba(239,68,68,.15);border-radius:3px;padding:1px 4px">■ Fin</span></div>`:''}
+      ${endDate?`<div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:#EF4444;background:rgba(239,68,68,.15);border-radius:3px;padding:1px 4px">■ Fin</span></div>`:''}
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:4px">
       ${dNames.map(d=>`<div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px">${d}</div>`).join('')}
