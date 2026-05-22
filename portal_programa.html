@@ -99,6 +99,8 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .week-item.active .wn{background:rgba(201,168,76,.25);color:var(--gl);}
 .wck{margin-left:auto;font-size:9px;color:var(--green);opacity:0;}
 .week-item.done .wck{opacity:1;}
+.week-item.locked{cursor:default;}
+.week-item.locked:hover{background:transparent;color:var(--muted);}
 .s-foot{padding:10px;border-top:1px solid #1E1C10;flex-shrink:0;}
 .s-foot-user{font-size:10px;color:var(--muted);margin-bottom:6px;}
 .s-foot-user strong{color:var(--text);}
@@ -1453,15 +1455,38 @@ function visionHabCustom(area,val){
 // ══════════════════════════════════════════════════════════════════════════════
 // SEMANAS
 // ══════════════════════════════════════════════════════════════════════════════
+function getWeekDates(idx){
+  let startD;
+  if(curInsc.fechaInicio){
+    // Siempre desde la fecha de inicio del programa, sin importar el día de semana
+    startD=new Date(curInsc.fechaInicio+'T12:00:00');
+    startD.setDate(startD.getDate()+idx*7);
+  } else {
+    // Fallback: usar inicio individual de la semana si no hay fechaInicio del programa
+    const sem=(curInsc.semanas||[])[idx];
+    if(sem&&sem.inicio) startD=new Date(sem.inicio+'T12:00:00');
+    else return{start:null,end:null,isLocked:false,label:null};
+  }
+  const endD=new Date(startD);endD.setDate(startD.getDate()+6);
+  const now=new Date();now.setHours(0,0,0,0);
+  const isLocked=startD>now;
+  const fmt=d=>d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
+  return{start:startD,end:endD,isLocked,label:`${fmt(startD)} – ${fmt(endD)}`};
+}
+
 function renderWeekList(){
   const sems=curInsc.semanas||[];
   if(!sems.length){document.getElementById('weekList').innerHTML='<p style="font-size:11px;color:var(--muted);text-align:center;padding:16px">Sin semanas cargadas.</p>';return;}
   document.getElementById('weekList').innerHTML=sems.map((s,i)=>{
     const done=semDone(i);const isCur=i===curSemIdx;
-    return`<div class="week-item ${isCur?'active':''} ${done?'done':''}" onclick="selectWeek(${i})">
-      <div class="wn">${s.num||i+1}</div>
-      <div style="flex:1;font-size:11px;font-weight:${isCur?700:400};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.titulo||'Semana '+(i+1)}</div>
-      <div class="wck">✓</div>
+    const wd=getWeekDates(i);const locked=wd.isLocked;
+    return`<div class="week-item ${isCur?'active':''} ${done?'done':''} ${locked?'locked':''}" ${locked?'':'onclick="selectWeek('+i+')"'}>
+      <div class="wn" style="${locked?'opacity:.4':''}">${s.num||i+1}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:11px;font-weight:${isCur?700:400};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${locked?'opacity:.5':''}">${s.titulo||'Semana '+(i+1)}</div>
+        ${wd.label?`<div style="font-size:9px;color:var(--muted);margin-top:1px">${wd.label}</div>`:''}
+      </div>
+      <div class="wck" style="opacity:1;font-size:${locked?'11':'9'}px">${locked?'🔒':done?'✓':''}</div>
     </div>`;
   }).join('');
 }
@@ -1471,17 +1496,62 @@ function renderSemana(idx){
   const sems=curInsc.semanas||[];
   if(!sems.length){document.getElementById('mainContent').innerHTML=`<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">📅</div>El contenido de tu programa todavía no está disponible.</div>`;return;}
   const sem=sems[idx]||sems[0];const p=getP(idx);
-  const des=sem.desafios||[];const hab=sem.habitos||[];const mat=sem.materiales||[];
+  const wd=getWeekDates(idx);
+
+  // Nav buttons
+  const hasPrev=idx>0;const hasNext=idx<sems.length-1;
+  const nextWd=hasNext?getWeekDates(idx+1):null;
+  const navHTML=`<div style="display:flex;justify-content:space-between;align-items:center;margin-top:20px;padding-top:14px;border-top:1px solid var(--border)">
+    ${hasPrev?`<button onclick="selectWeek(${idx-1})" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:12px;font-weight:600;cursor:pointer">← Semana ${idx}</button>`:'<div></div>'}
+    ${hasNext?`<button onclick="selectWeek(${idx+1})" style="display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:10px;border:1px solid ${nextWd&&nextWd.isLocked?'var(--border)':'rgba(201,168,76,.3)'};background:${nextWd&&nextWd.isLocked?'transparent':'rgba(201,168,76,.08)'};color:${nextWd&&nextWd.isLocked?'var(--muted)':'var(--gold)'};font-size:12px;font-weight:600;cursor:pointer">Semana ${idx+2} ${nextWd&&nextWd.isLocked?'🔒':'→'}</button>`:'<div></div>'}
+  </div>`;
+
+  // Locked state
+  if(wd.isLocked){
+    const unlockStr=wd.start?wd.start.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}):'próximamente';
+    document.getElementById('mainContent').innerHTML=`
+      <div style="text-align:center;padding:60px 20px">
+        <div style="font-size:48px;margin-bottom:16px">🔒</div>
+        <div style="font-size:20px;font-weight:800;color:var(--gl);margin-bottom:6px">Semana ${sem.num||idx+1}</div>
+        ${sem.titulo?`<div style="font-size:14px;font-weight:600;color:var(--text);margin-bottom:10px">${sem.titulo}</div>`:''}
+        <div style="font-size:13px;color:var(--muted);margin-bottom:6px">Se desbloquea el</div>
+        <div style="font-size:15px;font-weight:700;color:var(--gold);margin-bottom:20px">${unlockStr}</div>
+        <div style="font-size:12px;color:var(--muted);max-width:280px;margin:0 auto;line-height:1.7">Seguí trabajando en tu semana actual mientras llega este momento.</div>
+      </div>
+      ${navHTML}`;
+    return;
+  }
+
+  const des=sem.desafios||[];const mat=sem.materiales||[];
   const byArea={};AREAS.forEach(a=>{byArea[a.key]={des:[],mat:[]};});byArea.general={des:[],mat:[]};
   des.forEach(d=>{const a=d.area&&byArea[d.area]?d.area:'general';byArea[a].des.push(d);});
   mat.forEach(m=>{const a=m.area&&byArea[m.area]?m.area:'general';byArea[a].mat.push(m);});
   const hasAreas=AREAS.some(a=>byArea[a.key].des.length||byArea[a.key].mat.length);
   const hasGen=byArea.general.des.length||byArea.general.mat.length;
+
+  // Desafíos progress
+  const totalDes=des.length;
+  const doneDes=des.filter(d=>!!(p.desafios||{})[d.id]).length;
+  const pctDes=totalDes?Math.round(doneDes/totalDes*100):0;
+  const desComplete=totalDes>0&&doneDes>=totalDes;
+
   document.getElementById('mainContent').innerHTML=`
     <div class="week-header">
-      <div class="wk-badge">Semana ${sem.num||idx+1}</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-bottom:6px">
+        <div class="wk-badge">Semana ${sem.num||idx+1}</div>
+        ${wd.label?`<div style="font-size:11px;color:var(--muted)">${wd.label}</div>`:''}
+      </div>
       <div class="wk-title">${sem.titulo||'Semana '+(idx+1)}</div>
       ${sem.descripcion?`<div class="wk-desc">${sem.descripcion}</div>`:''}
+      ${totalDes?`<div style="margin-top:12px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px">
+          <span style="color:var(--muted)">Desafíos</span>
+          <span style="color:${desComplete?'var(--green)':'var(--muted)'};font-weight:${desComplete?700:400}">${doneDes}/${totalDes}${desComplete?' ✓':''}</span>
+        </div>
+        <div style="background:rgba(255,255,255,.06);border-radius:20px;height:5px;overflow:hidden">
+          <div style="height:100%;border-radius:20px;background:${desComplete?'var(--green)':'var(--gold)'};width:${pctDes}%;transition:.6s ease"></div>
+        </div>
+      </div>`:''}
     </div>
     ${hasAreas?`<div class="area-grid">${AREAS.map(a=>{
       const items=byArea[a.key];const doneC=items.des.filter(d=>(p.desafios||{})[d.id]).length;
@@ -1511,6 +1581,7 @@ function renderSemana(idx){
         <span class="reflexion-saved" id="reflexionSaved">✓ Guardado</span>
       </div>
     </div>
+    ${navHTML}
   `;
 }
 function toggleDes(dId,semIdx){
