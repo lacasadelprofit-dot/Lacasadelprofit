@@ -2220,15 +2220,11 @@ function portalToggleDes(area,dateStr){
 // MATERIAL
 // ══════════════════════════════════════════════════════════════════════════════
 function renderMaterialTab(){
-  const icoTipo={pdf:'📄',video:'🎥',audio:'🎧',link:'🔗',lectura:'📖'};
-  // Material de la inscripción (asignado desde admin)
+  const icoTipo={pdf:'📄',video:'🎥',audio:'🎧',link:'🔗',lectura:'📖',texto:'📖'};
   const matInsc=curInsc.material||[];
-  // Material global del programa
   const matProg=curProg.materialesGlobales||[];
-  // Material por semanas
   const matSem=[];
-  (curInsc.semanas||[]).forEach(s=>(s.materiales||[]).forEach(m=>matSem.push({...m,semana:s.num,tituloSem:s.titulo})));
-
+  (curInsc.semanas||[]).forEach((s,i)=>(s.materiales||[]).forEach(m=>matSem.push({...m,semana:s.num,tituloSem:s.titulo,_semIdx:i})));
   const all=[...matProg,...matInsc,...matSem];
 
   if(!all.length){
@@ -2236,25 +2232,72 @@ function renderMaterialTab(){
     return;
   }
 
-  const cards=all.map(m=>`
-    <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;display:flex;align-items:center;gap:12px">
-      <span style="font-size:26px;flex-shrink:0">${icoTipo[m.tipo]||'📎'}</span>
-      <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:var(--gl)">${m.nombre||m.titulo||'Recurso'}</div>
-        ${m.semana?`<div style="font-size:10px;color:var(--muted)">Semana ${m.semana}${m.tituloSem?' — '+m.tituloSem:''}</div>`:''}
-        ${m.fecha?`<div style="font-size:10px;color:var(--muted)">${m.fecha}</div>`:''}
-      </div>
-      ${m.url?`<a href="${m.url}" target="_blank" style="flex-shrink:0;padding:8px 14px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:9px;color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">Abrir ↗</a>`:
-        `<span style="flex-shrink:0;font-size:10px;color:var(--muted)">Sin link</span>`}
-    </div>`).join('');
+  if(!progreso.materialVisto)progreso.materialVisto={};
+  const visto=progreso.materialVisto;
+  const col=curProg.col||'#C9A84C';
 
+  // Contar solo los desbloqueados para el progreso
+  const desbloqueados=all.filter(m=>m._semIdx===undefined||!getWeekDates(m._semIdx).isLocked);
+  const vistos=desbloqueados.filter(m=>visto[m.id||m.titulo]).length;
+
+  const cards=all.map(m=>{
+    const mid=m.id||m.titulo||'mat';
+    const esVisto=!!visto[mid];
+    // Determinar si está bloqueado por semana futura
+    const wd=m._semIdx!==undefined?getWeekDates(m._semIdx):null;
+    const bloqueado=wd&&wd.isLocked;
+    const unlockLabel=wd&&wd.start?wd.start.toLocaleDateString('es-AR',{day:'numeric',month:'long'}):'';
+
+    if(bloqueado){
+      return`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;opacity:.55">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:24px;flex-shrink:0">🔒</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--muted)">${m.nombre||m.titulo||'Recurso'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Sem. ${m.semana}${m.tituloSem?' — '+m.tituloSem:''} · Disponible el ${unlockLabel}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+
+    return`<div style="background:var(--card);border:1px solid ${esVisto?col+'55':'var(--border)'};border-radius:12px;padding:14px;margin-bottom:8px;transition:border .2s">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <span style="font-size:24px;flex-shrink:0;margin-top:1px">${icoTipo[m.tipo]||'📎'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:${esVisto?'var(--muted)':'var(--gl)'};${esVisto?'text-decoration:line-through;':''}">${m.nombre||m.titulo||'Recurso'}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center">
+            ${m.semana?`<span style="font-size:10px;color:var(--muted)">Sem. ${m.semana}${m.tituloSem?' — '+m.tituloSem:''}</span>`:''}
+            ${m.duracion?`<span style="font-size:10px;background:rgba(255,255,255,.06);border-radius:20px;padding:1px 8px;color:var(--muted)">⏱ ${m.duracion}</span>`:''}
+            ${esVisto?`<span style="font-size:10px;color:${col};font-weight:600">✓ Visto</span>`:''}
+          </div>
+          ${m.descripcion?`<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5">${m.descripcion}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+        ${m.url?`<a href="${m.url}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:8px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:9px;color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">Abrir ↗</a>`:''}
+        <button onclick="toggleMaterialVisto('${mid}')" style="flex-shrink:0;padding:8px 14px;background:${esVisto?col+'22':'rgba(255,255,255,.05)'};border:1px solid ${esVisto?col+'55':'var(--border)'};border-radius:9px;color:${esVisto?col:'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer;transition:all .2s">${esVisto?'✓ Visto':'Marcar visto'}</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  const pct=desbloqueados.length?Math.round(vistos/desbloqueados.length*100):0;
   document.getElementById('mainContent').innerHTML=`
     <div style="margin-bottom:14px">
       <div style="font-size:18px;font-weight:800;color:var(--gl)">📁 Material</div>
-      <div style="font-size:12px;color:var(--muted)">${all.length} recurso${all.length!==1?'s':''} disponibles</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${vistos} de ${desbloqueados.length} visto${vistos!==1?'s':''}</div>
+      <div style="background:rgba(255,255,255,.08);border-radius:20px;height:5px;overflow:hidden">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:20px;transition:width .4s"></div>
+      </div>
     </div>
     ${cards}
   `;
+}
+
+function toggleMaterialVisto(mid){
+  if(!progreso.materialVisto)progreso.materialVisto={};
+  progreso.materialVisto[mid]=!progreso.materialVisto[mid];
+  if(!progreso.materialVisto[mid])delete progreso.materialVisto[mid];
+  saveProgress(()=>renderMaterialTab());
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
