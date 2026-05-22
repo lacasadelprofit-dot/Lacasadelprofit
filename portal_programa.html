@@ -53,8 +53,8 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .ps-header h2{font-size:20px;font-weight:800;color:var(--gl);margin-bottom:3px;}
 .ps-header p{font-size:13px;color:var(--muted);}
 .ps-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;max-width:960px;margin:0 auto;}
-.ps-card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid var(--border);border-radius:18px;padding:22px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
-.ps-card:hover{border-color:rgba(201,168,76,.45);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.4),0 0 30px rgba(201,168,76,.08);}
+.ps-card{background:rgba(255,255,255,.04);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);border:1px solid rgba(201,168,76,.15);border-radius:18px;padding:22px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.ps-card:hover{background:rgba(255,255,255,.07);border-color:rgba(201,168,76,.4);transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.3),0 0 30px rgba(201,168,76,.1);}
 .ps-stripe{position:absolute;top:0;left:0;right:0;height:3px;}
 .ps-card-ico{font-size:34px;margin-bottom:8px;display:block;}
 .ps-card-name{font-size:15px;font-weight:800;color:var(--gl);margin-bottom:2px;}
@@ -415,8 +415,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 
 <!-- SELECTOR -->
 <div id="progSelector">
-  <div class="ps-header"><svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ppg2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A1E04"/><stop offset="100%" stop-color="#080A04"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ppg2)"/><g stroke="#C9A84C" stroke-width="1.2" fill="none" opacity="0.9"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="32" r="18"/><circle cx="65.6" cy="41" r="18"/><circle cx="65.6" cy="59" r="18"/><circle cx="50" cy="68" r="18"/><circle cx="34.4" cy="59" r="18"/><circle cx="34.4" cy="41" r="18"/></g><circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.5" fill="none" opacity="0.6"/><g stroke="#E8C96A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="34,50 50,37 66,50"/><line x1="37" y1="50" x2="37" y2="63"/><line x1="63" y1="50" x2="63" y2="63"/><line x1="37" y1="63" x2="63" y2="63"/><path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63" fill="none"/></g></svg><h2 id="psTitle">Tus Programas</h2><p id="psSub">Elegí el programa que querés ver</p></div>
-  <div id="psPregDia" style="max-width:960px;margin:0 auto 24px"></div>
+  <div class="ps-header"><svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ppg2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A1E04"/><stop offset="100%" stop-color="#080A04"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ppg2)"/><g stroke="#C9A84C" stroke-width="1.2" fill="none" opacity="0.9"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="32" r="18"/><circle cx="65.6" cy="41" r="18"/><circle cx="65.6" cy="59" r="18"/><circle cx="50" cy="68" r="18"/><circle cx="34.4" cy="59" r="18"/><circle cx="34.4" cy="41" r="18"/></g><circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.5" fill="none" opacity="0.6"/><g stroke="#E8C96A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="34,50 50,37 66,50"/><line x1="37" y1="50" x2="37" y2="63"/><line x1="63" y1="50" x2="63" y2="63"/><line x1="37" y1="63" x2="63" y2="63"/><path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63" fill="none"/></g></svg><h2 id="psTitle">Tus Programas</h2></div>
   <div class="ps-grid" id="psGrid"></div>
 </div>
 
@@ -440,6 +439,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
         <div class="s-tab"        id="tab-avance"       onclick="switchTab('avance')"><span class="ti">📊</span>Mi Avance</div>
         <div class="s-tab"        id="tab-semanas"      onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
         <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
+        <div class="s-tab"        id="tab-logros"       onclick="switchTab('logros')"><span class="ti">🏅</span>Logros</div>
         <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
         <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
       </div>
@@ -617,7 +617,6 @@ function showSelector(ser,inscList,progs){
     </div>`;
   }).join('');
   document.getElementById('progSelector').style.display='block';
-  loadPregDia('psPregDia',ser.nombre||'');
 }
 function selectProgram(inscId){
   const insc=allInscList.find(i=>i.id===inscId);if(!insc)return;
@@ -654,7 +653,7 @@ function launchApp(ser,insc,prog){
 function switchTab(tab){
   if(curTab==='semanas')saveNotaImmediate();
   curTab=tab;
-  ['general','avance','semanas','habitos','material','vision','notas','comunicacion','proceso'].forEach(t=>{
+  ['general','avance','semanas','habitos','material','vision','logros','notas','comunicacion','proceso'].forEach(t=>{
     document.getElementById('tab-'+t)?.classList.toggle('active',t===tab);
   });
   const ww=document.getElementById('weekListWrap');const sp=document.getElementById('sSpacer');
@@ -666,6 +665,7 @@ function switchTab(tab){
   else if(tab==='habitos')renderHabitosTab();
   else if(tab==='material')renderMaterialTab();
   else if(tab==='vision')renderVisionTab();
+  else if(tab==='logros')renderLogrosTab();
   else if(tab==='notas')renderNotasTab();
   else if(tab==='comunicacion')renderComunicacionTab();
   else if(tab==='proceso')renderProcesoTab();
@@ -1121,13 +1121,14 @@ function renderAvance(){
       </div>`:'<div style="margin-top:10px;font-size:12px;color:var(--gold);text-align:center">🏆 ¡Todos los logros desbloqueados!</div>'}
     </div>
 
-    <!-- LOGROS -->
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">🏅 Logros · ${unlockedCount} de ${badges.length} desbloqueados</div>
-    <div class="av2-badge-grid">
-      ${badges.map(b=>`<div class="av2-badge ${b.ok?'unlocked':'locked'}">
-        <div class="av2-badge-ico">${b.ico}</div>
-        <div><div class="av2-badge-name">${b.name}</div><div class="av2-badge-desc">${b.desc}</div></div>
-      </div>`).join('')}
+    <!-- LOGROS — teaser -->
+    <div onclick="switchTab('logros')" style="cursor:pointer;background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.2);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:4px;transition:background .15s" onmouseover="this.style.background='rgba(201,168,76,.1)'" onmouseout="this.style.background='rgba(201,168,76,.06)'">
+      <span style="font-size:26px">🏅</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:12px;font-weight:700;color:var(--gold)">${unlockedCount} de ${badges.length} logros desbloqueados</div>
+        ${nextBadge?`<div style="font-size:11px;color:var(--muted);margin-top:2px">Próximo: ${nextBadge.ico} ${nextBadge.name}</div>`:`<div style="font-size:11px;color:var(--gold);margin-top:2px">¡Todos desbloqueados! 🏆</div>`}
+      </div>
+      <span style="font-size:11px;color:var(--muted)">Ver →</span>
     </div>
   `;
 }
@@ -1235,6 +1236,89 @@ function buildBadges(habList,doneDes,totDes,progWeeks){
     {ico:'⭐',name:'Desafíos completos', desc:'100% de desafíos completados',                      ok:totDes>0&&doneDes>=totDes},
     {ico:'🧘',name:'Área dominante',     desc:'Una misma área marcada 60 días consecutivos',       ok:maxAreaStreak>=60},
   ];
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// LOGROS
+// ══════════════════════════════════════════════════════════════════════════════
+function renderLogrosTab(){
+  const col=curProg.col||'#C9A84C';
+  const sems=curInsc.semanas||[];
+  const nombre=(curSer?.nombre||'').split(' ')[0]||'';
+  let doneDes=0,totDes=0;
+  sems.forEach((s,i)=>{const p=getP(i);(s.desafios||[]).forEach(d=>{totDes++;if((p.desafios||{})[d.id])doneDes++;});});
+  const progWeeks=sems.length||1;
+  const habElegidos=curInsc.habitosElegidos||{};
+  const habList=Object.values(habElegidos).map(h=>({...h,dates:Object.keys(curInsc.habTrack||{}).filter(d=>curInsc.habTrack[d]&&curInsc.habTrack[d][h.area])}));
+  const badges=buildBadges(habList,doneDes,totDes,progWeeks);
+  const unlocked=badges.filter(b=>b.ok);
+  const locked=badges.filter(b=>!b.ok);
+  const pct=Math.round(unlocked.length/badges.length*100);
+  const nextBadge=locked[0];
+
+  // Círculo de progreso de logros
+  const circ=Math.round(pct*2.0106);
+  const ring=`<svg width="90" height="90" viewBox="0 0 90 90">
+    <circle cx="45" cy="45" r="34" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="7"/>
+    <circle cx="45" cy="45" r="34" fill="none" stroke="${col}" stroke-width="7"
+      stroke-dasharray="${circ} 214" stroke-linecap="round" transform="rotate(-90 45 45)" opacity=".9"/>
+    <text x="45" y="49" text-anchor="middle" fill="${col}" font-size="14" font-weight="900" font-family="Segoe UI,sans-serif">${unlocked.length}/${badges.length}</text>
+  </svg>`;
+
+  document.getElementById('mainContent').innerHTML=`
+    <!-- HERO -->
+    <div class="av2-hero" style="margin-bottom:16px">
+      <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 80% 40%,${col}10,transparent 65%);pointer-events:none"></div>
+      <div style="display:flex;align-items:center;gap:16px;position:relative">
+        <div style="flex-shrink:0">${ring}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:16px;font-weight:800;color:var(--gl);margin-bottom:4px">🏅 Tus Logros</div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:10px">${unlocked.length === badges.length ? `¡${nombre}, desbloqueaste todos los logros! 🏆` : `${locked.length} logro${locked.length!==1?'s':''} por desbloquear`}</div>
+          <div style="background:rgba(255,255,255,.06);border-radius:20px;height:5px;overflow:hidden;margin-bottom:4px">
+            <div style="height:100%;border-radius:20px;background:${col};width:${pct}%;transition:.8s ease"></div>
+          </div>
+          <div style="font-size:10px;color:var(--muted)">${pct}% completado</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRÓXIMO LOGRO -->
+    ${nextBadge?`<div style="background:rgba(255,255,255,.03);border:1px dashed rgba(255,255,255,.1);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span style="font-size:28px;filter:grayscale(.8);opacity:.5">${nextBadge.ico}</span>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:3px">Próximo logro</div>
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${nextBadge.name}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${nextBadge.desc}</div>
+      </div>
+    </div>`:''  }
+
+    <!-- DESBLOQUEADOS -->
+    ${unlocked.length?`
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">✅ Desbloqueados — ${unlocked.length}</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px">
+      ${unlocked.map(b=>`<div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.25);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:14px">
+        <span style="font-size:32px;flex-shrink:0">${b.ico}</span>
+        <div>
+          <div style="font-size:13px;font-weight:800;color:var(--gl)">${b.name}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${b.desc}</div>
+        </div>
+        <span style="margin-left:auto;font-size:16px">✓</span>
+      </div>`).join('')}
+    </div>`:''}
+
+    <!-- BLOQUEADOS -->
+    ${locked.length?`
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px">🔒 Por desbloquear — ${locked.length}</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      ${locked.map(b=>`<div style="background:rgba(255,255,255,.02);border:1px solid var(--border);border-radius:12px;padding:11px 14px;display:flex;align-items:center;gap:14px;opacity:.45;filter:grayscale(.8)">
+        <span style="font-size:28px;flex-shrink:0">${b.ico}</span>
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--text)">${b.name}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">${b.desc}</div>
+        </div>
+      </div>`).join('')}
+    </div>`:''}
+  `;
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -1572,15 +1656,31 @@ function renderSemana(idx){
       <div class="nota-wrap"><textarea id="notaText" placeholder="Anotá reflexiones, aprendizajes, preguntas…" style="min-height:80px"></textarea>
       <div class="nota-save-row"><button class="btn-save-nota" onclick="addNotaSemana()">Agregar nota</button><span class="nota-saved" id="notaSaved">✓ Guardado</span></div></div>
     </div>
-    <div class="reflexion-block">
-      <div class="reflexion-lbl">✦ Reflexión de la semana</div>
-      <div class="reflexion-pregunta">Mi gran aprendizaje esta semana fue...</div>
-      <textarea id="reflexionText" style="width:100%;min-height:60px;background:rgba(0,0,0,.3);border:1px solid rgba(155,130,212,.2);border-radius:9px;color:var(--text);font-size:13px;padding:10px;outline:none;resize:vertical;font-family:inherit;line-height:1.6;transition:border-color .2s;box-sizing:border-box" placeholder="Escribí en una línea..." onfocus="this.style.borderColor='var(--esp)'" onblur="this.style.borderColor='rgba(155,130,212,.2)'">${p.reflexion||''}</textarea>
-      <div style="display:flex;align-items:center;gap:8px;margin-top:7px">
-        <button onclick="saveReflexion()" style="padding:7px 16px;background:rgba(155,130,212,.15);border:1px solid rgba(155,130,212,.3);border-radius:7px;color:var(--esp);font-size:12px;font-weight:700;cursor:pointer">Guardar</button>
-        <span class="reflexion-saved" id="reflexionSaved">✓ Guardado</span>
-      </div>
-    </div>
+    ${(()=>{
+      const ref=typeof p.reflexion==='object'&&p.reflexion?p.reflexion:{};
+      const ta=(id,val,ph)=>`<textarea id="${id}" style="width:100%;min-height:58px;background:rgba(0,0,0,.3);border:1px solid rgba(155,130,212,.2);border-radius:9px;color:var(--text);font-size:13px;padding:10px;outline:none;resize:vertical;font-family:inherit;line-height:1.6;transition:border-color .2s;box-sizing:border-box" placeholder="${ph}" onfocus="this.style.borderColor='var(--esp)'" onblur="this.style.borderColor='rgba(155,130,212,.2)'">${val||''}</textarea>`;
+      return`<div class="reflexion-block">
+        <div class="reflexion-lbl">✦ Reflexión de la semana</div>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <div>
+            <div class="reflexion-pregunta">¿Qué aprendiste esta semana?</div>
+            ${ta('refAprendiste',ref.aprendiste,'Tu gran aprendizaje…')}
+          </div>
+          <div>
+            <div class="reflexion-pregunta">¿Qué fue difícil?</div>
+            ${ta('refDificil',ref.dificil,'Lo que se sintió más desafiante…')}
+          </div>
+          <div>
+            <div class="reflexion-pregunta">¿Qué llevás a la próxima semana?</div>
+            ${ta('refLlevas',ref.llevas,'Una intención, un hábito, una decisión…')}
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+          <button onclick="saveReflexion()" style="padding:7px 16px;background:rgba(155,130,212,.15);border:1px solid rgba(155,130,212,.3);border-radius:7px;color:var(--esp);font-size:12px;font-weight:700;cursor:pointer">Guardar reflexión</button>
+          <span class="reflexion-saved" id="reflexionSaved">✓ Guardado</span>
+        </div>
+      </div>`;
+    })()}
     ${navHTML}
   `;
 }
@@ -1647,10 +1747,17 @@ function deleteNotaSemana(semIdx,noteId){
     if(list)list.innerHTML=buildSemNotasListHTML(getP(semIdx).notas||[],semIdx);
   });
 }
-function saveNotaImmediate(){const re=document.getElementById('reflexionText');if(re)getP(curSemIdx).reflexion=re.value;}
+function saveNotaImmediate(){
+  const p=getP(curSemIdx);
+  const a=document.getElementById('refAprendiste');const d=document.getElementById('refDificil');const l=document.getElementById('refLlevas');
+  if(a||d||l)p.reflexion={aprendiste:a?a.value:'',dificil:d?d.value:'',llevas:l?l.value:'',fecha:p.reflexion?.fecha||new Date().toLocaleDateString('es-AR')};
+}
 function saveReflexion(){
-  const txt=(document.getElementById('reflexionText')||{}).value;if(txt===undefined)return;
-  getP(curSemIdx).reflexion=txt;
+  const a=(document.getElementById('refAprendiste')||{}).value||'';
+  const d=(document.getElementById('refDificil')||{}).value||'';
+  const l=(document.getElementById('refLlevas')||{}).value||'';
+  if(!a&&!d&&!l)return;
+  getP(curSemIdx).reflexion={aprendiste:a,dificil:d,llevas:l,fecha:new Date().toLocaleDateString('es-AR')};
   saveProgress(()=>{const el=document.getElementById('reflexionSaved');if(el){el.style.display='inline';setTimeout(()=>el.style.display='none',2000);}});
 }
 
