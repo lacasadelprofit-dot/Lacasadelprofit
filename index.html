@@ -677,6 +677,13 @@ th{background:rgba(28,26,46,.88)!important;}
     <div id="sec-profit" class="sec">
       <div style="max-width:900px;margin:0 auto;padding:10px 0 40px">
 
+        <!-- SUB-TABS PROFIT -->
+        <div style="display:flex;gap:6px;margin-bottom:28px;border-bottom:1px solid var(--border);padding-bottom:12px">
+          <button id="ptab_cerebro" onclick="switchProfitTab('cerebro')" style="padding:7px 18px;border-radius:8px;border:1px solid rgba(201,168,76,.3);background:rgba(201,168,76,.12);color:var(--gl);font-size:12px;font-weight:700;cursor:pointer">🧠 Cerebro</button>
+          <button id="ptab_conocimiento" onclick="switchProfitTab('conocimiento')" style="padding:7px 18px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer">📚 Conocimiento</button>
+        </div>
+        <div id="profitCerebro">
+
         <!-- HERO -->
         <div style="text-align:center;margin-bottom:48px">
           <div style="font-size:56px;margin-bottom:14px;filter:drop-shadow(0 0 28px rgba(201,168,76,.5))">🧠</div>
@@ -794,6 +801,8 @@ th{background:rgba(28,26,46,.88)!important;}
             Es construir <span style="color:var(--gl);font-weight:700">una extensión cognitiva de tu consciencia</span>
           </div>
         </div>
+        </div><!-- /profitCerebro -->
+        <div id="profitConocimiento" style="display:none"></div>
 
       </div>
     </div>
@@ -7180,7 +7189,159 @@ function migrateProspectos(){
   toast(`${updated} prospectos actualizados ✅`);
 }
 function navCRM(){const ni=document.querySelector('.ni[onclick*="crm"]');nav('crm',ni);}
-function renderProfit(){} // placeholder — entidad cognitiva en desarrollo
+// ── PROFIT IA — BASE DE CONOCIMIENTO ──────────────────────────────
+let conocimiento=[],kbCat='metodologia',kbEditing=null,profitTab='cerebro',kbTableReady=null;
+
+const KB_CATS=[
+  {k:'metodologia',ico:'🧘',label:'Metodología'},
+  {k:'seres',      ico:'👥',label:'Seres'},
+  {k:'marketing',  ico:'📣',label:'Marketing'},
+  {k:'juancruz',   ico:'💡',label:'Juan Cruz'},
+];
+
+function switchProfitTab(tab){
+  profitTab=tab;
+  const cer=document.getElementById('profitCerebro');
+  const con=document.getElementById('profitConocimiento');
+  if(cer)cer.style.display=tab==='cerebro'?'':'none';
+  if(con)con.style.display=tab==='conocimiento'?'':'none';
+  ['cerebro','conocimiento'].forEach(t=>{
+    const btn=document.getElementById('ptab_'+t);if(!btn)return;
+    const active=t===tab;
+    btn.style.background=active?'rgba(201,168,76,.12)':'transparent';
+    btn.style.border=active?'1px solid rgba(201,168,76,.3)':'none';
+    btn.style.color=active?'var(--gl)':'var(--muted)';
+  });
+  if(tab==='conocimiento')renderKB();
+}
+
+async function renderProfit(){
+  const{data,error}=await _sb.from('conocimiento').select('id,data');
+  if(error){
+    kbTableReady=false;
+  }else{
+    kbTableReady=true;
+    conocimiento=(data||[]).map(r=>({id:r.id,...(r.data||{})}));
+  }
+  if(profitTab==='conocimiento')renderKB();
+}
+
+function switchKBCat(cat){kbCat=cat;kbEditing=null;renderKB();}
+
+function renderKB(){
+  const el=document.getElementById('profitConocimiento');if(!el)return;
+
+  if(kbTableReady===false){
+    el.innerHTML=`<div style="background:rgba(14,13,20,.8);border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:28px;margin-top:8px">
+      <div style="font-size:15px;font-weight:700;color:var(--gl);margin-bottom:10px">⚙️ Configuración inicial</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:16px">Para activar la Base de Conocimiento, ejecutá este SQL en <b style="color:var(--text)">Supabase Dashboard → SQL Editor</b>:</div>
+      <pre style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:16px;font-size:12px;color:var(--teal);overflow-x:auto;line-height:1.8">CREATE TABLE conocimiento (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  data JSONB
+);</pre>
+      <div style="font-size:12px;color:var(--muted);margin-top:14px">Una vez creada la tabla, recargá la página y volvé a esta pestaña.</div>
+    </div>`;
+    return;
+  }
+
+  const notes=conocimiento.filter(n=>n.categoria===kbCat);
+  const curCat=KB_CATS.find(c=>c.k===kbCat)||KB_CATS[0];
+
+  const tabsHTML=KB_CATS.map(c=>{
+    const cnt=conocimiento.filter(n=>n.categoria===c.k).length;
+    const active=c.k===kbCat;
+    return `<button onclick="switchKBCat('${c.k}')" style="padding:8px 16px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;transition:.15s;border:${active?'1px solid rgba(201,168,76,.35)':'1px solid transparent'};background:${active?'rgba(201,168,76,.12)':'transparent'};color:${active?'var(--gl)':'var(--muted)'}">${c.ico} ${c.label}${cnt?` <span style="font-size:10px;opacity:.7">(${cnt})</span>`:''}</button>`;
+  }).join('');
+
+  const showForm=kbEditing!==null;
+  const formHTML=`<div id="kbForm" style="display:${showForm?'block':'none'};background:rgba(14,13,20,.85);border:1px solid rgba(201,168,76,.22);border-radius:14px;padding:20px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:14px">${kbEditing?'✏️ Editar nota':'✨ Nueva nota'} — ${curCat.ico} ${curCat.label}</div>
+    <input id="kbTit" placeholder="Título" style="width:100%;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;margin-bottom:10px;font-family:inherit;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+    <textarea id="kbCont" placeholder="Contenido..." rows="6" style="width:100%;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;resize:vertical;font-family:inherit;margin-bottom:10px;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+    <input id="kbTags" placeholder="Etiquetas separadas por coma (ej: hábitos, espiritual, metodología)" style="width:100%;padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;font-family:inherit;margin-bottom:14px;transition:border-color .2s" onfocus="this.style.borderColor='var(--gold)'" onblur="this.style.borderColor='var(--border)'">
+    <div style="display:flex;gap:8px">
+      <button onclick="kbSave()" class="btn btn-p btn-sm">Guardar</button>
+      <button onclick="kbCancelForm()" class="btn btn-s btn-sm">Cancelar</button>
+    </div>
+  </div>`;
+
+  const notesHTML=notes.length?notes.map(n=>{
+    const tags=(n.etiquetas||[]).map(t=>`<span style="font-size:10px;padding:3px 9px;border-radius:20px;background:rgba(201,168,76,.1);color:var(--gl);border:1px solid rgba(201,168,76,.18)">${t}</span>`).join('');
+    const text=n.contenido||'';
+    const excerpt=text.length>200?text.slice(0,200)+'…':text;
+    const fecha=n.createdAt?new Date(n.createdAt).toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'numeric'}):'';
+    return `<div style="background:rgba(14,13,20,.7);border:1px solid rgba(201,168,76,.1);border-radius:14px;padding:18px;margin-bottom:10px;backdrop-filter:blur(8px);transition:border-color .2s" onmouseenter="this.style.borderColor='rgba(201,168,76,.28)'" onmouseleave="this.style.borderColor='rgba(201,168,76,.1)'">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">${n.titulo||'Sin título'}</div>
+        <div style="display:flex;gap:5px;flex-shrink:0">
+          <button onclick="kbShowForm('${n.id}')" class="btn btn-s btn-sm" style="font-size:11px">✏️ Editar</button>
+          <button onclick="kbDelete('${n.id}')" class="btn btn-d btn-sm" style="font-size:11px">🗑️</button>
+        </div>
+      </div>
+      ${excerpt?`<div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.75;white-space:pre-wrap">${excerpt}</div>`:''}
+      ${tags?`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">${tags}</div>`:''}
+      ${fecha?`<div style="font-size:10px;color:var(--muted);margin-top:10px;opacity:.55">${fecha}</div>`:''}
+    </div>`;
+  }).join(''):`<div style="text-align:center;padding:52px 20px;color:var(--muted);font-size:13px">
+    <div style="font-size:32px;margin-bottom:12px;opacity:.4">${curCat.ico}</div>
+    Todavía no hay notas en ${curCat.label}.<br>
+    <span style="font-size:12px;opacity:.7">Usá el botón de arriba para agregar la primera.</span>
+  </div>`;
+
+  el.innerHTML=`<div style="padding:4px 0 40px">
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:20px">${tabsHTML}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:700;color:var(--gl)">${curCat.ico} ${curCat.label} <span style="font-size:12px;font-weight:400;color:var(--muted)">${notes.length} nota${notes.length!==1?'s':''}</span></div>
+      <button onclick="kbShowForm(null)" class="btn btn-p btn-sm">+ Nueva nota</button>
+    </div>
+    ${formHTML}
+    <div id="kbList">${notesHTML}</div>
+  </div>`;
+
+  if(showForm){
+    const nota=kbEditing?conocimiento.find(n=>n.id===kbEditing):null;
+    if(nota){
+      const t=document.getElementById('kbTit'),c=document.getElementById('kbCont'),g=document.getElementById('kbTags');
+      if(t)t.value=nota.titulo||'';
+      if(c)c.value=nota.contenido||'';
+      if(g)g.value=(nota.etiquetas||[]).join(', ');
+    }
+    setTimeout(()=>document.getElementById('kbTit')?.focus(),30);
+  }
+}
+
+function kbShowForm(id){kbEditing=id;renderKB();}
+function kbCancelForm(){kbEditing=null;renderKB();}
+
+async function kbSave(){
+  const titulo=(document.getElementById('kbTit')?.value||'').trim();
+  const contenido=(document.getElementById('kbCont')?.value||'').trim();
+  const tagsRaw=document.getElementById('kbTags')?.value||'';
+  const etiquetas=tagsRaw.split(',').map(t=>t.trim()).filter(Boolean);
+  if(!titulo){toast('El título es obligatorio');return;}
+  const wasEditing=!!kbEditing;
+  const now=new Date().toISOString();
+  const existing=kbEditing?conocimiento.find(n=>n.id===kbEditing):null;
+  const payload={data:{categoria:kbCat,titulo,contenido,etiquetas,createdAt:existing?.createdAt||now,updatedAt:now}};
+  let error;
+  if(kbEditing){({error}=await _sb.from('conocimiento').update(payload).eq('id',kbEditing));}
+  else{({error}=await _sb.from('conocimiento').insert([payload]));}
+  if(error){toast('Error al guardar: '+error.message);return;}
+  const{data}=await _sb.from('conocimiento').select('id,data');
+  conocimiento=(data||[]).map(r=>({id:r.id,...(r.data||{})}));
+  kbEditing=null;
+  renderKB();
+  toast(wasEditing?'Nota actualizada ✅':'Nota guardada ✅');
+}
+
+async function kbDelete(id){
+  if(!confirm('¿Eliminar esta nota?'))return;
+  const{error}=await _sb.from('conocimiento').delete().eq('id',id);
+  if(error){toast('Error al eliminar');return;}
+  conocimiento=conocimiento.filter(n=>n.id!==id);
+  renderKB();
+  toast('Nota eliminada');
+}
 function renderCRM(){
   const prosp=getProspectos();
   const total=prosp.length;
