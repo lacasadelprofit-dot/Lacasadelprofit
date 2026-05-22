@@ -363,16 +363,33 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .proc-value{font-size:14px;color:var(--text);line-height:1.65;}
 .proc-tag{display:inline-flex;align-items:center;padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.2);color:var(--gold);margin:3px 3px 3px 0;}
 
+/* ── BADGE UNREAD ── */
+.s-tab.has-badge::after{content:'';display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--pink);margin-left:5px;flex-shrink:0;align-self:center;}
+
 /* ── RESPONSIVE ── */
 @media(max-width:720px){
   #app{height:auto;overflow:visible;}
   .app-wrap{flex-direction:column;}
   .sidebar{width:100%;min-width:unset;height:auto;}
-  .main{padding:12px;}
-  .s-tabs{flex-direction:row;overflow-x:auto;gap:3px;}
-  .s-tab{flex-shrink:0;}
+  .main{padding:10px;}
+  .s-tabs{flex-direction:row;overflow-x:auto;gap:2px;padding:5px 6px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  .s-tabs::-webkit-scrollbar{display:none;}
+  .s-tab{flex-shrink:0;padding:7px 10px;font-size:11px;}
   .area-grid{grid-template-columns:1fr;}
   .av-top{grid-template-columns:1fr;}
+  .av2-area-grid{grid-template-columns:1fr 1fr !important;}
+  .gv2-hero{padding:14px !important;}
+  .gv2-vitals{gap:6px;}
+  .gv2-vital{padding:10px 6px !important;}
+  .gv2-vital-num{font-size:22px !important;}
+  .carta-block{padding:14px !important;}
+  .lbox{width:calc(100% - 32px) !important;padding:28px 20px !important;}
+  .s-logo{padding:14px 14px 10px;}
+}
+@media(max-width:420px){
+  .s-tab{padding:7px 8px;font-size:10px;}
+  .s-tab .ti{width:14px;font-size:13px;}
+  .gv2-hero-row{flex-direction:column;align-items:flex-start;gap:10px;}
 }
 </style>
 </head>
@@ -496,7 +513,7 @@ function saveProgress(cb){clearTimeout(_saveTimer);_saveTimer=setTimeout(()=>_do
 async function _doSave(cb){
   updateProgressBar();
   if(curTab==='semanas')renderWeekList();
-  // KEY FIX: persist progreso + paraQue + resultadoDeseado to sessionStorage
+  // KEY FIX: persist progreso + paraQue + resultadoDeseado to localStorage
   curInsc.progreso={...progreso};
   const idx=allInscList.findIndex(i=>i.id===curInsc.id);
   if(idx>=0){
@@ -513,13 +530,13 @@ async function _doSave(cb){
     if(curInsc.habitosElegidos&&Object.keys(curInsc.habitosElegidos).length)
       allInscList[idx].habitosElegidos=curInsc.habitosElegidos;
   }
-  sessionStorage.setItem('pp_all_insc',JSON.stringify(allInscList));
+  localStorage.setItem('pp_all_insc',JSON.stringify(allInscList));
   // Save to Supabase via API
-  const _code=sessionStorage.getItem('pp_code')||'';
+  const _code=localStorage.getItem('pp_code')||'';
   try{
     const body={recordId:curInsc.id,code:_code,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[],habitosElegidos:curInsc.habitosElegidos||{}}};
     const resp=await fetch(SAVE_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!resp.ok)console.warn('save-progreso HTTP',resp.status);
+    if(!resp.ok){console.warn('save-progreso HTTP',resp.status);_showSyncDot(false);}
     else _showSyncDot(true);
   }catch(e){console.warn('save error:',e.message);_showSyncDot(false);}
   if(cb)cb();
@@ -544,11 +561,11 @@ async function doLogin(){
     const progs=await withTimeout(sbQ('programas',{}));
     try{allSessions=await withTimeout(sbQ('sessions',{serId:ser.id}));}catch{allSessions=[];}
     allInscList=inscList;allProgsList=progs;
-    sessionStorage.setItem('pp_ser',JSON.stringify(ser));
-    sessionStorage.setItem('pp_all_insc',JSON.stringify(inscList));
-    sessionStorage.setItem('pp_all_progs',JSON.stringify(progs));
-    sessionStorage.setItem('pp_sessions',JSON.stringify(allSessions));
-    sessionStorage.setItem('pp_code',code);
+    localStorage.setItem('pp_ser',JSON.stringify(ser));
+    localStorage.setItem('pp_all_insc',JSON.stringify(inscList));
+    localStorage.setItem('pp_all_progs',JSON.stringify(progs));
+    localStorage.setItem('pp_sessions',JSON.stringify(allSessions));
+    localStorage.setItem('pp_code',code);
     document.getElementById('loginScreen').style.display='none';
     if(inscList.length===1){const prog=progs.find(p=>p.id===insc.programaId);if(!prog)throw new Error('np');launchApp(ser,insc,prog);}
     else showSelector(ser,inscList,progs);
@@ -562,7 +579,7 @@ async function doLogin(){
   }finally{hideLoader();document.getElementById('btnLogin').disabled=false;}
 }
 function doLogout(){
-  ['pp_ser','pp_all_insc','pp_all_progs','pp_sessions','pp_code'].forEach(k=>sessionStorage.removeItem(k));
+  ['pp_ser','pp_all_insc','pp_all_progs','pp_sessions','pp_code'].forEach(k=>localStorage.removeItem(k));
   document.getElementById('app').style.display='none';document.getElementById('progSelector').style.display='none';
   document.getElementById('loginScreen').style.display='flex';
   curSer=curInsc=curProg=null;progreso={};allSessions=[];allInscList=[];allProgsList=[];
@@ -611,7 +628,7 @@ function goToSelector(){document.getElementById('app').style.display='none';show
 // ── LAUNCH ───────────────────────────────────────────────────────────────────
 function launchApp(ser,insc,prog){
   curSer=ser;curInsc=insc;curProg=prog;
-  // Restore progreso from insc (already updated by _doSave via sessionStorage)
+  // Restore progreso from insc (already updated by _doSave via localStorage)
   progreso=JSON.parse(JSON.stringify(insc.progreso||{}));
   const col=prog.col||'#C9A84C';
   document.documentElement.style.setProperty('--gold',col);
@@ -628,6 +645,7 @@ function launchApp(ser,insc,prog){
   document.getElementById('progSelector').style.display='none';
   document.getElementById('app').style.display='block';
   switchTab('general');window.scrollTo(0,0);
+  updateComBadge();
 }
 
 // ── TAB ──────────────────────────────────────────────────────────────────────
@@ -660,14 +678,15 @@ function updateProgressBar(){
 let _syncDotTimer;
 function _showSyncDot(ok){
   let dot=document.getElementById('syncDot');
-  if(!dot){dot=document.createElement('div');dot.id='syncDot';dot.style.cssText='position:fixed;bottom:56px;right:16px;font-size:10px;padding:3px 8px;border-radius:20px;z-index:9000;transition:opacity .4s;pointer-events:none';document.body.appendChild(dot);}
-  dot.textContent=ok?'✅ Guardado':'⚠️ Sin conexión';
-  dot.style.background=ok?'rgba(16,185,129,.15)':'rgba(239,68,68,.15)';
+  if(!dot){dot=document.createElement('div');dot.id='syncDot';dot.style.cssText='position:fixed;bottom:20px;right:20px;font-size:11px;font-weight:600;padding:6px 12px;border-radius:20px;z-index:9000;transition:opacity .5s;pointer-events:none;backdrop-filter:blur(8px)';document.body.appendChild(dot);}
+  dot.textContent=ok?'✓ Guardado':'⚠️ Error al guardar';
+  dot.style.background=ok?'rgba(16,185,129,.18)':'rgba(239,68,68,.18)';
   dot.style.color=ok?'#10B981':'#EF4444';
-  dot.style.border=`1px solid ${ok?'#10B98133':'#EF444433'}`;
+  dot.style.border=`1px solid ${ok?'rgba(16,185,129,.35)':'rgba(239,68,68,.35)'}`;
   dot.style.opacity='1';
   clearTimeout(_syncDotTimer);
-  _syncDotTimer=setTimeout(()=>{dot.style.opacity='0';},2500);
+  _syncDotTimer=setTimeout(()=>{dot.style.opacity='0';},ok?2000:4000);
+  if(!ok)toast('⚠️ No se pudo guardar. Revisá tu conexión.',3500);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -760,6 +779,48 @@ function renderGeneral(){
     <div class="carta-fecha">Escrita el ${progreso._carta.fecha}</div>
   </div>`;
 
+  // Carta del día 45
+  const c45=progreso._carta45||{};
+  let carta45HTML;
+  if(!c45.texto){
+    carta45HTML=`<div class="carta-block pendiente" style="border-left:3px solid var(--blue)">
+      <div class="carta-lbl" style="color:var(--blue)">📆 Carta del día 45</div>
+      <div class="carta-titulo">Escribí tu carta de mitad de camino</div>
+      <div class="carta-sub">La sellás ahora y se abre el día 45 de tu proceso — un recordatorio de por qué empezaste.</div>
+      <textarea id="carta45Input" style="width:100%;min-height:90px;background:rgba(0,0,0,.3);border:1px solid rgba(91,155,213,.2);border-radius:9px;color:var(--text);font-size:13px;padding:10px;outline:none;resize:vertical;font-family:inherit;line-height:1.7;box-sizing:border-box;margin-bottom:10px" placeholder="En este punto del camino, quiero recordarme que..."></textarea>
+      <button onclick="guardarCarta45()" style="width:100%;padding:10px;background:rgba(91,155,213,.1);border:1px solid rgba(91,155,213,.25);border-radius:9px;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer">Sellar mi carta del día 45</button>
+    </div>`;
+  }else if(diasEnPrograma<45){
+    const faltan=45-diasEnPrograma;
+    const pct45=Math.min(100,Math.round(diasEnPrograma/45*100));
+    carta45HTML=`<div class="carta-block sellada" style="border-left:3px solid var(--blue)">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <span style="font-size:26px">📆</span>
+        <div>
+          <div style="font-size:10px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:1.5px">Carta del día 45 — Sellada</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Escrita el ${c45.fecha}</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,.06);border-radius:20px;height:6px;overflow:hidden;margin-bottom:6px">
+        <div style="height:100%;border-radius:20px;background:var(--blue);width:${pct45}%;transition:.8s ease"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px">
+        <span>Día ${diasEnPrograma} de 45</span>
+        <span>${faltan} día${faltan!==1?'s':''} para abrirla</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);font-style:italic;border-top:1px solid rgba(255,255,255,.05);padding-top:10px">🔒 Se abrirá el día 45 de tu proceso</div>
+    </div>`;
+  }else{
+    carta45HTML=`<div class="carta-block revelada" style="border-left:3px solid var(--blue)">
+      <div class="carta-lbl" style="color:var(--blue)">📆 Carta del día 45</div>
+      <div style="font-size:22px;margin-bottom:8px">💙</div>
+      <div class="carta-titulo">¡Llegaste al día 45!</div>
+      <div class="carta-sub">Escrita el ${c45.fecha} — un recordatorio de por qué empezaste.</div>
+      <div class="carta-texto">${(c45.texto||'').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
+      <div class="carta-fecha">Escrita el ${c45.fecha}</div>
+    </div>`;
+  }
+
   // Para Qué section
   const pqSection=paraQue
     ?`<div id="pqDisplay" class="gv2-anchor-quote">“${paraQue}”</div>
@@ -837,6 +898,7 @@ function renderGeneral(){
     <div id="pregDiaBox"></div>
 
     ${cartaHTML}
+    ${carta45HTML}
 
     ${totInc?`<div class="sec-block"><div class="sec-title"><span class="ico">✨</span> Sesiones incluidas</div><div style="display:flex;flex-wrap:wrap;gap:7px">${Object.entries(sesInc).map(([n,q])=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;display:flex;align-items:center;gap:6px"><span style="font-size:11px">${n}</span><span style="font-size:11px;font-weight:800;color:var(--gl)">${q}x</span></div>`).join('')}</div></div>`:''}
   `;
@@ -1541,6 +1603,12 @@ function guardarCarta(){
   progreso._carta={texto,fecha:new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})};
   saveProgress(()=>{renderGeneral();toast('Tu carta fue sellada. Se abrirá al terminar el programa 💛',3200);});
 }
+function guardarCarta45(){
+  const el=document.getElementById('carta45Input');if(!el)return;
+  const texto=el.value.trim();if(!texto){toast('Escribí algo antes de sellar tu carta 📆');return;}
+  progreso._carta45={texto,fecha:new Date().toLocaleDateString('es-AR',{day:'numeric',month:'long',year:'numeric'})};
+  saveProgress(()=>{renderGeneral();toast('Tu carta del día 45 fue sellada 💙',3200);});
+}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // HÁBITOS — registro diario sincronizado con Journey admin
@@ -2197,12 +2265,14 @@ function renderComunicacionTab(){
       <div style="font-size:18px;font-weight:800;color:var(--gl)">💬 Comunicación</div>
       <div style="font-size:12px;color:var(--muted)">${adminMsgs} mensaje${adminMsgs!==1?'s':''} de tu facilitador</div>
     </div>
-    <div style="max-height:450px;overflow-y:auto;padding:4px;margin-bottom:14px">${msgHtml}</div>
+    <div id="comMsgList" style="max-height:450px;overflow-y:auto;padding:4px;margin-bottom:14px">${msgHtml}</div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
       <textarea id="portalMsgInput" style="width:100%;min-height:80px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6" placeholder="Escribí tu respuesta o consulta..."></textarea>
       <button onclick="sendPortalMsg()" style="margin-top:8px;width:100%;padding:10px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer">Enviar mensaje</button>
     </div>
   `;
+  setTimeout(()=>{const m=document.getElementById('comMsgList');if(m)m.scrollTop=m.scrollHeight;},50);
+  document.getElementById('tab-comunicacion')?.classList.remove('has-badge');
 }
 function sendPortalMsg(){
   const el=document.getElementById('portalMsgInput');if(!el)return;
@@ -2210,6 +2280,11 @@ function sendPortalMsg(){
   if(!curInsc.comunicacion)curInsc.comunicacion=[];
   curInsc.comunicacion.push({fecha:new Date().toLocaleDateString('es-AR'),de:'ser',texto,tipo:'mensaje'});
   saveProgress(()=>{renderComunicacionTab();toast('Mensaje enviado ✅');});
+}
+function updateComBadge(){
+  const msgs=curInsc?.comunicacion||[];
+  const hasUnread=msgs.length>0&&msgs[msgs.length-1].de==='admin';
+  document.getElementById('tab-comunicacion')?.classList.toggle('has-badge',hasUnread);
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -2257,9 +2332,9 @@ function buildProcesoHTML(o){
 
 // ── AUTO-RESTORE ──────────────────────────────────────────────────────────────
 window.addEventListener('load',()=>{
-  const ser=sessionStorage.getItem('pp_ser');const ai=sessionStorage.getItem('pp_all_insc');
-  const ap=sessionStorage.getItem('pp_all_progs');const code=sessionStorage.getItem('pp_code');
-  const ses=sessionStorage.getItem('pp_sessions');
+  const ser=localStorage.getItem('pp_ser');const ai=localStorage.getItem('pp_all_insc');
+  const ap=localStorage.getItem('pp_all_progs');const code=localStorage.getItem('pp_code');
+  const ses=localStorage.getItem('pp_sessions');
   if(ser&&ai&&ap&&code){
     try{
       _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
