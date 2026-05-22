@@ -71,6 +71,38 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 .ps-bdg.act{background:rgba(61,170,106,.15);color:var(--green);}
 .ps-bdg.comp{background:rgba(201,168,76,.12);color:var(--gold);}
 
+/* ── CHECKLIST DEL DÍA ── */
+.daily-check{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:12px 14px;margin-bottom:14px;}
+.daily-check-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:8px;}
+.daily-item{display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px;color:var(--text);}
+.daily-item.ok{color:var(--muted);text-decoration:line-through;}
+.daily-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.daily-dot.ok{background:var(--green);}
+.daily-dot.pend{background:var(--gold);}
+.daily-dot.warn{background:var(--pink);}
+/* ── ONBOARDING ── */
+#onboardingOverlay{display:none;position:fixed;inset:0;background:rgba(4,3,10,.92);z-index:9990;align-items:center;justify-content:center;padding:20px;}
+#onboardingOverlay.open{display:flex;}
+.ob-box{background:rgba(14,10,26,.95);backdrop-filter:blur(24px);border:1px solid var(--border);border-radius:20px;padding:32px 28px;width:100%;max-width:480px;max-height:90vh;overflow-y:auto;}
+.ob-step{display:none;}.ob-step.active{display:block;}
+.ob-title{font-size:22px;font-weight:900;color:var(--gl);margin-bottom:8px;line-height:1.25;}
+.ob-sub{font-size:13px;color:var(--muted);margin-bottom:24px;line-height:1.6;}
+.ob-btn{width:100%;padding:13px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);border-radius:11px;color:var(--gold);font-size:14px;font-weight:700;cursor:pointer;margin-top:10px;transition:background .15s;}
+.ob-btn:hover{background:rgba(201,168,76,.25);}
+.ob-skip{display:block;text-align:center;margin-top:12px;font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline;}
+.ob-dots{display:flex;justify-content:center;gap:6px;margin-bottom:20px;}
+.ob-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.15);}
+.ob-dot.active{background:var(--gold);}
+/* ── CELEBRACIÓN ── */
+#celebracion{display:none;position:fixed;inset:0;background:rgba(4,3,10,.88);z-index:9980;align-items:center;justify-content:center;flex-direction:column;}
+#celebracion.open{display:flex;}
+.cel-emoji{font-size:64px;animation:celBounce .6s ease infinite alternate;}
+.cel-title{font-size:24px;font-weight:900;color:var(--gl);margin:16px 0 6px;text-align:center;}
+.cel-sub{font-size:14px;color:var(--muted);text-align:center;max-width:280px;line-height:1.6;}
+@keyframes celBounce{from{transform:scale(1);}to{transform:scale(1.15);}  }
+.cel-confetti{position:fixed;inset:0;pointer-events:none;overflow:hidden;}
+.cel-piece{position:absolute;width:8px;height:8px;border-radius:2px;animation:celFall linear forwards;}
+@keyframes celFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1;}100%{transform:translateY(110vh) rotate(720deg);opacity:0;}}
 /* ── APP ── */
 #app{display:none;height:100vh;overflow:hidden;position:relative;z-index:2;}
 .app-wrap{display:flex;height:100%;}
@@ -413,6 +445,45 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
   </div>
 </div>
 
+<!-- ONBOARDING -->
+<div id="onboardingOverlay">
+  <div class="ob-box">
+    <div class="ob-dots">
+      <div class="ob-dot active" id="obDot0"></div>
+      <div class="ob-dot" id="obDot1"></div>
+      <div class="ob-dot" id="obDot2"></div>
+    </div>
+    <div class="ob-step active" id="obStep0">
+      <div class="ob-title" id="obWelcomeTitle">¡Bienvenido/a! 🌟</div>
+      <div class="ob-sub">Antes de empezar, te guiamos a través de 3 pasos para personalizar tu experiencia. Solo toma un momento.</div>
+      <button class="ob-btn" onclick="obNext(1)">Comenzar →</button>
+      <span class="ob-skip" onclick="obSkip()">Saltar y entrar directo</span>
+    </div>
+    <div class="ob-step" id="obStep1">
+      <div class="ob-title">¿Por qué estás acá? 🎯</div>
+      <div class="ob-sub">Escribí tu propósito profundo. Esta frase te va a sostener cuando el camino se ponga difícil.</div>
+      <textarea id="obPqText" style="width:100%;min-height:100px;background:rgba(0,0,0,.4);border:1px solid var(--border);border-radius:10px;padding:12px;color:var(--text);font-size:14px;outline:none;resize:vertical;font-family:inherit;line-height:1.6;box-sizing:border-box" placeholder="Ej: Quiero transformarme para estar presente en mi vida, en mis vínculos y en mi propósito…"></textarea>
+      <button class="ob-btn" onclick="obSavePQ()">Guardar y continuar →</button>
+      <span class="ob-skip" onclick="obNext(2)">Completar después</span>
+    </div>
+    <div class="ob-step" id="obStep2">
+      <div class="ob-title">Elegí tus hábitos 🌱</div>
+      <div class="ob-sub">Un hábito por área — espiritual, mental, física y social. Son los pilares de tu transformación.</div>
+      <button class="ob-btn" onclick="obGoHabitos()">Elegir mis hábitos →</button>
+      <span class="ob-skip" onclick="obFinish()">Ya los elegí / Después</span>
+    </div>
+  </div>
+</div>
+
+<!-- CELEBRACIÓN -->
+<div id="celebracion">
+  <div class="cel-confetti" id="celConfetti"></div>
+  <div class="cel-emoji">🎉</div>
+  <div class="cel-title" id="celTitle">¡Semana completada!</div>
+  <div class="cel-sub" id="celSub">Terminaste todos los desafíos de esta semana. Seguí así.</div>
+  <button onclick="closeCelebracion()" style="margin-top:24px;padding:12px 32px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.35);border-radius:11px;color:var(--gold);font-size:14px;font-weight:700;cursor:pointer">¡Gracias! →</button>
+</div>
+
 <!-- SELECTOR -->
 <div id="progSelector">
   <div class="ps-header"><svg width="48" height="48" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><defs><radialGradient id="ppg2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#2A1E04"/><stop offset="100%" stop-color="#080A04"/></radialGradient></defs><circle cx="50" cy="50" r="50" fill="url(#ppg2)"/><g stroke="#C9A84C" stroke-width="1.2" fill="none" opacity="0.9"><circle cx="50" cy="50" r="18"/><circle cx="50" cy="32" r="18"/><circle cx="65.6" cy="41" r="18"/><circle cx="65.6" cy="59" r="18"/><circle cx="50" cy="68" r="18"/><circle cx="34.4" cy="59" r="18"/><circle cx="34.4" cy="41" r="18"/></g><circle cx="50" cy="50" r="36" stroke="#C9A84C" stroke-width="1.5" fill="none" opacity="0.6"/><g stroke="#E8C96A" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"><polyline points="34,50 50,37 66,50"/><line x1="37" y1="50" x2="37" y2="63"/><line x1="63" y1="50" x2="63" y2="63"/><line x1="37" y1="63" x2="63" y2="63"/><path d="M46,63 L46,56 A4,4 0 0,1 54,56 L54,63" fill="none"/></g></svg><h2 id="psTitle">Tus Programas</h2></div>
@@ -628,7 +699,6 @@ function goToSelector(){document.getElementById('app').style.display='none';show
 // ── LAUNCH ───────────────────────────────────────────────────────────────────
 function launchApp(ser,insc,prog){
   curSer=ser;curInsc=insc;curProg=prog;
-  // Restore progreso from insc (already updated by _doSave via localStorage)
   progreso=JSON.parse(JSON.stringify(insc.progreso||{}));
   const col=prog.col||'#C9A84C';
   document.documentElement.style.setProperty('--gold',col);
@@ -646,6 +716,58 @@ function launchApp(ser,insc,prog){
   document.getElementById('app').style.display='block';
   switchTab('general');window.scrollTo(0,0);
   updateComBadge();
+  // Onboarding primer ingreso
+  if(!progreso._onboardingDone){
+    const nombre=(ser.nombre||'').split(' ')[0];
+    const el=document.getElementById('obWelcomeTitle');
+    if(el)el.textContent='¡Bienvenido/a, '+nombre+'! 🌟';
+    document.getElementById('onboardingOverlay').classList.add('open');
+  }
+}
+
+// ── ONBOARDING ────────────────────────────────────────────────────────────────
+function obNext(step){
+  document.querySelectorAll('.ob-step').forEach((s,i)=>{s.classList.toggle('active',i===step);});
+  document.querySelectorAll('.ob-dot').forEach((d,i)=>{d.classList.toggle('active',i===step);});
+}
+function obSavePQ(){
+  const txt=(document.getElementById('obPqText')||{}).value||'';
+  if(txt.trim()){curInsc.paraQue=txt.trim();progreso._paraQue=txt.trim();}
+  obNext(2);
+}
+function obGoHabitos(){
+  obFinish();
+  setTimeout(()=>switchTab('habitos'),200);
+}
+function obFinish(){
+  progreso._onboardingDone=true;
+  document.getElementById('onboardingOverlay').classList.remove('open');
+  saveProgress();
+}
+function obSkip(){obFinish();}
+
+// ── CELEBRACIÓN ───────────────────────────────────────────────────────────────
+function mostrarCelebracion(semTitulo){
+  const el=document.getElementById('celebracion');if(!el)return;
+  const title=document.getElementById('celTitle');
+  const sub=document.getElementById('celSub');
+  if(title)title.textContent='¡Semana completada! 🏆';
+  if(sub)sub.textContent=semTitulo?'"'+semTitulo+'" terminada. Seguí construyendo tu transformación.':'Terminaste todos los desafíos de esta semana. Seguí así.';
+  el.classList.add('open');
+  // Confetti
+  const cc=document.getElementById('celConfetti');if(!cc)return;
+  cc.innerHTML='';
+  const cols=['#C9A84C','#8B5CF6','#10B981','#3B82F6','#F59E0B','#EC4899'];
+  for(let i=0;i<60;i++){
+    const p=document.createElement('div');p.className='cel-piece';
+    const c=cols[Math.floor(Math.random()*cols.length)];
+    p.style.cssText='left:'+Math.random()*100+'%;top:-10px;background:'+c+';width:'+(6+Math.random()*8)+'px;height:'+(6+Math.random()*8)+'px;animation-duration:'+(2+Math.random()*2)+'s;animation-delay:'+Math.random()*0.8+'s;border-radius:'+(Math.random()>0.5?'50%':'2px');
+    cc.appendChild(p);
+  }
+}
+function closeCelebracion(){
+  document.getElementById('celebracion').classList.remove('open');
+  document.getElementById('celConfetti').innerHTML='';
 }
 
 // ── TAB ──────────────────────────────────────────────────────────────────────
@@ -845,7 +967,32 @@ function renderGeneral(){
       <textarea id="rdText" class="gv2-textarea" style="margin-top:8px" placeholder="Describí cómo querés estar, sentirte, vivir…"></textarea>
       <div class="gv2-save-row"><button class="gv2-btn-save" onclick="saveRD()">Guardar</button><span class="pq-ok" id="rdOk">✓ Guardado</span></div>`;
 
+  // Checklist del día
+  const todayStr=today();
+  const ht=curInsc.habTrack||{};
+  const habElegidos4=curInsc.habitosElegidos&&AK.every(k=>curInsc.habitosElegidos[k]&&(curInsc.habitosElegidos[k].nom||curInsc.habitosElegidos[k].nombre));
+  const habitoHoy=habElegidos4&&AK.every(k=>ht[todayStr]&&ht[todayStr][k]);
+  const curW=sems[curWeekIdx]||{};
+  const curP=getP(curWeekIdx);
+  const desPend=habElegidos4?(curW.desafios||[]).filter(d=>!(curP.desafios||{})[d.id]).length:0;
+  const refObj=typeof curP.reflexion==='object'&&curP.reflexion?curP.reflexion:{};
+  const refHecha=!!(refObj.aprendiste||refObj.dificil||refObj.llevas);
+  const msgsSinLeer=(curInsc.comunicacion||[]).some(m=>m.de==='admin');
+  const checkItems=[];
+  if(habElegidos4)checkItems.push({ok:habitoHoy,txt:habitoHoy?'Hábito del día registrado':'Registrá tu hábito de hoy',tab:'habitos',dot:habitoHoy?'ok':'pend'});
+  if(desPend>0)checkItems.push({ok:false,txt:desPend+' desafío'+(desPend!==1?'s':'')+' pendiente'+(desPend!==1?'s':'')+' esta semana',tab:'semanas',dot:'warn'});
+  if(!refHecha)checkItems.push({ok:false,txt:'Reflexión de la semana sin completar',tab:'semanas',dot:'pend'});
+  if(msgsSinLeer)checkItems.push({ok:false,txt:'Tenés mensajes nuevos',tab:'comunicacion',dot:'warn'});
+  const checkHTML=checkItems.length?'<div class="daily-check">'
+    +'<div class="daily-check-title">✦ Hoy</div>'
+    +checkItems.map(it=>'<div class="daily-item'+(it.ok?' ok':'')+'" '+(it.tab&&!it.ok?'onclick="switchTab(\''+it.tab+'\')" style="cursor:pointer"':'')+' >'
+      +'<div class="daily-dot '+it.dot+'"></div>'
+      +it.txt
+      +'</div>').join('')
+    +'</div>':'';
+
   document.getElementById('mainContent').innerHTML=`
+    ${checkHTML}
     <div class="gv2-hero">
       <div class="gv2-hero-wash" style="background:radial-gradient(ellipse at top right,${col}1A 0%,transparent 65%)"></div>
       <div class="gv2-hero-row">
@@ -1696,11 +1843,21 @@ function renderSemana(idx){
   `;
 }
 function toggleDes(dId,semIdx){
-  const p=getP(semIdx);if(!p.desafios)p.desafios={};p.desafios[dId]=!p.desafios[dId];
+  const p=getP(semIdx);if(!p.desafios)p.desafios={};
+  const wasDone=!!(p.desafios[dId]);
+  p.desafios[dId]=!wasDone;
   const done=p.desafios[dId];
   const dc=document.getElementById('dc_'+dId);const dt=document.getElementById('dt_'+dId);
   if(dc)dc.className='d-chk'+(done?' done':'');if(dt)dt.className='d-txt'+(done?' done':'');
   updateProgressBar();renderWeekList();saveProgress();
+  // Celebración si se completaron TODOS los desafíos de la semana al marcar uno
+  if(done&&!wasDone){
+    const sem=(curInsc.semanas||[])[semIdx];
+    const des=sem?sem.desafios||[]:[];
+    if(des.length>0&&des.every(d=>(p.desafios||{})[d.id])){
+      setTimeout(()=>mostrarCelebracion(sem.titulo||''),400);
+    }
+  }
 }
 function renderHabitos(hab,p,semIdx){
   const days=lastNDays(7);const hs=p.habitos||{};
