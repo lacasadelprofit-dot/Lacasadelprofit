@@ -661,7 +661,6 @@ function doLogout(){
 function showSelector(ser,inscList,progs){
   curSer=ser;
   document.getElementById('psTitle').textContent='Hola, '+ser.nombre+' 👋';
-  document.getElementById('psSub').textContent=inscList.length===1?'Tu programa activo':'Elegí el programa que querés ver';
   document.getElementById('psGrid').innerHTML=inscList.map(insc=>{
     const prog=progs.find(p=>p.id===insc.programaId)||{nombre:'Programa',ico:'📚',col:'#C9A84C'};
     const col=prog.col||'#C9A84C';const prgrs=insc.progreso||{};
