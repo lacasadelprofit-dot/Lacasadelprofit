@@ -623,20 +623,40 @@ async function doLogin(){
   document.getElementById('btnLogin').disabled=true;showLoader();
   try{
     const withTimeout=(p,ms=15000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
-    const resp=await withTimeout(fetch('/api/do-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code})}));
-    const json=await resp.json();
-    if(!resp.ok||!json.ok){
-      const msg=json.error||'err';
-      if(msg==='nf'||msg==='bc')throw new Error('cred');
-      throw new Error(msg);
+    // Intentar login via backend (bypasa RLS); si no está disponible, usar Supabase directo
+    let ser,inscList,progs,sessions=[];
+    let usedBackend=false;
+    try{
+      const resp=await withTimeout(fetch('/api/do-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code})}));
+      const ct=resp.headers.get('content-type')||'';
+      if(resp.ok&&ct.includes('json')){
+        const json=await resp.json();
+        if(json.ok){
+          ser=json.ser;inscList=json.inscList;progs=json.progs;sessions=json.sessions||[];
+          usedBackend=true;
+        } else if(json.error==='nf'||json.error==='bc'){
+          throw new Error('cred');
+        }
+      }
+    }catch(be){if(be.message==='cred')throw be;}
+    // Fallback: query directo a Supabase
+    if(!usedBackend){
+      if(typeof supabase==='undefined')throw new Error('lib');
+      _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+      const seres=await withTimeout(sbQ('seres',{email}));
+      if(!seres.length)throw new Error('cred');
+      ser=seres[0];
+      inscList=await withTimeout(sbQ('inscripciones',{serId:ser.id}));
+      if(!inscList.find(i=>String(i.code||'').trim().toUpperCase()===code))throw new Error('cred');
+      progs=await withTimeout(sbQ('programas',{}));
+      try{sessions=await withTimeout(sbQ('sessions',{serId:ser.id}));}catch{sessions=[];}
     }
-    const {ser,inscList,progs,sessions}=json;
-    _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-    allInscList=inscList;allProgsList=progs;allSessions=sessions||[];
+    if(!_sb)_sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+    allInscList=inscList;allProgsList=progs;allSessions=sessions;
     localStorage.setItem('pp_ser',JSON.stringify(ser));
     localStorage.setItem('pp_all_insc',JSON.stringify(inscList));
     localStorage.setItem('pp_all_progs',JSON.stringify(progs));
-    localStorage.setItem('pp_sessions',JSON.stringify(allSessions));
+    localStorage.setItem('pp_sessions',JSON.stringify(sessions));
     localStorage.setItem('pp_code',code);
     const insc=inscList.find(i=>String(i.code||'').trim().toUpperCase()===code)||inscList[0];
     document.getElementById('loginScreen').style.display='none';
@@ -646,8 +666,9 @@ async function doLogin(){
     const msg=e.message;
     if(msg==='cred'||msg==='np')errEl.textContent='Email o código incorrecto. Contactá al equipo.';
     else if(msg==='timeout')errEl.textContent='La conexión tardó mucho. Revisá tu red e intentá de nuevo.';
-    else errEl.textContent='Error de conexión ('+msg+'). Intentá de nuevo.';
-    errEl.style.display='block';console.error(e);
+    else if(msg==='lib')errEl.textContent='Error al cargar la página. Recargá e intentá de nuevo.';
+    else errEl.textContent='No se pudo conectar. Revisá tu internet e intentá de nuevo.';
+    errEl.style.display='block';console.error('doLogin:',e);
   }finally{hideLoader();document.getElementById('btnLogin').disabled=false;}
 }
 function doLogout(){
