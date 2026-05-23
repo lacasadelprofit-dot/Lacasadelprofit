@@ -622,30 +622,30 @@ async function doLogin(){
   if(!email||!code){errEl.textContent='Completá email y código.';errEl.style.display='block';return;}
   document.getElementById('btnLogin').disabled=true;showLoader();
   try{
-    if(typeof supabase==='undefined')throw new Error('lib');
+    const withTimeout=(p,ms=15000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
+    const resp=await withTimeout(fetch('/api/do-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,code})}));
+    const json=await resp.json();
+    if(!resp.ok||!json.ok){
+      const msg=json.error||'err';
+      if(msg==='nf'||msg==='bc')throw new Error('cred');
+      throw new Error(msg);
+    }
+    const {ser,inscList,progs,sessions}=json;
     _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-    const withTimeout=(p,ms=12000)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(new Error('timeout')),ms))]);
-    const seres=await withTimeout(sbQ('seres',{email}));
-    if(!seres.length)throw new Error('nf');
-    const ser=seres[0];
-    const inscList=await withTimeout(sbQ('inscripciones',{serId:ser.id}));
-    const insc=inscList.find(i=>String(i.code||'').trim().toUpperCase()===code);if(!insc)throw new Error('bc');
-    const progs=await withTimeout(sbQ('programas',{}));
-    try{allSessions=await withTimeout(sbQ('sessions',{serId:ser.id}));}catch{allSessions=[];}
-    allInscList=inscList;allProgsList=progs;
+    allInscList=inscList;allProgsList=progs;allSessions=sessions||[];
     localStorage.setItem('pp_ser',JSON.stringify(ser));
     localStorage.setItem('pp_all_insc',JSON.stringify(inscList));
     localStorage.setItem('pp_all_progs',JSON.stringify(progs));
     localStorage.setItem('pp_sessions',JSON.stringify(allSessions));
     localStorage.setItem('pp_code',code);
+    const insc=inscList.find(i=>String(i.code||'').trim().toUpperCase()===code)||inscList[0];
     document.getElementById('loginScreen').style.display='none';
     if(inscList.length===1){const prog=progs.find(p=>p.id===insc.programaId);if(!prog)throw new Error('np');launchApp(ser,insc,prog);}
     else showSelector(ser,inscList,progs);
   }catch(e){
     const msg=e.message;
-    if(msg==='nf'||msg==='bc'||msg==='np')errEl.textContent='Email o código incorrecto. Contactá al equipo.';
+    if(msg==='cred'||msg==='np')errEl.textContent='Email o código incorrecto. Contactá al equipo.';
     else if(msg==='timeout')errEl.textContent='La conexión tardó mucho. Revisá tu red e intentá de nuevo.';
-    else if(msg==='lib')errEl.textContent='Error al cargar. Recargá la página.';
     else errEl.textContent='Error de conexión ('+msg+'). Intentá de nuevo.';
     errEl.style.display='block';console.error(e);
   }finally{hideLoader();document.getElementById('btnLogin').disabled=false;}
