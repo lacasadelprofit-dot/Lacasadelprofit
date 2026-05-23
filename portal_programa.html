@@ -608,9 +608,13 @@ async function _doSave(cb){
   try{
     const body={recordId:curInsc.id,code:_code,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[],habitosElegidos:curInsc.habitosElegidos||{}}};
     const resp=await fetch(SAVE_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!resp.ok){console.warn('save-progreso HTTP',resp.status);_showSyncDot(false);}
-    else _showSyncDot(true);
-  }catch(e){console.warn('save error:',e.message);_showSyncDot(false);}
+    if(!resp.ok){
+      let detail='';try{const j=await resp.json();detail=j.error||'';}catch{}
+      console.warn('save-progreso HTTP',resp.status,detail);
+      _showSyncDot(false);
+      toast('⚠️ No se pudo guardar ('+resp.status+(detail?' · '+detail:'')+')');
+    } else _showSyncDot(true);
+  }catch(e){console.warn('save error:',e.message);_showSyncDot(false);toast('⚠️ Sin conexión — cambios guardados localmente');}
   if(cb)cb();
 }
 
