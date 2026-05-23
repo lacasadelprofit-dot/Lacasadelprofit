@@ -833,7 +833,8 @@ function makeSpiralSVG(col,pct){
     +'</svg>';
 }
 
-function renderGeneral(){
+function renderGeneral(){try{_renderGeneral();}catch(e){console.error('renderGeneral error:',e);document.getElementById('mainContent').innerHTML='<div style="padding:30px;color:var(--muted);font-size:12px">Error al cargar. Recargá la página.</div>';}}
+function _renderGeneral(){
   const sems=curInsc.semanas||[];const doneSem=sems.filter((_,i)=>semDone(i)).length;
   const pct=calcPct();
   const col=curProg.col||'#C9A84C';
@@ -2763,6 +2764,11 @@ function buildProcesoHTML(o){
 }
 
 // ── AUTO-RESTORE ──────────────────────────────────────────────────────────────
+function _showLogin(){
+  document.getElementById('loginScreen').style.display='flex';
+  document.getElementById('app').style.display='none';
+  document.getElementById('progSelector').style.display='none';
+}
 window.addEventListener('load',()=>{
   const ser=localStorage.getItem('pp_ser');const ai=localStorage.getItem('pp_all_insc');
   const ap=localStorage.getItem('pp_all_progs');const code=localStorage.getItem('pp_code');
@@ -2772,15 +2778,26 @@ window.addEventListener('load',()=>{
       _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
       curSer=JSON.parse(ser);allInscList=JSON.parse(ai);allProgsList=JSON.parse(ap);allSessions=ses?JSON.parse(ses):[];
       const insc=allInscList.find(i=>String(i.code||'').trim().toUpperCase()===String(code||'').trim().toUpperCase());
+      let launched=false;
       if(insc&&allInscList.length===1){
         const prog=allProgsList.find(p=>p.id===insc.programaId);
-        if(prog){document.getElementById('loginScreen').style.display='none';launchApp(curSer,insc,prog);}
+        if(prog){
+          document.getElementById('loginScreen').style.display='none';
+          launchApp(curSer,insc,prog);
+          launched=true;
+        }
       } else if(allInscList.length>1){
         document.getElementById('loginScreen').style.display='none';
         showSelector(curSer,allInscList,allProgsList);
+        launched=true;
       }
-      // Si no matchea nada, el loginScreen queda visible normalmente
-    }catch(e){console.warn('Restore failed',e);}
+      if(!launched)_showLogin();
+    }catch(e){
+      console.warn('Restore failed',e);
+      // Limpiar datos corruptos y mostrar login
+      ['pp_ser','pp_all_insc','pp_all_progs','pp_sessions','pp_code'].forEach(k=>localStorage.removeItem(k));
+      _showLogin();
+    }
   }
 });
 document.addEventListener('keydown',ev=>{
