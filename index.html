@@ -5203,9 +5203,37 @@ function saveOnboarding(inscId){
 
 /* ── TAB: SESIONES ── */
 function renderJourneySesiones(insc,prog,col){
-  const sesAsig=insc.sesionesAsignadas||[];
   const estColors={pendiente:'#6B7280',agendada:'#3B82F6',completada:'#10B981',cancelada:'#EF4444'};
-  if(!sesAsig.length) return `<div style="padding:24px;text-align:center;color:var(--muted)">Sin sesiones asignadas. Editá la inscripción para agregar sesiones.</div>`;
+  const estOpts=v=>`<option value="pendiente" ${(v||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option><option value="agendada" ${v==='agendada'?'selected':''}>📅 Agendada</option><option value="completada" ${v==='completada'?'selected':''}>✅ Completada</option><option value="cancelada" ${v==='cancelada'?'selected':''}>❌ Cancelada</option>`;
+
+  // ── Sesiones del programa (de cada semana) ──
+  const weekSes=[];
+  (insc.semanas||[]).forEach((s,si)=>(s.sesiones||[]).forEach((se,sei)=>weekSes.push({...se,_si:si,_sei:sei,_semNum:s.num||si+1,_semTit:s.titulo||''})));
+
+  const weekSesHtml=weekSes.length?weekSes.map(se=>{
+    const ec=estColors[se.estado||'pendiente']||'#6B7280';
+    return `<div style="background:var(--card2);border-radius:10px;padding:10px 12px;border:1px solid var(--border)">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <span style="font-size:16px">✨</span>
+        <div style="flex:1">
+          <div style="font-size:12px;font-weight:700;color:var(--text)">${se.tipo||'Sesión'}</div>
+          <div style="font-size:10px;color:var(--muted)">Sem. ${se._semNum}${se._semTit?' — '+se._semTit:''}</div>
+          ${se.desc?`<div style="font-size:10px;color:var(--muted)">${se.desc}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+        <select onchange="updateWeekSesField(${se._si},${se._sei},'facId',this.value)" style="flex:1;min-width:110px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 6px">
+          <option value="">Sin asignar</option>
+          ${facs.map(f=>`<option value="${f.id}" ${se.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
+        </select>
+        <input type="date" value="${se.fecha||''}" onchange="updateWeekSesField(${se._si},${se._sei},'fecha',this.value)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 6px">
+        <select onchange="updateWeekSesField(${se._si},${se._sei},'estado',this.value)" style="background:var(--card);border:1px solid ${ec};color:${ec};font-size:10px;border-radius:6px;padding:3px 6px;font-weight:600">${estOpts(se.estado)}</select>
+      </div>
+    </div>`;
+  }).join(''):`<div style="font-size:12px;color:var(--muted);text-align:center;padding:16px">Sin sesiones definidas en las semanas.</div>`;
+
+  // ── Sesiones extra (sesionesAsignadas) ──
+  const sesAsig=insc.sesionesAsignadas||[];
   const total=sesAsig.reduce((a,s)=>a+(s.monto||0),0);
   const sesHtml=sesAsig.map((s,idx)=>{
     const hi=herramientas.find(x=>x.nom===s.nom)||{};
@@ -5218,7 +5246,7 @@ function renderJourneySesiones(insc,prog,col){
           <div style="font-size:12px;font-weight:700;color:var(--text)">${s.nom}${sameNom?' <span style="color:var(--muted);font-weight:400;font-size:10px">#'+s.slot+'</span>':''}</div>
           <div style="font-size:10px;color:var(--muted)">${s.facNombre||'Sin facilitador'}${s.fecha?' · 📅 '+s.fecha:''}</div>
         </div>
-        <span style="font-size:18px">${{pendiente:'⏳',agendada:'📅',completada:'✅',cancelada:'❌'}[s.estado||'pendiente']||'⏳'}</span>
+        <span style="font-size:16px">${{pendiente:'⏳',agendada:'📅',completada:'✅',cancelada:'❌'}[s.estado||'pendiente']||'⏳'}</span>
       </div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <select onchange="updateDetailSesAsig(${idx},'fac',this)" style="flex:1;min-width:110px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 6px">
@@ -5226,28 +5254,36 @@ function renderJourneySesiones(insc,prog,col){
           ${facs.map(f=>`<option value="${f.id}" ${s.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
         </select>
         <input type="date" value="${s.fecha||''}" onchange="updateDetailSesAsig(${idx},'fecha',this)" style="background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 6px">
-        <select onchange="updateDetailSesAsig(${idx},'estado',this)" style="background:var(--card);border:1px solid ${ec};color:${ec};font-size:10px;border-radius:6px;padding:3px 6px;font-weight:600">
-          <option value="pendiente" ${(s.estado||'pendiente')==='pendiente'?'selected':''}>⏳ Pendiente</option>
-          <option value="agendada" ${s.estado==='agendada'?'selected':''}>📅 Agendada</option>
-          <option value="completada" ${s.estado==='completada'?'selected':''}>✅ Completada</option>
-          <option value="cancelada" ${s.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
-        </select>
+        <select onchange="updateDetailSesAsig(${idx},'estado',this)" style="background:var(--card);border:1px solid ${ec};color:${ec};font-size:10px;border-radius:6px;padding:3px 6px;font-weight:600">${estOpts(s.estado)}</select>
         <input type="number" value="${s.monto||''}" placeholder="$ Monto" onchange="updateDetailSesAsig(${idx},'monto',this)" style="width:90px;background:var(--card);border:1px solid var(--border);color:var(--gl);font-size:10px;border-radius:6px;padding:3px 6px;font-weight:600">
-        <button onclick="delDetailSesAsig('${insc.id}',${idx})" style="background:none;border:none;cursor:pointer;color:#EF4444;font-size:14px;padding:2px 4px" title="Eliminar sesión">✕</button>
+        <button onclick="delDetailSesAsig('${insc.id}',${idx})" style="background:none;border:none;cursor:pointer;color:#EF4444;font-size:14px;padding:2px 4px" title="Eliminar">✕</button>
       </div>
     </div>`;
   }).join('');
-  return `<div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:700;color:var(--gl)">✨ Control de sesiones</div>
-      <div style="display:flex;align-items:center;gap:8px">
-        <div style="font-size:10px;color:var(--muted)">${sesAsig.filter(s=>s.estado==='completada').length}/${sesAsig.length} completadas${total>0?' · $'+total.toLocaleString('es-AR'):''}</div>
-        <button onclick="addDetailSesAsig('${insc.id}')" style="background:${col}22;border:1px solid ${col};border-radius:7px;color:${col};font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer">+ Nueva</button>
-      </div>
+
+  return `<div style="display:flex;flex-direction:column;gap:16px">
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:8px;letter-spacing:.05em;text-transform:uppercase">✨ Sesiones del programa</div>
+      <div style="display:flex;flex-direction:column;gap:8px">${weekSesHtml}</div>
     </div>
-    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">${sesHtml}</div>
-    <button onclick="saveDetailSesAsig('${insc.id}')" style="width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:7px;cursor:pointer">💾 Guardar cambios</button>
+    ${sesAsig.length?`<div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <div style="font-size:11px;font-weight:700;color:var(--gl);letter-spacing:.05em;text-transform:uppercase">➕ Sesiones extra</div>
+        <div style="font-size:10px;color:var(--muted)">${sesAsig.filter(s=>s.estado==='completada').length}/${sesAsig.length} completadas${total>0?' · $'+total.toLocaleString('es-AR'):''}</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">${sesHtml}</div>
+      <button onclick="saveDetailSesAsig('${insc.id}')" style="width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:7px;cursor:pointer">💾 Guardar sesiones extra</button>
+    </div>`:''}
+    <button onclick="addDetailSesAsig('${insc.id}')" style="background:transparent;border:1px dashed var(--border);border-radius:8px;color:var(--muted);font-size:11px;padding:7px;cursor:pointer;width:100%">+ Agregar sesión extra</button>
   </div>`;
+}
+function updateWeekSesField(semIdx,sesIdx,field,val){
+  const insc=inscripciones.find(x=>x.id===curInscId);if(!insc)return;
+  const sem=(insc.semanas||[])[semIdx];if(!sem)return;
+  const ses=(sem.sesiones||[])[sesIdx];if(!ses)return;
+  ses[field]=val;
+  if(field==='facId'){const f=facs.find(x=>x.id===val);ses.facNombre=f?f.nombre:'';}
+  save();
 }
 
 /* ── TAB: CALENDARIO ── */
