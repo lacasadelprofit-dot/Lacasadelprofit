@@ -1813,6 +1813,7 @@ function renderSemana(idx){
   if(!sems.length){document.getElementById('mainContent').innerHTML=`<div style="text-align:center;padding:50px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">📅</div>El contenido de tu programa todavía no está disponible.</div>`;return;}
   const sem=sems[idx]||sems[0];const p=getP(idx);
   const wd=getWeekDates(idx);
+  const wDays=[];if(wd.start){for(let i=0;i<7;i++){const _d=new Date(wd.start);_d.setDate(_d.getDate()+i);wDays.push(_d.toISOString().slice(0,10));}}
 
   // Nav buttons
   const hasPrev=idx>0;const hasNext=idx<sems.length-1;
@@ -1894,14 +1895,11 @@ function renderSemana(idx){
       return`<div class="area-card ${a.cls}">
         <div class="area-hd"><span class="area-hd-ico">${a.ico}</span><span class="area-hd-lbl">${a.lbl}</span>${items.des.length?`<span class="area-cnt">${doneC}/${items.des.length}</span>`:''}
         </div>
-        ${items.des.length?items.des.map(d=>{const done=!!(p.desafios||{})[d.id];return`<div class="des-item">
-          <div class="d-chk ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dc_${d.id}"></div>
-          <div class="d-txt ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dt_${d.id}">${d.texto}</div>
-        </div>`;}).join(''):`<div class="empty-msg">Sin desafíos asignados</div>`}
+        ${items.des.length?items.des.map(d=>_desItemHTML(d,idx,p,wDays,a.col)).join(''):`<div class="empty-msg">Sin desafíos asignados</div>`}
         ${items.mat.length?`<div style="margin-top:8px;border-top:1px solid rgba(255,255,255,.05);padding-top:8px">${items.mat.map(m=>`<div class="mat-item"><div class="mat-ico">${iconForType(m.tipo)}</div><div><div class="mat-name">${m.nombre||'Material'}</div>${m.tipo?`<div class="mat-type">${m.tipo}</div>`:''}</div>${m.url?`<a class="mat-lnk" href="${m.url}" target="_blank" rel="noopener">↗</a>`:''}</div>`).join('')}</div>`:''}
       </div>`;
     }).join('')}</div>`:''}
-    ${!hasAreas&&hasGen?`<div class="sec-block"><div class="sec-title"><span class="ico">🎯</span> Desafíos</div>${des.map(d=>{const done=!!(p.desafios||{})[d.id];return`<div class="des-item"><div class="d-chk ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dc_${d.id}"></div><div class="d-txt ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dt_${d.id}">${d.texto}</div></div>`;}).join('')}</div>${mat.length?`<div class="sec-block"><div class="sec-title"><span class="ico">📖</span> Materiales</div>${mat.map(m=>`<div class="mat-item"><div class="mat-ico">${iconForType(m.tipo)}</div><div><div class="mat-name">${m.nombre||'Material'}</div>${m.tipo?`<div class="mat-type">${m.tipo}</div>`:''}</div>${m.url?`<a class="mat-lnk" href="${m.url}" target="_blank" rel="noopener">Abrir ↗</a>`:''}</div>`).join('')}</div>`:''}`:''}
+    ${!hasAreas&&hasGen?`<div class="sec-block"><div class="sec-title"><span class="ico">🎯</span> Desafíos</div>${des.map(d=>_desItemHTML(d,idx,p,wDays,'var(--gold)')).join('')}</div>${mat.length?`<div class="sec-block"><div class="sec-title"><span class="ico">📖</span> Materiales</div>${mat.map(m=>`<div class="mat-item"><div class="mat-ico">${iconForType(m.tipo)}</div><div><div class="mat-name">${m.nombre||'Material'}</div>${m.tipo?`<div class="mat-type">${m.tipo}</div>`:''}</div>${m.url?`<a class="mat-lnk" href="${m.url}" target="_blank" rel="noopener">Abrir ↗</a>`:''}</div>`).join('')}</div>`:''}`:''}
     ${!hasAreas&&!hasGen?`<div style="padding:30px;text-align:center;color:var(--muted)">El equipo cargará el contenido pronto.</div>`:''}
     <div class="sec-block"><div class="sec-title"><span class="ico">📝</span> Mis notas de la semana</div>
       <div id="semNotasList">${buildSemNotasListHTML(p.notas||[],idx)}</div>
@@ -1949,6 +1947,42 @@ function toggleHab(hId,date,semIdx){
   if(de)de.innerHTML=days.map(d=>{const isT=d===today();const isDone=arr.includes(d);return`<div class="h-dot ${isT?'today':''} ${isDone?'done':''}" onclick="toggleHab('${hId}','${d}',${semIdx})" title="${fmtDate(d)}">${isT&&!isDone?'●':''}</div>`;}).join('');
   const se=document.getElementById('hs_'+hId);if(se)se.textContent=calcStreak(arr)?'🔥'+calcStreak(arr):'';
   saveProgress();
+}
+function toggleDesDia(dId,dateStr,semIdx){
+  const p=getP(semIdx);if(!p.desafiosDias)p.desafiosDias={};if(!p.desafiosDias[dId])p.desafiosDias[dId]={};
+  p.desafiosDias[dId][dateStr]=!p.desafiosDias[dId][dateStr];
+  if(!p.desafios)p.desafios={};
+  p.desafios[dId]=Object.values(p.desafiosDias[dId]).some(Boolean);
+  updateProgressBar();renderWeekList();saveProgress();
+  const sem=(curInsc.semanas||[])[semIdx];
+  const des=sem?sem.desafios||[]:[];
+  if(p.desafios[dId]&&des.length>0&&des.every(d=>(p.desafios||{})[d.id])){setTimeout(()=>mostrarCelebracion(sem.titulo||''),400);}
+  renderSemana(semIdx);
+}
+function _desItemHTML(d,idx,p,wDays,areaCol){
+  const diasTrack=(p.desafiosDias||{})[d.id]||{};
+  const dNames=['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+  if(!wDays.length){
+    const done=!!(p.desafios||{})[d.id];
+    return`<div class="des-item"><div class="d-chk ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dc_${d.id}"></div><div class="d-txt ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dt_${d.id}">${d.texto}</div></div>`;
+  }
+  const marked=wDays.filter(ds=>diasTrack[ds]);
+  const done=marked.length>0;
+  const btns=wDays.map((ds,i)=>{
+    const m=!!diasTrack[ds];
+    const isExtra=marked.length>1&&marked.indexOf(ds)>0;
+    const btnCol=isExtra?'rgba(201,168,76,.8)':areaCol;
+    return`<div style="text-align:center"><div style="font-size:8px;color:var(--muted);margin-bottom:2px">${dNames[i]}</div><button onclick="toggleDesDia('${d.id}','${ds}',${idx})" style="width:100%;padding:4px 0;border-radius:5px;border:1.5px solid ${m?btnCol:'rgba(255,255,255,.08)'};background:${m?btnCol+'33':'transparent'};cursor:pointer;font-size:10px;color:${m?btnCol:'rgba(255,255,255,.15)'};transition:.15s">${m?'✓':''}</button></div>`;
+  }).join('');
+  const pct=Math.round(marked.length/wDays.length*100);
+  return`<div style="background:rgba(0,0,0,.2);border-radius:10px;padding:10px 11px;margin-bottom:7px;border:1px solid ${done?areaCol+'33':'rgba(255,255,255,.04)'}">
+    <div style="display:flex;align-items:flex-start;gap:7px;margin-bottom:8px">
+      <div style="flex:1;font-size:12px;line-height:1.5;color:${done?'var(--text)':'rgba(255,255,255,.6)'};font-weight:${done?600:400}">${d.texto}</div>
+      ${done?`<span style="flex-shrink:0;font-size:9px;font-weight:700;padding:2px 7px;border-radius:20px;background:${areaCol}22;color:${areaCol}">✓${marked.length>1?' +'+( marked.length-1)+' extra':' Listo'}</span>`:''}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px${pct>0?';margin-bottom:5px':''}">${btns}</div>
+    ${pct>0?`<div style="background:rgba(255,255,255,.06);border-radius:20px;height:2px;overflow:hidden"><div style="background:${areaCol};height:100%;width:${pct}%;border-radius:20px;transition:.3s"></div></div>`:''}
+  </div>`;
 }
 function buildSemNotasListHTML(notas,semIdx){
   if(!notas.length)return'<div style="font-size:12px;color:var(--muted);padding:2px 0 10px">Todavía no hay notas esta semana.</div>';
@@ -2282,7 +2316,6 @@ function renderPortalCalMensual(){
     </div>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;align-items:center;font-size:10px;color:var(--muted)">
       <div style="display:flex;gap:3px;align-items:center">${legend}<span>H=hábitos</span></div>
-      <div style="display:flex;gap:3px;align-items:center">${legend}<span>D=desafíos</span></div>
       <div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}33;border-radius:3px;padding:1px 4px">🤝</span><span>=sesión</span></div>
       ${iniStr?`<div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:${col};background:${col}22;border-radius:3px;padding:1px 4px">▶ Inicio</span></div>`:''}
       ${endDate?`<div style="display:flex;gap:3px;align-items:center"><span style="font-size:8px;font-weight:800;color:#EF4444;background:rgba(239,68,68,.15);border-radius:3px;padding:1px 4px">■ Fin</span></div>`:''}
@@ -2357,10 +2390,8 @@ function renderPortalCalSemanal(){
       <button onclick="portalCalNavWeek(1)" style="background:var(--card2);border:1px solid var(--border);border-radius:7px;color:var(--text);padding:4px 10px;cursor:pointer">›</button>
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:10px">${dayHdrs}</div>
-    <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">H — Hábitos Diarios</div>
+    <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">Hábitos Diarios</div>
     ${habRows}
-    <div style="font-size:10px;font-weight:700;color:var(--muted);margin:12px 0 8px;text-transform:uppercase;letter-spacing:1px">D — Desafíos</div>
-    ${desRows}
   </div>`;
 }
 
