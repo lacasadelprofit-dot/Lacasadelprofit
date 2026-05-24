@@ -1973,7 +1973,7 @@ function toggleDesDia(dId,dateStr,semIdx){
 }
 function _desItemHTML(d,idx,p,wDays,areaCol){
   const diasTrack=(p.desafiosDias||{})[d.id]||{};
-  const dNames=['Lu','Ma','Mi','Ju','Vi','Sá','Do'];
+  const _DN2=['Do','Lu','Ma','Mi','Ju','Vi','Sá'];
   if(!wDays.length){
     const done=!!(p.desafios||{})[d.id];
     return`<div class="des-item"><div class="d-chk ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dc_${d.id}"></div><div class="d-txt ${done?'done':''}" onclick="toggleDes('${d.id}',${idx})" id="dt_${d.id}">${d.texto}</div></div>`;
@@ -1984,7 +1984,7 @@ function _desItemHTML(d,idx,p,wDays,areaCol){
     const m=!!diasTrack[ds];
     const isExtra=marked.length>1&&marked.indexOf(ds)>0;
     const btnCol=isExtra?'rgba(201,168,76,.8)':areaCol;
-    return`<div style="text-align:center"><div style="font-size:8px;color:var(--muted);margin-bottom:2px">${dNames[i]}</div><button onclick="toggleDesDia('${d.id}','${ds}',${idx})" style="width:100%;padding:4px 0;border-radius:5px;border:1.5px solid ${m?btnCol:'rgba(255,255,255,.08)'};background:${m?btnCol+'33':'transparent'};cursor:pointer;font-size:10px;color:${m?btnCol:'rgba(255,255,255,.15)'};transition:.15s">${m?'✓':''}</button></div>`;
+    return`<div style="text-align:center"><div style="font-size:8px;color:var(--muted);margin-bottom:2px">${_DN2[new Date(ds+'T12:00:00').getDay()]}</div><button onclick="toggleDesDia('${d.id}','${ds}',${idx})" style="width:100%;padding:4px 0;border-radius:5px;border:1.5px solid ${m?btnCol:'rgba(255,255,255,.08)'};background:${m?btnCol+'33':'transparent'};cursor:pointer;font-size:10px;color:${m?btnCol:'rgba(255,255,255,.15)'};transition:.15s">${m?'✓':''}</button></div>`;
   }).join('');
   const pct=Math.round(marked.length/wDays.length*100);
   return`<div style="background:rgba(0,0,0,.2);border-radius:10px;padding:10px 11px;margin-bottom:7px;border:1px solid ${done?areaCol+'33':'rgba(255,255,255,.04)'}">
@@ -2351,13 +2351,13 @@ function renderPortalCalSemanal(){
   const _wd=getWeekDates(semIdx);
   const wStart=_wd.start||new Date();
   const days=[];for(let i=0;i<7;i++){const d=new Date(wStart);d.setDate(d.getDate()+i);days.push(d);}
-  const dNames=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const _DN=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const todayStr=new Date().toISOString().split('T')[0];
   const sem=(curInsc.semanas||[])[semIdx]||{};
   const habByArea={},desByArea={};
   (sem.habitos||[]).forEach(h=>{if(h.area&&!habByArea[h.area])habByArea[h.area]=h;});
   (sem.desafios||[]).forEach(d=>{if(d.area&&!desByArea[d.area])desByArea[d.area]=d;});
-  const dayHdrs=days.map((d,i)=>{const ds=d.toISOString().split('T')[0];const isToday=ds===todayStr;return `<div style="text-align:center;font-size:10px;font-weight:${isToday?800:600};color:${isToday?col:'var(--muted)'}"><div>${dNames[i]}</div><div style="font-size:12px;color:${isToday?col:'var(--text)'}">${d.getDate()}</div></div>`;}).join('');
+  const dayHdrs=days.map(d=>{const ds=d.toISOString().split('T')[0];const isToday=ds===todayStr;return `<div style="text-align:center;font-size:10px;font-weight:${isToday?800:600};color:${isToday?col:'var(--muted)'}"><div>${_DN[d.getDay()]}</div><div style="font-size:12px;color:${isToday?col:'var(--text)'}">${d.getDate()}</div></div>`;}).join('');
   const habRows=AK.map(k=>{
     const hab=habByArea[k];
     const btns=days.map(d=>{const ds=d.toISOString().split('T')[0];const done=habTrack[ds]&&habTrack[ds][k];return `<div style="display:flex;justify-content:center"><button onclick="portalToggleHab('${k}','${ds}')" style="width:32px;height:32px;border-radius:50%;border:1.5px solid ${done?AC[k]:'var(--border)'};background:${done?AC[k]+'33':'transparent'};cursor:pointer;font-size:13px;color:${done?AC[k]:'var(--muted)'};transition:.15s">${done?'✓':''}</button></div>`;}).join('');
