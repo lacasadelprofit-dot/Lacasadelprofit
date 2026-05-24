@@ -1785,7 +1785,7 @@ function getWeekDates(idx){
   }
   const endD=new Date(startD);endD.setDate(startD.getDate()+6);
   const now=new Date();now.setHours(0,0,0,0);
-  const isLocked=startD>now;
+  const isLocked=false; // TEMP: desbloqueo temporal para revisión
   const fmt=d=>d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
   return{start:startD,end:endD,isLocked,label:`${fmt(startD)} – ${fmt(endD)}`};
 }
