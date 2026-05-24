@@ -777,8 +777,10 @@ function obGoHabitos(){
 }
 function obFinish(){
   progreso._onboardingDone=true;
+  curInsc.progreso={...progreso};
   document.getElementById('onboardingOverlay').classList.remove('open');
-  saveProgress();
+  clearTimeout(_saveTimer);
+  _doSave(); // guardar inmediato, sin esperar el debounce de 600ms
 }
 function obSkip(){obFinish();}
 
@@ -2854,14 +2856,17 @@ async function renderProcesoTab(){
     const email=(curSer.email||'').toLowerCase().trim();
     const{data,error}=await _sb.from('onboardings').select('id,data');
     if(error)throw error;
-    const onbs=(data||[]).map(r=>({id:r.id,...(r.data||{})}))
-      .filter(o=>(o.email||'').toLowerCase().trim()===email)
+    const allOnbs=(data||[]).map(r=>({id:r.id,...(r.data||{})}))
+      .filter(o=>(o.email||'').toLowerCase().trim()===email||(o.inscripcionId&&o.inscripcionId===curInsc.id))
       .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
-    if(!onbs.length){
+    // Priorizar el vinculado a esta inscripción específica
+    const onbs=allOnbs;
+    const onb=onbs.find(o=>o.inscripcionId===curInsc.id)||onbs[0];
+    if(!onb){
       el.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✦</div><p style="font-size:13px">Todavía no hay un proceso registrado para vos.</p><p style="font-size:11px;margin-top:8px">Completá el formulario de onboarding con Juan Cruz.</p></div>';
       return;
     }
-    el.innerHTML=buildProcesoHTML(onbs[0]);
+    el.innerHTML=buildProcesoHTML(onb);
     el.dataset.procesoOk='1';
     _procesoLoaded=true;
   }catch(e){

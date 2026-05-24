@@ -1231,11 +1231,11 @@ th{background:rgba(28,26,46,.88)!important;}
   <input type="hidden" id="inId">
   <div class="fg-row">
    <div class="fg"><label>Ser *</label><select id="inSer" onchange="refreshInscSesAsig()"></select></div>
-   <div class="fg"><label>Programa *</label><select id="inProg" onchange="refreshInscSesAsig()"></select></div>
+   <div class="fg"><label>Programa *</label><select id="inProg" onchange="refreshInscSesAsig();calcFechaFin()"></select></div>
   </div>
   <div class="fg-row">
-   <div class="fg"><label>Fecha de inicio</label><input type="date" id="inFini"></div>
-   <div class="fg"><label>Fecha de fin</label><input type="date" id="inFfin"></div>
+   <div class="fg"><label>Fecha de inicio</label><input type="date" id="inFini" onchange="calcFechaFin()"></div>
+   <div class="fg"><label>Fecha de fin <span id="inFfinAuto" style="font-size:10px;color:var(--muted);font-weight:400"></span></label><input type="date" id="inFfin"></div>
   </div>
   <div class="fg"><label>¿Para qué eligió este camino?</label><textarea id="inParaQue" style="min-height:60px" placeholder="Texto que verá el ser en su portal…"></textarea></div>
   <div class="fg"><label>Resultado deseado</label><input type="text" id="inIntencion" placeholder="Al terminar quiero…"></div>
@@ -1413,6 +1413,8 @@ th{background:rgba(28,26,46,.88)!important;}
   </div>
   <div class="fg" id="mtUrlRow"><label>URL / Link</label><input type="text" id="mtUrl" placeholder="https://..."></div>
   <div class="fg" id="mtContRow" style="display:none"><label>Contenido</label><textarea id="mtCont" style="min-height:100px" placeholder="Escribí el texto de la lectura aquí..."></textarea></div>
+  <div class="fg"><label>Descripción <span style="font-weight:400;color:var(--muted)">(opcional — visible para el ser)</span></label><textarea id="mtDesc" style="min-height:60px" placeholder="Breve descripción de para qué sirve este material…"></textarea></div>
+  <div class="fg"><label>Duración estimada <span style="font-weight:400;color:var(--muted)">(ej: 15 min, 45 min de meditación)</span></label><input type="text" id="mtDur" placeholder="Ej: 20 min"></div>
   <div class="mf">
    <button class="btn btn-s" onclick="closeModal('moMaterial')">Cancelar</button>
    <button class="btn btn-p" onclick="saveMaterial()">Guardar</button>
@@ -1512,9 +1514,10 @@ th{background:rgba(28,26,46,.88)!important;}
 </div>
 <div class="mo" id="moVincularOnb">
  <div class="mb">
-  <h2>🔗 Vincular registro a programa</h2>
+  <h2>🔗 Vincular registro</h2>
   <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Registro de <strong id="moVincularOnbNom"></strong></div>
-  <div class="fg"><label>Programa</label><select id="moVincularOnbSel" class="fi"></select></div>
+  <div class="fg"><label>Programa</label><select id="moVincularOnbSel" class="fi" onchange="onVincularProgChange()"></select></div>
+  <div class="fg" id="fgVincularInsc" style="display:none"><label>Inscripción (ser)</label><select id="moVincularInscSel" class="fi"></select></div>
   <div style="display:flex;gap:10px;margin-top:16px">
    <button class="btn btn-p" onclick="confirmarVincular()">Confirmar</button>
    <button class="btn btn-s" onclick="document.getElementById('moVincularOnb').classList.remove('open')">Cancelar</button>
@@ -3601,6 +3604,8 @@ function openModal(type,id,extra){
     document.getElementById('mtTipo').value=m?(m.tipo||'video'):'video';
     document.getElementById('mtUrl').value=m?(m.url||''):'';
     document.getElementById('mtCont').value=m?(m.contenido||''):'';
+    document.getElementById('mtDesc').value=m?(m.descripcion||''):'';
+    document.getElementById('mtDur').value=m?(m.duracion||''):'';
     toggleMtFields();
     document.getElementById('moMaterial').classList.add('open');
 
@@ -4069,18 +4074,37 @@ function vincularOnboarding(id){
   document.getElementById('moVincularOnbSel').innerHTML=`<option value="">— Sin asignar —</option>${opts}`;
   document.getElementById('moVincularOnbSel').value=o.progId||'';
   mo._onbId=id;
+  onVincularProgChange(o.inscripcionId||'');
   mo.classList.add('open');
+}
+function onVincularProgChange(preselectedInscId){
+  const progId=document.getElementById('moVincularOnbSel').value;
+  const fg=document.getElementById('fgVincularInsc');
+  const sel=document.getElementById('moVincularInscSel');
+  if(!progId){fg.style.display='none';return;}
+  const lista=inscripciones.filter(i=>i.programaId===progId);
+  if(!lista.length){fg.style.display='none';return;}
+  sel.innerHTML=`<option value="">— Sin vincular a inscripción —</option>`+lista.map(i=>{
+    const ser=seres.find(s=>s.id===i.serId);
+    const nom=ser?ser.nombre:'Ser desconocido';
+    const pre=preselectedInscId===i.id?'selected':'';
+    return `<option value="${i.id}" ${pre}>${nom}${i.code?' ('+i.code+')':''}</option>`;
+  }).join('');
+  fg.style.display='';
 }
 function confirmarVincular(){
   const mo=document.getElementById('moVincularOnb');
-  const id=mo._onbId;const progId=document.getElementById('moVincularOnbSel').value;
+  const id=mo._onbId;
+  const progId=document.getElementById('moVincularOnbSel').value;
+  const inscId=document.getElementById('moVincularInscSel')?.value||'';
   const o=onboardings.find(x=>x.id===id);if(!o)return;
   o.progId=progId||null;
+  o.inscripcionId=inscId||null;
   o.estado=progId?'asignado':'pendiente';
   save();
   mo.classList.remove('open');
   renderProgRegistros();
-  toast(progId?'🔗 Registro vinculado al programa':'Vínculo removido');
+  toast(inscId?'🔗 Registro vinculado a inscripción':progId?'🔗 Registro vinculado al programa':'Vínculo removido');
 }
 function renderProgInscritos(){
   const el=document.getElementById('progInscritosView');if(!el)return;
@@ -4235,9 +4259,10 @@ function renderMaterialesHTML(sem,col){
   return sem.materiales.map((m,i)=>`
     <div style="display:flex;align-items:center;gap:8px;padding:8px;border-radius:8px;background:var(--card2);margin-bottom:6px">
       <span style="font-size:18px">${iconos[m.tipo]||'📌'}</span>
-      <div style="flex:1">
+      <div style="flex:1;min-width:0">
         <div style="font-size:13px;font-weight:600;color:var(--text)">${m.titulo}</div>
-        <div style="font-size:11px;color:var(--muted);text-transform:capitalize">${m.tipo}${m.url?' · '+m.url.substring(0,40)+'…':''}</div>
+        <div style="font-size:11px;color:var(--muted);text-transform:capitalize">${m.tipo}${m.duracion?' · ⏱ '+m.duracion:''}${m.url?' · '+m.url.substring(0,30)+'…':''}</div>
+        ${m.descripcion?`<div style="font-size:11px;color:var(--muted);margin-top:2px;font-style:italic">${m.descripcion.substring(0,60)}${m.descripcion.length>60?'…':''}</div>`:''}
       </div>
       <button onclick="editMaterial(${i})" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:13px">✏️</button>
       <button onclick="delMaterial(${i})" style="background:none;border:none;cursor:pointer;color:#EF4444;font-size:13px">✕</button>
@@ -4351,7 +4376,7 @@ function saveMaterial(){
   const tit=document.getElementById('mtTit').value.trim();if(!tit){alert('El título es obligatorio');return;}
   const sem=getCurSem();if(!sem)return;
   if(!sem.materiales)sem.materiales=[];
-  const mData={titulo:tit,tipo:document.getElementById('mtTipo').value,url:document.getElementById('mtUrl').value.trim(),contenido:document.getElementById('mtCont').value.trim()};
+  const mData={titulo:tit,tipo:document.getElementById('mtTipo').value,url:document.getElementById('mtUrl').value.trim(),contenido:document.getElementById('mtCont').value.trim(),descripcion:document.getElementById('mtDesc').value.trim(),duracion:document.getElementById('mtDur').value.trim()};
   const eid=document.getElementById('mtId').value;
   if(eid!==''){sem.materiales[parseInt(eid)]=Object.assign(sem.materiales[parseInt(eid)],mData);}
   else{sem.materiales.push({id:'m_'+Date.now(),...mData});}
@@ -4372,6 +4397,23 @@ let _calActiveView='mes';
 let _calViewYear=new Date().getFullYear();
 let _calViewMonth=new Date().getMonth();
 let _calViewWeek=0;
+
+function calcFechaFin(){
+  const fini=document.getElementById('inFini').value;
+  const progId=document.getElementById('inProg').value;
+  const ffin=document.getElementById('inFfin');
+  const lbl=document.getElementById('inFfinAuto');
+  if(!fini||!progId){if(lbl)lbl.textContent='';return;}
+  const prog=programas.find(x=>x.id===progId);
+  if(!prog){if(lbl)lbl.textContent='';return;}
+  const dias=(prog.semanas_dur||(prog.semanas||[]).length||0)*7;
+  if(!dias){if(lbl)lbl.textContent='';return;}
+  const d=new Date(fini+'T12:00:00');
+  d.setDate(d.getDate()+dias-1);
+  const iso=d.toISOString().slice(0,10);
+  if(!ffin.value){ffin.value=iso;}
+  if(lbl)lbl.textContent=`(auto · ${dias} días)`;
+}
 
 // Genera/refresca la lista de asignación de facilitadores según el programa elegido
 function refreshInscSesAsig(){
@@ -4868,6 +4910,31 @@ function switchJourneyTab(tab){
 function renderJourneyOnboarding(insc,prog,col){
   if(!insc.onboarding)insc.onboarding={};
   const ob=insc.onboarding;
+
+  // Datos del portal (completados por el ser)
+  const AC={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AI={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
+  const AK=['espiritual','mental','fisica','social'];
+  const onbDone=!!(insc.progreso&&insc.progreso._onboardingDone);
+  const paraQue=insc.paraQue||'';
+  const resultado=insc.resultadoDeseado||'';
+  const habEleg=insc.habitosElegidos||{};
+  const habElList=AK.filter(k=>habEleg[k]).map(k=>`<div style="display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:${AC[k]}22;border:1px solid ${AC[k]}55;border-radius:20px;margin:2px"><span>${AI[k]}</span><span style="font-size:11px;font-weight:600;color:${AC[k]}">${habEleg[k]}</span></div>`).join('');
+
+  const portalSection=`<div class="cc" style="margin-bottom:14px;padding:12px;border-left:3px solid ${col}">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--gl)">📱 Respuestas del Portal</div>
+      <span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:${onbDone?'#10B98122':'var(--card2)'};color:${onbDone?'#10B981':'var(--muted)'};">${onbDone?'✅ Completado':'⏳ Pendiente'}</span>
+    </div>
+    ${paraQue
+      ? `<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:3px">¿Para qué estás acá?</div><div style="font-size:12px;color:var(--text);font-style:italic;line-height:1.5;border-left:2px solid ${col};padding-left:8px">"${paraQue}"</div></div>`
+      : `<div style="font-size:11px;color:var(--muted);margin-bottom:10px;font-style:italic">Sin propósito registrado aún.</div>`}
+    ${resultado
+      ? `<div style="margin-bottom:10px"><div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:3px">Resultado deseado</div><div style="font-size:12px;color:var(--text);line-height:1.5">${resultado}</div></div>`
+      : ''}
+    <div><div style="font-size:10px;font-weight:600;color:var(--muted);margin-bottom:5px">Hábitos elegidos</div>${habElList||`<span style="font-size:11px;color:var(--muted);font-style:italic">Sin hábitos elegidos aún.</span>`}</div>
+  </div>`;
+
   const preguntas=[
     {k:'objetivos',l:'¿Cuáles son tus principales objetivos para este programa?',ph:'Escribí tus objetivos...'},
     {k:'situacion',l:'¿Cuál es tu situación actual? ¿Desde dónde empezás?',ph:'Describí tu punto de partida...'},
@@ -4884,8 +4951,10 @@ function renderJourneyOnboarding(insc,prog,col){
   return `<div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <div style="font-size:13px;font-weight:700;color:var(--gl)">🚀 Onboarding</div>
-      <button onclick="saveOnboarding('${insc.id}')" style="background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:6px 14px;cursor:pointer">💾 Guardar</button>
+      <button onclick="saveOnboarding('${insc.id}')" style="background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:6px 14px;cursor:pointer">💾 Guardar notas</button>
     </div>
+    ${portalSection}
+    <div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px">📝 Notas del facilitador</div>
     ${rows}
   </div>`;
 }
@@ -5451,11 +5520,19 @@ function renderInscWeekContent(){
   const desP=semP.desafios||{};
   const habP=semP.habitos||{};
   const nota=semP.nota||'';
+  const ref=typeof semP.reflexion==='object'&&semP.reflexion?semP.reflexion:null;
 
   // Progreso del ser (readonly)
   const desDoneCount=(sem.desafios||[]).filter(d=>desP[d.id]).length;
   const desTotal=(sem.desafios||[]).length;
   const progresoBadge=desTotal?`<span style="font-size:10px;background:${col}22;color:${col};border-radius:20px;padding:2px 8px;font-weight:600">${desDoneCount}/${desTotal} desafíos</span>`:'';
+
+  const reflexionHTML=ref?`<div style="margin-top:10px;padding:10px;background:rgba(155,130,212,.07);border:1px solid rgba(155,130,212,.2);border-radius:10px">
+    <div style="font-size:9px;color:rgba(155,130,212,.8);font-weight:700;letter-spacing:.5px;margin-bottom:8px">✦ REFLEXIÓN DE LA SEMANA${ref.fecha?' · '+ref.fecha:''}</div>
+    ${ref.aprendiste?`<div style="margin-bottom:6px"><div style="font-size:9px;color:var(--muted);font-weight:600;margin-bottom:2px">¿Qué aprendiste?</div><div style="font-size:11px;color:var(--text);white-space:pre-wrap;line-height:1.5">${ref.aprendiste}</div></div>`:''}
+    ${ref.dificil?`<div style="margin-bottom:6px"><div style="font-size:9px;color:var(--muted);font-weight:600;margin-bottom:2px">¿Qué fue difícil?</div><div style="font-size:11px;color:var(--text);white-space:pre-wrap;line-height:1.5">${ref.dificil}</div></div>`:''}
+    ${ref.llevas?`<div><div style="font-size:9px;color:var(--muted);font-weight:600;margin-bottom:2px">¿Qué llevás a la próxima semana?</div><div style="font-size:11px;color:var(--text);white-space:pre-wrap;line-height:1.5">${ref.llevas}</div></div>`:''}
+  </div>`:'';
 
   const desProgresoHTML=(sem.desafios||[]).length?`
     <div style="margin-bottom:14px">
@@ -5466,7 +5543,8 @@ function renderInscWeekContent(){
         <span style="font-size:10px;color:${done?col:'var(--border)'};font-weight:600">${done?'✅':''}</span>
       </div>`}).join('')}
       ${nota?`<div style="margin-top:8px;padding:8px 10px;background:var(--card2);border-radius:8px;border-left:2px solid ${col}"><div style="font-size:9px;color:var(--muted);font-weight:600;margin-bottom:3px">NOTA DEL SER</div><div style="font-size:11px;color:var(--text);white-space:pre-wrap">${nota}</div></div>`:''}
-    </div>`:'';
+      ${reflexionHTML}
+    </div>`:reflexionHTML?`<div style="margin-bottom:14px">${reflexionHTML}</div>`:'';
 
   el.innerHTML=desProgresoHTML+buildWeekEditorHTML(sem,col,curInscSemIdx,'ser');
 }
