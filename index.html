@@ -681,6 +681,7 @@ th{background:rgba(28,26,46,.88)!important;}
         <div style="display:flex;gap:6px;margin-bottom:28px;border-bottom:1px solid var(--border);padding-bottom:12px">
           <button id="ptab_cerebro" onclick="switchProfitTab('cerebro')" style="padding:7px 18px;border-radius:8px;border:1px solid rgba(201,168,76,.3);background:rgba(201,168,76,.12);color:var(--gl);font-size:12px;font-weight:700;cursor:pointer">🧠 Cerebro</button>
           <button id="ptab_conocimiento" onclick="switchProfitTab('conocimiento')" style="padding:7px 18px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer">📚 Conocimiento</button>
+          <button id="ptab_ecosistema" onclick="switchProfitTab('ecosistema')" style="padding:7px 18px;border-radius:8px;border:none;background:transparent;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer">🌌 Ecosistema</button>
         </div>
         <div id="profitCerebro">
 
@@ -803,6 +804,53 @@ th{background:rgba(28,26,46,.88)!important;}
         </div>
         </div><!-- /profitCerebro -->
         <div id="profitConocimiento" style="display:none"></div>
+        <div id="profitEcosistema" style="display:none">
+
+          <!-- HERO ECOSISTEMA -->
+          <div style="text-align:center;margin-bottom:40px">
+            <div style="font-size:52px;margin-bottom:12px;filter:drop-shadow(0 0 28px rgba(201,168,76,.4))">🌌</div>
+            <div style="font-size:26px;font-weight:800;color:var(--gl);letter-spacing:2px;margin-bottom:8px">ECOSISTEMA VIVO</div>
+            <div style="font-size:13px;color:var(--muted);line-height:1.8;max-width:600px;margin:0 auto">Sistema operativo de expansión humana que integra consciencia, estrategia, memoria, claridad, estructura y evolución. No reemplaza criterio humano — expande observación, reflexión y acción consciente.</div>
+          </div>
+
+          <!-- INTELIGENCIAS OPERATIVAS -->
+          <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✦ Inteligencias Operativas</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px;margin-bottom:28px">
+            <div style="background:rgba(14,13,20,.7);border:1px solid rgba(201,168,76,.15);border-left:3px solid var(--gold);border-radius:14px;padding:20px">
+              <div style="font-size:15px;font-weight:800;color:var(--gl);margin-bottom:8px">✨ Profit</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.8">Expansión consciente, claridad, patrones, coherencia interna y profundidad humana.</div>
+            </div>
+            <div style="background:rgba(14,13,20,.7);border:1px solid rgba(155,130,212,.2);border-left:3px solid var(--purple);border-radius:14px;padding:20px">
+              <div style="font-size:15px;font-weight:800;color:var(--purple);margin-bottom:8px">⚡ Das</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.8">Estrategia, automatización, estructura, sistemas y ejecución.</div>
+            </div>
+            <div style="background:rgba(14,13,20,.7);border:1px solid rgba(61,170,106,.2);border-left:3px solid var(--green);border-radius:14px;padding:20px">
+              <div style="font-size:15px;font-weight:800;color:var(--green);margin-bottom:8px">💰 Finco</div>
+              <div style="font-size:12px;color:var(--muted);line-height:1.8">Inteligencia financiera, sostenibilidad, abundancia y estructura económica.</div>
+            </div>
+          </div>
+
+          <!-- FLUJO COGNITIVO -->
+          <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✦ Flujo Cognitivo</div>
+          <div style="background:rgba(14,13,20,.7);border:1px solid rgba(201,168,76,.15);border-radius:16px;padding:24px;margin-bottom:28px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px">
+              ${[['1','Entrada','Juan Cruz escribe ideas, problemas, emociones o reflexiones'],['2','Memoria Viva','El sistema conecta experiencias, patrones y objetivos históricos'],['3','Agentes','Profit, Das y Finco analizan desde distintas dimensiones'],['4','Mente Maestra','Perspectivas inspiradas en arquetipos, filosofía y liderazgo'],['5','Síntesis','Claridad, contradicciones detectadas, oportunidades y caminos']].map(([n,t,d])=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px"><div style="width:30px;height:30px;border-radius:50%;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.3);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;color:var(--gl);margin-bottom:10px">${n}</div><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px">${t}</div><div style="font-size:11px;color:var(--muted);line-height:1.7">${d}</div></div>`).join('')}
+            </div>
+          </div>
+
+          <!-- MENTE MAESTRA -->
+          <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✦ Mente Maestra — Arquetipos</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:28px">
+            ${[['✨','Jesús','Compasión, consciencia, presencia, integración humana y servicio'],['📜','San Juan','Simbolismo, visión profunda, contemplación y percepción expandida'],['🜂','Melquizedec','Equilibrio, sabiduría ancestral, integración y orden superior'],['🧊','Metatrón','Arquitectura, geometría, sistemas, estructura y precisión'],['⚔','Arcángel Miguel','Protección, claridad, decisión, enfoque y discernimiento'],['🌌','Pleyadianos','Creatividad, expansión, imaginación, sensibilidad y visión futurista'],['🔮','Merlin','Alquimia, transformación, intuición, misterio y pensamiento simbólico'],['🏛','Carnegie','Escala, infraestructura, expansión empresarial y construcción de legado'],['📈','Maxwell','Liderazgo, equipos, influencia, crecimiento humano y expansión organizacional'],['📖','Emerson','Filosofía, autenticidad, pensamiento independiente y verdad interior'],['⚙','Tesla','Innovación, energía, simplificación, sistemas y visión futurista']].map(([ico,n,d])=>`<div style="background:rgba(14,13,20,.7);border:1px solid rgba(201,168,76,.1);border-radius:14px;padding:18px;transition:.2s" onmouseover="this.style.borderColor='rgba(201,168,76,.35)'" onmouseout="this.style.borderColor='rgba(201,168,76,.1)'"><div style="font-size:20px;margin-bottom:8px">${ico}</div><div style="font-size:13px;font-weight:800;color:var(--gl);margin-bottom:6px">${n}</div><div style="font-size:11px;color:var(--muted);line-height:1.7">${d}</div></div>`).join('')}
+          </div>
+
+          <!-- FILOSOFIA -->
+          <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:14px">✦ Diseño Filosófico</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+            ${[['🎯','Propósito','Expandir consciencia, claridad, coherencia y evolución consciente'],['🔒','Límites','El sistema no reemplaza criterio humano ni afirma verdades absolutas'],['⚖','Ética','La prioridad es aumentar claridad y autonomía, no dependencia psicológica'],['🌱','Expansión','La expansión real requiere integración, estructura, acción y consciencia aplicada']].map(([ico,t,d])=>`<div style="background:rgba(14,13,20,.7);border:1px solid rgba(201,168,76,.15);border-radius:14px;padding:20px"><div style="font-size:22px;margin-bottom:10px">${ico}</div><div style="font-size:13px;font-weight:800;color:var(--gl);margin-bottom:6px">${t}</div><div style="font-size:12px;color:var(--muted);line-height:1.8">${d}</div></div>`).join('')}
+          </div>
+
+        </div><!-- /profitEcosistema -->
 
       </div>
     </div>
@@ -1886,15 +1934,13 @@ async function _syncSupabase(){
     return;
   }
   try{
-    const results=await Promise.all(
-      pairs.filter(([,arr])=>arr.length).map(([tbl,arr])=>_sb.from(tbl).upsert(_wrap(arr)))
-    );
-    const errs=results.filter(r=>r.error);
+    const activePairs=pairs.filter(([,arr])=>arr.length);
+    const results=await Promise.all(activePairs.map(([tbl,arr])=>_sb.from(tbl).upsert(_wrap(arr))));
+    const errs=results.map((r,i)=>({...r,tbl:activePairs[i][0],arr:activePairs[i][1]})).filter(r=>r.error);
     if(errs.length){
-      errs.forEach(r=>console.error('sync err:',r.error));
-      // Encolar los que fallaron para reintentar
-      errs.forEach((_,i)=>{const[tbl,arr]=pairs[i];if(arr.length)addToQueue(tbl,arr);});
-      toast('⚠️ Error al guardar en la nube — reintentando al reconectarse','err');
+      errs.forEach(r=>console.error('sync err ['+r.tbl+']:',r.error.message||r.error));
+      errs.forEach(r=>{if(r.arr.length)addToQueue(r.tbl,r.arr);});
+      toast('⚠️ Error al guardar ['+errs.map(r=>r.tbl).join(', ')+'] — abrí la consola para ver el detalle');
     } else {
       updateOfflineUI();
     }
@@ -7296,9 +7342,11 @@ function switchProfitTab(tab){
   profitTab=tab;
   const cer=document.getElementById('profitCerebro');
   const con=document.getElementById('profitConocimiento');
+  const eco=document.getElementById('profitEcosistema');
   if(cer)cer.style.display=tab==='cerebro'?'':'none';
   if(con)con.style.display=tab==='conocimiento'?'':'none';
-  ['cerebro','conocimiento'].forEach(t=>{
+  if(eco)eco.style.display=tab==='ecosistema'?'':'none';
+  ['cerebro','conocimiento','ecosistema'].forEach(t=>{
     const btn=document.getElementById('ptab_'+t);if(!btn)return;
     const active=t===tab;
     btn.style.background=active?'rgba(201,168,76,.12)':'transparent';

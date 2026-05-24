@@ -1785,7 +1785,7 @@ function getWeekDates(idx){
   }
   const endD=new Date(startD);endD.setDate(startD.getDate()+6);
   const now=new Date();now.setHours(0,0,0,0);
-  const isLocked=false; // TEMP: desbloqueo temporal para revisión
+  const isLocked=startD>now;
   const fmt=d=>d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
   return{start:startD,end:endD,isLocked,label:`${fmt(startD)} – ${fmt(endD)}`};
 }
@@ -2626,15 +2626,65 @@ function renderMaterialTab(){
   }).join('');
 
   const pct=desbloqueados.length?Math.round(vistos/desbloqueados.length*100):0;
+
+  // Chips de filtro — solo tipos que existen en el material disponible
+  const tiposLabel={pdf:'📄 PDF',video:'🎥 Video',audio:'🎧 Audio',link:'🔗 Link',lectura:'📖 Lectura',texto:'📖 Texto'};
+  const tiposPresentes=[...new Set(all.filter(m=>!(m._semIdx!==undefined&&getWeekDates(m._semIdx).isLocked)).map(m=>m.tipo).filter(Boolean))];
+  const chips=[{k:'todos',l:'Todos'},...tiposPresentes.map(t=>({k:t,l:tiposLabel[t]||('📎 '+t)}))];
+  const chipsHTML=chips.map(c=>{
+    const act=_matFilter===c.k;
+    return`<button onclick="_matFilter='${c.k}';renderMaterialTab()" style="padding:5px 12px;border-radius:20px;border:1px solid ${act?col:'var(--border)'};background:${act?col+'22':'transparent'};color:${act?col:'var(--muted)'};font-size:11px;font-weight:${act?'700':'400'};cursor:pointer;transition:all .15s;white-space:nowrap">${c.l}</button>`;
+  }).join('');
+
+  // Filtrar cards según filtro activo
+  const cardsFiltradas=_matFilter==='todos'?cards:all.map((m,idx)=>{
+    if(m.tipo!==_matFilter)return'';
+    const mid=m.id||(m.titulo&&m.titulo.trim())||('mat_'+idx);
+    const esVisto=!!visto[mid];
+    const wd=m._semIdx!==undefined?getWeekDates(m._semIdx):null;
+    const bloqueado=wd&&wd.isLocked;
+    const unlockLabel=wd&&wd.start?wd.start.toLocaleDateString('es-AR',{day:'numeric',month:'long'}):'';
+    if(bloqueado){
+      return`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:8px;opacity:.55">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span style="font-size:24px;flex-shrink:0">🔒</span>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--muted)">${m.nombre||m.titulo||'Recurso'}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:3px">Sem. ${m.semana}${m.tituloSem?' — '+m.tituloSem:''} · Disponible el ${unlockLabel}</div>
+          </div>
+        </div>
+      </div>`;
+    }
+    return`<div style="background:var(--card);border:1px solid ${esVisto?col+'55':'var(--border)'};border-radius:12px;padding:14px;margin-bottom:8px;transition:border .2s">
+      <div style="display:flex;align-items:flex-start;gap:12px">
+        <span style="font-size:24px;flex-shrink:0;margin-top:1px">${icoTipo[m.tipo]||'📎'}</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:${esVisto?'var(--muted)':'var(--gl)'};${esVisto?'text-decoration:line-through;':''}">${m.nombre||m.titulo||'Recurso'}</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;align-items:center">
+            ${m.semana?`<span style="font-size:10px;color:var(--muted)">Sem. ${m.semana}${m.tituloSem?' — '+m.tituloSem:''}</span>`:''}
+            ${m.duracion?`<span style="font-size:10px;background:rgba(255,255,255,.06);border-radius:20px;padding:1px 8px;color:var(--muted)">⏱ ${m.duracion}</span>`:''}
+            ${esVisto?`<span style="font-size:10px;color:${col};font-weight:600">✓ Visto</span>`:''}
+          </div>
+          ${m.descripcion?`<div style="font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5">${m.descripcion}</div>`:''}
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+        ${m.url?`<a href="${m.url}" target="_blank" rel="noopener" style="flex:1;text-align:center;padding:8px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:9px;color:var(--gold);font-size:12px;font-weight:700;text-decoration:none">Abrir ↗</a>`:''}
+        <button onclick="toggleMaterialVisto('${mid}')" style="flex-shrink:0;padding:8px 14px;background:${esVisto?col+'22':'rgba(255,255,255,.05)'};border:1px solid ${esVisto?col+'55':'var(--border)'};border-radius:9px;color:${esVisto?col:'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer;transition:all .2s">${esVisto?'✓ Visto':'Marcar visto'}</button>
+      </div>
+    </div>`;
+  }).join('');
+
   document.getElementById('mainContent').innerHTML=`
     <div style="margin-bottom:14px">
       <div style="font-size:18px;font-weight:800;color:var(--gl)">📁 Material</div>
       <div style="font-size:12px;color:var(--muted);margin-bottom:8px">${vistos} de ${desbloqueados.length} visto${vistos!==1?'s':''}</div>
-      <div style="background:rgba(255,255,255,.08);border-radius:20px;height:5px;overflow:hidden">
+      <div style="background:rgba(255,255,255,.08);border-radius:20px;height:5px;overflow:hidden;margin-bottom:12px">
         <div style="height:100%;width:${pct}%;background:${col};border-radius:20px;transition:width .4s"></div>
       </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${chipsHTML}</div>
     </div>
-    ${cards}
+    ${cardsFiltradas}
   `;
 }
 
@@ -2835,6 +2885,7 @@ function updateComBadge(){
 // MI PROCESO (onboarding)
 // ══════════════════════════════════════════════════════════════════════════════
 let _procesoLoaded=false;
+let _matFilter='todos';
 async function renderProcesoTab(){
   const el=document.getElementById('mainContent');if(!el)return;
   if(_procesoLoaded&&el.dataset.procesoOk==='1')return;
