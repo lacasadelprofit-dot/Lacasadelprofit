@@ -872,6 +872,50 @@ function makeSpiralSVG(col,pct){
     +'</svg>';
 }
 
+function buildHabProgCardsHTML(){
+  const AC_H={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
+  const AI_H={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
+  const AL_H={espiritual:'Espiritual',mental:'Mental',fisica:'Física',social:'Social'};
+  const habElegidos=curInsc.habitosElegidos||{};
+  const habTrack=curInsc.habTrack||{};
+  const progDias=Math.max(1,Math.min(Math.round((parseFloat(curProg.meses)||3)*30+(parseInt(curProg.semanas_dur)||0)*7),365));
+  const startD=curInsc.fechaInicio?new Date(curInsc.fechaInicio+'T12:00:00'):(()=>{const d=new Date();d.setDate(d.getDate()-progDias);return d;})();
+  const todayStr=today();
+  const progDates=[];
+  for(let i=0;i<progDias;i++){const d=new Date(startD);d.setDate(d.getDate()+i);const ds=d.toISOString().slice(0,10);if(ds<=todayStr)progDates.push(ds);else break;}
+  const cards=['espiritual','mental','fisica','social'].filter(k=>habElegidos[k]&&(habElegidos[k].nom||habElegidos[k].nombre||habElegidos[k])).map(k=>{
+    const nom=habElegidos[k].nom||habElegidos[k].nombre||habElegidos[k]||'';
+    const cH=AC_H[k];
+    const doneArr=progDates.map(ds=>!!(habTrack[ds]&&habTrack[ds][k]));
+    const doneDays=doneArr.filter(Boolean).length;
+    const totalDays=progDates.length;
+    const pct=totalDays?Math.round(doneDays/totalDays*100):0;
+    let maxStr=0,curS=0;
+    doneArr.forEach(done=>{if(done){curS++;maxStr=Math.max(maxStr,curS);}else curS=0;});
+    let streak=0;
+    for(let i=doneArr.length-1;i>=0;i--){if(doneArr[i])streak++;else break;}
+    const last28=progDates.slice(-28);
+    const miniCells=last28.map(ds=>{const done=!!(habTrack[ds]&&habTrack[ds][k]);return`<div style="width:10px;height:10px;border-radius:2px;background:${done?cH:'rgba(255,255,255,.06)'}"></div>`;}).join('');
+    const lvl=pct>=80?'💎':pct>=60?'🏅':pct>=40?'⚡':pct>=20?'🌱':'⭕';
+    return`<div style="background:var(--card);border:1px solid ${cH}33;border-left:3px solid ${cH};border-radius:12px;padding:13px 14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <span style="font-size:20px">${AI_H[k]}</span>
+        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">${AL_H[k]}</div></div>
+        <div style="text-align:right;flex-shrink:0"><div style="font-size:17px;font-weight:900;color:${cH}">${pct}%</div><div style="font-size:9px;color:var(--muted)">${doneDays}/${totalDays} días</div></div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px"><div style="height:100%;border-radius:20px;background:${cH};width:${pct}%;transition:.8s ease"></div></div>
+      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:9px">${miniCells}</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+        <div style="font-size:10px;color:var(--muted)">🔥 Racha actual: <span style="color:${cH};font-weight:700">${streak} día${streak!==1?'s':''}</span></div>
+        <div style="font-size:10px;color:var(--muted)">⭐ Mejor racha: <span style="color:${cH};font-weight:700">${maxStr} día${maxStr!==1?'s':''}</span></div>
+        <div style="margin-left:auto;font-size:14px">${lvl}</div>
+      </div>
+    </div>`;
+  }).join('');
+  if(!cards) return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px"><div style="font-size:12px;color:var(--muted)">Elegí tus hábitos en <strong style="color:var(--gold);cursor:pointer" onclick="switchTab('habitos')">Hábitos</strong> para ver tu progreso aquí</div></div>`;
+  return`<div style="margin-bottom:4px">${cards}</div>`;
+}
+
 function renderGeneral(){try{_renderGeneral();}catch(e){console.error('renderGeneral error:',e);document.getElementById('mainContent').innerHTML='<div style="padding:30px;color:var(--muted);font-size:12px">Error al cargar. Recargá la página.</div>';}}
 function _renderGeneral(){
   const sems=curInsc.semanas||[];const doneSem=sems.filter((_,i)=>semDone(i)).length;
@@ -1064,47 +1108,14 @@ function _renderGeneral(){
       </div>
     </div>`:''}
 
-    <div class="gv2-vitals">
-      <div class="gv2-vital">
-        <div class="gv2-vital-ico">${gStreak>0?'🔥':'🌱'}</div>
-        <div class="gv2-vital-num" style="color:${gStreak>0?col:'var(--muted)'}">${gStreak}</div>
-        <div class="gv2-vital-lbl">Días racha</div>
-      </div>
-      <div class="gv2-vital">
-        <div class="gv2-vital-ico">📅</div>
-        <div class="gv2-vital-num" style="color:${col}">${activeDays}</div>
-        <div class="gv2-vital-lbl">Días activos</div>
-      </div>
-      <div class="gv2-vital">
-        <div class="gv2-vital-ico">⭐</div>
-        <div class="gv2-vital-num" style="color:${col}">${adherencia}%</div>
-        <div class="gv2-vital-lbl">Adherencia</div>
-      </div>
-    </div>
 
-    <!-- PROGRESO POR ÁREA -->
-    ${(()=>{
-      const ad={espiritual:{t:0,d:0},mental:{t:0,d:0},fisica:{t:0,d:0},social:{t:0,d:0}};
-      const AC={espiritual:'var(--esp)',mental:'var(--men)',fisica:'var(--fis)',social:'var(--soc)'};
-      const AB={espiritual:'rgba(199,125,255,.18)',mental:'rgba(96,165,250,.18)',fisica:'rgba(74,222,128,.18)',social:'rgba(251,191,36,.18)'};
-      sems.forEach((sem,i)=>{const p=getP(i);(sem.desafios||[]).forEach(d=>{const a=d.area&&ad[d.area]?d.area:'espiritual';ad[a].t++;if((p.desafios||{})[d.id])ad[a].d++;});});
-      const cards=AREAS.map(a=>{const x=ad[a.key];const pct=x.t?Math.round(x.d/x.t*100):0;
-        return '<div style="flex:1;min-width:0;background:'+AB[a.key]+';border:1px solid '+AC[a.key].replace('var(','').replace(')','')+'33;border-radius:12px;padding:10px 8px;text-align:center">'
-          +'<div style="font-size:20px;margin-bottom:4px">'+a.ico+'</div>'
-          +'<div style="font-size:10px;font-weight:700;color:'+AC[a.key]+';margin-bottom:6px">'+a.lbl+'</div>'
-          +'<div style="background:rgba(255,255,255,.08);border-radius:20px;height:4px;overflow:hidden;margin-bottom:4px">'
-          +'<div style="height:100%;border-radius:20px;background:'+AC[a.key]+';width:'+pct+'%;transition:.6s ease"></div></div>'
-          +'<div style="font-size:11px;font-weight:700;color:'+AC[a.key]+'">'+pct+'%</div>'
-          +'<div style="font-size:9px;color:var(--muted)">'+x.d+'/'+x.t+'</div>'
-          +'</div>';
-      }).join('');
-      return '<div style="display:flex;gap:8px;margin-bottom:14px">'+cards+'</div>';
-    })()}
+    <!-- RESUMEN DE HÁBITOS -->
+    ${buildHabProgCardsHTML()}
 
     <div id="pregDiaBox"></div>
 
-    ${cartaHTML}
     ${carta45HTML}
+    ${cartaHTML}
 
     ${totInc?`<div class="sec-block"><div class="sec-title"><span class="ico">✨</span> Sesiones incluidas</div><div style="display:flex;flex-wrap:wrap;gap:7px">${Object.entries(sesInc).map(([n,q])=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:7px;padding:6px 10px;display:flex;align-items:center;gap:6px"><span style="font-size:11px">${n}</span><span style="font-size:11px;font-weight:800;color:var(--gl)">${q}x</span></div>`).join('')}</div></div>`:''}
   `;
@@ -1312,7 +1323,7 @@ function renderAvance(){
 
     <!-- HÁBITOS -->
     <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;margin-top:4px">🌱 Progreso por hábito</div>
-    ${habProgCards||`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:16px"><div style="font-size:12px;color:var(--muted)">Elegí tus hábitos en <strong style="color:var(--gold)">Mi Visión</strong> para ver tu progreso aquí</div></div>`}
+    ${buildHabProgCardsHTML()}
 
     <!-- CAMINO DE SEMANAS -->
     <div class="av2-journey">
@@ -2863,7 +2874,9 @@ async function renderProcesoTab(){
     const onbs=allOnbs;
     const onb=onbs.find(o=>o.inscripcionId===curInsc.id)||onbs[0];
     if(!onb){
-      el.innerHTML='<div style="text-align:center;padding:48px 20px;color:var(--muted)"><div style="font-size:40px;margin-bottom:12px">✦</div><p style="font-size:13px">Todavía no hay un proceso registrado para vos.</p><p style="font-size:11px;margin-top:8px">Completá el formulario de onboarding con Juan Cruz.</p></div>';
+      el.innerHTML=buildProcesoSinOnboarding();
+      el.dataset.procesoOk='1';
+      _procesoLoaded=true;
       return;
     }
     el.innerHTML=buildProcesoHTML(onb);
@@ -2872,6 +2885,22 @@ async function renderProcesoTab(){
   }catch(e){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)">Error al cargar. Intentá de nuevo.</div>';
   }
+}
+function buildProcesoSinOnboarding(){
+  const col=curProg&&curProg.col?curProg.col:'#C9A84C';
+  const paraQue=curInsc.paraQue||progreso._paraQue||'';
+  const resultado=curInsc.resultadoDeseado||progreso._resultadoDeseado||'';
+  const sec=(label,content)=>content?`<div class="proc-section"><div class="proc-label">${label}</div>${content}</div>`:'';
+  return `
+    <div style="margin-bottom:14px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">📋 Mi Compromiso</div>
+    </div>
+    ${sec('🎯 ¿Para qué estás acá?',paraQue?`<div class="proc-value" style="margin-top:6px;font-size:15px;font-style:italic;line-height:1.7">"${paraQue}"</div>`:'')}
+    ${sec('✨ Resultado deseado',resultado?`<div class="proc-value" style="margin-top:6px;font-size:13px;line-height:1.7;color:var(--muted)">${resultado}</div>`:'')}
+    ${!paraQue&&!resultado?`<div style="color:var(--muted);font-size:13px;margin-bottom:20px">Todavía no registraste tu propósito. Hacé clic en el botón de abajo para completarlo.</div>`:''}
+    <a href="/onboarding.html" target="_blank" style="display:block;margin-top:18px;padding:14px;background:${col}15;border:1px solid ${col}44;border-radius:12px;text-align:center;text-decoration:none;color:${col};font-size:13px;font-weight:700">
+      📋 Completar mi formulario de inicio →
+    </a>`;
 }
 function buildProcesoHTML(o){
   const col=curProg&&curProg.col?curProg.col:'#C9A84C';
