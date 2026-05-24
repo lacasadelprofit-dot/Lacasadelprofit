@@ -510,6 +510,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
         <div class="s-tab"        id="tab-semanas"      onclick="switchTab('semanas')"><span class="ti">📅</span>Semanas</div>
         <div class="s-tab"        id="tab-material"     onclick="switchTab('material')"><span class="ti">📁</span>Material</div>
         <div class="s-tab"        id="tab-logros"       onclick="switchTab('logros')"><span class="ti">🏅</span>Logros</div>
+        <div class="s-tab"        id="tab-sesiones"     onclick="switchTab('sesiones')"><span class="ti">🤝</span>Mis Sesiones</div>
         <div class="s-tab"        id="tab-notas"        onclick="switchTab('notas')"><span class="ti">📝</span>Notas</div>
         <div class="s-tab"        id="tab-comunicacion" onclick="switchTab('comunicacion')"><span class="ti">💬</span>Comunicación</div>
       </div>
@@ -809,7 +810,7 @@ function closeCelebracion(){
 function switchTab(tab){
   if(curTab==='semanas')saveNotaImmediate();
   curTab=tab;
-  ['general','semanas','habitos','material','vision','logros','notas','comunicacion','proceso'].forEach(t=>{
+  ['general','semanas','habitos','material','vision','logros','sesiones','notas','comunicacion','proceso'].forEach(t=>{
     document.getElementById('tab-'+t)?.classList.toggle('active',t===tab);
   });
   const ww=document.getElementById('weekListWrap');const sp=document.getElementById('sSpacer');
@@ -821,6 +822,7 @@ function switchTab(tab){
   else if(tab==='material')renderMaterialTab();
   else if(tab==='vision')renderVisionTab();
   else if(tab==='logros')renderLogrosTab();
+  else if(tab==='sesiones')renderSesionesTab();
   else if(tab==='notas')renderNotasTab();
   else if(tab==='comunicacion')renderComunicacionTab();
   else if(tab==='proceso')renderProcesoTab();
@@ -2657,36 +2659,121 @@ function toggleMaterialVisto(mid){
 // ══════════════════════════════════════════════════════════════════════════════
 // NOTAS
 // ══════════════════════════════════════════════════════════════════════════════
+function renderSesionesTab(){
+  const col=curProg.col||'#C9A84C';
+  // Recopilar sesiones de todas las fuentes, deduplicar por id/fecha+tipo
+  const seen=new Set();
+  const all=[];
+  [...(allSessions||[]),...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[])].forEach(s=>{
+    const key=(s.id||'')+'|'+(s.fecha||s.date||'')+'|'+(s.tipo||s.titulo||'');
+    if(seen.has(key))return;seen.add(key);
+    all.push({
+      id:s.id||'',
+      fecha:(s.fecha||s.date||'').slice(0,10),
+      titulo:s.titulo||s.tipo||'Sesión',
+      estado:s.estado||'pendiente',
+      notas:s.notas||s.nota||'',
+      link:s.link||s.meet||''
+    });
+  });
+  all.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const todayStr=new Date().toISOString().slice(0,10);
+  const proximas=all.filter(s=>s.fecha>=todayStr);
+  const pasadas=all.filter(s=>s.fecha<todayStr).reverse();
+
+  function sesCard(s){
+    const comp=(s.estado||'').toLowerCase().includes('comp');
+    const canc=(s.estado||'').toLowerCase().includes('canc');
+    const badgeC=comp?'#10B981':canc?'#EF4444':col;
+    const badgeTxt=comp?'Completada':canc?'Cancelada':'Programada';
+    const badgeBg=comp?'rgba(16,185,129,.15)':canc?'rgba(239,68,68,.1)':col+'22';
+    return`<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${comp?'#10B981':canc?'#EF4444':col};border-radius:12px;padding:14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <div style="font-size:14px;font-weight:700;color:var(--text)">${s.titulo}</div>
+        <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:${badgeBg};color:${badgeC}">${badgeTxt}</span>
+      </div>
+      ${s.fecha?`<div style="font-size:12px;color:var(--muted);margin-bottom:${s.notas||s.link?'8px':'0'}">${fmtDate(s.fecha)}</div>`:''}
+      ${s.notas?`<div style="font-size:12px;color:var(--text);background:var(--card2);border-radius:8px;padding:8px;line-height:1.6;white-space:pre-wrap">${s.notas}</div>`:''}
+      ${s.link&&!comp?`<a href="${s.link}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;color:${col};text-decoration:none;font-weight:600">🔗 Unirse a la sesión</a>`:''}
+    </div>`;
+  }
+
+  const emptyHTML=`<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">No hay sesiones registradas.</div>`;
+
+  document.getElementById('mainContent').innerHTML=`
+    <div style="margin-bottom:16px">
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">🤝 Mis Sesiones</div>
+      <div style="font-size:12px;color:var(--muted)">${all.length} sesión${all.length!==1?'es':''} en total</div>
+    </div>
+    ${proximas.length?`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Próximas</div>${proximas.map(sesCard).join('')}`:''}
+    ${pasadas.length?`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:${proximas.length?'18px':0} 0 10px">Historial</div>${pasadas.map(sesCard).join('')}`:''}
+    ${!all.length?emptyHTML:''}
+  `;
+}
+
 function renderNotasTab(){
   if(!curInsc.notasSer)curInsc.notasSer=[];
-  const notas=curInsc.notasSer.filter(n=>n.de!=='admin');// ser solo ve sus propias notas
+  const notas=curInsc.notasSer.filter(n=>n.de!=='admin');
   const col=curProg.col||'#C9A84C';
+  const sems=curInsc.semanas||[];
 
-  // Sort: semana notes by semNum desc, then free notes by date (newest first)
-  const semNotas=[...notas].filter(n=>n.tipo==='semana').sort((a,b)=>(b.semNum||0)-(a.semNum||0));
+  // Recopilar reflexiones de todas las semanas
+  const reflexItems=[];
+  sems.forEach((sem,idx)=>{
+    const p=progreso[String(idx)]||{};
+    const ref=p.reflexion&&typeof p.reflexion==='object'?p.reflexion:null;
+    if(ref&&(ref.aprendiste||ref.dificil||ref.llevas)){
+      reflexItems.push({tipo:'reflexion',semNum:idx+1,semTitulo:sem.titulo||'',fecha:ref.fecha||'',ref});
+    }
+  });
+  reflexItems.sort((a,b)=>b.semNum-a.semNum);
+
+  // Notas libres y de semana
   const freeNotas=[...notas].filter(n=>n.tipo!=='semana').reverse();
-  const allSorted=[...freeNotas,...semNotas];
-  const items=allSorted.length?allSorted.map(n=>{
+  const semNotas=[...notas].filter(n=>n.tipo==='semana').sort((a,b)=>(b.semNum||0)-(a.semNum||0));
+
+  function notaCard(n){
     const isSem=n.tipo==='semana';
     const badge=isSem?`<span style="display:inline-flex;align-items:center;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;background:${col}22;border:1px solid ${col}44;color:${col};margin-right:6px">S${n.semNum}${n.semTitulo?' · '+n.semTitulo:''}</span>`:'';
     return`<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${isSem?col:'var(--border)'};border-radius:12px;padding:14px 40px 14px 14px;margin-bottom:8px;position:relative">
       <div style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:6px">${badge}<span style="font-size:10px;color:var(--muted)">${n.fecha||''}</span></div>
       <div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${n.texto}</div>
-      ${n.id?`<button onclick="deletePortalNota('${n.id}')" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px" title="Eliminar">×</button>`:''}
-    </div>`;}).join('')
-    :`<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">Todavía no escribiste notas.</div>`;
+      ${n.id?`<button onclick="deletePortalNota('${n.id}')" style="position:absolute;top:10px;right:10px;background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;padding:2px 6px">×</button>`:''}
+    </div>`;
+  }
+
+  function reflexCard(r){
+    const rc='#8B5CF6';
+    return`<div style="background:var(--card);border:1px solid ${rc}33;border-left:3px solid ${rc};border-radius:12px;padding:14px;margin-bottom:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+        <span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:20px;background:${rc}22;border:1px solid ${rc}44;color:${rc}">✦ Reflexión S${r.semNum}${r.semTitulo?' · '+r.semTitulo:''}</span>
+        <span style="font-size:10px;color:var(--muted)">${r.fecha||''}</span>
+      </div>
+      ${r.ref.aprendiste?`<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:${rc};margin-bottom:3px">¿Qué aprendiste?</div><div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${r.ref.aprendiste}</div></div>`:''}
+      ${r.ref.dificil?`<div style="margin-bottom:8px"><div style="font-size:10px;font-weight:700;color:${rc};margin-bottom:3px">¿Qué fue difícil?</div><div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${r.ref.dificil}</div></div>`:''}
+      ${r.ref.llevas?`<div><div style="font-size:10px;font-weight:700;color:${rc};margin-bottom:3px">¿Qué llevás?</div><div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">${r.ref.llevas}</div></div>`:''}
+    </div>`;
+  }
+
+  const totalItems=freeNotas.length+semNotas.length+reflexItems.length;
+  const itemsHTML=[
+    ...freeNotas.map(notaCard),
+    ...(reflexItems.length||semNotas.length?[`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:16px 0 10px">Reflexiones & Notas por semana</div>`]:[]),
+    ...reflexItems.map(reflexCard),
+    ...semNotas.map(notaCard)
+  ].join('');
 
   document.getElementById('mainContent').innerHTML=`
     <div style="margin-bottom:14px">
-      <div style="font-size:18px;font-weight:800;color:var(--gl)">📝 Mis Notas</div>
-      <div style="font-size:12px;color:var(--muted)">${notas.length} nota${notas.length!==1?'s':''}</div>
+      <div style="font-size:18px;font-weight:800;color:var(--gl)">📝 Mis Notas & Reflexiones</div>
+      <div style="font-size:12px;color:var(--muted)">${totalItems} registro${totalItems!==1?'s':''}</div>
     </div>
     <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px">
       <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px">Nueva nota</div>
       <textarea id="portalNotaInput" style="width:100%;min-height:100px;background:var(--card2);border:1px solid var(--border);border-radius:8px;padding:10px;color:var(--text);font-size:13px;resize:vertical;font-family:inherit;line-height:1.6" placeholder="Escribí tu reflexión, aprendizaje o lo que quieras registrar..."></textarea>
       <button onclick="savePortalNota()" style="margin-top:8px;width:100%;padding:10px;background:rgba(201,168,76,.15);border:1px solid rgba(201,168,76,.4);border-radius:9px;color:var(--gold);font-size:13px;font-weight:700;cursor:pointer">Guardar nota</button>
     </div>
-    ${items}
+    ${totalItems?itemsHTML:'<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">Todavía no escribiste notas ni reflexiones.</div>'}
   `;
 }
 function savePortalNota(){
