@@ -4319,43 +4319,85 @@ function renderProgInscritos(){
   const el=document.getElementById('progInscritosView');if(!el)return;
   const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
   const col=p.col||'#C9A84C';
+  const todayStr=new Date().toISOString().slice(0,10);
   const isActivo=x=>{const sem=calcSemanaAuto(x);return sem<=(p.semanas_dur||(p.semanas||[]).length||999);};
   const lista=inscripciones.filter(i=>i.programaId===curJourneyProgId);
-  const activos=lista.filter(isActivo);
-  const finalizados=lista.filter(x=>!isActivo(x));
   if(!lista.length){
     el.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">🗺️</div><div>Ningún ser inscripto en este programa aún.<br>Usá <strong>+ Inscribir Ser</strong> desde el Journey.</div></div>`;
     return;
   }
-  const kpis=`<div class="kpi-grid" style="margin-bottom:18px">
-    <div class="kc go"><div class="ki">👥</div><div class="kl">Inscritos</div><div class="kv">${lista.length}</div><div class="ks">Total</div></div>
-    <div class="kc bl"><div class="ki">🔥</div><div class="kl">Activos</div><div class="kv">${activos.length}</div><div class="ks">En progreso</div></div>
-    <div class="kc pu"><div class="ki">✅</div><div class="kl">Finalizados</div><div class="kv">${finalizados.length}</div><div class="ks">Completaron</div></div>
-  </div>`;
-  const cards=lista.sort((a,b)=>(isActivo(b)?1:0)-(isActivo(a)?1:0)).map(insc=>{
-    const ser=seres.find(x=>x.id===insc.serId);if(!ser)return '';
+
+  // Calcular datos por inscripción
+  const datos=lista.map(insc=>{
+    const ser=seres.find(x=>x.id===insc.serId)||{nombre:'?'};
     const activo=isActivo(insc);
     const totalSem=p.semanas_dur||(p.semanas||[]).length||1;
-    const semAuto=calcSemanaAuto(insc);
-    const semActual=Math.min(semAuto,totalSem);
+    const semActual=Math.min(calcSemanaAuto(insc),totalSem);
     const sems=insc.semanas||p.semanas||[];
     const pr=insc.progreso||{};
     const desDone=Object.values(pr).reduce((a,pp)=>a+Object.values(pp.desafios||{}).filter(Boolean).length,0);
     const desTotal=sems.reduce((a,s)=>a+(s.desafios||[]).length,0);
     const pct=desTotal?Math.round(desDone/desTotal*100):Math.round(semActual/totalSem*100);
-    return `<div onclick="navToInscDetail('${insc.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--card2);border-radius:10px;border:1px solid ${activo?col+'33':'var(--border)'};cursor:pointer;transition:.15s;margin-bottom:7px" onmouseover="this.style.borderColor='${col}'" onmouseout="this.style.borderColor='${activo?col+'33':'var(--border)'}'">
+
+    // Última actividad: fecha más reciente en habTrack o desTrack
+    const allDates=[...Object.keys(insc.habTrack||{}),...Object.keys(insc.desTrack||{})].filter(d=>{
+      const ht=insc.habTrack&&insc.habTrack[d];const dt=insc.desTrack&&insc.desTrack[d];
+      return (ht&&Object.values(ht).some(Boolean))||(dt&&Object.values(dt).some(Boolean));
+    }).sort();
+    const lastDate=allDates.length?allDates[allDates.length-1]:null;
+    const diasInactivo=lastDate?Math.floor((new Date(todayStr)-new Date(lastDate))/86400000):null;
+
+    // Semáforo
+    let semaforo,semaforoColor;
+    if(!activo){semaforo='✓';semaforoColor='#6B7280';}
+    else if(diasInactivo===null||diasInactivo>=7){semaforo='🔴';semaforoColor='#EF4444';}
+    else if(diasInactivo>=3){semaforo='🟡';semaforoColor='#F59E0B';}
+    else{semaforo='🟢';semaforoColor='#10B981';}
+
+    // Próxima sesión
+    const proxSes=(insc.sesionesAsignadas||[])
+      .filter(s=>s.fecha&&s.fecha>=todayStr&&(s.estado||'')!=='cancelada')
+      .sort((a,b)=>a.fecha.localeCompare(b.fecha))[0]||null;
+
+    // Score para ordenar: rojos primero, luego amarillos, verdes, finalizados
+    const score=!activo?3:diasInactivo===null||diasInactivo>=7?0:diasInactivo>=3?1:2;
+
+    return{insc,ser,activo,semActual,totalSem,desDone,desTotal,pct,lastDate,diasInactivo,semaforo,semaforoColor,proxSes,score};
+  }).sort((a,b)=>a.score-b.score);
+
+  const activos=datos.filter(d=>d.activo).length;
+  const finalizados=datos.filter(d=>!d.activo).length;
+  const enRiesgo=datos.filter(d=>d.activo&&(d.diasInactivo===null||d.diasInactivo>=3)).length;
+
+  const kpis=`<div class="kpi-grid" style="margin-bottom:18px">
+    <div class="kc go"><div class="ki">👥</div><div class="kl">Inscritos</div><div class="kv">${lista.length}</div><div class="ks">Total</div></div>
+    <div class="kc bl"><div class="ki">🟢</div><div class="kl">Activos</div><div class="kv">${activos}</div><div class="ks">Al día</div></div>
+    <div class="kc re"><div class="ki">⚠️</div><div class="kl">En riesgo</div><div class="kv">${enRiesgo}</div><div class="ks">Sin actividad</div></div>
+    <div class="kc pu"><div class="ki">✅</div><div class="kl">Finalizados</div><div class="kv">${finalizados}</div><div class="ks">Completaron</div></div>
+  </div>`;
+
+  const cards=datos.map(({insc,ser,activo,semActual,totalSem,desDone,desTotal,pct,lastDate,diasInactivo,semaforo,semaforoColor,proxSes})=>{
+    const actividadTxt=!activo?'Finalizado':diasInactivo===null?'Sin actividad registrada':diasInactivo===0?'Activo hoy':diasInactivo===1?'Ayer':`Hace ${diasInactivo} días`;
+    const proxSesTxt=proxSes?`📅 ${proxSes.fecha}${proxSes.nom?' · '+proxSes.nom:''}`:null;
+    const borderCol=activo?semaforoColor+'44':'var(--border)';
+    return `<div onclick="navToInscDetail('${insc.id}')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card2);border-radius:10px;border:1px solid ${borderCol};cursor:pointer;transition:.15s;margin-bottom:7px" onmouseover="this.style.borderColor='${col}'" onmouseout="this.style.borderColor='${borderCol}'">
       <div style="width:36px;height:36px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
       <div style="flex:1;min-width:0">
-        <div style="font-size:13px;font-weight:700;color:var(--text)">${ser.nombre}</div>
-        <div style="font-size:10px;color:var(--muted)">Sem ${semActual}/${totalSem}${desTotal?' · '+desDone+'/'+desTotal+' desafíos':''}</div>
-        <div style="background:var(--border);border-radius:20px;height:4px;overflow:hidden;margin-top:4px"><div style="background:${col};height:100%;width:${pct}%;border-radius:20px;transition:.4s"></div></div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span style="font-size:13px;font-weight:700;color:var(--text)">${ser.nombre}</span>
+          <span style="font-size:13px">${semaforo}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:1px">Sem ${semActual}/${totalSem}${desTotal?' · '+desDone+'/'+desTotal+' des':''} · ${actividadTxt}</div>
+        ${proxSesTxt?`<div style="font-size:10px;color:${col};margin-bottom:3px">${proxSesTxt}</div>`:''}
+        <div style="background:var(--border);border-radius:20px;height:4px;overflow:hidden;margin-top:3px"><div style="background:${activo?semaforoColor:col};height:100%;width:${pct}%;border-radius:20px;transition:.4s"></div></div>
       </div>
       <div style="text-align:right;flex-shrink:0">
-        <div style="font-size:15px;font-weight:800;color:${col}">${pct}%</div>
-        <div style="font-size:9px;font-weight:600;color:${activo?'#10B981':'#6B7280'}">${activo?'● ACTIVO':'✓ FIN'}</div>
+        <div style="font-size:15px;font-weight:800;color:${activo?semaforoColor:col}">${pct}%</div>
+        <div style="font-size:9px;font-weight:600;color:${semaforoColor}">${activo?'ACTIVO':'FIN'}</div>
       </div>
     </div>`;
   }).join('');
+
   el.innerHTML=kpis+`<div>${cards}</div>`;
 }
 function renderJourney(){
