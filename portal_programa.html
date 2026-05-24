@@ -1153,7 +1153,7 @@ async function loadPregDia(boxId,seed){
       const pRand=pregs[Math.floor(Math.random()*pregs.length)];
       box.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px">
         <div class="preg-dia" style="flex:1;min-width:200px">
-          <div class="preg-dia-label">✦ Pregunta aleatoria</div>
+          <div class="preg-dia-label">✦ Pregunta del momento</div>
           <div class="preg-dia-texto">${pRand.texto||''}</div>
           ${pRand.matiz?`<div class="preg-dia-dim">${pRand.matiz}</div>`:''}
         </div>
@@ -2583,10 +2583,10 @@ function renderMaterialTab(){
 
   // Contar solo los desbloqueados para el progreso
   const desbloqueados=all.filter(m=>m._semIdx===undefined||!getWeekDates(m._semIdx).isLocked);
-  const vistos=desbloqueados.filter(m=>visto[m.id||m.titulo]).length;
+  const vistos=desbloqueados.filter((m,i)=>visto[m.id||(m.titulo&&m.titulo.trim())||('mat_'+i)]).length;
 
-  const cards=all.map(m=>{
-    const mid=m.id||m.titulo||'mat';
+  const cards=all.map((m,idx)=>{
+    const mid=m.id||(m.titulo&&m.titulo.trim())||('mat_'+idx);
     const esVisto=!!visto[mid];
     // Determinar si está bloqueado por semana futura
     const wd=m._semIdx!==undefined?getWeekDates(m._semIdx):null;
