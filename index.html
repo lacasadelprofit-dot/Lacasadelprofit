@@ -1855,22 +1855,26 @@ th{background:rgba(28,26,46,.88)!important;}
   <h2 id="moSintesisTit">📝 Nueva síntesis</h2>
   <input type="hidden" id="siId">
   <div class="fg">
-   <label>Agente / Arquetipo</label>
+   <label>Agente / Mente Maestra</label>
    <select id="siAgente" class="fi">
-    <option value="profit">✨ Profit</option>
-    <option value="finco">💰 Finco</option>
-    <option value="das">⚡ Das</option>
-    <option value="jesus">✨ Jesús</option>
-    <option value="sanjuan">📜 San Juan</option>
-    <option value="melquizedec">🜂 Melquizedec</option>
-    <option value="metatron">🧊 Metatrón</option>
-    <option value="miguel">⚔ Arcángel Miguel</option>
-    <option value="pleyadianos">🌌 Pleyadianos</option>
-    <option value="merlin">🔮 Merlin</option>
-    <option value="carnegie">🏛 Carnegie</option>
-    <option value="maxwell">📈 Maxwell</option>
-    <option value="emerson">📖 Emerson</option>
-    <option value="tesla">⚙ Tesla</option>
+    <optgroup label="— Agentes —">
+     <option value="profit">✨ Profit</option>
+     <option value="finco">💰 Finco</option>
+     <option value="das">⚡ Das</option>
+    </optgroup>
+    <optgroup label="— Mente Maestra —">
+     <option value="jesus">✨ Jesús</option>
+     <option value="sanjuan">📜 San Juan</option>
+     <option value="melquizedec">🜂 Melquizedec</option>
+     <option value="metatron">🧊 Metatrón</option>
+     <option value="miguel">⚔ Arcángel Miguel</option>
+     <option value="pleyadianos">🌌 Pleyadianos</option>
+     <option value="merlin">🔮 Merlin</option>
+     <option value="carnegie">🏛 Carnegie</option>
+     <option value="maxwell">📈 Maxwell</option>
+     <option value="emerson">📖 Emerson</option>
+     <option value="tesla">⚙ Tesla</option>
+    </optgroup>
    </select>
   </div>
   <div class="fg"><label>Título</label><input id="siTitulo" class="fi" placeholder="Ej: Patrón de postergación detectado"></div>
@@ -7798,11 +7802,18 @@ function renderSintesis(){
   if(!lista)return;
 
   // Filtros por agente
+  const agentes=['profit','finco','das'];
   const usados=[...new Set(sintesis.map(s=>s.agente).filter(Boolean))];
-  filtrosEl.innerHTML=['todos',...usados].map(k=>{
+  const chips=['todos',...usados];
+  filtrosEl.innerHTML=chips.map((k,i)=>{
     const active=_siFiltro===k;
     const lbl=k==='todos'?'Todos':(_siAgentes[k]||k);
-    return`<button onclick="_siFiltro='${k}';renderSintesis()" style="padding:5px 14px;border-radius:20px;border:1px solid ${active?'rgba(201,168,76,.4)':'rgba(255,255,255,.08)'};background:${active?'rgba(201,168,76,.12)':'transparent'};color:${active?'var(--gl)':'var(--muted)'};font-size:11px;font-weight:700;cursor:pointer">${lbl}</button>`;
+    const esAgente=agentes.includes(k);
+    const sepBefore=i>0&&k!=='todos'&&!agentes.includes(chips[i-1])&&chips[i-1]!=='todos'&&esAgente;
+    const col=esAgente?'rgba(201,168,76,.4)':'rgba(155,130,212,.3)';
+    const colBg=esAgente?'rgba(201,168,76,.12)':'rgba(155,130,212,.1)';
+    const colTxt=esAgente?'var(--gl)':'var(--purple)';
+    return`<button onclick="_siFiltro='${k}';renderSintesis()" style="padding:5px 14px;border-radius:20px;border:1px solid ${active?col:'rgba(255,255,255,.08)'};background:${active?colBg:'transparent'};color:${active?colTxt:'var(--muted)'};font-size:11px;font-weight:700;cursor:pointer">${lbl}</button>`;
   }).join('');
 
   const filtrados=_siFiltro==='todos'?sintesis:sintesis.filter(s=>s.agente===_siFiltro);
