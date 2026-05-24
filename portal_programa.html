@@ -2709,6 +2709,7 @@ function renderSesionesTab(){
   [...(allSessions||[]),...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[])].forEach((s,i)=>{
     const key=(s.id||'')+'|'+(s.fecha||s.date||'')+'|'+(s.tipo||s.titulo||s.nom||'')+'|'+i;
     if(seen.has(key))return;seen.add(key);
+    if((s.estado||'').toLowerCase().includes('canc'))return;
     all.push({
       id:s.id||'',
       fecha:(s.fecha||s.date||'').slice(0,10),
