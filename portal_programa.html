@@ -736,6 +736,11 @@ function goToSelector(){document.getElementById('app').style.display='none';show
 function launchApp(ser,insc,prog){
   curSer=ser;curInsc=insc;curProg=prog;_procesoLoaded=false;
   progreso=JSON.parse(JSON.stringify(insc.progreso||{}));
+  // Si la inscripción no tiene fecha de inicio, fijarla a hoy (primer acceso del participante)
+  if(!curInsc.fechaInicio){
+    curInsc.fechaInicio=new Date().toISOString().slice(0,10);
+    saveProgress();
+  }
   const col=prog.col||'#C9A84C';
   document.documentElement.style.setProperty('--gold',col);
   document.documentElement.style.setProperty('--gl',lighten(col));
@@ -1775,13 +1780,13 @@ function getWeekDates(idx){
   let startD;
   if(curInsc.fechaInicio){
     // Siempre desde la fecha de inicio del programa, sin importar el día de semana
-    startD=new Date(curInsc.fechaInicio+'T12:00:00');
+    const _fi=(curInsc.fechaInicio||'').slice(0,10);
+    startD=new Date(_fi+'T12:00:00');
     startD.setDate(startD.getDate()+idx*7);
   } else {
-    // Fallback: usar inicio individual de la semana si no hay fechaInicio del programa
-    const sem=(curInsc.semanas||[])[idx];
-    if(sem&&sem.inicio) startD=new Date(sem.inicio+'T12:00:00');
-    else return{start:null,end:null,isLocked:false,label:null};
+    // Sin fechaInicio definida: usar hoy como base (primer acceso)
+    startD=new Date();startD.setHours(12,0,0,0);
+    startD.setDate(startD.getDate()+idx*7);
   }
   const endD=new Date(startD);endD.setDate(startD.getDate()+6);
   const now=new Date();now.setHours(0,0,0,0);
@@ -1953,9 +1958,16 @@ function toggleDesDia(dId,dateStr,semIdx){
   p.desafiosDias[dId][dateStr]=!p.desafiosDias[dId][dateStr];
   if(!p.desafios)p.desafios={};
   p.desafios[dId]=Object.values(p.desafiosDias[dId]).some(Boolean);
-  updateProgressBar();renderWeekList();saveProgress();
+  // Sync desTrack para el calendario mensual
   const sem=(curInsc.semanas||[])[semIdx];
   const des=sem?sem.desafios||[]:[];
+  const desObj=des.find(x=>x.id===dId);
+  if(desObj&&desObj.area){
+    if(!curInsc.desTrack)curInsc.desTrack={};
+    if(!curInsc.desTrack[dateStr])curInsc.desTrack[dateStr]={};
+    curInsc.desTrack[dateStr][desObj.area]=!!p.desafiosDias[dId][dateStr];
+  }
+  updateProgressBar();renderWeekList();saveProgress();
   if(p.desafios[dId]&&des.length>0&&des.every(d=>(p.desafios||{})[d.id])){setTimeout(()=>mostrarCelebracion(sem.titulo||''),400);}
   renderSemana(semIdx);
 }
@@ -2324,7 +2336,7 @@ function renderPortalCalMensual(){
       ${dNames.map(d=>`<div style="text-align:center;font-size:9px;font-weight:700;color:var(--muted);padding:2px">${d}</div>`).join('')}
     </div>
     <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:3px">${cells}</div>
-    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:10px">Tocá un día para registrar tus hábitos y desafíos</div>
+    <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:10px">H = hábitos diarios · D = desafíos trabajados</div>
   </div>`;
 }
 
