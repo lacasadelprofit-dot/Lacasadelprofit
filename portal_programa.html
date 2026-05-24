@@ -2348,15 +2348,8 @@ function renderPortalCalSemanal(){
   const AK=['espiritual','mental','fisica','social'];
   const habTrack=curInsc.habTrack||{};const desTrack=curInsc.desTrack||{};
   const semIdx=_pCalWeek||0;
-  let wStart=new Date();
-  if(curInsc.fechaInicio){
-    wStart=new Date(curInsc.fechaInicio+'T12:00:00');
-    wStart.setDate(wStart.getDate()+semIdx*7);
-  } else {
-    wStart.setDate(wStart.getDate()-wStart.getDay()+1);
-  }
-  const dow=wStart.getDay();
-  wStart.setDate(wStart.getDate()-(dow===0?6:dow-1));
+  const _wd=getWeekDates(semIdx);
+  const wStart=_wd.start||new Date();
   const days=[];for(let i=0;i<7;i++){const d=new Date(wStart);d.setDate(d.getDate()+i);days.push(d);}
   const dNames=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
   const todayStr=new Date().toISOString().split('T')[0];
