@@ -1516,8 +1516,8 @@ th{background:rgba(28,26,46,.88)!important;}
  <div class="mb">
   <h2>🔗 Vincular registro</h2>
   <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Registro de <strong id="moVincularOnbNom"></strong></div>
-  <div class="fg"><label>Programa</label><select id="moVincularOnbSel" class="fi" onchange="onVincularProgChange()"></select></div>
-  <div class="fg" id="fgVincularInsc" style="display:none"><label>Inscripción (ser)</label><select id="moVincularInscSel" class="fi"></select></div>
+  <div class="fg"><label>Programa activo</label><select id="moVincularOnbSel" class="fi"></select></div>
+  <div id="moVincularOnbHint" style="font-size:11px;color:var(--muted);margin-top:-6px;margin-bottom:8px">Solo se muestran programas con inscriptos activos</div>
   <div style="display:flex;gap:10px;margin-top:16px">
    <button class="btn btn-p" onclick="confirmarVincular()">Confirmar</button>
    <button class="btn btn-s" onclick="document.getElementById('moVincularOnb').classList.remove('open')">Cancelar</button>
@@ -4067,44 +4067,29 @@ function guardarNotasFacilitador(){
 }
 function vincularOnboarding(id){
   const o=onboardings.find(x=>x.id===id);if(!o)return;
-  if(!programas.length){toast('No hay programas creados aún');return;}
-  const opts=programas.map(p=>`<option value="${p.id}" ${o.progId===p.id?'selected':''}>${p.ico||'📚'} ${p.nombre}</option>`).join('');
+  const today=new Date().toISOString().slice(0,10);
+  const progIdsActivos=new Set(inscripciones.filter(i=>!i.fechaFin||i.fechaFin>=today).map(i=>i.programaId));
+  const progsActivos=programas.filter(p=>progIdsActivos.has(p.id));
+  if(!progsActivos.length){toast('No hay programas con inscriptos activos');return;}
+  const opts=progsActivos.map(p=>`<option value="${p.id}" ${o.progId===p.id?'selected':''}>${p.ico||'📚'} ${p.nombre}</option>`).join('');
   const mo=document.getElementById('moVincularOnb');
   document.getElementById('moVincularOnbNom').textContent=o.nombre||'Sin nombre';
   document.getElementById('moVincularOnbSel').innerHTML=`<option value="">— Sin asignar —</option>${opts}`;
   document.getElementById('moVincularOnbSel').value=o.progId||'';
   mo._onbId=id;
-  onVincularProgChange(o.inscripcionId||'');
   mo.classList.add('open');
-}
-function onVincularProgChange(preselectedInscId){
-  const progId=document.getElementById('moVincularOnbSel').value;
-  const fg=document.getElementById('fgVincularInsc');
-  const sel=document.getElementById('moVincularInscSel');
-  if(!progId){fg.style.display='none';return;}
-  const lista=inscripciones.filter(i=>i.programaId===progId);
-  if(!lista.length){fg.style.display='none';return;}
-  sel.innerHTML=`<option value="">— Sin vincular a inscripción —</option>`+lista.map(i=>{
-    const ser=seres.find(s=>s.id===i.serId);
-    const nom=ser?ser.nombre:'Ser desconocido';
-    const pre=preselectedInscId===i.id?'selected':'';
-    return `<option value="${i.id}" ${pre}>${nom}${i.code?' ('+i.code+')':''}</option>`;
-  }).join('');
-  fg.style.display='';
 }
 function confirmarVincular(){
   const mo=document.getElementById('moVincularOnb');
   const id=mo._onbId;
   const progId=document.getElementById('moVincularOnbSel').value;
-  const inscId=document.getElementById('moVincularInscSel')?.value||'';
   const o=onboardings.find(x=>x.id===id);if(!o)return;
   o.progId=progId||null;
-  o.inscripcionId=inscId||null;
   o.estado=progId?'asignado':'pendiente';
   save();
   mo.classList.remove('open');
   renderProgRegistros();
-  toast(inscId?'🔗 Registro vinculado a inscripción':progId?'🔗 Registro vinculado al programa':'Vínculo removido');
+  toast(progId?'🔗 Registro vinculado al programa':'Vínculo removido');
 }
 function renderProgInscritos(){
   const el=document.getElementById('progInscritosView');if(!el)return;
@@ -4350,9 +4335,10 @@ function saveHabito(){
 function addSesion(){openModal('sesion',null);}
 function editSesion(i){openModal('sesion',i);}
 function delSesion(i){
-  const sem=getCurSem();if(!sem)return;
+  if(!confirm('¿Eliminar esta sesión?'))return;
+  const sem=getCurSem();if(!sem){toast('Error: semana no encontrada');return;}
   if(!sem.sesiones)sem.sesiones=[];
-  sem.sesiones.splice(i,1);save();refreshJView();
+  sem.sesiones.splice(i,1);save();refreshJView();toast('Sesión eliminada');
 }
 function saveSesion(){
   const tipo=document.getElementById('snTipo').value.trim();if(!tipo){alert('El tipo de sesión es obligatorio');return;}
@@ -4986,7 +4972,7 @@ function renderJourneySesiones(insc,prog,col){
         </div>
         <span style="font-size:18px">${{pendiente:'⏳',agendada:'📅',completada:'✅',cancelada:'❌'}[s.estado||'pendiente']||'⏳'}</span>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
         <select onchange="updateDetailSesAsig(${idx},'fac',this)" style="flex:1;min-width:110px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:10px;border-radius:6px;padding:3px 6px">
           <option value="">Sin asignar</option>
           ${facs.map(f=>`<option value="${f.id}" ${s.facId===f.id?'selected':''}>${f.nombre}</option>`).join('')}
@@ -4999,13 +4985,17 @@ function renderJourneySesiones(insc,prog,col){
           <option value="cancelada" ${s.estado==='cancelada'?'selected':''}>❌ Cancelada</option>
         </select>
         <input type="number" value="${s.monto||''}" placeholder="$ Monto" onchange="updateDetailSesAsig(${idx},'monto',this)" style="width:90px;background:var(--card);border:1px solid var(--border);color:var(--gl);font-size:10px;border-radius:6px;padding:3px 6px;font-weight:600">
+        <button onclick="delDetailSesAsig('${insc.id}',${idx})" style="background:none;border:none;cursor:pointer;color:#EF4444;font-size:14px;padding:2px 4px" title="Eliminar sesión">✕</button>
       </div>
     </div>`;
   }).join('');
   return `<div>
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
       <div style="font-size:12px;font-weight:700;color:var(--gl)">✨ Control de sesiones</div>
-      <div style="font-size:10px;color:var(--muted)">${sesAsig.filter(s=>s.estado==='completada').length}/${sesAsig.length} completadas${total>0?' · $'+total.toLocaleString('es-AR'):''}</div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div style="font-size:10px;color:var(--muted)">${sesAsig.filter(s=>s.estado==='completada').length}/${sesAsig.length} completadas${total>0?' · $'+total.toLocaleString('es-AR'):''}</div>
+        <button onclick="addDetailSesAsig('${insc.id}')" style="background:${col}22;border:1px solid ${col};border-radius:7px;color:${col};font-size:11px;font-weight:700;padding:3px 10px;cursor:pointer">+ Nueva</button>
+      </div>
     </div>
     <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">${sesHtml}</div>
     <button onclick="saveDetailSesAsig('${insc.id}')" style="width:100%;background:${col}22;border:1px solid ${col};border-radius:8px;color:${col};font-size:11px;font-weight:600;padding:7px;cursor:pointer">💾 Guardar cambios</button>
@@ -5478,6 +5468,31 @@ function updateDetailSesAsig(idx,field,el){
   else if(field==='fecha'){insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],fecha:el.value};}
   else if(field==='monto'){insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],monto:parseFloat(el.value)||0};}
   else{insc.sesionesAsignadas[idx]={...insc.sesionesAsignadas[idx],estado:el.value};}
+}
+function addDetailSesAsig(inscId){
+  const insc=inscripciones.find(x=>x.id===inscId);if(!insc)return;
+  const prog=programas.find(x=>x.id===insc.programaId);
+  const herrs=herramientas.filter(h=>!h.esProducto);
+  const opciones=herrs.map((h,i)=>`${i+1}. ${h.ico||'✨'} ${h.nom}`).join('\n');
+  const input=prompt('Nueva sesión — escribí el número:\n\n'+opciones);
+  if(!input)return;
+  const idx=parseInt(input.trim())-1;
+  const h=herrs[idx];
+  if(!h){toast('Número inválido');return;}
+  if(!insc.sesionesAsignadas)insc.sesionesAsignadas=[];
+  const slot=insc.sesionesAsignadas.filter(s=>s.nom===h.nom).length+1;
+  insc.sesionesAsignadas.push({nom:h.nom,slot,facId:'',facNombre:'',fecha:'',estado:'pendiente',monto:0});
+  save();
+  switchJourneyTab('sesiones');
+  toast('Sesión agregada ✅');
+}
+function delDetailSesAsig(inscId,idx){
+  if(!confirm('¿Eliminar esta sesión?'))return;
+  const insc=inscripciones.find(x=>x.id===inscId);if(!insc)return;
+  insc.sesionesAsignadas.splice(idx,1);
+  save();
+  switchJourneyTab('sesiones');
+  toast('Sesión eliminada');
 }
 function saveDetailSesAsig(id){
   const insc=inscripciones.find(x=>x.id===id);if(!insc)return;
