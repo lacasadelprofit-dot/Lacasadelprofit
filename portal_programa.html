@@ -932,7 +932,7 @@ function buildHabProgCardsHTML(detailed=false){
   }).join('');
   if(!cards) return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px"><div style="font-size:12px;color:var(--muted)">Elegí tus hábitos en <strong style="color:var(--gold);cursor:pointer" onclick="switchTab('habitos')">Hábitos</strong> para ver tu progreso aquí</div></div>`;
   if(detailed) return`<div>${cards}</div>`;
-  return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">${cards}</div>`;
+  return`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:4px">${cards}</div>`;
 }
 
 function renderGeneral(){try{_renderGeneral();}catch(e){console.error('renderGeneral error:',e);document.getElementById('mainContent').innerHTML='<div style="padding:30px;color:var(--muted);font-size:12px">Error al cargar. Recargá la página.</div>';}}
@@ -2458,7 +2458,8 @@ function renderResumen(){
   </div>`).join('');
 
   return `<div>
-    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">Resumen — últimos 90 días</div>
+    ${buildHabProgCardsHTML(true)}
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;margin-top:18px">Estadísticas — últimos 90 días</div>
 
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
       <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;text-align:center">
