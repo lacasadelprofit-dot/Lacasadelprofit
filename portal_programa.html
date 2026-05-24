@@ -872,7 +872,7 @@ function makeSpiralSVG(col,pct){
     +'</svg>';
 }
 
-function buildHabProgCardsHTML(){
+function buildHabProgCardsHTML(detailed=false){
   const AC_H={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
   const AI_H={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
   const AL_H={espiritual:'Espiritual',mental:'Mental',fisica:'Física',social:'Social'};
@@ -894,26 +894,45 @@ function buildHabProgCardsHTML(){
     doneArr.forEach(done=>{if(done){curS++;maxStr=Math.max(maxStr,curS);}else curS=0;});
     let streak=0;
     for(let i=doneArr.length-1;i>=0;i--){if(doneArr[i])streak++;else break;}
-    const last28=progDates.slice(-28);
-    const miniCells=last28.map(ds=>{const done=!!(habTrack[ds]&&habTrack[ds][k]);return`<div style="width:10px;height:10px;border-radius:2px;background:${done?cH:'rgba(255,255,255,.06)'}"></div>`;}).join('');
     const lvl=pct>=80?'💎':pct>=60?'🏅':pct>=40?'⚡':pct>=20?'🌱':'⭕';
-    return`<div style="background:var(--card);border:1px solid ${cH}33;border-left:3px solid ${cH};border-radius:12px;padding:13px 14px;margin-bottom:8px">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-        <span style="font-size:20px">${AI_H[k]}</span>
-        <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">${AL_H[k]}</div></div>
-        <div style="text-align:right;flex-shrink:0"><div style="font-size:17px;font-weight:900;color:${cH}">${pct}%</div><div style="font-size:9px;color:var(--muted)">${doneDays}/${totalDays} días</div></div>
+    if(detailed){
+      const last28=progDates.slice(-28);
+      const miniCells=last28.map(ds=>{const done=!!(habTrack[ds]&&habTrack[ds][k]);return`<div style="width:10px;height:10px;border-radius:2px;background:${done?cH:'rgba(255,255,255,.06)'}"></div>`;}).join('');
+      return`<div style="background:var(--card);border:1px solid ${cH}33;border-left:3px solid ${cH};border-radius:12px;padding:13px 14px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:20px">${AI_H[k]}</span>
+          <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">${AL_H[k]}</div></div>
+          <div style="text-align:right;flex-shrink:0"><div style="font-size:17px;font-weight:900;color:${cH}">${pct}%</div><div style="font-size:9px;color:var(--muted)">${doneDays}/${totalDays} días</div></div>
+        </div>
+        <div style="background:rgba(255,255,255,.05);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px"><div style="height:100%;border-radius:20px;background:${cH};width:${pct}%;transition:.8s ease"></div></div>
+        <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:9px">${miniCells}</div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
+          <div style="font-size:10px;color:var(--muted)">🔥 Racha: <span style="color:${cH};font-weight:700">${streak}d</span></div>
+          <div style="font-size:10px;color:var(--muted)">⭐ Mejor: <span style="color:${cH};font-weight:700">${maxStr}d</span></div>
+          <div style="margin-left:auto;font-size:14px">${lvl}</div>
+        </div>
+      </div>`;
+    }
+    // Modo compacto: grilla 2×2
+    return`<div style="background:var(--card);border:1px solid ${cH}33;border-top:3px solid ${cH};border-radius:12px;padding:12px 10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+        <span style="font-size:18px">${AI_H[k]}</span>
+        <span style="font-size:13px">${lvl}</span>
       </div>
-      <div style="background:rgba(255,255,255,.05);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px"><div style="height:100%;border-radius:20px;background:${cH};width:${pct}%;transition:.8s ease"></div></div>
-      <div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:9px">${miniCells}</div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">
-        <div style="font-size:10px;color:var(--muted)">🔥 Racha actual: <span style="color:${cH};font-weight:700">${streak} día${streak!==1?'s':''}</span></div>
-        <div style="font-size:10px;color:var(--muted)">⭐ Mejor racha: <span style="color:${cH};font-weight:700">${maxStr} día${maxStr!==1?'s':''}</span></div>
-        <div style="margin-left:auto;font-size:14px">${lvl}</div>
+      <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}</div>
+      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">${AL_H[k]}</div>
+      <div style="background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden;margin-bottom:6px"><div style="height:100%;border-radius:20px;background:${cH};width:${pct}%;transition:.8s ease"></div></div>
+      <div style="font-size:14px;font-weight:900;color:${cH};margin-bottom:4px">${pct}%</div>
+      <div style="font-size:9px;color:var(--muted)">${doneDays}/${totalDays} días</div>
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
+        <div style="font-size:9px;color:var(--muted)">🔥 Racha: <span style="color:${cH};font-weight:700">${streak}d</span></div>
+        <div style="font-size:9px;color:var(--muted)">⭐ Mejor: <span style="color:${cH};font-weight:700">${maxStr}d</span></div>
       </div>
     </div>`;
   }).join('');
   if(!cards) return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px"><div style="font-size:12px;color:var(--muted)">Elegí tus hábitos en <strong style="color:var(--gold);cursor:pointer" onclick="switchTab('habitos')">Hábitos</strong> para ver tu progreso aquí</div></div>`;
-  return`<div style="margin-bottom:4px">${cards}</div>`;
+  if(detailed) return`<div>${cards}</div>`;
+  return`<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px">${cards}</div>`;
 }
 
 function renderGeneral(){try{_renderGeneral();}catch(e){console.error('renderGeneral error:',e);document.getElementById('mainContent').innerHTML='<div style="padding:30px;color:var(--muted);font-size:12px">Error al cargar. Recargá la página.</div>';}}
@@ -1110,7 +1129,28 @@ function _renderGeneral(){
 
 
     <!-- RESUMEN DE HÁBITOS -->
+    <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">🌱 Hábitos</div>
     ${buildHabProgCardsHTML()}
+
+    <!-- RESUMEN DE DESAFÍOS -->
+    ${(()=>{
+      const ad={espiritual:{t:0,d:0},mental:{t:0,d:0},fisica:{t:0,d:0},social:{t:0,d:0}};
+      const AC={espiritual:'var(--esp)',mental:'var(--men)',fisica:'var(--fis)',social:'var(--soc)'};
+      const AB={espiritual:'rgba(199,125,255,.18)',mental:'rgba(96,165,250,.18)',fisica:'rgba(74,222,128,.18)',social:'rgba(251,191,36,.18)'};
+      sems.forEach((sem,i)=>{const p=getP(i);(sem.desafios||[]).forEach(d=>{const a=d.area&&ad[d.area]?d.area:'espiritual';ad[a].t++;if((p.desafios||{})[d.id])ad[a].d++;});});
+      const cards=AREAS.map(a=>{const x=ad[a.key];const pct=x.t?Math.round(x.d/x.t*100):0;
+        return '<div style="flex:1;min-width:0;background:'+AB[a.key]+';border:1px solid '+AC[a.key].replace('var(','').replace(')','')+'33;border-radius:12px;padding:10px 8px;text-align:center">'
+          +'<div style="font-size:20px;margin-bottom:4px">'+a.ico+'</div>'
+          +'<div style="font-size:10px;font-weight:700;color:'+AC[a.key]+';margin-bottom:6px">'+a.lbl+'</div>'
+          +'<div style="background:rgba(255,255,255,.08);border-radius:20px;height:4px;overflow:hidden;margin-bottom:4px">'
+          +'<div style="height:100%;border-radius:20px;background:'+AC[a.key]+';width:'+pct+'%;transition:.6s ease"></div></div>'
+          +'<div style="font-size:11px;font-weight:700;color:'+AC[a.key]+'">'+pct+'%</div>'
+          +'<div style="font-size:9px;color:var(--muted)">'+x.d+'/'+x.t+'</div>'
+          +'</div>';
+      }).join('');
+      return '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;margin-top:14px">🎯 Desafíos por área</div>'
+           + '<div style="display:flex;gap:8px;margin-bottom:18px">'+cards+'</div>';
+    })()}
 
     <div id="pregDiaBox"></div>
 
@@ -1323,7 +1363,7 @@ function renderAvance(){
 
     <!-- HÁBITOS -->
     <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px;margin-top:4px">🌱 Progreso por hábito</div>
-    ${buildHabProgCardsHTML()}
+    ${buildHabProgCardsHTML(true)}
 
     <!-- CAMINO DE SEMANAS -->
     <div class="av2-journey">
