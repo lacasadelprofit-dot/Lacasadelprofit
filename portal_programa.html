@@ -913,21 +913,13 @@ function buildHabProgCardsHTML(detailed=false){
         </div>
       </div>`;
     }
-    // Modo compacto: grilla 2×2
-    return`<div style="background:var(--card);border:1px solid ${cH}33;border-top:3px solid ${cH};border-radius:12px;padding:12px 10px">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-        <span style="font-size:18px">${AI_H[k]}</span>
-        <span style="font-size:13px">${lvl}</span>
-      </div>
-      <div style="font-size:11px;font-weight:700;color:var(--text);margin-bottom:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${nom}</div>
-      <div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:8px">${AL_H[k]}</div>
-      <div style="background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden;margin-bottom:6px"><div style="height:100%;border-radius:20px;background:${cH};width:${pct}%;transition:.8s ease"></div></div>
-      <div style="font-size:14px;font-weight:900;color:${cH};margin-bottom:4px">${pct}%</div>
-      <div style="font-size:9px;color:var(--muted)">${doneDays}/${totalDays} días</div>
-      <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px">
-        <div style="font-size:9px;color:var(--muted)">🔥 Racha: <span style="color:${cH};font-weight:700">${streak}d</span></div>
-        <div style="font-size:9px;color:var(--muted)">⭐ Mejor: <span style="color:${cH};font-weight:700">${maxStr}d</span></div>
-      </div>
+    // Modo compacto: fila de 4
+    return`<div style="background:var(--card);border:1px solid ${cH}33;border-top:3px solid ${cH};border-radius:10px;padding:10px 8px;text-align:center">
+      <div style="font-size:20px;margin-bottom:4px">${AI_H[k]}</div>
+      <div style="font-size:10px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-bottom:6px" title="${nom}">${nom}</div>
+      <div style="background:rgba(255,255,255,.06);border-radius:20px;height:4px;overflow:hidden;margin-bottom:5px"><div style="height:100%;border-radius:20px;background:${cH};width:${pct}%;transition:.8s ease"></div></div>
+      <div style="font-size:13px;font-weight:900;color:${cH}">${pct}%</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:3px">🔥 ${streak}d</div>
     </div>`;
   }).join('');
   if(!cards) return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;text-align:center;margin-bottom:14px"><div style="font-size:12px;color:var(--muted)">Elegí tus hábitos en <strong style="color:var(--gold);cursor:pointer" onclick="switchTab('habitos')">Hábitos</strong> para ver tu progreso aquí</div></div>`;
