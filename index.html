@@ -4384,6 +4384,21 @@ function buildWeekEditorHTML(sem,col,semIdx,mode){
       </div>
       ${restoreBtn}${delBtn}
     </div>
+    <!-- INTENCIÓN / MENSAJE / PREGUNTA -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+      <div style="grid-column:1/-1">
+        <div style="font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">✦ Intención de la semana</div>
+        <textarea id="jsIntencion" rows="2" placeholder="¿Cuál es la intención central de esta semana?" onblur="saveSemExtra()" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px 10px;resize:vertical;font-family:inherit;line-height:1.6;outline:none">${(sem.intencion||'').replace(/</g,'&lt;')}</textarea>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--purple);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">✦ Mensaje del facilitador</div>
+        <textarea id="jsMensajeFac" rows="3" placeholder="Un mensaje personal para el ser esta semana…" onblur="saveSemExtra()" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px 10px;resize:vertical;font-family:inherit;line-height:1.6;outline:none">${(sem.mensajeFacilitador||'').replace(/</g,'&lt;')}</textarea>
+      </div>
+      <div>
+        <div style="font-size:10px;font-weight:700;color:var(--esp);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">✦ Pregunta de cierre</div>
+        <textarea id="jsPreguntaCierre" rows="3" placeholder="¿Qué pregunta cerrará la semana?" onblur="saveSemExtra()" style="width:100%;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;padding:8px 10px;resize:vertical;font-family:inherit;line-height:1.6;outline:none">${(sem.preguntaCierre||'').replace(/</g,'&lt;')}</textarea>
+      </div>
+    </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <!-- DESAFÍOS -->
       <div>
@@ -4501,9 +4516,18 @@ function saveSemTitulo(){
   const v=document.getElementById('jsTitulo');if(!v)return;
   sem.titulo=v.value;
   save();
-  // Solo refrescar la lista de semanas (no el contenido completo)
   if(journeyMode==='tmpl') refreshTmplWeekList();
   else refreshInscWeekList();
+}
+function saveSemExtra(){
+  const sem=getCurSem();if(!sem)return;
+  const i=document.getElementById('jsIntencion');
+  const m=document.getElementById('jsMensajeFac');
+  const p=document.getElementById('jsPreguntaCierre');
+  if(i)sem.intencion=i.value;
+  if(m)sem.mensajeFacilitador=m.value;
+  if(p)sem.preguntaCierre=p.value;
+  save();
 }
 function refreshTmplWeekList(){
   const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
