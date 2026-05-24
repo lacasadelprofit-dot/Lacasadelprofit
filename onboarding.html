@@ -822,8 +822,9 @@
 
       <div class="nav-row">
         <button class="btn-back" onclick="prevSlide()">← Atrás</button>
-        <button class="btn-next" onclick="finalize()" style="background:#4a7c59;">Finalizar ✓</button>
+        <button class="btn-next" id="btn-finalizar" onclick="finalize()" style="background:#4a7c59;">Finalizar ✓</button>
       </div>
+      <div id="save-status" style="text-align:center;margin-top:12px;font-size:11px;min-height:16px"></div>
     </div>
   </div>
 
@@ -1017,40 +1018,50 @@
       </div>
     `).join('');
 
+    // Mostrar estado de guardado
+    const saveStatus = document.getElementById('save-status');
+    if (saveStatus) { saveStatus.textContent = 'Guardando…'; saveStatus.style.color = 'var(--text2)'; }
+
+    const payload = {
+      nombre,
+      email,
+      fecha:            new Date().toISOString().split('T')[0],
+      estado:           'pendiente',
+      objetivos:        selections.objetivos,
+      objetivosExtra:   document.getElementById('objetivos-extra').value.trim(),
+      situacion:        selections.situacion,
+      situacionDetalle: document.getElementById('situacion-detalle').value.trim(),
+      compromiso:       selections.compromiso,
+      compromisoPropio: document.getElementById('compromiso-propio').value.trim(),
+      logroEsperado:    document.getElementById('logro-esperado').value.trim(),
+      tiempo:           selections.tiempo,
+      tiempoContexto:   document.getElementById('tiempo-contexto').value.trim(),
+      notasInternas: {
+        impresion:   document.getElementById('nota-impresion').value.trim(),
+        bloqueos:    document.getElementById('nota-bloqueos').value.trim(),
+        hipotesis:   document.getElementById('nota-hipotesis').value.trim(),
+        atencion:    document.getElementById('nota-atencion').value.trim(),
+        notaLibre:   document.getElementById('nota-libre').value.trim(),
+        potencial:   selections.ratings.potencial,
+        disposicion: selections.ratings.disposicion,
+      }
+    };
+
     try {
       const _sb = supabase.createClient(
         'https://vffmnyjjawvvctcqzkvj.supabase.co',
         'sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t'
       );
-      await _sb.from('onboardings').insert({ data: {
-        nombre,
-        email,
-        fecha:            new Date().toISOString().split('T')[0],
-        estado:           'pendiente',
-        objetivos:        selections.objetivos,
-        objetivosExtra:   document.getElementById('objetivos-extra').value.trim(),
-        situacion:        selections.situacion,
-        situacionDetalle: document.getElementById('situacion-detalle').value.trim(),
-        compromiso:       selections.compromiso,
-        compromisoPropio: document.getElementById('compromiso-propio').value.trim(),
-        logroEsperado:    document.getElementById('logro-esperado').value.trim(),
-        tiempo:           selections.tiempo,
-        tiempoContexto:   document.getElementById('tiempo-contexto').value.trim(),
-        notasInternas: {
-          impresion:   document.getElementById('nota-impresion').value.trim(),
-          bloqueos:    document.getElementById('nota-bloqueos').value.trim(),
-          hipotesis:   document.getElementById('nota-hipotesis').value.trim(),
-          atencion:    document.getElementById('nota-atencion').value.trim(),
-          notaLibre:   document.getElementById('nota-libre').value.trim(),
-          potencial:   selections.ratings.potencial,
-          disposicion: selections.ratings.disposicion,
-        }
-      }});
+      const { error } = await _sb.from('onboardings').insert({ data: payload });
+      if (error) throw error;
+      goTo(total - 1);
     } catch(e) {
-      console.warn('onboarding save:', e);
+      console.error('onboarding save:', e);
+      if (saveStatus) {
+        saveStatus.textContent = '⚠️ Error al guardar: ' + (e.message || 'intentá de nuevo');
+        saveStatus.style.color = '#EF4444';
+      }
     }
-
-    goTo(total - 1);
   }
 
   function truncate(str, len = 120) {
