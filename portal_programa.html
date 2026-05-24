@@ -2059,47 +2059,6 @@ function renderHabitosTab(){
   const hasChosen = curInsc.habitosElegidos && Object.keys(curInsc.habitosElegidos).length >= 4;
   if(!hasChosen){ renderHabitosForm(false); return; }
 
-  // Hábitos progress cards
-  const habElegidos=curInsc.habitosElegidos||{};
-  const habTrackH=curInsc.habTrack||{};
-  const AC_H={espiritual:'#8B5CF6',mental:'#3B82F6',fisica:'#10B981',social:'#F59E0B'};
-  const AI_H={espiritual:'🌀',mental:'🧠',fisica:'💪',social:'🤝'};
-  const AL_H={espiritual:'Espiritual',mental:'Mental',fisica:'Física',social:'Social'};
-  const progDias=Math.max(1,Math.min(Math.round((parseFloat(curProg.meses)||3)*30+(parseInt(curProg.semanas_dur)||0)*7),365));
-  const startD=curInsc.fechaInicio?new Date(curInsc.fechaInicio+'T12:00:00'):(() => {const d=new Date();d.setDate(d.getDate()-progDias);return d;})();
-  const todayH=today();
-  const progDates=[];
-  for(let i=0;i<progDias;i++){const d=new Date(startD);d.setDate(d.getDate()+i);const ds=d.toISOString().slice(0,10);if(ds<=todayH)progDates.push(ds);else break;}
-
-  const habCards=['espiritual','mental','fisica','social'].filter(k=>habElegidos[k]&&(habElegidos[k].nom||habElegidos[k].nombre)).map(k=>{
-    const nom=habElegidos[k].nom||habElegidos[k].nombre||'';
-    const cH=AC_H[k];
-    const doneArr=progDates.map(ds=>!!(habTrackH[ds]&&habTrackH[ds][k]));
-    const doneDays=doneArr.filter(Boolean).length;
-    const pctH=progDates.length?Math.round(doneDays/progDates.length*100):0;
-    let maxStr=0,curStr=0,streakH=0;
-    doneArr.forEach(done=>{if(done){curStr++;maxStr=Math.max(maxStr,curStr);}else curStr=0;});
-    for(let i=doneArr.length-1;i>=0;i--){if(doneArr[i])streakH++;else break;}
-    const last28=progDates.slice(-28);
-    const mini=last28.map(ds=>{const done=!!(habTrackH[ds]&&habTrackH[ds][k]);return'<div style="width:10px;height:10px;border-radius:2px;background:'+(done?cH:'rgba(255,255,255,.06)')+'"></div>';}).join('');
-    const lvl=pctH>=80?'💎':pctH>=60?'🏅':pctH>=40?'⚡':pctH>=20?'🌱':'⭕';
-    return'<div style="background:var(--card);border:1px solid '+cH+'33;border-left:3px solid '+cH+';border-radius:12px;padding:13px 14px;margin-bottom:8px">'
-      +'<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
-      +'<span style="font-size:20px">'+AI_H[k]+'</span>'
-      +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+nom+'</div>'
-      +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.6px">'+AL_H[k]+'</div></div>'
-      +'<div style="text-align:right;flex-shrink:0"><div style="font-size:17px;font-weight:900;color:'+cH+'">'+pctH+'%</div>'
-      +'<div style="font-size:9px;color:var(--muted)">'+doneDays+'/'+progDates.length+' días</div></div></div>'
-      +'<div style="background:rgba(255,255,255,.05);border-radius:20px;height:5px;overflow:hidden;margin-bottom:10px">'
-      +'<div style="height:100%;border-radius:20px;background:'+cH+';width:'+pctH+'%;transition:.8s ease"></div></div>'
-      +'<div style="display:flex;flex-wrap:wrap;gap:2px;margin-bottom:9px">'+mini+'</div>'
-      +'<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center">'
-      +'<div style="font-size:10px;color:var(--muted)">🔥 Racha actual: <span style="color:'+cH+';font-weight:700">'+streakH+' día'+(streakH!==1?'s':'')+'</span></div>'
-      +'<div style="font-size:10px;color:var(--muted)">⭐ Mejor racha: <span style="color:'+cH+';font-weight:700">'+maxStr+' día'+(maxStr!==1?'s':'')+'</span></div>'
-      +'<div style="margin-left:auto;font-size:14px">'+lvl+'</div>'
-      +'</div></div>';
-  }).join('');
-
   document.getElementById('mainContent').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
       <div>
@@ -2108,7 +2067,6 @@ function renderHabitosTab(){
       </div>
       <button onclick="renderHabitosForm(true)" style="padding:5px 11px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:11px;cursor:pointer">✏️ Editar</button>
     </div>
-    ${habCards}
     <div id="pCalSubNav" style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap">
       <button id="pcaltab_sem" onclick="switchPortalCalView('sem')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📆 Semanal</button>
       <button id="pcaltab_mes" onclick="switchPortalCalView('mes')" style="padding:6px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--muted);font-size:12px;font-weight:600;cursor:pointer">📅 Mensual</button>
