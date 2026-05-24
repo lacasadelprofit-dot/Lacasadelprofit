@@ -1887,6 +1887,8 @@ function renderSemana(idx){
         </div>
       </div>`:''}
     </div>
+    ${sem.intencion?`<div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.22);border-radius:14px;padding:16px 18px;margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">✦ Intención de la semana</div><div style="font-size:14px;color:var(--text);line-height:1.7">${sem.intencion}</div></div>`:''}
+    ${sem.mensajeFacilitador?`<div style="background:rgba(155,130,212,.07);border:1px solid rgba(155,130,212,.22);border-radius:14px;padding:16px 18px;margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:var(--esp);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">✦ Mensaje del facilitador</div><div style="font-size:14px;color:var(--text);line-height:1.7">${sem.mensajeFacilitador}</div></div>`:''}
     ${hasAreas?`<div class="area-grid">${AREAS.map(a=>{
       const items=byArea[a.key];const doneC=items.des.filter(d=>(p.desafios||{})[d.id]).length;
       return`<div class="area-card ${a.cls}">
@@ -1906,6 +1908,7 @@ function renderSemana(idx){
       <div class="nota-wrap"><textarea id="notaText" placeholder="Anotá reflexiones, aprendizajes, preguntas…" style="min-height:80px"></textarea>
       <div class="nota-save-row"><button class="btn-save-nota" onclick="addNotaSemana()">Agregar nota</button><span class="nota-saved" id="notaSaved">✓ Guardado</span></div></div>
     </div>
+    ${sem.preguntaCierre?`<div style="background:rgba(100,180,140,.07);border:1px solid rgba(100,180,140,.22);border-radius:14px;padding:16px 18px;margin-bottom:14px"><div style="font-size:10px;font-weight:700;color:var(--green);letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">✦ Pregunta de cierre</div><div style="font-size:14px;color:var(--text);line-height:1.7">${sem.preguntaCierre}</div></div>`:''}
     ${_reflexionBlockHTML}
     ${navHTML}
   `;
@@ -2236,7 +2239,7 @@ function renderPortalCalMensual(){
   const sesInfoMap={};
   [...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[]),...(allSessions||[])].forEach(s=>{
     const fd=(s.fecha||s.date||'').slice(0,10);if(!fd)return;
-    if(!sesInfoMap[fd])sesInfoMap[fd]={estado:s.estado||'',titulo:s.titulo||s.tipo||'Sesión'};
+    if(!sesInfoMap[fd])sesInfoMap[fd]={estado:s.estado||'',titulo:s.titulo||s.tipo||s.nom||'Sesión'};
   });
   const year=_pCalYear,month=_pCalMonth;
   const mNames=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -2703,49 +2706,55 @@ function renderSesionesTab(){
   // Recopilar sesiones de todas las fuentes, deduplicar por id/fecha+tipo
   const seen=new Set();
   const all=[];
-  [...(allSessions||[]),...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[])].forEach(s=>{
-    const key=(s.id||'')+'|'+(s.fecha||s.date||'')+'|'+(s.tipo||s.titulo||'');
+  [...(allSessions||[]),...(curInsc.sesionesAsignadas||[]),...(curInsc.semanas||[]).flatMap(s=>s.sesiones||[])].forEach((s,i)=>{
+    const key=(s.id||'')+'|'+(s.fecha||s.date||'')+'|'+(s.tipo||s.titulo||s.nom||'')+'|'+i;
     if(seen.has(key))return;seen.add(key);
     all.push({
       id:s.id||'',
       fecha:(s.fecha||s.date||'').slice(0,10),
-      titulo:s.titulo||s.tipo||'Sesión',
+      titulo:s.titulo||s.tipo||s.nom||'Sesión',
+      facNombre:s.facNombre||'',
       estado:s.estado||'pendiente',
       notas:s.notas||s.nota||'',
       link:s.link||s.meet||''
     });
   });
-  all.sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  all.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   const todayStr=new Date().toISOString().slice(0,10);
-  const proximas=all.filter(s=>s.fecha>=todayStr);
-  const pasadas=all.filter(s=>s.fecha<todayStr).reverse();
+  const proximas=all.filter(s=>s.fecha&&s.fecha>=todayStr);
+  const pasadas=all.filter(s=>s.fecha&&s.fecha<todayStr);
+  const sinFecha=all.filter(s=>!s.fecha);
 
   function sesCard(s){
     const comp=(s.estado||'').toLowerCase().includes('comp');
     const canc=(s.estado||'').toLowerCase().includes('canc');
-    const badgeC=comp?'#10B981':canc?'#EF4444':col;
-    const badgeTxt=comp?'Completada':canc?'Cancelada':'Programada';
-    const badgeBg=comp?'rgba(16,185,129,.15)':canc?'rgba(239,68,68,.1)':col+'22';
-    return`<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${comp?'#10B981':canc?'#EF4444':col};border-radius:12px;padding:14px;margin-bottom:10px">
+    const pend=!s.fecha||(s.estado||'pendiente')==='pendiente';
+    const badgeC=comp?'#10B981':canc?'#EF4444':pend?'#6B7280':col;
+    const badgeTxt=comp?'Completada':canc?'Cancelada':s.fecha?'Agendada':'Pendiente de fecha';
+    const badgeBg=comp?'rgba(16,185,129,.15)':canc?'rgba(239,68,68,.1)':pend?'rgba(107,114,128,.12)':col+'22';
+    return`<div style="background:var(--card);border:1px solid var(--border);border-left:3px solid ${comp?'#10B981':canc?'#EF4444':s.fecha?col:'rgba(107,114,128,.3)'};border-radius:12px;padding:14px;margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
         <div style="font-size:14px;font-weight:700;color:var(--text)">${s.titulo}</div>
         <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:${badgeBg};color:${badgeC}">${badgeTxt}</span>
       </div>
-      ${s.fecha?`<div style="font-size:12px;color:var(--muted);margin-bottom:${s.notas||s.link?'8px':'0'}">${fmtDate(s.fecha)}</div>`:''}
-      ${s.notas?`<div style="font-size:12px;color:var(--text);background:var(--card2);border-radius:8px;padding:8px;line-height:1.6;white-space:pre-wrap">${s.notas}</div>`:''}
+      ${s.fecha?`<div style="font-size:12px;color:var(--muted);margin-bottom:4px">📅 ${fmtDate(s.fecha)}</div>`:''}
+      ${s.facNombre?`<div style="font-size:12px;color:var(--muted);margin-bottom:4px">👤 ${s.facNombre}</div>`:''}
+      ${s.notas?`<div style="font-size:12px;color:var(--text);background:var(--card2);border-radius:8px;padding:8px;line-height:1.6;margin-top:6px;white-space:pre-wrap">${s.notas}</div>`:''}
       ${s.link&&!comp?`<a href="${s.link}" target="_blank" style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;font-size:12px;color:${col};text-decoration:none;font-weight:600">🔗 Unirse a la sesión</a>`:''}
     </div>`;
   }
 
   const emptyHTML=`<div style="padding:30px;text-align:center;color:var(--muted);font-size:13px">No hay sesiones registradas.</div>`;
+  const sep=(label,mt=18)=>`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:${mt}px 0 10px">${label}</div>`;
 
   document.getElementById('mainContent').innerHTML=`
     <div style="margin-bottom:16px">
       <div style="font-size:18px;font-weight:800;color:var(--gl)">🤝 Mis Sesiones</div>
       <div style="font-size:12px;color:var(--muted)">${all.length} sesión${all.length!==1?'es':''} en total</div>
     </div>
-    ${proximas.length?`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px">Próximas</div>${proximas.map(sesCard).join('')}`:''}
-    ${pasadas.length?`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin:${proximas.length?'18px':0} 0 10px">Historial</div>${pasadas.map(sesCard).join('')}`:''}
+    ${proximas.length?sep('Próximas',0)+proximas.map(sesCard).join(''):''}
+    ${sinFecha.length?sep('Sin fecha asignada',proximas.length?18:0)+sinFecha.map(sesCard).join(''):''}
+    ${pasadas.length?sep('Historial',proximas.length||sinFecha.length?18:0)+pasadas.map(sesCard).join(''):''}
     ${!all.length?emptyHTML:''}
   `;
 }
