@@ -2099,7 +2099,6 @@ async function _syncSupabase(){
     ['facturas',facturas],['herramientas',herramientas],['programas',programas],
     ['campanas',campañas],['inscripciones',inscripciones],['egresos',egresos],['regalos',regalos],
     ['comunidad_contenido',comunidad],
-    ['onboardings',onboardings],
     ['sintesis',sintesis]
   ];
   // Siempre guardar localmente primero
@@ -4309,7 +4308,9 @@ function confirmarVincular(){
   const o=onboardings.find(x=>x.id===id);if(!o)return;
   o.progId=progId||null;
   o.estado=progId?'asignado':'pendiente';
-  save();
+  // Upsert directo solo de este registro (no pasa por _syncSupabase)
+  _sb.from('onboardings').upsert([{id:String(o.id),data:o,updated_at:new Date().toISOString()}])
+    .then(({error})=>{if(error)console.error('onboarding upsert:',error.message);});
   mo.classList.remove('open');
   renderProgRegistros();
   toast(progId?'🔗 Registro vinculado al programa':'Vínculo removido');
