@@ -603,18 +603,29 @@ async function _doSave(cb){
       allInscList[idx].habitosElegidos=curInsc.habitosElegidos;
   }
   localStorage.setItem('pp_all_insc',JSON.stringify(allInscList));
-  // Save to Supabase via API
-  const _code=localStorage.getItem('pp_code')||'';
+  // Guardar directo en Supabase con el cliente JS (no necesita endpoint backend)
   try{
-    const body={recordId:curInsc.id,code:_code,progreso,extraData:{paraQue:curInsc.paraQue||'',resultadoDeseado:curInsc.resultadoDeseado||'',habTrack:curInsc.habTrack||{},desTrack:curInsc.desTrack||{},notasSer:curInsc.notasSer||[],comunicacion:curInsc.comunicacion||[],habitosElegidos:curInsc.habitosElegidos||{}}};
-    const resp=await fetch(SAVE_FN,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!resp.ok){
-      let detail='';try{const j=await resp.json();detail=j.error||'';}catch{}
-      console.warn('save-progreso HTTP',resp.status,detail);
-      _showSyncDot(false);
-      toast('⚠️ No se pudo guardar ('+resp.status+(detail?' · '+detail:'')+')');
-    } else _showSyncDot(true);
-  }catch(e){console.warn('save error:',e.message);_showSyncDot(false);toast('⚠️ Sin conexión — cambios guardados localmente');}
+    if(!_sb)throw new Error('cliente no inicializado');
+    const {id:_id,...dataFields}=curInsc;
+    const merged={
+      ...dataFields,
+      progreso,
+      habTrack:curInsc.habTrack||{},
+      desTrack:curInsc.desTrack||{},
+      habitosElegidos:curInsc.habitosElegidos||{},
+      paraQue:curInsc.paraQue||'',
+      resultadoDeseado:curInsc.resultadoDeseado||'',
+      comunicacion:curInsc.comunicacion||[],
+      notasSer:curInsc.notasSer||[],
+    };
+    const{error}=await _sb.from('inscripciones').update({data:merged}).eq('id',curInsc.id);
+    if(error)throw error;
+    _showSyncDot(true);
+  }catch(e){
+    console.warn('save error:',e.message);
+    _showSyncDot(false);
+    toast('⚠️ No se pudo guardar: '+e.message);
+  }
   if(cb)cb();
 }
 
