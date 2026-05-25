@@ -14,8 +14,6 @@
   --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
   --terra:#C17A48;--terra-d:#9A5C30;--terra-l:#F0E4D6;
   --text:#1C1200;--muted:#7A6E60;
-  --c-id:#C17A48;--c-di:#6B8F5E;--c-cu:#5E8FAD;
-  --c-re:#B87878;--c-pr:#C4964A;--c-co:#8A7AB8;
 }
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
@@ -75,33 +73,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .sec-wrap{max-width:680px;margin:0 auto;padding:0 16px;}
 .sec-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
   color:var(--terra-d);margin-bottom:16px;}
-
-/* Filtros por dimensión */
-.dim-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;}
-.dim-btn{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:var(--card);
-  color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.2px;}
-.dim-btn:hover{border-color:var(--terra);color:var(--terra);}
-.dim-btn.active{background:var(--terra);border-color:var(--terra);color:#fff;}
-
-/* Grilla de preguntas */
-.q-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:52px;}
-.q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 18px;
-  border-left-width:4px;transition:box-shadow .2s,transform .2s;}
-.q-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-2px);}
-.q-card[data-d="Identidad"]{border-left-color:var(--c-id);}
-.q-card[data-d="Dinero"]{border-left-color:var(--c-di);}
-.q-card[data-d="Cuerpo"]{border-left-color:var(--c-cu);}
-.q-card[data-d="Relaciones"]{border-left-color:var(--c-re);}
-.q-card[data-d="Propósito"]{border-left-color:var(--c-pr);}
-.q-card[data-d="Consciencia"]{border-left-color:var(--c-co);}
-.q-dim-tag{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;opacity:.65;}
-.q-card[data-d="Identidad"] .q-dim-tag{color:var(--c-id);}
-.q-card[data-d="Dinero"] .q-dim-tag{color:var(--c-di);}
-.q-card[data-d="Cuerpo"] .q-dim-tag{color:var(--c-cu);}
-.q-card[data-d="Relaciones"] .q-dim-tag{color:var(--c-re);}
-.q-card[data-d="Propósito"] .q-dim-tag{color:var(--c-pr);}
-.q-card[data-d="Consciencia"] .q-dim-tag{color:var(--c-co);}
-.q-texto{font-size:14px;font-weight:600;color:var(--text);line-height:1.55;}
 
 /* ── SEPARATOR ── */
 .page-sep{border:none;border-top:1px solid var(--border);margin:8px 0 48px;}
@@ -199,17 +170,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 </div>
 
-<!-- QUESTIONS SECTION -->
-<div class="sec-wrap">
-  <div class="sec-title" id="qCount">Preguntas expansivas</div>
-  <div class="dim-filters" id="dimFilters"></div>
-  <div class="q-grid" id="qGrid">
-    <div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Cargando preguntas...</p></div>
-  </div>
-</div>
-
-<hr class="page-sep" style="max-width:680px;margin-left:auto;margin-right:auto;">
-
 <!-- REGALOS SECTION -->
 <div class="regalos-wrap">
   <div class="sec-title" style="margin-bottom:8px">Regalos para vos</div>
@@ -240,7 +200,7 @@ function trackClick(boton){
 
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 
-let allPregs=[], allPregsOrig=[], featIdx=0, activeDim='Todas';
+let allPregs=[], allPregsOrig=[], featIdx=0;
 
 /* ── DEL MOMENTO ── */
 function showFeatured(){
@@ -267,34 +227,6 @@ function showDia(){
   const p=allPregsOrig[dayOfYear%allPregsOrig.length];
   document.getElementById('diaQ').textContent=p.texto;
   document.getElementById('diaDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+(p.matiz||'');
-}
-
-/* ── FILTROS POR DIMENSIÓN ── */
-function renderFilters(){
-  const dims=['Todas',...[...new Set(allPregsOrig.map(p=>p.matiz).filter(Boolean))]];
-  document.getElementById('dimFilters').innerHTML=dims.map(d=>{
-    const ico=d==='Todas'?'✦ ':DIM_ICO[d]?DIM_ICO[d]+' ':'';
-    return`<button class="dim-btn${d===activeDim?' active':''}" onclick="setDim('${d}')">${ico}${d}</button>`;
-  }).join('');
-}
-function setDim(dim){activeDim=dim;renderFilters();renderGrid();}
-
-/* ── GRILLA ── */
-function renderGrid(){
-  const lista=activeDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===activeDim);
-  if(!lista.length){
-    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Las preguntas estarán disponibles pronto.</p></div>';
-    document.getElementById('qCount').textContent='Preguntas expansivas';
-    return;
-  }
-  document.getElementById('qCount').textContent=activeDim==='Todas'
-    ?`${lista.length} preguntas expansivas`
-    :`${lista.length} preguntas · ${activeDim}`;
-  document.getElementById('qGrid').innerHTML=lista.map(p=>`
-    <div class="q-card" data-d="${p.matiz||''}">
-      ${p.matiz?`<div class="q-dim-tag">${DIM_ICO[p.matiz]||''} ${p.matiz}</div>`:''}
-      <div class="q-texto">${p.texto}</div>
-    </div>`).join('');
 }
 
 /* ── REGALOS ── */
@@ -350,8 +282,6 @@ async function init(){
     showFeatured();
   }
   showDia();
-  renderFilters();
-  renderGrid();
   await loadRegalos();
 }
 
