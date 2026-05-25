@@ -13,8 +13,7 @@
 :root{
   --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
   --terra:#C17A48;--terra-d:#9A5C30;--terra-l:#F0E4D6;
-  --text:#1C1200;--muted:#7A6E60;--green:#3DAA6A;
-  /* Dimensión colors */
+  --text:#1C1200;--muted:#7A6E60;
   --c-id:#C17A48;--c-di:#6B8F5E;--c-cu:#5E8FAD;
   --c-re:#B87878;--c-pr:#C4964A;--c-co:#8A7AB8;
 }
@@ -23,109 +22,137 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* ── HEADER ── */
 .site-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;
-  border-bottom:1px solid var(--border);background:var(--card);position:sticky;top:0;z-index:100;}
-.brand{font-size:15px;font-weight:800;color:var(--text);}
+  border-bottom:1px solid var(--border);background:rgba(250,250,248,.96);
+  backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.brand{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.1px;}
 .brand span{color:var(--terra);}
-.nav-link{font-size:13px;color:var(--muted);text-decoration:none;font-weight:600;
-  padding:6px 14px;border:1px solid var(--border);border-radius:20px;transition:all .2s;}
-.nav-link:hover{border-color:var(--terra);color:var(--terra);}
+.nav-link{font-size:13px;color:var(--terra-d);text-decoration:none;font-weight:700;
+  padding:7px 16px;border:1.5px solid var(--terra);border-radius:20px;transition:all .2s;}
+.nav-link:hover{background:var(--terra);color:#fff;}
 
 /* ── HERO ── */
-.hero{text-align:center;padding:56px 20px 40px;max-width:620px;margin:0 auto;}
-.hero .pill{display:inline-block;font-size:12px;font-weight:700;padding:5px 18px;border-radius:20px;
-  background:var(--terra-l);border:1px solid rgba(193,122,72,.35);color:var(--terra-d);
-  margin-bottom:20px;letter-spacing:.3px;}
-.hero h1{font-size:30px;font-weight:800;color:var(--text);line-height:1.22;margin-bottom:14px;}
-.hero p{font-size:15px;color:var(--muted);line-height:1.75;max-width:460px;margin:0 auto;}
+.hero{text-align:center;padding:60px 20px 44px;max-width:620px;margin:0 auto;position:relative;}
+.hero-deco{position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  font-size:100px;opacity:.035;pointer-events:none;line-height:1;color:var(--terra);}
+.hero .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+  padding:5px 18px;border-radius:20px;background:var(--terra-l);
+  border:1px solid rgba(193,122,72,.35);color:var(--terra-d);margin-bottom:22px;letter-spacing:.3px;}
+.hero h1{font-size:32px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:14px;letter-spacing:-.3px;}
+.hero p{font-size:15px;color:var(--muted);line-height:1.8;max-width:440px;margin:0 auto;}
 
-/* ── FEATURED QUESTION ── */
-.featured-wrap{max-width:620px;margin:0 auto 48px;padding:0 16px;}
-.featured-card{background:var(--text);border-radius:24px;padding:36px 32px;position:relative;overflow:hidden;}
-.featured-card::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;
-  border-radius:50%;background:rgba(193,122,72,.14);pointer-events:none;}
-.featured-card::after{content:'';position:absolute;bottom:-40px;left:-40px;width:120px;height:120px;
-  border-radius:50%;background:rgba(193,122,72,.08);pointer-events:none;}
+/* ── FEATURED WRAP ── */
+.featured-wrap{max-width:620px;margin:0 auto 52px;padding:0 16px;display:flex;flex-direction:column;gap:12px;}
+
+/* Card del momento (oscura) */
+.featured-card{background:var(--text);border-radius:24px;padding:34px 30px;position:relative;overflow:hidden;}
+.featured-card::before{content:'✦';position:absolute;top:-14px;right:22px;font-size:90px;
+  opacity:.05;color:#fff;pointer-events:none;line-height:1;}
 .featured-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-  color:rgba(193,122,72,.8);margin-bottom:16px;}
-.featured-q{font-size:22px;font-weight:700;color:#fff;line-height:1.4;position:relative;margin-bottom:20px;}
+  color:rgba(193,122,72,.85);margin-bottom:16px;}
+.featured-q{font-size:21px;font-weight:700;color:#fff;line-height:1.45;margin-bottom:18px;}
 .featured-dim{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;
-  background:rgba(193,122,72,.2);color:var(--terra-l);letter-spacing:.5px;position:relative;}
-.featured-next{display:flex;align-items:center;gap:8px;margin-top:20px;position:relative;}
-.btn-next{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:20px;
-  color:rgba(255,255,255,.75);font-size:12px;font-weight:600;padding:6px 16px;cursor:pointer;transition:all .2s;}
-.btn-next:hover{background:rgba(255,255,255,.18);color:#fff;}
+  background:rgba(193,122,72,.2);color:var(--terra-l);letter-spacing:.5px;}
+.featured-next{margin-top:18px;}
+.btn-next{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:20px;
+  color:rgba(255,255,255,.72);font-size:12px;font-weight:600;padding:6px 16px;cursor:pointer;transition:all .2s;}
+.btn-next:hover{background:rgba(255,255,255,.2);color:#fff;}
 
-/* ── QUESTIONS SECTION TITLE ── */
+/* Card del día (cálida) */
+.dia-card{background:linear-gradient(140deg,#FBF0E6 0%,var(--terra-l) 100%);
+  border:1.5px solid rgba(193,122,72,.28);border-radius:24px;padding:28px 30px;
+  position:relative;overflow:hidden;}
+.dia-card::before{content:'';position:absolute;top:-32px;right:-32px;width:130px;height:130px;
+  border-radius:50%;background:rgba(193,122,72,.1);pointer-events:none;}
+.dia-label{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--terra-d);margin-bottom:14px;}
+.dia-badge{background:var(--terra);color:#fff;font-size:9px;font-weight:800;
+  padding:2px 9px;border-radius:10px;letter-spacing:.4px;text-transform:none;}
+.dia-q{font-size:19px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;}
+.dia-dim{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;
+  background:rgba(193,122,72,.15);color:var(--terra-d);letter-spacing:.5px;}
+
+/* ── QUESTIONS SECTION ── */
 .sec-wrap{max-width:680px;margin:0 auto;padding:0 16px;}
 .sec-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
   color:var(--terra-d);margin-bottom:16px;}
 
-/* ── QUESTIONS GRID ── */
-.q-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:48px;}
+/* Filtros por dimensión */
+.dim-filters{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:20px;}
+.dim-btn{padding:5px 13px;border-radius:20px;border:1px solid var(--border);background:var(--card);
+  color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.2px;}
+.dim-btn:hover{border-color:var(--terra);color:var(--terra);}
+.dim-btn.active{background:var(--terra);border-color:var(--terra);color:#fff;}
+
+/* Grilla de preguntas */
+.q-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:52px;}
 .q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 18px;
-  border-left-width:4px;transition:box-shadow .2s;}
-.q-card:hover{box-shadow:0 4px 16px rgba(0,0,0,.08);}
+  border-left-width:4px;transition:box-shadow .2s,transform .2s;}
+.q-card:hover{box-shadow:0 6px 20px rgba(0,0,0,.07);transform:translateY(-2px);}
 .q-card[data-d="Identidad"]{border-left-color:var(--c-id);}
 .q-card[data-d="Dinero"]{border-left-color:var(--c-di);}
 .q-card[data-d="Cuerpo"]{border-left-color:var(--c-cu);}
 .q-card[data-d="Relaciones"]{border-left-color:var(--c-re);}
 .q-card[data-d="Propósito"]{border-left-color:var(--c-pr);}
 .q-card[data-d="Consciencia"]{border-left-color:var(--c-co);}
-.q-dim-tag{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
-  margin-bottom:8px;opacity:.6;}
+.q-dim-tag{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;margin-bottom:8px;opacity:.65;}
 .q-card[data-d="Identidad"] .q-dim-tag{color:var(--c-id);}
 .q-card[data-d="Dinero"] .q-dim-tag{color:var(--c-di);}
 .q-card[data-d="Cuerpo"] .q-dim-tag{color:var(--c-cu);}
 .q-card[data-d="Relaciones"] .q-dim-tag{color:var(--c-re);}
 .q-card[data-d="Propósito"] .q-dim-tag{color:var(--c-pr);}
 .q-card[data-d="Consciencia"] .q-dim-tag{color:var(--c-co);}
-.q-texto{font-size:14px;font-weight:600;color:var(--text);line-height:1.5;}
+.q-texto{font-size:14px;font-weight:600;color:var(--text);line-height:1.55;}
 
 /* ── SEPARATOR ── */
-.page-sep{border:none;border-top:1px solid var(--border);margin:8px 0 44px;}
+.page-sep{border:none;border-top:1px solid var(--border);margin:8px 0 48px;}
 
 /* ── REGALOS ── */
-.regalos-wrap{max-width:680px;margin:0 auto;padding:0 16px 60px;}
+.regalos-wrap{max-width:680px;margin:0 auto;padding:0 16px 64px;}
 .regalos-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 .regalo-card{background:var(--card);border:1px solid var(--border);border-radius:20px;
-  overflow:hidden;transition:box-shadow .2s;display:flex;flex-direction:column;}
-.regalo-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.08);}
+  overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column;}
+.regalo-card:hover{box-shadow:0 6px 24px rgba(0,0,0,.08);transform:translateY(-2px);}
 .regalo-card::before{content:'';display:block;height:3px;
   background:linear-gradient(90deg,var(--terra-l),var(--terra),var(--terra-l));}
-.regalo-body{padding:20px 18px 16px;flex:1;display:flex;flex-direction:column;}
-.regalo-ico{font-size:30px;margin-bottom:8px;display:block;}
-.regalo-nombre{font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px;}
-.regalo-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;flex:1;}
+.regalo-body{padding:22px 18px 18px;flex:1;display:flex;flex-direction:column;}
+.regalo-ico{font-size:32px;margin-bottom:10px;display:block;}
+.regalo-nombre{font-size:15px;font-weight:700;color:var(--text);margin-bottom:5px;line-height:1.3;}
+.regalo-desc{font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:16px;flex:1;}
 .btn-dl-jcc{width:100%;padding:11px;background:var(--terra);border:none;border-radius:10px;
   color:#fff;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;
   justify-content:center;gap:7px;text-decoration:none;transition:background .2s;margin-top:auto;}
 .btn-dl-jcc:hover{background:var(--terra-d);}
-@media(max-width:540px){.regalos-grid{grid-template-columns:1fr;}}
 
 /* ── CTA ── */
-.cta-wrap{max-width:540px;margin:0 auto 60px;padding:0 16px;}
-.cta-card{background:var(--text);border-radius:20px;padding:36px 28px;text-align:center;}
-.cta-card h2{font-size:20px;font-weight:800;color:#fff;margin-bottom:10px;}
-.cta-card p{font-size:14px;color:rgba(255,255,255,.65);line-height:1.7;margin-bottom:24px;}
-.btn-cta{display:inline-block;padding:14px 32px;background:var(--terra);border:none;border-radius:12px;
-  color:#fff;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;transition:background .2s;}
-.btn-cta:hover{background:var(--terra-d);}
+.cta-wrap{max-width:560px;margin:0 auto 64px;padding:0 16px;}
+.cta-card{background:var(--text);border-radius:24px;padding:42px 32px;text-align:center;position:relative;overflow:hidden;}
+.cta-card::before{content:'✦';position:absolute;bottom:-14px;right:22px;font-size:90px;
+  opacity:.04;color:#fff;line-height:1;}
+.cta-card h2{font-size:22px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-.2px;}
+.cta-card p{font-size:14px;color:rgba(255,255,255,.6);line-height:1.75;margin-bottom:26px;
+  max-width:380px;margin-left:auto;margin-right:auto;}
+.btn-cta{display:inline-block;padding:14px 36px;background:var(--terra);border:none;border-radius:12px;
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;
+  transition:background .2s,transform .15s;letter-spacing:.2px;}
+.btn-cta:hover{background:var(--terra-d);transform:translateY(-1px);}
 
 /* ── LOADER ── */
-#loader{display:none;position:fixed;inset:0;background:rgba(250,250,248,.94);z-index:9999;
-  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
-.spinner{width:44px;height:44px;border:3px solid rgba(193,122,72,.2);border-top-color:var(--terra);
+#loader{display:none;position:fixed;inset:0;background:rgba(250,250,248,.96);z-index:9999;
+  align-items:center;justify-content:center;}
+.spinner{width:40px;height:40px;border:3px solid rgba(193,122,72,.2);border-top-color:var(--terra);
   border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-
 .empty{text-align:center;padding:48px 20px;color:var(--muted);}
 .empty .ei{font-size:40px;margin-bottom:12px;}
 
 @media(max-width:540px){
-  .q-grid{grid-template-columns:1fr;}
-  .hero h1{font-size:24px;}
+  .q-grid,.regalos-grid{grid-template-columns:1fr;}
+  .hero h1{font-size:26px;}
   .featured-q{font-size:18px;}
+  .dia-q{font-size:17px;}
+  .featured-card,.dia-card{padding:24px 20px;}
   .site-header{padding:14px 16px;}
+  .cta-card{padding:30px 20px;}
 }
 </style>
 </head>
@@ -141,13 +168,16 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <!-- HERO -->
 <div class="hero">
+  <div class="hero-deco">✦</div>
   <div class="pill">✦ Preguntas expansivas · Juan Cruz Consciencia</div>
   <h1>Preguntas que abren<br>lo que está cerrado</h1>
   <p>No son para responder. Son para sostener — para que algo en vos empiece a expandirse desde adentro.</p>
 </div>
 
-<!-- FEATURED QUESTION -->
+<!-- FEATURED QUESTIONS -->
 <div class="featured-wrap">
+
+  <!-- Del momento -->
   <div class="featured-card">
     <div class="featured-label">✦ Pregunta del momento</div>
     <div class="featured-q" id="featuredQ">Cargando...</div>
@@ -156,22 +186,34 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <button class="btn-next" onclick="nextFeatured();trackClick('pregunta_siguiente')">Otra pregunta →</button>
     </div>
   </div>
+
+  <!-- Del día -->
+  <div class="dia-card">
+    <div class="dia-label">
+      📅 Pregunta del día
+      <span class="dia-badge" id="diaBadge"></span>
+    </div>
+    <div class="dia-q" id="diaQ">Cargando...</div>
+    <div class="dia-dim" id="diaDim"></div>
+  </div>
+
 </div>
 
 <!-- QUESTIONS SECTION -->
 <div class="sec-wrap">
   <div class="sec-title" id="qCount">Preguntas expansivas</div>
+  <div class="dim-filters" id="dimFilters"></div>
   <div class="q-grid" id="qGrid">
     <div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Cargando preguntas...</p></div>
   </div>
 </div>
 
-<hr class="page-sep" style="max-width:680px;margin:0 auto 44px;">
+<hr class="page-sep" style="max-width:680px;margin-left:auto;margin-right:auto;">
 
 <!-- REGALOS SECTION -->
 <div class="regalos-wrap">
   <div class="sec-title" style="margin-bottom:8px">Regalos para vos</div>
-  <p style="font-size:14px;color:var(--muted);margin-bottom:24px;line-height:1.65">Preparé estos materiales para vos. Son un regalo — descargalos y que te sirvan.</p>
+  <p style="font-size:14px;color:var(--muted);margin-bottom:26px;line-height:1.7">Preparé estos materiales para vos. Son un regalo — descargalos y que te sirvan.</p>
   <div id="regalosWrap">
     <div class="empty"><div class="ei">🎁</div><p>Cargando recursos...</p></div>
   </div>
@@ -190,24 +232,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
 function trackClick(boton){
-  try{
-    _sb.from('regalo_eventos').insert({data:{
-      tipo:'click_btn',
-      boton,
-      pagina:'recursos_jcc',
-      fecha:new Date().toISOString().split('T')[0],
-      ts:new Date().toISOString()
-    }});
-  }catch(e){}
+  try{_sb.from('regalo_eventos').insert({data:{tipo:'click_btn',boton,pagina:'recursos_jcc',fecha:new Date().toISOString().split('T')[0],ts:new Date().toISOString()}});}catch(e){}
 }
 
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 
-let allPregs=[], featIdx=0;
+let allPregs=[], allPregsOrig=[], featIdx=0, activeDim='Todas';
 
-/* ── FEATURED ── */
+/* ── DEL MOMENTO ── */
 function showFeatured(){
   if(!allPregs.length)return;
   const p=allPregs[featIdx%allPregs.length];
@@ -219,19 +254,47 @@ function nextFeatured(){
   showFeatured();
 }
 
-/* ── GRID ── */
-function renderGrid(){
-  if(!allPregs.length){
-    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Las preguntas estarán disponibles pronto.</p></div>';
+/* ── DEL DÍA (determinístico por fecha, igual para todos) ── */
+function showDia(){
+  const now=new Date();
+  const dayOfYear=Math.floor((now-new Date(now.getFullYear(),0,0))/86400000);
+  document.getElementById('diaBadge').textContent=`${now.getDate()} de ${MONTHS[now.getMonth()]}`;
+  if(!allPregsOrig.length){
+    document.getElementById('diaQ').textContent='¿Qué estoy eligiendo hoy que me expande?';
+    document.getElementById('diaDim').textContent='✦';
     return;
   }
-  document.getElementById('qCount').textContent=`${allPregs.length} preguntas expansivas`;
-  document.getElementById('qGrid').innerHTML=allPregs.map(p=>`
+  const p=allPregsOrig[dayOfYear%allPregsOrig.length];
+  document.getElementById('diaQ').textContent=p.texto;
+  document.getElementById('diaDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+(p.matiz||'');
+}
+
+/* ── FILTROS POR DIMENSIÓN ── */
+function renderFilters(){
+  const dims=['Todas',...[...new Set(allPregsOrig.map(p=>p.matiz).filter(Boolean))]];
+  document.getElementById('dimFilters').innerHTML=dims.map(d=>{
+    const ico=d==='Todas'?'✦ ':DIM_ICO[d]?DIM_ICO[d]+' ':'';
+    return`<button class="dim-btn${d===activeDim?' active':''}" onclick="setDim('${d}')">${ico}${d}</button>`;
+  }).join('');
+}
+function setDim(dim){activeDim=dim;renderFilters();renderGrid();}
+
+/* ── GRILLA ── */
+function renderGrid(){
+  const lista=activeDim==='Todas'?allPregs:allPregs.filter(p=>p.matiz===activeDim);
+  if(!lista.length){
+    document.getElementById('qGrid').innerHTML='<div class="empty" style="grid-column:1/-1"><div class="ei">✦</div><p>Las preguntas estarán disponibles pronto.</p></div>';
+    document.getElementById('qCount').textContent='Preguntas expansivas';
+    return;
+  }
+  document.getElementById('qCount').textContent=activeDim==='Todas'
+    ?`${lista.length} preguntas expansivas`
+    :`${lista.length} preguntas · ${activeDim}`;
+  document.getElementById('qGrid').innerHTML=lista.map(p=>`
     <div class="q-card" data-d="${p.matiz||''}">
       ${p.matiz?`<div class="q-dim-tag">${DIM_ICO[p.matiz]||''} ${p.matiz}</div>`:''}
       <div class="q-texto">${p.texto}</div>
-    </div>
-  `).join('');
+    </div>`).join('');
 }
 
 /* ── REGALOS ── */
@@ -253,7 +316,7 @@ async function loadRegalos(){
           <span class="regalo-ico">${r.icono||'🎁'}</span>
           <div class="regalo-nombre">${r.nombre||'Regalo'}</div>
           ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
-          <a class="btn-dl-jcc" href="${tUrl}" target="_blank" onclick="trackClick('regalo_${r.id}_${(r.nombre||'').replace(/\\s+/g,'-').toLowerCase().slice(0,30)}')">🎁 Recibir regalo</a>
+          <a class="btn-dl-jcc" href="${tUrl}" target="_blank" onclick="trackClick('regalo_${r.id}')">🎁 Recibir regalo</a>
         </div>
       </div>`;
     }).join('')}</div>`;
@@ -267,10 +330,11 @@ async function init(){
   document.getElementById('loader').style.display='flex';
   try{
     const {data,error}=await _sb.from('comunidad_contenido').select('id,data');
-    allPregs=(error||!data?.length)?[]:data
+    allPregsOrig=(error||!data?.length)?[]:data
       .map(r=>r.data||{})
       .filter(p=>p.tipo==='pregunta'&&p.activo!==false);
-    // Shuffle for variety
+    // Shuffle para "del momento" (no afecta allPregsOrig usado para "del día")
+    allPregs=[...allPregsOrig];
     for(let i=allPregs.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       [allPregs[i],allPregs[j]]=[allPregs[j],allPregs[i]];
@@ -285,8 +349,9 @@ async function init(){
   } else {
     showFeatured();
   }
+  showDia();
+  renderFilters();
   renderGrid();
-
   await loadRegalos();
 }
 
