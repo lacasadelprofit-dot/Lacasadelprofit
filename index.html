@@ -581,9 +581,10 @@ th{background:rgba(28,26,46,.88)!important;}
     <div id="sec-journey" class="sec">
      <!-- Sub-tabs (se ocultan cuando se abre el detalle) -->
      <div id="jTabBar" class="tab-bar" style="margin-bottom:18px">
-       <button class="tab-btn active" id="jTabResumen"   onclick="setJourneyTab('resumen')">📊 Resumen</button>
-       <button class="tab-btn"        id="jTabActivos"   onclick="setJourneyTab('activos')">🔥 Activos</button>
-       <button class="tab-btn"        id="jTabHistorial" onclick="setJourneyTab('historial')">📋 Historial</button>
+       <button class="tab-btn active" id="jTabResumen"      onclick="setJourneyTab('resumen')">📊 Resumen</button>
+       <button class="tab-btn"        id="jTabActivos"      onclick="setJourneyTab('activos')">🔥 Activos</button>
+       <button class="tab-btn"        id="jTabHistorial"    onclick="setJourneyTab('historial')">📋 Historial</button>
+       <button class="tab-btn"        id="jTabFacilitador"  onclick="setJourneyTab('facilitador')">🎯 Facilitador</button>
      </div>
      <!-- Lista (contenido de cada sub-tab) -->
      <div id="journeyAdminListView">
@@ -595,6 +596,7 @@ th{background:rgba(28,26,46,.88)!important;}
        <div id="jSecHistorial" style="display:none">
          <div id="journeyHistGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px"></div>
        </div>
+       <div id="jSecFacilitador" style="display:none"></div>
      </div>
      <!-- Detalle de inscripción (overlay completo) -->
      <div id="journeyAdminDetailView" style="display:none"></div>
@@ -1687,8 +1689,8 @@ th{background:rgba(28,26,46,.88)!important;}
  <div class="mb">
   <h2>🔗 Vincular registro</h2>
   <div style="font-size:13px;color:var(--muted);margin-bottom:16px">Registro de <strong id="moVincularOnbNom"></strong></div>
-  <div class="fg"><label>Programa activo</label><select id="moVincularOnbSel" class="fi"></select></div>
-  <div id="moVincularOnbHint" style="font-size:11px;color:var(--muted);margin-top:-6px;margin-bottom:8px">Solo se muestran programas con inscriptos activos</div>
+  <div class="fg"><label>Programa</label><select id="moVincularOnbSel" class="fi" onchange="updateVincularInscSel()"></select></div>
+  <div class="fg" id="moVincularInscRow"><label>Ser</label><select id="moVincularOnbInscSel" class="fi"></select></div>
   <div style="display:flex;gap:10px;margin-top:16px">
    <button class="btn btn-p" onclick="confirmarVincular()">Confirmar</button>
    <button class="btn btn-s" onclick="document.getElementById('moVincularOnb').classList.remove('open')">Cancelar</button>
@@ -4215,6 +4217,7 @@ function renderProgRegistros(){
   const badge=(n,col)=>n?`<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;background:${col}22;color:${col}">${n}</span>`:'';
   const cardHtml=(o,idx)=>{
     const prog=o.progId?programas.find(p=>p.id===o.progId):null;
+    const serVinc=o.serId?seres.find(x=>x.id===o.serId):null;
     return`<div class="card" style="padding:16px 18px;margin-bottom:10px">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
         <div style="flex:1;min-width:0">
@@ -4223,7 +4226,7 @@ function renderProgRegistros(){
             ${o.email?`<span style="font-size:11px;color:var(--muted)">${o.email}</span>`:''}
             ${o.estado==='asignado'?badge('Asignado','#4ADE80'):badge('Pendiente','#E8C96A')}
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">📅 ${o.fecha||'—'}${prog?` · 📚 ${prog.ico||''} ${prog.nombre}`:''}${o.tiempoDiario?` · ⏱ ${o.tiempoDiario} diarios`:''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">📅 ${o.fecha||'—'}${prog?` · 📚 ${prog.ico||''} ${prog.nombre}`:''}${serVinc?` · 👤 ${serVinc.nombre||serVinc.email}`:''}${o.tiempoDiario?` · ⏱ ${o.tiempoDiario} diarios`:''}</div>
           ${o.situacion?`<div style="font-size:12px;color:var(--text);margin-bottom:4px"><span style="color:var(--muted)">Situación:</span> ${String(o.situacion).split('\\n').pop().trim()}</div>`:''}
           ${(o.objetivos||[]).length?`<div style="font-size:12px;color:var(--text);margin-bottom:4px"><span style="color:var(--muted)">Objetivos:</span> ${(o.objetivos).map(x=>String(x).split('\\n').pop().trim()).slice(0,3).join(' · ')}</div>`:''}
           ${o.logroEsperado?`<div style="font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;font-style:italic">"${o.logroEsperado.slice(0,120)}${o.logroEsperado.length>120?'…':''}"</div>`:''}
@@ -4299,21 +4302,45 @@ function vincularOnboarding(id){
   document.getElementById('moVincularOnbSel').innerHTML=`<option value="">— Sin asignar —</option>${opts}`;
   document.getElementById('moVincularOnbSel').value=o.progId||'';
   mo._onbId=id;
+  mo._prevInscId=o.inscId||'';
+  updateVincularInscSel();
   mo.classList.add('open');
+}
+function updateVincularInscSel(){
+  const mo=document.getElementById('moVincularOnb');
+  const progId=document.getElementById('moVincularOnbSel').value;
+  const prevInscId=mo?mo._prevInscId:'';
+  const inscSel=document.getElementById('moVincularOnbInscSel');
+  const row=document.getElementById('moVincularInscRow');
+  if(!progId){inscSel.innerHTML='';row.style.display='none';return;}
+  row.style.display='';
+  const today=new Date().toISOString().slice(0,10);
+  const lista=inscripciones.filter(i=>i.programaId===progId&&(!i.fechaFin||i.fechaFin>=today));
+  if(!lista.length){inscSel.innerHTML='<option value="">— Sin inscriptos activos —</option>';return;}
+  inscSel.innerHTML=lista.map(i=>{
+    const ser=seres.find(x=>x.id===i.serId)||{nombre:'?'};
+    const sel=(i.id===prevInscId)?'selected':'';
+    return `<option value="${i.id}" ${sel}>${ser.nombre||ser.email||i.serId}</option>`;
+  }).join('');
 }
 function confirmarVincular(){
   const mo=document.getElementById('moVincularOnb');
   const id=mo._onbId;
   const progId=document.getElementById('moVincularOnbSel').value;
+  const inscId=document.getElementById('moVincularOnbInscSel').value;
   const o=onboardings.find(x=>x.id===id);if(!o)return;
   o.progId=progId||null;
-  o.estado=progId?'asignado':'pendiente';
+  o.inscId=inscId||null;
+  const insc=inscripciones.find(x=>x.id===inscId);
+  o.serId=insc?insc.serId:null;
+  o.estado=progId&&inscId?'asignado':'pendiente';
   // Upsert directo solo de este registro (no pasa por _syncSupabase)
   _sb.from('onboardings').upsert([{id:String(o.id),data:o,updated_at:new Date().toISOString()}])
     .then(({error})=>{if(error)console.error('onboarding upsert:',error.message);});
   mo.classList.remove('open');
   renderProgRegistros();
-  toast(progId?'🔗 Registro vinculado al programa':'Vínculo removido');
+  const ser=insc?seres.find(x=>x.id===insc.serId):null;
+  toast(progId&&inscId?`🔗 Vinculado a ${ser?ser.nombre||ser.email:'ser'}`:'Vínculo removido');
 }
 function renderProgInscritos(){
   const el=document.getElementById('progInscritosView');if(!el)return;
@@ -4853,15 +4880,94 @@ function renderJourneyAdmin(){
 
 function setJourneyTab(tab){
   _jTab=tab;
-  ['Resumen','Activos','Historial'].forEach(t=>{
+  ['Resumen','Activos','Historial','Facilitador'].forEach(t=>{
     const lt=t.toLowerCase();
     document.getElementById('jTab'+t)?.classList.toggle('active',lt===tab);
     const sec=document.getElementById('jSec'+t);
     if(sec)sec.style.display=lt===tab?'':'none';
   });
-  if(tab==='resumen')  renderJourneyResumen();
-  else if(tab==='activos')   renderJourneyActivos();
-  else if(tab==='historial') renderJourneyHistorial();
+  if(tab==='resumen')       renderJourneyResumen();
+  else if(tab==='activos')      renderJourneyActivos();
+  else if(tab==='historial')    renderJourneyHistorial();
+  else if(tab==='facilitador')  renderJourneyFacilitador();
+}
+
+function renderJourneyFacilitador(){
+  const el=document.getElementById('jSecFacilitador');if(!el)return;
+  const todayStr=new Date().toISOString().slice(0,10);
+  const isActivo=x=>{const prog=programas.find(pp=>pp.id===x.programaId);return prog&&calcSemanaAuto(x)<=(prog.semanas_dur||(prog.semanas||[]).length||999);};
+
+  const datos=inscripciones.filter(isActivo).map(insc=>{
+    const ser=seres.find(x=>x.id===insc.serId)||{nombre:'?'};
+    const prog=programas.find(x=>x.id===insc.programaId)||{nombre:'?',col:'#C9A84C'};
+    const col=prog.col||'#C9A84C';
+    const totalSem=prog.semanas_dur||(prog.semanas||[]).length||1;
+    const semActual=Math.min(calcSemanaAuto(insc),totalSem);
+    const sems=insc.semanas||prog.semanas||[];
+    const pr=insc.progreso||{};
+    const desDone=Object.values(pr).reduce((a,pp)=>a+Object.values(pp.desafios||{}).filter(Boolean).length,0);
+    const desTotal=sems.reduce((a,s)=>a+(s.desafios||[]).length,0);
+    const pct=desTotal?Math.round(desDone/desTotal*100):Math.round(semActual/totalSem*100);
+
+    // Última actividad
+    const allDates=[...Object.keys(insc.habTrack||{}),...Object.keys(insc.desTrack||{})].filter(d=>{
+      const ht=insc.habTrack&&insc.habTrack[d];const dt=insc.desTrack&&insc.desTrack[d];
+      return (ht&&Object.values(ht).some(Boolean))||(dt&&Object.values(dt).some(Boolean));
+    }).sort();
+    const lastDate=allDates.length?allDates[allDates.length-1]:null;
+    const diasInactivo=lastDate?Math.floor((new Date(todayStr)-new Date(lastDate))/86400000):null;
+
+    // Semáforo
+    let semaforo,semaforoColor,score;
+    if(diasInactivo===null||diasInactivo>=7){semaforo='🔴';semaforoColor='#EF4444';score=0;}
+    else if(diasInactivo>=3){semaforo='🟡';semaforoColor='#F59E0B';score=1;}
+    else{semaforo='🟢';semaforoColor='#10B981';score=2;}
+
+    // Próxima sesión
+    const proxSes=(insc.sesionesAsignadas||[])
+      .filter(s=>s.fecha&&s.fecha>=todayStr&&(s.estado||'')!=='cancelada')
+      .sort((a,b)=>a.fecha.localeCompare(b.fecha))[0]||null;
+
+    return{insc,ser,prog,col,semActual,totalSem,desDone,desTotal,pct,lastDate,diasInactivo,semaforo,semaforoColor,proxSes,score};
+  }).sort((a,b)=>a.score-b.score||a.ser.nombre.localeCompare(b.ser.nombre));
+
+  if(!datos.length){
+    el.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">🎯</div>No hay seres activos en este momento.</div>`;
+    return;
+  }
+
+  const rojos=datos.filter(d=>d.score===0).length;
+  const amarillos=datos.filter(d=>d.score===1).length;
+  const verdes=datos.filter(d=>d.score===2).length;
+
+  const kpis=`<div class="kpi-grid" style="margin-bottom:18px">
+    <div class="kc re"><div class="ki">🔴</div><div class="kl">Sin actividad</div><div class="kv">${rojos}</div><div class="ks">7+ días</div></div>
+    <div class="kc go"><div class="ki">🟡</div><div class="kl">En riesgo</div><div class="kv">${amarillos}</div><div class="ks">3-6 días</div></div>
+    <div class="kc bl"><div class="ki">🟢</div><div class="kl">Al día</div><div class="kv">${verdes}</div><div class="ks">Últimos 2 días</div></div>
+  </div>`;
+
+  const cards=datos.map(({insc,ser,prog,col,semActual,totalSem,desDone,desTotal,pct,diasInactivo,semaforo,semaforoColor,proxSes})=>{
+    const actividadTxt=diasInactivo===null?'Sin actividad':diasInactivo===0?'Hoy':diasInactivo===1?'Ayer':`Hace ${diasInactivo}d`;
+    const borderCol=semaforoColor+'44';
+    return `<div onclick="openInscDetail('${insc.id}')" style="display:flex;align-items:center;gap:10px;padding:11px 13px;background:var(--card2);border-radius:10px;border:1px solid ${borderCol};cursor:pointer;transition:.15s;margin-bottom:7px" onmouseover="this.style.borderColor='${col}'" onmouseout="this.style.borderColor='${borderCol}'">
+      <div style="width:36px;height:36px;border-radius:50%;background:${col}33;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:${col};flex-shrink:0">${ser.nombre.charAt(0)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+          <span style="font-size:13px;font-weight:700;color:var(--text)">${ser.nombre}</span>
+          <span style="font-size:12px">${semaforo}</span>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:1px">${prog.ico||'📚'} ${prog.nombre} · Sem ${semActual}/${totalSem}${desTotal?' · '+desDone+'/'+desTotal+' des':''} · ${actividadTxt}</div>
+        ${proxSes?`<div style="font-size:10px;color:${col}">📅 ${proxSes.fecha}${proxSes.nom?' · '+proxSes.nom:''}</div>`:''}
+        <div style="background:var(--border);border-radius:20px;height:4px;overflow:hidden;margin-top:3px"><div style="background:${semaforoColor};height:100%;width:${pct}%;border-radius:20px;transition:.4s"></div></div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">
+        <div style="font-size:15px;font-weight:800;color:${semaforoColor}">${pct}%</div>
+        <div style="font-size:9px;font-weight:600;color:${semaforoColor}">${actividadTxt.toUpperCase()}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  el.innerHTML=kpis+`<div>${cards}</div>`;
 }
 
 /* ── TAB: RESUMEN ─────────────────────────────────────────── */
