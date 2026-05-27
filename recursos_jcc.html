@@ -232,10 +232,13 @@ function showDia(){
 /* ── REGALOS ── */
 async function loadRegalos(){
   try{
-    const {data,error}=await _sb.from('regalos').select('id,data');
+    // Filtro en el servidor: solo regalos de marca jcc/ambos y activos
+    const {data,error}=await _sb.from('regalos').select('id,data')
+      .or('data->>marca.is.null,data->>marca.eq.jcc,data->>marca.eq.ambos')
+      .or('data->>activo.is.null,data->>activo.eq.true');
     const lista=(error||!data?.length)?[]:data
       .map(r=>({id:r.id,...r.data}))
-      .filter(r=>r.activo!==false&&(!r.marca||r.marca==='jcc'||r.marca==='ambos'))
+      .filter(r=>r.activo!==false)   // segunda línea de defensa
       .sort((a,b)=>(a.orden??9999)-(b.orden??9999));
     if(!lista.length){
       document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
@@ -261,10 +264,13 @@ async function loadRegalos(){
 async function init(){
   document.getElementById('loader').style.display='flex';
   try{
-    const {data,error}=await _sb.from('comunidad_contenido').select('id,data');
+    // Filtro en el servidor: solo tipo=pregunta y activas
+    const {data,error}=await _sb.from('comunidad_contenido').select('id,data')
+      .filter('data->>tipo','eq','pregunta')
+      .or('data->>activo.is.null,data->>activo.eq.true');
     allPregsOrig=(error||!data?.length)?[]:data
       .map(r=>r.data||{})
-      .filter(p=>p.tipo==='pregunta'&&p.activo!==false);
+      .filter(p=>p.activo!==false);  // segunda línea de defensa
     // Shuffle para "del momento" (no afecta allPregsOrig usado para "del día")
     allPregs=[...allPregsOrig];
     for(let i=allPregs.length-1;i>0;i--){
