@@ -237,29 +237,62 @@ th{background:rgba(28,26,46,.88)!important;}
   .sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:200;}
   .sidebar.open{transform:translateX(0);}
   .main{margin-left:0;}
-  .topbar{padding:12px 14px;}
-  .topbar h1{font-size:15px;}
+  .topbar{padding:10px 12px;flex-wrap:wrap;gap:6px;}
+  .topbar h1{font-size:14px;order:2;flex:1;}
+  .topbar .hamburger{order:1;}
+  .topbar>div:not(.acts){order:3;margin-left:0!important;}
+  .topbar .acts{order:4;width:100%;justify-content:flex-end;flex-wrap:wrap;}
+  #connBadge{display:none!important;}
   .content{padding:12px;}
-  .kpi-grid{grid-template-columns:repeat(2,1fr);gap:9px;}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)!important;gap:9px;}
   .kc{padding:12px;}
   .kv{font-size:22px;}
   .cg2,.cg22{grid-template-columns:1fr;}
   .fg-row{grid-template-columns:1fr;}
   .tc{overflow-x:auto;}
   table{min-width:520px;}
-  .mb{width:95vw;padding:18px;}
+  .mb{width:95vw;padding:16px;max-height:88vh;}
+  .mb h2{font-size:15px;margin-bottom:14px;}
   .lbox{width:92vw;padding:32px 22px;}
   .cal-nav h2{font-size:13px;min-width:0;}
-  .cg{gap:2px;}
-  .cd{min-height:52px;padding:4px;}
-  .dn{font-size:10px;}
-  .ce{font-size:9px;}
+  .cg{gap:1px;}
+  .cd{min-height:46px;padding:3px;}
+  .dn{font-size:9px;}
+  .ce{font-size:8px;}
   .filters{flex-direction:column;gap:6px;}
   .si,.fi{width:100%;}
   .topbar .acts .btn span{display:none;}
+  .tab-bar{flex-wrap:wrap;padding:8px 10px;gap:5px;}
+  .tab-btn{font-size:11px;padding:5px 10px;}
+  .invsm{grid-template-columns:1fr 1fr!important;}
+  /* Colapsar grids inline generados por JS */
+  [style*="grid-template-columns:1fr 1fr 1fr"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:repeat(3,1fr)"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:repeat(4,1fr)"]{grid-template-columns:repeat(2,1fr)!important;}
+  [style*="grid-template-columns:2fr 1fr"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:1fr 1fr;"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:auto 1fr"]{grid-template-columns:1fr!important;}
+  /* Journey: colapsar sidebar + contenido */
+  #progTabSemanas>div{flex-direction:column!important;gap:10px!important;}
+  #journeyWeekList{width:100%!important;flex-direction:row!important;overflow-x:auto!important;flex-wrap:nowrap!important;padding-bottom:4px;-webkit-overflow-scrolling:touch;}
+  /* Journey inscription detail (generado por JS) */
+  .journey-cols{flex-direction:column!important;gap:10px!important;}
+  .journey-sidebar{width:100%!important;flex-direction:row!important;overflow-x:auto!important;flex-wrap:nowrap!important;-webkit-overflow-scrolling:touch;}
+  /* Comunidad: calendarios y grids especiales */
+  #comCalRow{grid-template-columns:1fr!important;}
+  /* vis-bar (barra de visión) no se corta */
+  .vis-bar{width:70px;}
+  /* Modales: asegurar scroll en iOS */
+  .mo{align-items:flex-start;padding-top:20px;}
 }
 @media(max-width:420px){
-  .kpi-grid{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr!important;}
+  .topbar h1{font-size:13px;}
+  .tab-btn{font-size:10px;padding:4px 8px;}
+  [style*="grid-template-columns:repeat(2,1fr)"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:repeat(auto-fit,minmax(240"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:repeat(auto-fit,minmax(200"]{grid-template-columns:1fr!important;}
+  [style*="grid-template-columns:repeat(auto-fit,minmax(260"]{grid-template-columns:1fr!important;}
 }
 </style>
 </head>
@@ -336,7 +369,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <!-- DASHBOARD -->
     <div id="sec-dashboard" class="sec active">
      <div id="dPregDia" style="margin-bottom:18px"></div>
-     <div id="dKPIs" class="kpi-grid" style="grid-template-columns:1fr 1fr 1fr"></div>
+     <div id="dKPIs" class="kpi-grid"></div>
      <div id="dToday" style="margin-bottom:18px"></div>
      <div id="dWeekView" style="margin-bottom:18px"></div>
      <div class="cg22" style="margin-bottom:18px">
@@ -541,8 +574,8 @@ th{background:rgba(28,26,46,.88)!important;}
       </div>
       <!-- Tab Semanas -->
       <div id="progTabSemanas">
-       <div style="display:flex;gap:14px;align-items:flex-start">
-        <div id="journeyWeekList" style="width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:6px"></div>
+       <div class="journey-cols" style="display:flex;gap:14px;align-items:flex-start">
+        <div id="journeyWeekList" class="journey-sidebar" style="width:190px;flex-shrink:0;display:flex;flex-direction:column;gap:6px"></div>
         <div id="journeyWeekContent" style="flex:1;min-width:0"></div>
        </div>
       </div>
@@ -5879,8 +5912,8 @@ function sendMensaje(inscId){
 
 /* ── TAB: SEMANAS ── */
 function renderJourneySemanas(insc,prog,col){
-  return `<div style="display:flex;gap:14px;align-items:flex-start">
-    <div style="width:200px;flex-shrink:0">
+  return `<div class="journey-cols" style="display:flex;gap:14px;align-items:flex-start">
+    <div class="journey-sidebar" style="width:200px;flex-shrink:0">
       <div id="inscWeekList"></div>
       <div class="cc" style="margin-top:12px;padding:12px">
         <div style="font-size:11px;font-weight:700;color:var(--gl);margin-bottom:6px">📝 Notas generales</div>
