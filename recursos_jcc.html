@@ -134,7 +134,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <!-- HEADER -->
 <header class="site-header">
   <div class="brand">Juan Cruz <span>Consciencia</span></div>
-  <a class="nav-link" href="/registro_jcc.html" onclick="trackClick('header_agendar_sesion')">Agendá una sesión ↗</a>
+  <a class="nav-link" href="/registro_jcc.html" onclick="track('click_btn',{boton:'header_agendar_sesion'})">Agendá una sesión ↗</a>
 </header>
 
 <!-- HERO -->
@@ -164,7 +164,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="featured-q" id="featuredQ">Cargando...</div>
     <div class="featured-dim" id="featuredDim"></div>
     <div class="featured-next">
-      <button class="btn-next" onclick="nextFeatured();trackClick('pregunta_siguiente')">Otra pregunta →</button>
+      <button class="btn-next" onclick="nextFeatured();track('click_btn',{boton:'pregunta_siguiente'})">Otra pregunta →</button>
     </div>
   </div>
 
@@ -184,7 +184,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="cta-card">
     <h2>¿Querés ir más profundo?</h2>
     <p>Una sesión de Barras de Access o Proceso de Cuerpos puede ser el próximo paso en tu camino de expansión.</p>
-    <a class="btn-cta" href="/registro_jcc.html" onclick="trackClick('cta_quiero_ir_mas_profundo')">Reservar una sesión ✨</a>
+    <a class="btn-cta" href="/sesiones_jcc.html" onclick="track('click_btn',{boton:'cta_reservar_sesion'})">Conocé las sesiones ✨</a>
   </div>
 </div>
 
@@ -194,9 +194,15 @@ const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
-function trackClick(boton){
-  try{_sb.from('regalo_eventos').insert({data:{tipo:'click_btn',boton,pagina:'recursos_jcc',fecha:new Date().toISOString().split('T')[0],ts:new Date().toISOString()}});}catch(e){}
+/* ── TRACKING ── */
+function track(tipo,extra={}){
+  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'recursos_jcc',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}});}catch(e){}
 }
+// Alias viejo (retrocompatible)
+function trackClick(boton){track('click_btn',{boton});}
+
+// Page view al cargar
+window.addEventListener('load',()=>track('page_view'));
 
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 
@@ -245,13 +251,19 @@ async function loadRegalos(){
       return;
     }
     document.getElementById('regalosWrap').innerHTML=`<div class="regalos-grid">${lista.map(r=>{
-      const tUrl=`${window.location.origin}/api/track-regalo?rid=${encodeURIComponent(r.id)}&canal=recursos_jcc`;
+      const nombre=r.nombre||'Regalo';
+      const btnHtml=r.pdfUrl
+        ?`<a class="btn-dl-jcc" href="${r.pdfUrl}" target="_blank"
+            onclick="track('descarga',{regaloId:'${r.id}',regaloNombre:'${nombre.replace(/'/g,'\\x27')}',canal:'recursos_jcc'})">
+            🎁 Recibir regalo
+          </a>`
+        :`<div class="btn-dl-jcc" style="opacity:.45;cursor:not-allowed">Próximamente ✦</div>`;
       return`<div class="regalo-card">
         <div class="regalo-body">
           <span class="regalo-ico">${r.icono||'🎁'}</span>
-          <div class="regalo-nombre">${r.nombre||'Regalo'}</div>
+          <div class="regalo-nombre">${nombre}</div>
           ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
-          <a class="btn-dl-jcc" href="${tUrl}" target="_blank" onclick="trackClick('regalo_${r.id}')">🎁 Recibir regalo</a>
+          ${btnHtml}
         </div>
       </div>`;
     }).join('')}</div>`;

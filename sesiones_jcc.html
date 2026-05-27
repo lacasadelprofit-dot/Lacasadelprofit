@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sesiones — Juan Cruz Consciencia</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<meta name="theme-color" content="#C17A48">
+<meta property="og:title" content="Sesiones — Juan Cruz Consciencia">
+<meta property="og:description" content="Barras de Access, Proceso de Cuerpos y Sesión Profit. Herramientas para expandir tu consciencia.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
+  --terra:#C17A48;--terra-d:#9A5C30;--terra-l:#F0E4D6;
+  --text:#1C1200;--muted:#7A6E60;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+/* ── HEADER ── */
+.site-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;
+  border-bottom:1px solid var(--border);background:rgba(250,250,248,.96);
+  backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.brand{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.1px;}
+.brand span{color:var(--terra);}
+.nav-link{font-size:13px;color:var(--terra-d);text-decoration:none;font-weight:700;
+  padding:7px 16px;border:1.5px solid var(--terra);border-radius:20px;transition:all .2s;}
+.nav-link:hover{background:var(--terra);color:#fff;}
+
+/* ── HERO ── */
+.hero{text-align:center;padding:60px 20px 44px;max-width:620px;margin:0 auto;position:relative;}
+.hero-deco{position:absolute;top:16px;left:50%;transform:translateX(-50%);
+  font-size:100px;opacity:.035;pointer-events:none;line-height:1;color:var(--terra);}
+.hero .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
+  padding:5px 18px;border-radius:20px;background:var(--terra-l);
+  border:1px solid rgba(193,122,72,.35);color:var(--terra-d);margin-bottom:22px;letter-spacing:.3px;}
+.hero h1{font-size:32px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:14px;letter-spacing:-.3px;}
+.hero p{font-size:15px;color:var(--muted);line-height:1.8;max-width:440px;margin:0 auto;}
+
+/* ── SESIONES ── */
+.sesiones-wrap{max-width:680px;margin:0 auto;padding:0 16px 32px;}
+.sesion-card{background:var(--card);border:1px solid var(--border);border-radius:24px;
+  overflow:hidden;margin-bottom:20px;transition:box-shadow .2s;}
+.sesion-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.08);}
+.sesion-stripe{height:4px;}
+.sesion-body{padding:28px 24px;}
+.sesion-ico{font-size:44px;margin-bottom:14px;display:block;line-height:1;}
+.sesion-nombre{font-size:22px;font-weight:800;color:var(--text);margin-bottom:8px;letter-spacing:-.2px;}
+.sesion-tagline{font-size:14px;font-weight:600;color:var(--terra);margin-bottom:16px;font-style:italic;}
+.sesion-desc{font-size:14px;color:var(--muted);line-height:1.85;margin-bottom:20px;}
+.sesion-bullets{list-style:none;margin-bottom:24px;display:flex;flex-direction:column;gap:8px;}
+.sesion-bullets li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);line-height:1.5;}
+.sesion-bullets li::before{content:'✦';color:var(--terra);flex-shrink:0;font-size:11px;margin-top:2px;}
+.sesion-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  padding-top:20px;border-top:1px solid var(--border);}
+.sesion-duracion{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.btn-reservar{padding:12px 28px;background:var(--terra);border:none;border-radius:12px;
+  color:#fff;font-size:14px;font-weight:800;cursor:pointer;text-decoration:none;
+  display:inline-block;transition:background .2s,transform .15s;letter-spacing:.2px;}
+.btn-reservar:hover{background:var(--terra-d);transform:translateY(-1px);}
+
+/* ── CTA FINAL ── */
+.cta-wrap{max-width:560px;margin:0 auto 64px;padding:0 16px;}
+.cta-card{background:var(--text);border-radius:24px;padding:42px 32px;text-align:center;position:relative;overflow:hidden;}
+.cta-card::before{content:'✦';position:absolute;bottom:-14px;right:22px;font-size:90px;
+  opacity:.04;color:#fff;line-height:1;}
+.cta-card h2{font-size:22px;font-weight:800;color:#fff;margin-bottom:10px;letter-spacing:-.2px;}
+.cta-card p{font-size:14px;color:rgba(255,255,255,.6);line-height:1.75;margin-bottom:26px;
+  max-width:380px;margin-left:auto;margin-right:auto;}
+.btn-cta{display:inline-block;padding:14px 36px;background:var(--terra);border:none;border-radius:12px;
+  color:#fff;font-size:15px;font-weight:800;cursor:pointer;text-decoration:none;
+  transition:background .2s,transform .15s;letter-spacing:.2px;}
+.btn-cta:hover{background:var(--terra-d);transform:translateY(-1px);}
+
+/* ── BACK LINK ── */
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
+  text-decoration:none;padding:8px 0;margin-bottom:24px;transition:color .2s;}
+.back-link:hover{color:var(--terra);}
+
+@media(max-width:540px){
+  .hero h1{font-size:26px;}
+  .site-header{padding:14px 16px;}
+  .sesion-body{padding:22px 18px;}
+  .sesion-nombre{font-size:19px;}
+  .cta-card{padding:30px 20px;}
+  .sesion-footer{flex-direction:column;align-items:flex-start;}
+  .btn-reservar{width:100%;text-align:center;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="site-header">
+  <div class="brand">Juan Cruz <span>Consciencia</span></div>
+  <a class="nav-link" href="/registro_jcc.html" onclick="track('click_btn',{boton:'header_agendar_sesion'})">Agendá una sesión ↗</a>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-deco">✦</div>
+  <div class="pill">✦ Sesiones · Juan Cruz Consciencia</div>
+  <h1>Herramientas para<br>expandir tu consciencia</h1>
+  <p>Cada sesión es una invitación a soltar lo que ya no te sirve y abrirte a más de lo que sos.</p>
+</div>
+
+<!-- SESIONES -->
+<div class="sesiones-wrap">
+
+  <a class="back-link" href="/recursos_jcc.html">← Volver a recursos</a>
+
+  <!-- BARRAS DE ACCESS -->
+  <div class="sesion-card" id="barras">
+    <div class="sesion-stripe" style="background:linear-gradient(90deg,#C17A48,#E8A87C)"></div>
+    <div class="sesion-body">
+      <span class="sesion-ico">🌀</span>
+      <div class="sesion-nombre">Barras de Access</div>
+      <div class="sesion-tagline">"¿Qué pasaría si pudieras soltar todo lo que creés que sabés?"</div>
+      <div class="sesion-desc">
+        Las Barras de Access son 32 puntos en la cabeza que, al ser suavemente tocados, liberan la carga energética de todos los pensamientos, sentimientos y emociones que te limitan. Es como vaciar la papelera de reciclaje de la computadora de tu mente.
+      </div>
+      <ul class="sesion-bullets">
+        <li>Profunda relajación y soltar el estrés acumulado</li>
+        <li>Mayor claridad mental y liviandad</li>
+        <li>Apertura a nuevas posibilidades en cualquier área de tu vida</li>
+        <li>Reducción de pensamientos obsesivos y preocupaciones</li>
+        <li>Mejora en la calidad del sueño</li>
+      </ul>
+      <div class="sesion-footer">
+        <div class="sesion-duracion">⏱ 60 a 90 minutos</div>
+        <a class="btn-reservar" href="/registro_jcc.html" onclick="track('click_btn',{boton:'reservar_barras'})">Reservar Barras ✦</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROCESO DE CUERPOS -->
+  <div class="sesion-card" id="proceso-cuerpos">
+    <div class="sesion-stripe" style="background:linear-gradient(90deg,#7B9E87,#A8C5B0)"></div>
+    <div class="sesion-body">
+      <span class="sesion-ico">🌿</span>
+      <div class="sesion-nombre">Proceso de Cuerpos</div>
+      <div class="sesion-tagline">"¿Qué sabe tu cuerpo que vos todavía no estás escuchando?"</div>
+      <div class="sesion-desc">
+        El Proceso de Cuerpos de Access Consciousness trabaja directamente con el cuerpo usando técnicas de tacto suave. Tu cuerpo tiene una inteligencia propia — esta sesión lo invita a liberarse de los bloqueos, traumas y energías que cargó sin que lo supieras.
+      </div>
+      <ul class="sesion-bullets">
+        <li>Liberación de tensiones físicas y energéticas almacenadas</li>
+        <li>Mayor conexión y conciencia de tu propio cuerpo</li>
+        <li>Soltura de traumas físicos o emocionales registrados en el cuerpo</li>
+        <li>Sensación de liviandad y bienestar profundo</li>
+        <li>Cada proceso es completamente personalizado</li>
+      </ul>
+      <div class="sesion-footer">
+        <div class="sesion-duracion">⏱ 60 a 90 minutos</div>
+        <a class="btn-reservar" href="/registro_jcc.html" onclick="track('click_btn',{boton:'reservar_proceso_cuerpos'})">Reservar Proceso ✦</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- SESIÓN PROFIT -->
+  <div class="sesion-card" id="sesion-profit">
+    <div class="sesion-stripe" style="background:linear-gradient(90deg,#C9A84C,#E8C96A)"></div>
+    <div class="sesion-body">
+      <span class="sesion-ico">💛</span>
+      <div class="sesion-nombre">Sesión Profit</div>
+      <div class="sesion-tagline">"¿Qué expandiría en tu vida si empezaras a vivir en profit?"</div>
+      <div class="sesion-desc">
+        La Sesión Profit es una experiencia de consciencia y presencia creada desde La Casa del Profit. Combinando preguntas expansivas, herramientas energéticas y acompañamiento personalizado, esta sesión te ayuda a identificar qué está bloqueando tu expansión y cómo moverlo.
+      </div>
+      <ul class="sesion-bullets">
+        <li>Claridad sobre lo que querés crear en tu vida</li>
+        <li>Identificación y movimiento de los bloqueos más profundos</li>
+        <li>Herramientas concretas para continuar expandiéndote solo</li>
+        <li>Presencia, escucha y acompañamiento sin juicio</li>
+        <li>Integra lo trabajado en Barras y Proceso de Cuerpos</li>
+      </ul>
+      <div class="sesion-footer">
+        <div class="sesion-duracion">⏱ 60 minutos</div>
+        <a class="btn-reservar" href="/registro_jcc.html" onclick="track('click_btn',{boton:'reservar_sesion_profit'})">Reservar Sesión ✦</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- CTA FINAL -->
+<div class="cta-wrap">
+  <div class="cta-card">
+    <h2>¿No sabés por dónde empezar?</h2>
+    <p>Contame dónde estás y juntos elegimos la sesión que más te sirve en este momento.</p>
+    <a class="btn-cta" href="/registro_jcc.html" onclick="track('click_btn',{boton:'cta_no_se_por_donde_empezar'})">Escribime ✨</a>
+  </div>
+</div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+function track(tipo,extra={}){
+  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'sesiones_jcc',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}});}catch(e){}
+}
+
+window.addEventListener('load',()=>track('page_view'));
+</script>
+</body>
+</html>
