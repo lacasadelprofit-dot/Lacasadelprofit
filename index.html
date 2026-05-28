@@ -689,15 +689,17 @@ th{background:rgba(28,26,46,.88)!important;}
     <div id="sec-marketing" class="sec">
      <div id="mktKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
      <div class="tab-bar" style="margin-bottom:18px">
-      <button class="tab-btn active" id="mktTabPub" onclick="setMktTab('pub')">📢 Publicidades</button>
+      <button class="tab-btn active" id="mktTabResumen" onclick="setMktTab('resumen')">📊 Resumen</button>
+      <button class="tab-btn" id="mktTabPub" onclick="setMktTab('pub')">📢 Publicidades</button>
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
       <button class="tab-btn" id="mktTabRet" onclick="setMktTab('ret')">🔄 Retención</button>
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
-      <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Estadísticas</button>
+      <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
       <button class="tab-btn" onclick="navCRM()" style="border-color:rgba(201,168,76,.3);color:var(--gold)">👥 Ir a CRM →</button>
      </div>
-     <div id="mktPub"></div>
+     <div id="mktResumen"></div>
+     <div id="mktPub" style="display:none"></div>
      <div id="mktConv" style="display:none"></div>
      <div id="mktRet" style="display:none"></div>
      <div id="mktMeta" style="display:none"></div>
@@ -6831,21 +6833,145 @@ function doImport(){
 }
 
 /* MARKETING */
-let mktTab='pub';
+let mktTab='resumen';
 function setMktTab(t){
   mktTab=t;
-  ['pub','conv','ret','meta','regalos','stats'].forEach(x=>{
+  ['resumen','pub','conv','ret','meta','regalos','stats'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
     if(document.getElementById(contentId))document.getElementById(contentId).style.display=x===t?'':'none';
   });
-  if(t==='pub')renderMktPub();
+  if(t==='resumen')renderMktResumen();
+  else if(t==='pub')renderMktPub();
   else if(t==='conv')renderMktConv();
   else if(t==='ret')renderMktRet();
   else if(t==='regalos')renderMktRegalos();
   else if(t==='stats')renderMktStats();
   else renderMetaTab();
+}
+
+/* ── RESUMEN DEL SISTEMA ── */
+async function renderMktResumen(){
+  const el=document.getElementById('mktResumen');
+  if(!el)return;
+  el.innerHTML=`<div class="es"><div class="ei">⏳</div><p>Cargando resumen...</p></div>`;
+
+  // Cargar eventos de la landing
+  let evs=[];
+  try{
+    const{data}=await _sb.from('regalo_eventos').select('data');
+    evs=(data||[]).map(r=>r.data||{});
+  }catch(e){console.warn('regalo_eventos:',e);}
+
+  // ── Métricas de la landing ──
+  const pageViews=evs.filter(e=>e.tipo==='page_view').length;
+  const clicks=evs.filter(e=>e.tipo==='click_btn');
+  const downloads=evs.filter(e=>e.tipo==='descarga').length;
+  const modalOpens=evs.filter(e=>e.tipo==='modal_open').length;
+  const sesionClicks=clicks.filter(e=>['reservar_barras','reservar_proceso_cuerpos','reservar_clase_barras','modal_elegir_barras','modal_elegir_proceso_cuerpos','modal_elegir_clase_barras'].includes(e.boton)).length;
+  const convRateLanding=pageViews?Math.round(modalOpens/pageViews*100):0;
+
+  // ── CRM ──
+  const prospectos=seres.filter(s=>s.prospecto).length;
+  const convertidos=seres.filter(s=>!s.prospecto&&s.campañaId).length;
+  const convRate=prospectos+convertidos?Math.round(convertidos/(prospectos+convertidos)*100):0;
+  const campActivas=campañas.filter(c=>c.estado==='activa').length;
+
+  // ── Sesiones ──
+  const mesActual=new Date().toISOString().slice(0,7);
+  // sesiones vienen de los programas (inscripciones), buscar sessions global si existe
+  const todasSes=typeof sessions!=='undefined'?sessions:[];
+  const sesMes=todasSes.filter(s=>(s.fecha||'').startsWith(mesActual)).length;
+
+  // ── Programas ──
+  const inscActivas=inscripciones.filter(i=>i.estado!=='cancelada'&&i.estado!=='inactiva').length;
+
+  // ── Ingresos del mes ──
+  const ingMes=facturas.filter(f=>(f.fecha||'').startsWith(mesActual)).reduce((a,f)=>a+(parseFloat(f.total)||0),0);
+
+  // ── Top botones ──
+  const byBtn={};
+  clicks.forEach(e=>{byBtn[e.boton]=(byBtn[e.boton]||0)+1;});
+  const topBtns=Object.entries(byBtn).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const totalClicks=clicks.length;
+
+  // ── Visitas por día (últimos 14) ──
+  const byDate={};
+  evs.filter(e=>e.tipo==='page_view').forEach(e=>{if(e.fecha)byDate[e.fecha]=(byDate[e.fecha]||0)+1;});
+  const dateEntries=Object.entries(byDate).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
+
+  const LABELS={
+    'header_agendar_sesion':'Header — Agendá una sesión',
+    'pregunta_siguiente':'Pregunta — Otra pregunta →',
+    'modal_elegir_barras':'Modal → Barras de Access',
+    'modal_elegir_proceso_cuerpos':'Modal → Proceso de Cuerpos',
+    'modal_elegir_clase_barras':'Modal → Clase de Barras',
+    'modal_no_se_cual':'Modal → No sé cuál elegir',
+    'reservar_barras':'Card — Reservar Barras',
+    'reservar_proceso_cuerpos':'Card — Reservar Proceso de Cuerpos',
+    'reservar_clase_barras':'Card — Reservar Clase de Barras',
+    'cta_escribime':'CTA final — Agendá una sesión',
+  };
+  const lbl=b=>LABELS[b]||b;
+
+  el.innerHTML=`
+    <!-- LANDING -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--gl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">🌐 Landing pública — recursos_jcc.html</div>
+      <div class="kpi-grid">
+        <div class="kc bl"><div class="ki">👁</div><div class="kl">Visitas totales</div><div class="kv">${pageViews}</div><div class="ks">a la landing</div></div>
+        <div class="kc go"><div class="ki">🎯</div><div class="kl">Modal abierto</div><div class="kv">${modalOpens}</div><div class="ks">${convRateLanding}% de visitas</div></div>
+        <div class="kc tl"><div class="ki">📲</div><div class="kl">Clicks en sesiones</div><div class="kv">${sesionClicks}</div><div class="ks">intención de reserva</div></div>
+        <div class="kc gr"><div class="ki">🎁</div><div class="kl">Descargas</div><div class="kv">${downloads}</div><div class="ks">regalos descargados</div></div>
+      </div>
+    </div>
+
+    <!-- SISTEMA -->
+    <div style="margin-bottom:20px">
+      <div style="font-size:11px;font-weight:700;color:var(--gl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">📊 Sistema</div>
+      <div class="kpi-grid">
+        <div class="kc go"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${prospectos}</div><div class="ks">en CRM</div></div>
+        <div class="kc gr"><div class="ki">✨</div><div class="kl">Convertidos</div><div class="kv">${convertidos}</div><div class="ks">${convRate}% conversión</div></div>
+        <div class="kc tl"><div class="ki">🗺️</div><div class="kl">En programas</div><div class="kv">${inscActivas}</div><div class="ks">inscripciones activas</div></div>
+        <div class="kc or"><div class="ki">📣</div><div class="kl">Campañas</div><div class="kv">${campActivas}</div><div class="ks">activas</div></div>
+        ${sesMes||sesMes===0?`<div class="kc bl"><div class="ki">🧘</div><div class="kl">Sesiones este mes</div><div class="kv">${sesMes}</div><div class="ks">de ${todasSes.length} totales</div></div>`:''}
+        ${ingMes?`<div class="kc gr"><div class="ki">💰</div><div class="kl">Ingresos del mes</div><div class="kv">$${Math.round(ingMes).toLocaleString('es-AR')}</div><div class="ks">ARS</div></div>`:''}
+      </div>
+    </div>
+
+    <!-- VISITAS POR DÍA -->
+    ${dateEntries.length?`
+    <div class="card" style="padding:18px;margin-bottom:16px">
+      <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">📈 Visitas por día — últimos 14 días</div>
+      <div style="display:flex;align-items:flex-end;gap:5px;height:80px">
+        ${(()=>{const mx=Math.max(...dateEntries.map(([,n])=>n),1);return dateEntries.map(([f,n])=>`
+          <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px" title="${f}: ${n} visitas">
+            <span style="font-size:9px;color:var(--muted)">${n}</span>
+            <div style="width:100%;background:linear-gradient(180deg,#60A5FA,#3B82F6);border-radius:3px 3px 0 0;height:${Math.round(n/mx*60)}px;min-height:3px"></div>
+            <span style="font-size:8px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">${f.slice(5)}</span>
+          </div>`).join('');})()}
+      </div>
+    </div>`:''}
+
+    <!-- TOP ACCIONES -->
+    ${topBtns.length?`
+    <div class="card" style="padding:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🖱 Top acciones en la landing</div>
+      ${topBtns.map(([btn,n])=>{
+        const pct=Math.round(n/totalClicks*100);
+        return`<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+            <span style="font-size:13px;color:var(--text)">${lbl(btn)}</span>
+            <span style="font-size:13px;font-weight:700;color:var(--gl)">${n} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pct}%)</span></span>
+          </div>
+          <div style="height:6px;background:var(--card2);border-radius:4px;overflow:hidden">
+            <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:4px;transition:width .4s"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`:`<div class="es"><div class="ei">📊</div><p>Aún no hay datos de la landing.<br><span style="font-size:12px;color:var(--muted)">Aparecerán cuando haya visitas a recursos_jcc.html</span></p></div>`}
+  `;
 }
 
 /* ── ESTADÍSTICAS DE CLICKS ── */
@@ -7453,7 +7579,7 @@ function renderMkt(){
     <div class="kc or"><div class="ki">📊</div><div class="kl">CTR promedio</div><div class="kv">${avgCtr}%</div><div class="ks">${gastadoARS?'$'+Math.round(gastadoARS).toLocaleString('es-AR'):''} ${gastadoUSD?'USD '+gastadoUSD.toLocaleString('en-US',{maximumFractionDigits:0}):''} invertido</div></div>
     <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${totalProsp}</div><div class="ks">Sin sesión aún</div></div>
     <div class="kc gr"><div class="ki">✨</div><div class="kl">Convertidos</div><div class="kv">${totalConv}</div><div class="ks">${metaLeadCount} de Meta automáticos</div></div>`;
-  renderMktPub();
+  setMktTab('resumen');
 }
 
 function renderMktPub(){
