@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Preguntas Expansivas — Juan Cruz Consciencia</title>
+<title>Juan Cruz Consciencia</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="theme-color" content="#C17A48">
-<meta property="og:title" content="Preguntas Expansivas — Juan Cruz Consciencia">
-<meta property="og:description" content="60 preguntas para expandir tu consciencia y mover lo que está quieto.">
+<meta property="og:title" content="Juan Cruz Consciencia">
+<meta property="og:description" content="Preguntas expansivas, recursos gratuitos y sesiones para expandir tu consciencia.">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -25,11 +25,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .brand{font-size:15px;font-weight:800;color:var(--text);letter-spacing:-.1px;}
 .brand span{color:var(--terra);}
 .nav-link{font-size:13px;color:var(--terra-d);text-decoration:none;font-weight:700;
-  padding:7px 16px;border:1.5px solid var(--terra);border-radius:20px;transition:all .2s;}
+  padding:7px 16px;border:1.5px solid var(--terra);border-radius:20px;transition:all .2s;
+  background:none;cursor:pointer;}
 .nav-link:hover{background:var(--terra);color:#fff;}
 
 /* ── HERO ── */
-.hero{text-align:center;padding:60px 20px 44px;max-width:620px;margin:0 auto;position:relative;}
+.hero{text-align:center;padding:56px 20px 40px;max-width:620px;margin:0 auto;position:relative;}
 .hero-deco{position:absolute;top:16px;left:50%;transform:translateX(-50%);
   font-size:100px;opacity:.035;pointer-events:none;line-height:1;color:var(--terra);}
 .hero .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
@@ -38,10 +39,30 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .hero h1{font-size:32px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:14px;letter-spacing:-.3px;}
 .hero p{font-size:15px;color:var(--muted);line-height:1.8;max-width:440px;margin:0 auto;}
 
-/* ── FEATURED WRAP ── */
-.featured-wrap{max-width:620px;margin:0 auto 52px;padding:0 16px;display:flex;flex-direction:column;gap:12px;}
+/* ── SECTION HEADER ── */
+.sec-header{max-width:680px;margin:0 auto;padding:0 16px 20px;}
+.sec-title{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--terra-d);margin-bottom:6px;}
+.sec-sub{font-size:14px;color:var(--muted);line-height:1.7;}
 
-/* Card del momento (oscura) */
+/* ── SEPARATOR ── */
+.page-sep{border:none;border-top:1px solid var(--border);
+  max-width:648px;margin:0 auto 52px;display:block;}
+
+/* ── PREGUNTAS ── */
+.featured-wrap{max-width:620px;margin:0 auto 52px;padding:0 16px;display:flex;flex-direction:column;gap:12px;}
+.dia-card{background:linear-gradient(140deg,#FBF0E6 0%,var(--terra-l) 100%);
+  border:1.5px solid rgba(193,122,72,.28);border-radius:24px;padding:28px 30px;
+  position:relative;overflow:hidden;}
+.dia-card::before{content:'';position:absolute;top:-32px;right:-32px;width:130px;height:130px;
+  border-radius:50%;background:rgba(193,122,72,.1);pointer-events:none;}
+.dia-label{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;color:var(--terra-d);margin-bottom:14px;}
+.dia-badge{background:var(--terra);color:#fff;font-size:9px;font-weight:800;
+  padding:2px 9px;border-radius:10px;letter-spacing:.4px;text-transform:none;}
+.dia-q{font-size:19px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;}
+.dia-dim{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;
+  background:rgba(193,122,72,.15);color:var(--terra-d);letter-spacing:.5px;}
 .featured-card{background:var(--text);border-radius:24px;padding:34px 30px;position:relative;overflow:hidden;}
 .featured-card::before{content:'✦';position:absolute;top:-14px;right:22px;font-size:90px;
   opacity:.05;color:#fff;pointer-events:none;line-height:1;}
@@ -55,30 +76,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   color:rgba(255,255,255,.72);font-size:12px;font-weight:600;padding:6px 16px;cursor:pointer;transition:all .2s;}
 .btn-next:hover{background:rgba(255,255,255,.2);color:#fff;}
 
-/* Card del día (cálida) */
-.dia-card{background:linear-gradient(140deg,#FBF0E6 0%,var(--terra-l) 100%);
-  border:1.5px solid rgba(193,122,72,.28);border-radius:24px;padding:28px 30px;
-  position:relative;overflow:hidden;}
-.dia-card::before{content:'';position:absolute;top:-32px;right:-32px;width:130px;height:130px;
-  border-radius:50%;background:rgba(193,122,72,.1);pointer-events:none;}
-.dia-label{display:flex;align-items:center;gap:8px;font-size:10px;font-weight:700;
-  letter-spacing:2px;text-transform:uppercase;color:var(--terra-d);margin-bottom:14px;}
-.dia-badge{background:var(--terra);color:#fff;font-size:9px;font-weight:800;
-  padding:2px 9px;border-radius:10px;letter-spacing:.4px;text-transform:none;}
-.dia-q{font-size:19px;font-weight:700;color:var(--text);line-height:1.5;margin-bottom:14px;}
-.dia-dim{display:inline-block;font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;
-  background:rgba(193,122,72,.15);color:var(--terra-d);letter-spacing:.5px;}
-
-/* ── QUESTIONS SECTION ── */
-.sec-wrap{max-width:680px;margin:0 auto;padding:0 16px;}
-.sec-title{font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--terra-d);margin-bottom:16px;}
-
-/* ── SEPARATOR ── */
-.page-sep{border:none;border-top:1px solid var(--border);margin:8px 0 48px;}
-
 /* ── REGALOS ── */
-.regalos-wrap{max-width:680px;margin:0 auto;padding:0 16px 64px;}
+.regalos-wrap{max-width:680px;margin:0 auto 52px;padding:0 16px;}
 .regalos-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;}
 .regalo-card{background:var(--card);border:1px solid var(--border);border-radius:20px;
   overflow:hidden;transition:box-shadow .2s,transform .2s;display:flex;flex-direction:column;}
@@ -94,8 +93,195 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   justify-content:center;gap:7px;text-decoration:none;transition:background .2s;margin-top:auto;}
 .btn-dl-jcc:hover{background:var(--terra-d);}
 
-/* ── CTA ── */
-.cta-wrap{max-width:560px;margin:0 auto 64px;padding:0 16px;}
+/* ── SESIONES ── */
+.sesiones-wrap{max-width:680px;margin:0 auto 52px;padding:0 16px;}
+.sesion-card{background:var(--card);border:1px solid var(--border);border-radius:24px;
+  overflow:hidden;margin-bottom:16px;transition:box-shadow .2s;}
+.sesion-card:hover{box-shadow:0 8px 32px rgba(0,0,0,.08);}
+.sesion-stripe{height:4px;}
+.sesion-body{padding:28px 24px;}
+.sesion-ico{font-size:40px;margin-bottom:12px;display:block;line-height:1;}
+.sesion-nombre{font-size:20px;font-weight:800;color:var(--text);margin-bottom:6px;letter-spacing:-.2px;}
+.sesion-tagline{font-size:13px;font-weight:600;color:var(--terra);margin-bottom:14px;font-style:italic;}
+.sesion-desc{font-size:14px;color:var(--muted);line-height:1.85;margin-bottom:18px;}
+.sesion-bullets{list-style:none;margin-bottom:22px;display:flex;flex-direction:column;gap:7px;}
+.sesion-bullets li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);line-height:1.5;}
+.sesion-bullets li::before{content:'✦';color:var(--terra);flex-shrink:0;font-size:11px;margin-top:2px;}
+.sesion-footer{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;
+  padding-top:18px;border-top:1px solid var(--border);}
+.sesion-duracion{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:5px;}
+.btn-reservar{padding:11px 26px;background:var(--terra);border:none;border-radius:12px;
+  color:#fff;font-size:13px;font-weight:800;cursor:pointer;text-decoration:none;
+  display:inline-block;transition:background .2s,transform .15s;letter-spacing:.2px;}
+.btn-reservar:hover{background:var(--terra-d);transform:translateY(-1px);}
+
+/* ── SECCIÓN INTERNA DE SESIÓN ── */
+.ses-sep{border:none;border-top:1px solid var(--border);margin:24px 0;}
+.ses-sub-title{font-size:14px;font-weight:800;color:var(--text);margin:0 0 12px;letter-spacing:-.1px;}
+.ses-text{font-size:13px;color:var(--muted);line-height:1.8;margin-bottom:14px;}
+
+/* Checklist */
+.ses-checklist{list-style:none;display:flex;flex-direction:column;gap:9px;margin-bottom:20px;}
+.ses-checklist li{display:flex;align-items:flex-start;gap:10px;font-size:13px;color:var(--text);line-height:1.5;}
+.ses-checklist li::before{content:"✓";background:var(--terra);color:#fff;
+  width:18px;height:18px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;
+  font-size:10px;font-weight:800;flex-shrink:0;margin-top:1px;}
+
+/* Grid 2 y 4 columnas */
+.ses-grid{display:grid;gap:10px;margin-bottom:20px;}
+.ses-grid-2{grid-template-columns:repeat(2,1fr);}
+.ses-grid-4{grid-template-columns:repeat(2,1fr);}
+.ses-grid-item{background:var(--card2);border:1px solid var(--border);padding:12px 10px;
+  border-radius:14px;text-align:center;}
+.ses-grid-item .gi-ico{font-size:26px;margin-bottom:4px;}
+.ses-grid-item .gi-title{font-size:12px;font-weight:800;color:var(--text);}
+.ses-grid-item .gi-desc{font-size:11px;color:var(--muted);margin-top:2px;}
+
+/* Steps */
+.ses-steps{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.ses-step{display:flex;align-items:center;gap:12px;background:var(--card2);
+  padding:14px;border-radius:16px;}
+.ses-step-num{background:var(--terra);color:#fff;width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0;}
+.ses-step-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.ses-step-desc{font-size:12px;color:var(--muted);}
+
+/* Benefit cards */
+.ses-benefits{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.ses-benefit{display:flex;align-items:center;gap:12px;background:var(--card2);
+  padding:12px 14px;border-radius:16px;border:1px solid var(--border);}
+.ses-benefit-ico{font-size:28px;flex-shrink:0;width:36px;text-align:center;}
+.ses-benefit-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.ses-benefit-desc{font-size:12px;color:var(--muted);}
+
+/* Info grid */
+.ses-info{display:flex;flex-direction:column;gap:8px;margin-bottom:20px;}
+.ses-info-row{display:flex;align-items:center;gap:12px;background:var(--card2);
+  padding:12px 14px;border-radius:14px;border:1px solid var(--border);}
+.ses-info-ico{font-size:20px;flex-shrink:0;width:24px;text-align:center;}
+.ses-info-label{font-size:12px;font-weight:700;color:var(--muted);min-width:72px;}
+.ses-info-val{font-size:13px;font-weight:700;color:var(--text);}
+
+/* Testimonials */
+.ses-testi{display:flex;flex-direction:column;gap:10px;margin-bottom:20px;}
+.ses-testi-img{border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+.ses-testi-img img{width:100%;height:auto;display:block;}
+
+/* Price */
+.ses-price-row{display:flex;align-items:center;gap:14px;margin:20px 0 0;
+  background:var(--terra-l);border:1px solid rgba(193,122,72,.3);border-radius:16px;padding:16px 18px;}
+.ses-price-tag{font-size:22px;font-weight:800;color:var(--terra);line-height:1;}
+.ses-price-tag span{font-size:13px;font-weight:600;color:var(--terra-d);}
+.ses-price-note{font-size:12px;color:var(--muted);line-height:1.5;}
+
+/* Urgency */
+.ses-urg{background:rgba(193,122,72,.1);border-radius:12px;padding:10px 14px;
+  text-align:center;font-size:12px;font-weight:700;color:var(--terra-d);margin-bottom:20px;}
+
+/* Price boxes (para clases) */
+.ses-price-box{background:var(--card2);border:1.5px solid var(--border);
+  border-radius:16px;padding:16px;text-align:center;margin-bottom:10px;}
+.ses-price-box.warm{background:rgba(193,122,72,.06);border-color:rgba(193,122,72,.3);}
+.ses-price-box.green{background:#eef4ee;border-color:#a8c5a8;}
+.ses-price-main{font-size:22px;font-weight:800;color:var(--text);margin-bottom:4px;}
+.ses-price-small{font-size:12px;color:var(--muted);line-height:1.5;}
+.ses-price-badge{display:inline-block;background:rgba(193,122,72,.15);border:1px solid var(--terra);
+  border-radius:20px;padding:3px 10px;font-size:11px;font-weight:700;color:var(--terra-d);margin-top:6px;}
+
+/* Pregunta destacada */
+.ses-pregunta{font-size:15px;font-weight:600;color:var(--terra);text-align:center;
+  margin:16px 0 20px;font-style:italic;line-height:1.6;}
+
+/* Quote / placeholder testimonial */
+.ses-quote{background:var(--terra-l);border-left:4px solid var(--terra);
+  padding:14px 16px;border-radius:0 14px 14px 0;
+  font-style:italic;font-size:13px;color:var(--terra-d);margin-bottom:20px;line-height:1.7;}
+
+/* Cierre card */
+.ses-cierre{text-align:center;padding:8px 0 4px;}
+.ses-cierre p{font-size:15px;color:var(--text);line-height:1.7;margin-bottom:20px;}
+
+/* Grid 3 columnas */
+.ses-grid-3{grid-template-columns:1fr;}
+@media(min-width:480px){.ses-grid-3{grid-template-columns:repeat(3,1fr);}}
+
+/* Definition box (borde izquierdo) */
+.ses-def-box{background:var(--card2);border-left:4px solid var(--terra);
+  padding:14px 16px;border-radius:0 14px 14px 0;margin-bottom:12px;}
+.ses-def-title{font-size:13px;font-weight:800;color:var(--terra);margin-bottom:6px;}
+.ses-def-text{font-size:13px;color:var(--muted);line-height:1.7;}
+
+/* Proceso flow (3 iconos en fila) */
+.ses-flow{display:flex;justify-content:space-around;text-align:center;
+  margin:16px 0;gap:8px;}
+.ses-flow-item{flex:1;}
+.ses-flow-ico{font-size:32px;margin-bottom:6px;}
+.ses-flow-label{font-size:12px;font-weight:800;color:var(--text);}
+
+/* ── QUIÉN SOY ── */
+.quien-wrap{max-width:680px;margin:0 auto 52px;padding:0 16px;}
+.quien-quote{font-size:24px;font-weight:800;color:var(--text);line-height:1.35;
+  text-align:center;padding:8px 8px 32px;letter-spacing:-.3px;}
+.quien-quote em{color:var(--terra);font-style:normal;}
+.quien-stats{display:flex;gap:12px;margin-bottom:20px;}
+.quien-stat{flex:1;background:var(--terra-l);border:1px solid rgba(193,122,72,.2);
+  border-radius:16px;padding:14px;text-align:center;}
+.quien-stat-num{font-size:22px;font-weight:800;color:var(--terra);line-height:1;}
+.quien-stat-label{font-size:11px;color:var(--terra-d);font-weight:600;margin-top:4px;line-height:1.4;}
+.quien-eyebrow{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:var(--terra-d);margin-bottom:10px;}
+.quien-card{background:var(--card);border:1px solid var(--border);border-radius:20px;
+  padding:22px 20px;margin-bottom:16px;}
+.quien-card p{font-size:14px;color:var(--muted);line-height:1.9;margin-bottom:12px;}
+.quien-card p:last-child{margin-bottom:0;}
+.quien-tags{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0;}
+.quien-tag{background:var(--card2);border:1px solid var(--border);
+  border-radius:20px;padding:4px 12px;font-size:11px;font-weight:600;color:var(--muted);}
+.quien-vision{background:var(--text);border-radius:16px;padding:22px 20px;margin:16px 0 0;}
+.quien-vision-label{font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(193,122,72,.85);margin-bottom:12px;}
+.quien-vision-text{font-size:14px;color:rgba(255,255,255,.72);line-height:1.9;font-style:italic;}
+.quien-mision{background:var(--terra-l);border:1.5px solid rgba(193,122,72,.25);
+  border-radius:16px;padding:20px;text-align:center;margin-top:16px;}
+.quien-mision strong{font-size:18px;color:var(--terra);display:block;margin-bottom:6px;}
+.quien-mision span{font-size:13px;color:var(--terra-d);}
+.quien-espacio{font-size:15px;color:var(--text);line-height:1.9;text-align:center;
+  padding:28px 24px;background:var(--card);border:1px solid var(--border);
+  border-radius:20px;position:relative;overflow:hidden;}
+.quien-espacio::before{content:'✦';position:absolute;bottom:-10px;right:16px;
+  font-size:80px;opacity:.04;color:var(--terra);line-height:1;pointer-events:none;}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(28,18,0,.55);z-index:500;
+  display:none;align-items:flex-end;justify-content:center;
+  backdrop-filter:blur(4px);padding:0;}
+.modal-overlay.open{display:flex;}
+.modal-sheet{background:var(--bg);border-radius:28px 28px 0 0;width:100%;max-width:520px;
+  padding:28px 24px 36px;animation:slideUp .28s ease;max-height:92dvh;overflow-y:auto;}
+@keyframes slideUp{from{transform:translateY(60px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-handle{width:40px;height:4px;background:var(--border);border-radius:4px;margin:0 auto 22px;}
+.modal-title{font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px;letter-spacing:-.2px;}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.6;}
+.modal-sesion{display:flex;align-items:center;gap:14px;padding:16px;border:1.5px solid var(--border);
+  border-radius:16px;margin-bottom:10px;cursor:pointer;text-decoration:none;
+  background:var(--card);transition:border-color .18s,box-shadow .18s;}
+.modal-sesion:hover{border-color:var(--terra);box-shadow:0 4px 16px rgba(193,122,72,.12);}
+.modal-sesion-ico{font-size:32px;flex-shrink:0;line-height:1;}
+.modal-sesion-info{flex:1;}
+.modal-sesion-nombre{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.modal-sesion-desc{font-size:12px;color:var(--muted);line-height:1.5;}
+.modal-sesion-arr{font-size:18px;color:var(--terra);flex-shrink:0;opacity:.6;}
+.modal-divider{border:none;border-top:1px solid var(--border);margin:14px 0;}
+.modal-nosé{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:14px;
+  background:var(--card2);cursor:pointer;text-decoration:none;transition:background .18s;}
+.modal-nosé:hover{background:var(--terra-l);}
+.modal-nosé-text{font-size:13px;color:var(--muted);}
+.modal-nosé-text strong{display:block;font-size:14px;color:var(--text);margin-bottom:2px;}
+.modal-close{position:absolute;top:16px;right:20px;background:none;border:none;
+  font-size:22px;color:var(--muted);cursor:pointer;padding:4px;line-height:1;}
+
+/* ── CTA FINAL ── */
+.cta-wrap{max-width:560px;margin:0 auto 72px;padding:0 16px;}
 .cta-card{background:var(--text);border-radius:24px;padding:42px 32px;text-align:center;position:relative;overflow:hidden;}
 .cta-card::before{content:'✦';position:absolute;bottom:-14px;right:22px;font-size:90px;
   opacity:.04;color:#fff;line-height:1;}
@@ -117,13 +303,23 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .empty .ei{font-size:40px;margin-bottom:12px;}
 
 @media(max-width:540px){
-  .q-grid,.regalos-grid{grid-template-columns:1fr;}
+  .regalos-grid{grid-template-columns:1fr;}
   .hero h1{font-size:26px;}
   .featured-q{font-size:18px;}
   .dia-q{font-size:17px;}
   .featured-card,.dia-card{padding:24px 20px;}
   .site-header{padding:14px 16px;}
   .cta-card{padding:30px 20px;}
+  .sesion-body{padding:22px 18px;}
+  .sesion-nombre{font-size:18px;}
+  .sesion-footer{flex-direction:column;align-items:flex-start;}
+  .btn-reservar{width:100%;text-align:center;}
+  .ses-testi{flex-direction:column;}
+}
+@media(min-width:540px){
+  .ses-grid-4{grid-template-columns:repeat(4,1fr);}
+  .ses-testi{flex-direction:row;}
+  .ses-testi-img{flex:1;}
 }
 </style>
 </head>
@@ -131,24 +327,78 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <div id="loader"><div class="spinner"></div></div>
 
+<!-- MODAL ELEGÍ TU SESIÓN -->
+<div class="modal-overlay" id="modalSesiones" onclick="closeModal(event)">
+  <div class="modal-sheet" style="position:relative">
+    <button class="modal-close" onclick="closeModalBtn()" aria-label="Cerrar">✕</button>
+    <div class="modal-handle"></div>
+    <div class="modal-title">¿Qué te llama?</div>
+    <div class="modal-sub">Elegí lo que más resuena con lo que estás buscando ahora.</div>
+
+    <a class="modal-sesion" href="/registro_jcc.html?sesion=barras"
+       onclick="track('click_btn',{boton:'modal_elegir_barras'})">
+      <div class="modal-sesion-ico">🌀</div>
+      <div class="modal-sesion-info">
+        <div class="modal-sesion-nombre">Barras de Access</div>
+        <div class="modal-sesion-desc">Liberar carga mental, relajación profunda, claridad · 60-90 min</div>
+      </div>
+      <div class="modal-sesion-arr">→</div>
+    </a>
+
+    <a class="modal-sesion" href="/registro_jcc.html?sesion=proceso_cuerpos"
+       onclick="track('click_btn',{boton:'modal_elegir_proceso_cuerpos'})">
+      <div class="modal-sesion-ico">🌿</div>
+      <div class="modal-sesion-info">
+        <div class="modal-sesion-nombre">Proceso de Cuerpos</div>
+        <div class="modal-sesion-desc">Conectar con tu cuerpo, liberar bloqueos físicos · 60-90 min</div>
+      </div>
+      <div class="modal-sesion-arr">→</div>
+    </a>
+
+    <a class="modal-sesion" href="/registro_jcc.html?tipo=clase_barras"
+       onclick="track('click_btn',{boton:'modal_elegir_clase_barras'})">
+      <div class="modal-sesion-ico">📚</div>
+      <div class="modal-sesion-info">
+        <div class="modal-sesion-nombre">Clase de Barras de Access®</div>
+        <div class="modal-sesion-desc">Aprendé a dar sesiones · 8 horas · Un solo día</div>
+      </div>
+      <div class="modal-sesion-arr">→</div>
+    </a>
+
+    <hr class="modal-divider">
+
+    <a class="modal-nosé" href="/registro_jcc.html"
+       onclick="track('click_btn',{boton:'modal_no_se_cual'})">
+      <div style="font-size:22px">💬</div>
+      <div class="modal-nosé-text">
+        <strong>No sé cuál elegir</strong>
+        Contame dónde estás y lo vemos juntos
+      </div>
+    </a>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header class="site-header">
   <div class="brand">Juan Cruz <span>Consciencia</span></div>
-  <a class="nav-link" href="/registro_jcc.html" onclick="track('click_btn',{boton:'header_agendar_sesion'})">Agendá una sesión ↗</a>
+  <button class="nav-link" onclick="openModal();track('click_btn',{boton:'header_agendar_sesion'})">Agendá una sesión ↗</button>
 </header>
 
 <!-- HERO -->
 <div class="hero">
   <div class="hero-deco">✦</div>
-  <div class="pill">✦ Preguntas expansivas · Juan Cruz Consciencia</div>
-  <h1>Preguntas que abren<br>lo que está cerrado</h1>
-  <p>No son para responder. Son para sostener — para que algo en vos empiece a expandirse desde adentro.</p>
+  <div class="pill">✦ Juan Cruz Consciencia</div>
+  <h1>Un espacio para expandir<br>tu consciencia</h1>
+  <p>Preguntas que abren lo que está cerrado, recursos gratuitos y sesiones para ir más profundo.</p>
 </div>
 
-<!-- FEATURED QUESTIONS -->
-<div class="featured-wrap">
+<!-- ── SECCIÓN: PREGUNTA ── -->
+<div class="sec-header">
+  <div class="sec-title">✦ Pregunta del día</div>
+  <div class="sec-sub">No es para responder — es para sostener y dejar que algo se mueva.</div>
+</div>
 
-  <!-- Del día -->
+<div class="featured-wrap">
   <div class="dia-card">
     <div class="dia-label">
       📅 Pregunta del día
@@ -157,8 +407,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="dia-q" id="diaQ">Cargando...</div>
     <div class="dia-dim" id="diaDim"></div>
   </div>
-
-  <!-- Del momento -->
   <div class="featured-card">
     <div class="featured-label">✦ Pregunta del momento</div>
     <div class="featured-q" id="featuredQ">Cargando...</div>
@@ -167,28 +415,482 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <button class="btn-next" onclick="nextFeatured();track('click_btn',{boton:'pregunta_siguiente'})">Otra pregunta →</button>
     </div>
   </div>
-
 </div>
 
-<!-- REGALOS SECTION -->
+<hr class="page-sep">
+
+<!-- ── SECCIÓN: REGALOS ── -->
+<div class="sec-header">
+  <div class="sec-title">🎁 Regalos para vos</div>
+  <div class="sec-sub">Preparé estos materiales para vos. Son completamente gratuitos — descargalos y que te sirvan.</div>
+</div>
+
 <div class="regalos-wrap">
-  <div class="sec-title" style="margin-bottom:8px">Regalos para vos</div>
-  <p style="font-size:14px;color:var(--muted);margin-bottom:26px;line-height:1.7">Preparé estos materiales para vos. Son un regalo — descargalos y que te sirvan.</p>
   <div id="regalosWrap">
     <div class="empty"><div class="ei">🎁</div><p>Cargando recursos...</p></div>
   </div>
 </div>
 
-<!-- CTA -->
+<hr class="page-sep">
+
+<!-- ── SECCIÓN: SESIONES ── -->
+<div class="sec-header">
+  <div class="sec-title">🌀 Las sesiones</div>
+  <div class="sec-sub">Cada sesión es una invitación a soltar lo que ya no te sirve y abrirte a más de lo que sos.</div>
+</div>
+
+<div class="sesiones-wrap">
+
+  <!-- ═══ BARRAS DE ACCESS ═══ -->
+  <div class="sesion-card" id="barras">
+    <div class="sesion-stripe" style="background:linear-gradient(90deg,#C17A48,#E8A87C)"></div>
+    <div class="sesion-body">
+      <span class="sesion-ico">🌀</span>
+      <div class="sesion-nombre">Barras de Access</div>
+      <div class="sesion-tagline">"¿Qué pasaría si pudieras soltar todo lo que creés que sabés?"</div>
+      <div class="sesion-desc">
+        Liberá el estrés y la mente sin hablar de tus problemas. Una sesión para resetear tu cabeza, dormir mejor y abrirte a más posibilidades — a través de un toque suave y ligero en 32 puntos energéticos de tu cabeza.
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- ¿Es para vos? -->
+      <div class="ses-sub-title">🎯 ¿Es para vos?</div>
+      <ul class="ses-checklist">
+        <li>Pensás demasiado y no podés frenar la mente</li>
+        <li>Sentís estrés, ansiedad o sobrecarga constante</li>
+        <li>Te cuesta relajarte de verdad</li>
+        <li>Querés soltar y resetear tu energía</li>
+      </ul>
+
+      <hr class="ses-sep">
+
+      <!-- 32 puntos -->
+      <div class="ses-sub-title">🧠 32 puntos energéticos en tu cabeza</div>
+      <p class="ses-text">En estos puntos se almacena todo lo que viviste y aprendiste. Las Barras trabajan directamente sobre ellos.</p>
+      <div class="ses-grid ses-grid-2">
+        <div class="ses-grid-item"><div class="gi-ico">💭</div><div class="gi-title">Pensamientos</div><div class="gi-desc">patrones repetitivos</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">❤️</div><div class="gi-title">Emociones</div><div class="gi-desc">cargas no procesadas</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🔗</div><div class="gi-title">Creencias</div><div class="gi-desc">limitaciones aprendidas</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🔄</div><div class="gi-title">Patrones</div><div class="gi-desc">comportamientos automáticos</div></div>
+      </div>
+
+      <!-- Áreas de los 32 puntos -->
+      <div class="ses-sub-title">🗺️ Los 32 Puntos y sus Áreas</div>
+      <p class="ses-text">Cada punto está asociado a un área específica de tu vida.</p>
+      <div class="ses-grid ses-grid-4">
+        <div class="ses-grid-item"><div class="gi-ico">💰</div><div class="gi-title">Dinero</div><div class="gi-desc">abundancia y finanzas</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🎮</div><div class="gi-title">Control</div><div class="gi-desc">poder y gestión</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🎨</div><div class="gi-title">Creatividad</div><div class="gi-desc">inspiración y expresión</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">💋</div><div class="gi-title">Sexo</div><div class="gi-desc">intimidad y relación</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🧘</div><div class="gi-title">Cuerpo</div><div class="gi-desc">conciencia y sensaciones</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">😢</div><div class="gi-title">Tristeza</div><div class="gi-desc">pérdida y melancolía</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">😊</div><div class="gi-title">Alegría</div><div class="gi-desc">felicidad</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">💬</div><div class="gi-title">Comunicación</div><div class="gi-desc">expresarse y ser escuchado</div></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- El proceso -->
+      <div class="ses-sub-title">🙌 El proceso</div>
+      <p class="ses-text">A través de un toque suave y ligero en la cabeza, sin presión ni técnica compleja. Solo presencia y consciencia.</p>
+      <div class="ses-steps">
+        <div class="ses-step">
+          <div class="ses-step-num">1</div>
+          <div><div class="ses-step-title">Se activan los puntos</div><div class="ses-step-desc">El toque ligero estimula los 32 puntos energéticos</div></div>
+        </div>
+        <div class="ses-step">
+          <div class="ses-step-num">2</div>
+          <div><div class="ses-step-title">Se descargan acumulaciones</div><div class="ses-step-desc">Se liberan las cargas energéticas almacenadas</div></div>
+        </div>
+        <div class="ses-step">
+          <div class="ses-step-num">3</div>
+          <div><div class="ses-step-title">Relajación profunda</div><div class="ses-step-desc">El sistema nervioso entra en estado de calma real</div></div>
+        </div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- Para qué sirve -->
+      <div class="ses-sub-title">💡 ¿Para qué sirve?</div>
+      <div class="ses-grid ses-grid-4">
+        <div class="ses-grid-item"><div class="gi-ico">🧘</div><div class="gi-title">Calmar la mente</div><div class="gi-desc">reduce el ruido mental y pensamientos repetitivos</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🌿</div><div class="gi-title">Reducir estrés</div><div class="gi-desc">libera tensión acumulada</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🔓</div><div class="gi-title">Soltar bloqueos</div><div class="gi-desc">desbloquea creencias que te limitan</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">✨</div><div class="gi-title">Mayor claridad</div><div class="gi-desc">mejora el enfoque y toma de decisiones</div></div>
+      </div>
+
+      <!-- Qué podés experimentar -->
+      <div class="ses-sub-title">🌟 ¿Qué podés experimentar?</div>
+      <p class="ses-text">Cada persona vive la sesión de forma única. Estas son algunas sensaciones comunes.</p>
+      <div class="ses-grid ses-grid-4">
+        <div class="ses-grid-item"><div class="gi-ico">🕊️</div><div class="gi-title">Paz mental</div><div class="gi-desc">quietud interior y silencio mental</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🍃</div><div class="gi-title">Mayor liviandad</div><div class="gi-desc">como si te hubieras quitado un peso</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">😴</div><div class="gi-title">Mejor descanso</div><div class="gi-desc">sueño más profundo y reparador</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🔮</div><div class="gi-title">Más espacio interno</div><div class="gi-desc">claridad para pensar, sentir y decidir</div></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- En 60 min vas a notar -->
+      <div class="ses-sub-title">⚡ En 60 minutos vas a notar</div>
+      <div class="ses-benefits">
+        <div class="ses-benefit"><div class="ses-benefit-ico">🧠</div><div><div class="ses-benefit-title">Menos ruido mental</div><div class="ses-benefit-desc">como si alguien bajara el volumen</div></div></div>
+        <div class="ses-benefit"><div class="ses-benefit-ico">🌟</div><div><div class="ses-benefit-title">Apertura a nuevas posibilidades</div><div class="ses-benefit-desc">oportunidades que antes no veías</div></div></div>
+        <div class="ses-benefit"><div class="ses-benefit-ico">😴</div><div><div class="ses-benefit-title">Sueño reparador</div><div class="ses-benefit-desc">dormís como hacía meses</div></div></div>
+        <div class="ses-benefit"><div class="ses-benefit-ico">⚡</div><div><div class="ses-benefit-title">Más energía</div><div class="ses-benefit-desc">menos reactividad ante conflictos</div></div></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- Testimonios -->
+      <div class="ses-sub-title">📱 Lo que dicen después de una sesión</div>
+      <div class="ses-testi" style="display:flex;gap:10px;margin-bottom:20px;">
+        <div class="ses-testi-img" style="flex:1"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.03.36.jpg?v=1776899404" alt="Testimonio 1" loading="lazy"></div>
+        <div class="ses-testi-img" style="flex:1"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.04.11.jpg?v=1776899404" alt="Testimonio 2" loading="lazy"></div>
+        <div class="ses-testi-img" style="flex:1"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsApp_Image_2026-04-22_at_20.13.36.jpg?v=1776899680" alt="Testimonio 3" loading="lazy"></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- Info práctica -->
+      <div class="ses-sub-title">📋 ¿Cómo funciona?</div>
+      <div class="ses-info">
+        <div class="ses-info-row"><div class="ses-info-ico">🕒</div><div class="ses-info-label">Duración</div><div class="ses-info-val">60 minutos</div></div>
+        <div class="ses-info-row"><div class="ses-info-ico">📍</div><div class="ses-info-label">Modalidad</div><div class="ses-info-val">Presencial · Lomas de Zamora o Caballito</div></div>
+        <div class="ses-info-row"><div class="ses-info-ico">💸</div><div class="ses-info-label">Inversión</div><div class="ses-info-val">$50.000 ARS</div></div>
+        <div class="ses-info-row"><div class="ses-info-ico">🔐</div><div class="ses-info-label">Reserva</div><div class="ses-info-val">Seña de $25.000</div></div>
+      </div>
+
+      <div class="ses-urg">⏳ Solo 10 turnos por semana · ¡Agendá el tuyo ahora!</div>
+
+      <div class="sesion-footer">
+        <div class="sesion-duracion">⏱ 60 min · Presencial</div>
+        <a class="btn-reservar" href="/registro_jcc.html?sesion=barras" onclick="track('click_btn',{boton:'reservar_barras'})">Reservar Barras ✦</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ PROCESO DE CUERPOS ═══ -->
+  <div class="sesion-card" id="proceso-cuerpos">
+    <div class="sesion-stripe" style="background:linear-gradient(90deg,#7B9E87,#A8C5B0)"></div>
+    <div class="sesion-body">
+      <span class="sesion-ico">🌿</span>
+      <div class="sesion-nombre">Proceso de Cuerpos</div>
+      <div class="sesion-tagline">"¿Qué sabe tu cuerpo que vos todavía no estás escuchando?"</div>
+      <div class="sesion-desc">
+        Soltá lo que tu cuerpo guardó sin permiso. Un proceso de Access Consciousness® para liberar realidades reactivas y presuntivas — a través de la imposición de manos que trabaja directamente a nivel energético.
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- ¿Es para vos? -->
+      <div class="ses-sub-title">🎯 ¿Es para vos?</div>
+      <ul class="ses-checklist">
+        <li>Siempre te pasa lo mismo en distintas situaciones</li>
+        <li>Reaccionás y después pensás: "¿por qué hice eso?"</li>
+        <li>Querés cambiar pero no sabés cómo empezar</li>
+        <li>Buscás vivir con más consciencia y elección</li>
+      </ul>
+
+      <hr class="ses-sep">
+
+      <!-- Realidades -->
+      <div class="ses-sub-title">📖 Realidades Reactivas y Presuntivas</div>
+      <p class="ses-text">Dos formas en que nos limitamos sin darnos cuenta — y que se fijan directamente en el cuerpo.</p>
+      <div class="ses-def-box">
+        <div class="ses-def-title">🔹 Realidad Presuntiva</div>
+        <div class="ses-def-text">Todos los supuestos, creencias y puntos de vista que adoptamos como verdades absolutas sin cuestionarlos: <em>"así son las cosas"</em>, <em>"esto es lo normal"</em>, <em>"la familia es así"</em>. Son realidades que se dan por sentadas.</div>
+      </div>
+      <div class="ses-def-box">
+        <div class="ses-def-title">🔸 Realidad Reactiva</div>
+        <div class="ses-def-text">Es la contracara: reaccionar automáticamente desde el juicio bueno/malo, en lugar de elegir conscientemente.<br><br><strong>No asumir es clave, porque asumir es estar en realidades presuntivas y reactivas.</strong></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- El proceso -->
+      <div class="ses-sub-title">🙌 El proceso</div>
+      <p class="ses-text">A través de un proceso de imposición de manos que trabaja a nivel energético:</p>
+      <div class="ses-flow">
+        <div class="ses-flow-item"><div class="ses-flow-ico">🔍</div><div class="ses-flow-label">Identificar</div></div>
+        <div class="ses-flow-item"><div class="ses-flow-ico">🌀</div><div class="ses-flow-label">Liberar</div></div>
+        <div class="ses-flow-item"><div class="ses-flow-ico">✨</div><div class="ses-flow-label">Recuperar elección</div></div>
+      </div>
+      <p class="ses-text" style="text-align:center;font-style:italic;">Un proceso que no requiere esfuerzo, solo presencia y disposición a recibir.</p>
+
+      <hr class="ses-sep">
+
+      <!-- Qué podés experimentar -->
+      <div class="ses-sub-title">🌟 ¿Qué podés experimentar?</div>
+      <div class="ses-grid ses-grid-3" style="margin-bottom:20px;">
+        <div class="ses-grid-item"><div class="gi-ico">🕊️</div><div class="gi-title">Liviandad</div><div class="gi-desc">Menos peso interno, más espacio</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">👁️</div><div class="gi-title">Claridad</div><div class="gi-desc">Ver las situaciones con nuevos ojos</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🌀</div><div class="gi-title">Nuevas posibilidades</div><div class="gi-desc">Opciones donde antes había repetición</div></div>
+      </div>
+
+      <!-- Para qué sirve -->
+      <div class="ses-sub-title">💡 ¿Para qué sirve?</div>
+      <div class="ses-grid ses-grid-3" style="margin-bottom:20px;">
+        <div class="ses-grid-item"><div class="gi-ico">🔄</div><div class="gi-title">Salir de patrones</div><div class="gi-desc">Romper ciclos repetitivos que no te sirven</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">⚡</div><div class="gi-title">Reducir la reacción</div><div class="gi-desc">Crear espacio entre el estímulo y tu respuesta</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">💭</div><div class="gi-title">Liberar creencias</div><div class="gi-desc">Soltar lo que te limita y abrir posibilidades</div></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- En 60 min -->
+      <div class="ses-sub-title">⚡ En 60 minutos vas a notar</div>
+      <div class="ses-benefits">
+        <div class="ses-benefit"><div class="ses-benefit-ico">🔄</div><div><div class="ses-benefit-title">Liberación de realidades reactivas</div><div class="ses-benefit-desc">el cuerpo deja de reaccionar automáticamente</div></div></div>
+        <div class="ses-benefit"><div class="ses-benefit-ico">🧬</div><div><div class="ses-benefit-title">Desprogramación de realidades presuntivas</div><div class="ses-benefit-desc">lo que asumiste como verdad sin cuestionar</div></div></div>
+        <div class="ses-benefit"><div class="ses-benefit-ico">💆</div><div><div class="ses-benefit-title">Mayor conexión corporal</div><div class="ses-benefit-desc">empezás a sentir lo que tu cuerpo necesita</div></div></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- Testimonios -->
+      <div class="ses-sub-title">📱 Lo que dicen después del proceso</div>
+      <div class="ses-testi" style="display:flex;gap:10px;margin-bottom:20px;">
+        <div class="ses-testi-img" style="flex:1"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.03.36.jpg?v=1776899404" alt="Testimonio 1" loading="lazy"></div>
+        <div class="ses-testi-img" style="flex:1"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.04.11.jpg?v=1776899404" alt="Testimonio 2" loading="lazy"></div>
+        <div class="ses-testi-img" style="flex:1"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsApp_Image_2026-04-22_at_20.13.36.jpg?v=1776899680" alt="Testimonio 3" loading="lazy"></div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- Info práctica -->
+      <div class="ses-sub-title">📋 ¿Cómo funciona?</div>
+      <div class="ses-info">
+        <div class="ses-info-row"><div class="ses-info-ico">🕒</div><div class="ses-info-label">Duración</div><div class="ses-info-val">60 minutos</div></div>
+        <div class="ses-info-row"><div class="ses-info-ico">📍</div><div class="ses-info-label">Modalidad</div><div class="ses-info-val">Presencial · Lomas de Zamora o Caballito</div></div>
+        <div class="ses-info-row"><div class="ses-info-ico">💸</div><div class="ses-info-label">Inversión</div><div class="ses-info-val">$60.000 ARS</div></div>
+        <div class="ses-info-row"><div class="ses-info-ico">🔐</div><div class="ses-info-label">Reserva</div><div class="ses-info-val">Seña de $30.000</div></div>
+      </div>
+
+      <div class="ses-urg">⏳ Solo 5 turnos por semana · ¡Agendá el tuyo ahora!</div>
+
+      <div class="sesion-footer">
+        <div class="sesion-duracion">⏱ 60 min · Presencial</div>
+        <a class="btn-reservar" href="/registro_jcc.html?sesion=proceso_cuerpos" onclick="track('click_btn',{boton:'reservar_proceso_cuerpos'})">Reservar Proceso ✦</a>
+      </div>
+    </div>
+  </div>
+
+
+</div>
+
+<hr class="page-sep">
+
+<!-- ── SECCIÓN: CLASES ── -->
+<div class="sec-header">
+  <div class="sec-title">📚 Clases</div>
+  <div class="sec-sub">Aprendé a dar sesiones de Barras de Access® y transformá vidas — empezando por la tuya.</div>
+</div>
+
+<div class="sesiones-wrap" style="margin-bottom:0">
+
+  <div class="sesion-card" id="clase-barras">
+    <div class="sesion-stripe" style="background:linear-gradient(90deg,#4A7FA5,#7BAFD4)"></div>
+    <div class="sesion-body">
+      <span class="sesion-ico">📚</span>
+      <div class="sesion-nombre">Clase de Barras de Access®</div>
+      <div class="sesion-tagline">"¿Cuánto espacio, liviandad y claridad podrías crear en tu vida?"</div>
+      <div class="sesion-desc">
+        Un entrenamiento práctico de 8 horas en un solo día para que domines esta técnica manual suave y efectiva. No necesitás experiencia previa — solo ganas de aprender y ofrecer bienestar.
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- Qué son las Barras -->
+      <div class="ses-sub-title">✨ ¿Qué son las Barras de Access?</div>
+      <p class="ses-text">Una técnica energética que activa 32 puntos en la cabeza, permitiendo liberar estrés, ansiedad, sobrepensamiento y todo aquello que ya no suma. Es como hacer un <strong>reset mental y energético</strong>.</p>
+
+      <hr class="ses-sep">
+
+      <!-- Qué vas a vivir -->
+      <div class="ses-sub-title">🌟 ¿Qué vas a vivir?</div>
+      <ul class="ses-checklist">
+        <li><strong>Parte teórica</strong> — entendé la base de las Barras</li>
+        <li><strong>Herramientas de Access Consciousness®</strong> — aplicables desde el primer día</li>
+        <li><strong>Práctica completa</strong> — aprendés a dar sesiones</li>
+        <li><strong>Todos dan 2 sesiones y reciben 2</strong> — experiencia real desde el primer día</li>
+        <li><strong>Te vas con la técnica incorporada y súper relajado/a</strong></li>
+      </ul>
+
+      <!-- Qué vas a aprender -->
+      <div class="ses-sub-title">🌿 En esta clase vas a aprender:</div>
+      <ul class="ses-checklist">
+        <li>Dar y recibir <strong>sesiones completas</strong></li>
+        <li>Liberar bloqueos de <strong>forma simple y efectiva</strong></li>
+        <li>Herramientas de Access como <strong>"La Pregunta"</strong></li>
+        <li>Crear más <strong>facilidad, gozo y expansión</strong> en tu vida</li>
+      </ul>
+      <p class="ses-text" style="font-style:italic;">No necesitás experiencia previa… solo estar dispuest@ a recibir algo diferente.</p>
+
+      <hr class="ses-sep">
+
+      <!-- Para quién es -->
+      <div class="ses-sub-title">🎯 ¿Para quién es esta clase?</div>
+      <ul class="ses-checklist">
+        <li>Si ya das sesiones de Barras y querés <strong>profundizar para certificarte</strong></li>
+        <li>Si sos terapeuta o coach y querés <strong>sumar una herramienta poderosa</strong></li>
+        <li>Si querés aprender herramientas de Access Consciousness®</li>
+        <li>Si sentís que necesitás un <strong>cambio real</strong> en tu vida</li>
+        <li>Si buscás una herramienta que <strong>te quede para toda la vida</strong></li>
+      </ul>
+
+      <hr class="ses-sep">
+
+      <!-- Inversión -->
+      <div class="ses-sub-title">💰 Inversión</div>
+      <div class="ses-price-box">
+        <div class="ses-price-main">USD 330</div>
+        <div class="ses-price-small">o equivalente en pesos argentinos · tipo de cambio BNA</div>
+      </div>
+      <div class="ses-price-box warm">
+        <div class="ses-price-main">USD 165</div>
+        <div class="ses-price-small">50% OFF si ya hiciste una clase conmigo</div>
+        <div class="ses-price-badge">🎁 Descuento para alumnos</div>
+      </div>
+      <div class="ses-price-box green">
+        <div class="ses-price-main">Menores de 15 años</div>
+        <div class="ses-price-small">Sin costo · Acompañando a un mayor</div>
+        <div class="ses-price-badge" style="background:#d4ecd4;border-color:#7aa87a;color:#3a6b3a;">👨‍👩‍👧‍👦 Familia</div>
+      </div>
+
+      <hr class="ses-sep">
+
+      <!-- Muchas personas sienten -->
+      <div class="ses-sub-title">✨ Muchas personas después de una sesión sienten:</div>
+      <div class="ses-grid ses-grid-2" style="margin-bottom:20px;">
+        <div class="ses-grid-item"><div class="gi-ico">🧠</div><div class="gi-title">Mente más liviana</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">😴</div><div class="gi-title">Mejor descanso</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">🌿</div><div class="gi-title">Menos ansiedad</div></div>
+        <div class="ses-grid-item"><div class="gi-ico">✨</div><div class="gi-title">Más claridad para elegir</div></div>
+      </div>
+
+      <!-- Cierre -->
+      <div class="ses-cierre">
+        <p>Si sentís que es momento de un cambio real…<br><strong>Esta clase puede ser el inicio de algo mucho más grande.</strong></p>
+      </div>
+
+      <div class="sesion-footer">
+        <div class="sesion-duracion">📅 8 horas · Un solo día · Presencial</div>
+        <a class="btn-reservar" href="/registro_jcc.html?tipo=clase_barras" onclick="track('click_btn',{boton:'reservar_clase_barras'})" style="background:#4A7FA5;">Reservar lugar ✦</a>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<hr class="page-sep">
+
+<!-- ── SECCIÓN: QUIÉN SOY ── -->
+<div class="sec-header">
+  <div class="sec-title">✦ Quién soy</div>
+</div>
+
+<div class="quien-wrap">
+
+  <div class="quien-quote">
+    No vine a enseñarte nada.<br>Vine a <em>recordarte</em> lo que ya sabés.
+  </div>
+
+  <!-- Stats -->
+  <div class="quien-stats">
+    <div class="quien-stat">
+      <div class="quien-stat-num">6+</div>
+      <div class="quien-stat-label">años en el camino espiritual</div>
+    </div>
+    <div class="quien-stat">
+      <div class="quien-stat-num">100+</div>
+      <div class="quien-stat-label">sesiones y procesos vividos</div>
+    </div>
+    <div class="quien-stat">
+      <div class="quien-stat-num">✦</div>
+      <div class="quien-stat-label">Certificado Access Consciousness®</div>
+    </div>
+  </div>
+
+  <!-- Mi historia -->
+  <div class="quien-eyebrow">Mi historia</div>
+  <div class="quien-card">
+    <p>Empecé en octubre de 2020. Lo que arrancó como una búsqueda personal se convirtió en un camino de transformación profunda que no paró más.</p>
+    <p>En estos años pasé por más de 100 sesiones y procesos distintos:</p>
+    <div class="quien-tags">
+      <span class="quien-tag">Registros Akáshicos</span>
+      <span class="quien-tag">Bioexistencia Consciente</span>
+      <span class="quien-tag">Reiki</span>
+      <span class="quien-tag">Cafeomancia</span>
+      <span class="quien-tag">Runas</span>
+      <span class="quien-tag">Constelaciones con Caballos</span>
+      <span class="quien-tag">Flores de Bach</span>
+      <span class="quien-tag">Biodecodificación</span>
+      <span class="quien-tag">Temazcal</span>
+      <span class="quien-tag">Conexiones Pleyadianas</span>
+      <span class="quien-tag">Ceremonias con Medicina Ancestral</span>
+      <span class="quien-tag">y muchas más...</span>
+    </div>
+    <p>Cada una me mostró algo distinto. Cada una me fue sacando capas. No fue un camino lineal — fue, y sigue siendo, un camino de soltar: creencias heredadas, reacciones automáticas, pesos que ni sabía que cargaba.</p>
+  </div>
+
+  <!-- Access Consciousness -->
+  <div class="quien-eyebrow">El momento que cambió todo</div>
+  <div class="quien-card">
+    <p>En abril de 2022 recibí mis primeras Barras de Access. Sentí algo distinto. Una liviandad que hacía años no experimentaba. A los días me di cuenta de que reaccionaba menos — de que había más espacio entre las cosas que pasaban y lo que yo hacía con eso.</p>
+    <p>Ese mismo año me certifiqué como practicante. Porque cuando algo te transforma tanto, no querés guardártelo. Querés compartirlo.</p>
+  </div>
+
+  <!-- Filosofía y visión -->
+  <div class="quien-eyebrow">Mi filosofía · La Casa del Profit</div>
+  <div class="quien-card">
+    <p>Después de años de explorar distintas herramientas, encontré las que realmente funcionan para mí. Así nació La Casa del Profit — una dimensión de expansión espiritual donde convergen herramientas energéticas, mentales y emocionales.</p>
+    <div class="quien-vision">
+      <div class="quien-vision-label">✦ La visión</div>
+      <div class="quien-vision-text">"Creemos que cada ser humano tiene dentro de sí el poder de transformar su vida. Con las herramientas adecuadas podés cambiar toda tu realidad — vos sos el creador de la misma. Cada sesión es un paso. Cada ser que se transforma, transforma su entorno."</div>
+    </div>
+    <div class="quien-mision">
+      <strong>1.000.000 de sesiones</strong>
+      <span>No por el número, sino por lo que representa: un millón de seres que eligieron expandirse.</span>
+    </div>
+  </div>
+
+  <!-- Lo que vas a vivir -->
+  <div class="quien-eyebrow">Lo que vas a vivir cuando vengas</div>
+  <div class="quien-espacio">
+    Un espacio sin juicio, donde no hay nada que hacer — solo recibir.<br>
+    Un espacio en el que te permitas ser exactamente lo que sos.<br><br>
+    <span style="font-size:13px;color:var(--muted);">Sin agenda, sin expectativas. Solo presencia.</span>
+  </div>
+
+</div>
+
+<!-- ── CTA FINAL ── -->
 <div class="cta-wrap">
   <div class="cta-card">
-    <h2>¿Querés ir más profundo?</h2>
-    <p>Una sesión de Barras de Access o Proceso de Cuerpos puede ser el próximo paso en tu camino de expansión.</p>
-    <a class="btn-cta" href="/sesiones_jcc.html" onclick="track('click_btn',{boton:'cta_reservar_sesion'})">Conocé las sesiones ✨</a>
+    <h2>¿No sabés por dónde empezar?</h2>
+    <p>Contame dónde estás y juntos elegimos la sesión que más te sirve en este momento.</p>
+    <button class="btn-cta" onclick="openModal();track('click_btn',{boton:'cta_escribime'})" style="border:none;cursor:pointer;">Agendá una sesión ✨</button>
   </div>
 </div>
 
 <script>
+/* ── MODAL ── */
+function openModal(){
+  document.getElementById('modalSesiones').classList.add('open');
+  document.body.style.overflow='hidden';
+  track('modal_open',{modal:'elegir_sesion'});
+}
+function closeModalBtn(){
+  document.getElementById('modalSesiones').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeModal(e){
+  if(e.target===document.getElementById('modalSesiones')) closeModalBtn();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Escape') closeModalBtn();});
+
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
@@ -196,19 +898,13 @@ const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
 
 /* ── TRACKING ── */
 function track(tipo,extra={}){
-  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'recursos_jcc',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}});}catch(e){}
+  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'landing_jcc',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}});}catch(e){}
 }
-// Alias viejo (retrocompatible)
-function trackClick(boton){track('click_btn',{boton});}
-
-// Page view al cargar
 window.addEventListener('load',()=>track('page_view'));
 
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
-
 let allPregs=[], allPregsOrig=[], featIdx=0;
 
-/* ── DEL MOMENTO ── */
 function showFeatured(){
   if(!allPregs.length)return;
   const p=allPregs[featIdx%allPregs.length];
@@ -220,7 +916,6 @@ function nextFeatured(){
   showFeatured();
 }
 
-/* ── DEL DÍA (determinístico por fecha, igual para todos) ── */
 function showDia(){
   const now=new Date();
   const dayOfYear=Math.floor((now-new Date(now.getFullYear(),0,0))/86400000);
@@ -235,16 +930,14 @@ function showDia(){
   document.getElementById('diaDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+(p.matiz||'');
 }
 
-/* ── REGALOS ── */
 async function loadRegalos(){
   try{
-    // Filtro en el servidor: solo regalos de marca jcc/ambos y activos
     const {data,error}=await _sb.from('regalos').select('id,data')
       .or('data->>marca.is.null,data->>marca.eq.jcc,data->>marca.eq.ambos')
       .or('data->>activo.is.null,data->>activo.eq.true');
     const lista=(error||!data?.length)?[]:data
       .map(r=>({id:r.id,...r.data}))
-      .filter(r=>r.activo!==false)   // segunda línea de defensa
+      .filter(r=>r.activo!==false)
       .sort((a,b)=>(a.orden??9999)-(b.orden??9999));
     if(!lista.length){
       document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
@@ -254,7 +947,7 @@ async function loadRegalos(){
       const nombre=r.nombre||'Regalo';
       const btnHtml=r.pdfUrl
         ?`<a class="btn-dl-jcc" href="${r.pdfUrl}" target="_blank"
-            onclick="track('descarga',{regaloId:'${r.id}',regaloNombre:'${nombre.replace(/'/g,'\\x27')}',canal:'recursos_jcc'})">
+            onclick="track('descarga',{regaloId:'${r.id}',regaloNombre:'${nombre.replace(/'/g,'\\x27')}',canal:'landing_jcc'})">
             🎁 Recibir regalo
           </a>`
         :`<div class="btn-dl-jcc" style="opacity:.45;cursor:not-allowed">Próximamente ✦</div>`;
@@ -272,27 +965,22 @@ async function loadRegalos(){
   }
 }
 
-/* ── INIT ── */
 async function init(){
   document.getElementById('loader').style.display='flex';
   try{
-    // Filtro en el servidor: solo tipo=pregunta y activas
     const {data,error}=await _sb.from('comunidad_contenido').select('id,data')
       .filter('data->>tipo','eq','pregunta')
       .or('data->>activo.is.null,data->>activo.eq.true');
     allPregsOrig=(error||!data?.length)?[]:data
       .map(r=>r.data||{})
-      .filter(p=>p.activo!==false);  // segunda línea de defensa
-    // Shuffle para "del momento" (no afecta allPregsOrig usado para "del día")
+      .filter(p=>p.activo!==false);
     allPregs=[...allPregsOrig];
     for(let i=allPregs.length-1;i>0;i--){
       const j=Math.floor(Math.random()*(i+1));
       [allPregs[i],allPregs[j]]=[allPregs[j],allPregs[i]];
     }
   }catch(e){console.warn('preguntas:',e);}
-
   document.getElementById('loader').style.display='none';
-
   if(!allPregs.length){
     document.getElementById('featuredQ').textContent='¿Qué elegiría si confiara en mí?';
     document.getElementById('featuredDim').textContent='🪞 Identidad';
