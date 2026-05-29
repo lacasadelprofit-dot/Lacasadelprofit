@@ -366,6 +366,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div style="display:flex;align-items:center;gap:8px;margin-left:auto;margin-right:8px">
      <span id="connBadge" style="font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(61,170,106,.15);color:#3DAA6A;border:1px solid rgba(61,170,106,.3);white-space:nowrap">🟢 Online</span>
      <span id="syncBadge" style="display:none;font-size:11px;padding:3px 10px;border-radius:20px;background:rgba(201,168,76,.15);color:var(--gold);border:1px solid rgba(201,168,76,.3);cursor:pointer;white-space:nowrap" onclick="manualSync()" title="Tap para sincronizar ahora">🔄 Pendientes</span>
+     <button id="reloadBtn" onclick="reloadData()" title="Recargar datos desde Supabase" style="background:none;border:1px solid var(--border);border-radius:20px;color:var(--muted);font-size:11px;padding:3px 10px;cursor:pointer;white-space:nowrap;transition:all .2s" onmouseenter="this.style.borderColor='var(--gold)';this.style.color='var(--gold)'" onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">↺ Actualizar</button>
     </div>
     <div class="acts" id="pgActs"><button class="btn btn-p" onclick="openModal('ses')">+ Nueva Sesión</button></div>
    </div>
@@ -2062,6 +2063,75 @@ async function manualSync(){
   await processSyncQueue();
 }
 
+/* ── Realtime sync entre dispositivos ── */
+let _realtimeDebounce=null;
+function setupRealtime(){
+  const tables=['seres','sessions','programas','inscripciones','facturas',
+    'herramientas','campanas','egresos','regalos','comunidad_contenido',
+    'onboardings','sintesis','metricas_redes'];
+  tables.forEach(tbl=>{
+    try{
+      _sb.channel('rt:'+tbl)
+        .on('postgres_changes',{event:'*',schema:'public',table:tbl},()=>{
+          // Ignorar si el cambio fue nuestro (menos de 3s)
+          if(Date.now()-_localChangeTs<3000)return;
+          clearTimeout(_realtimeDebounce);
+          _realtimeDebounce=setTimeout(_silentReload,800);
+        })
+        .subscribe();
+    }catch(e){console.warn('realtime sub failed:',tbl,e);}
+  });
+}
+
+async function _silentReload(){
+  if(!navigator.onLine)return;
+  try{
+    await loadData(true); // sin loader
+    // re-renderizar sección activa sin interrumpir al usuario
+    const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
+      facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
+      herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,
+      marketing:renderMkt,crm:renderCRM,profit:renderProfit,comunidad:renderComunidad};
+    if(fn[curSec])fn[curSec]();
+    // Indicador visual sutil
+    const btn=document.getElementById('reloadBtn');
+    if(btn){
+      btn.textContent='↺ Actualizado';btn.style.color='var(--green)';
+      setTimeout(()=>{btn.textContent='↺ Actualizar';btn.style.color='var(--muted)';},2000);
+    }
+  }catch(e){console.warn('silentReload:',e);}
+}
+
+/* ── Recarga global de datos desde Supabase ── */
+let _lastLoadTs=0;
+async function reloadData(){
+  const btn=document.getElementById('reloadBtn');
+  if(btn){btn.textContent='↺ Cargando...';btn.style.color='var(--gold)';}
+  try{
+    await loadData();
+    _lastLoadTs=Date.now();
+    // Re-renderizar la sección activa
+    const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
+      facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
+      herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,
+      marketing:renderMkt,crm:renderCRM,profit:renderProfit,comunidad:renderComunidad};
+    if(fn[curSec])fn[curSec]();
+    toast('✅ Datos actualizados');
+  }catch(e){
+    toast('⚠️ Error al recargar','err');
+  }finally{
+    if(btn){btn.textContent='↺ Actualizar';btn.style.color='var(--muted)';}
+  }
+}
+
+// Auto-refresh al volver al tab si pasaron más de 5 minutos
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && navigator.onLine){
+    const minutos5=5*60*1000;
+    if(Date.now()-_lastLoadTs > minutos5) reloadData();
+  }
+});
+
 window.addEventListener('online',()=>{
   toast('🟢 Conexión restaurada');
   updateOfflineUI();
@@ -2084,8 +2154,8 @@ function _wrap(arr){return arr.map(r=>({id:String(r.id),data:r,updated_at:new Da
 // Unwrap Supabase rows → JS objects (merges id into data)
 function _unwrap(rows){return rows.map(r=>({...r.data,id:r.id}));}
 
-async function loadData(){
-  showLoader('Cargando datos...');
+async function loadData(silent=false){
+  if(!silent)showLoader('Cargando datos...');
   try{
     const [sr,ss,ff,fc,hh,pp,cc,ii,eg,rg,cm,ob,si,mr]=await Promise.all([
       _sb.from('seres').select('id,data'),
@@ -2126,18 +2196,20 @@ async function loadData(){
     // ✅ Guardar copia local para uso offline
     saveLocalCache();
     updateOfflineUI();
+    _lastLoadTs=Date.now();
   }catch(err){
     console.error('loadData:',err);
-    // 📴 Sin conexión — intentar cargar desde caché local
-    const cached=loadLocalCache();
-    if(cached){
-      toast('📴 Offline — mostrando datos del último acceso');
-    } else {
-      toast('Sin conexión y sin caché local. Conectate a internet para el primer acceso.','err');
+    if(!silent){
+      const cached=loadLocalCache();
+      if(cached){
+        toast('📴 Offline — mostrando datos del último acceso');
+      } else {
+        toast('Sin conexión y sin caché local. Conectate a internet para el primer acceso.','err');
+      }
     }
     updateOfflineUI();
   }
-  hideLoader();
+  if(!silent)hideLoader();
 }
 // ─────────────────────────────────────────────────────────
 
@@ -2170,7 +2242,9 @@ function save(){
   clearTimeout(_saveTimer);
   _saveTimer=setTimeout(()=>_syncSupabase(),1000);
 }
+let _localChangeTs=0;
 async function _syncSupabase(){
+  _localChangeTs=Date.now(); // marcar que el cambio fue nuestro
   const pairs=[
     ['seres',seres],['sessions',sessions],['facilitadores',facs],
     ['facturas',facturas],['herramientas',herramientas],['programas',programas],
@@ -2228,6 +2302,7 @@ async function doLogin(){
   document.getElementById('loginScreen').style.display='none';
   document.getElementById('app').style.display='block';
   initApp();
+  setupRealtime(); // iniciar sync en tiempo real
 }
 document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none')doLogin();});
 async function doLogout(){
