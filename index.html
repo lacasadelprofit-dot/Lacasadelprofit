@@ -342,7 +342,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('herramientas',this)"><span class="ico">🔮</span><span>Herramientas</span></div>
     <div class="ni" onclick="nav('programas',this)"><span class="ico">📚</span><span>Programas</span></div>
     <div class="ni" onclick="nav('journey',this)"><span class="ico">🗺️</span><span>Journey</span></div>
-    <div class="nl">Marketing</div>
+    <div class="nl">Comunicación</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
     <div class="ni" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
     <div class="ni" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
@@ -644,11 +644,14 @@ th{background:rgba(28,26,46,.88)!important;}
     <!-- CONTENIDO -->
     <div id="sec-contenido" class="sec">
       <div class="tab-bar" style="margin-bottom:18px">
-        <button class="tab-btn active" id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
+        <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
+        <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
         <button class="tab-btn"        id="contTabComunidad" onclick="setContSection('comunidad')">🫂 Comunidad</button>
       </div>
+      <!-- Sub-tab: Resumen -->
+      <div id="contResumen"></div>
       <!-- Sub-tab: Redes Sociales -->
-      <div id="contRedes"></div>
+      <div id="contRedes" style="display:none"></div>
       <!-- Sub-tab: Comunidad -->
       <div id="contComunidad" style="display:none">
         <div class="tab-bar" style="margin-bottom:14px">
@@ -7366,41 +7369,45 @@ const TIPO_CONT_COL={idea:'var(--gold)',planificado:'var(--blue)',publicado:'var
 // Métricas específicas por plataforma
 const PLAT_METRICS={
   Instagram:[
-    {k:'alcance',          l:'Alcance',           ico:'👁'},
-    {k:'impresiones',      l:'Impresiones',        ico:'🔁'},
-    {k:'reproducciones',   l:'Reproducciones',     ico:'▶️'},
-    {k:'likes',            l:'Likes',              ico:'❤️'},
-    {k:'comentarios',      l:'Comentarios',        ico:'💬'},
-    {k:'guardados',        l:'Guardados',          ico:'🔖'},
-    {k:'compartidos',      l:'Compartidos',        ico:'↗️'},
-    {k:'clics_perfil',     l:'Clics al perfil',    ico:'👤'},
-    {k:'seguidores_ganados',l:'Seguidores ganados',ico:'➕'},
-    {k:'leads_generados',  l:'Leads generados',    ico:'✨'},
+    {k:'alcance',              l:'Alcance total',         ico:'👁'},
+    {k:'alcance_no_seguidores',l:'Alcance no-seguidores', ico:'🌐'},
+    {k:'impresiones',          l:'Impresiones',           ico:'🔁'},
+    {k:'reproducciones',       l:'Reproducciones',        ico:'▶️'},
+    {k:'likes',                l:'Likes',                 ico:'❤️'},
+    {k:'comentarios',          l:'Comentarios',           ico:'💬'},
+    {k:'guardados',            l:'Guardados',             ico:'🔖'},
+    {k:'compartidos',          l:'Compartidos',           ico:'↗️'},
+    {k:'clics_perfil',         l:'Clics al perfil',       ico:'👤'},
+    {k:'seguidores_ganados',   l:'Seguidores ganados',    ico:'➕'},
+    {k:'leads_generados',      l:'Leads generados',       ico:'✨'},
   ],
   TikTok:[
-    {k:'reproducciones',   l:'Reproducciones',     ico:'▶️'},
-    {k:'likes',            l:'Likes',              ico:'❤️'},
-    {k:'comentarios',      l:'Comentarios',        ico:'💬'},
-    {k:'compartidos',      l:'Compartidos',        ico:'↗️'},
-    {k:'guardados',        l:'Guardados',          ico:'🔖'},
-    {k:'seguidores_ganados',l:'Seguidores ganados',ico:'➕'},
-    {k:'leads_generados',  l:'Leads generados',    ico:'✨'},
+    {k:'reproducciones',       l:'Reproducciones',        ico:'▶️'},
+    {k:'alcance_no_seguidores',l:'Vistas no-seguidores',  ico:'🌐'},
+    {k:'likes',                l:'Likes',                 ico:'❤️'},
+    {k:'comentarios',          l:'Comentarios',           ico:'💬'},
+    {k:'compartidos',          l:'Compartidos',           ico:'↗️'},
+    {k:'guardados',            l:'Guardados',             ico:'🔖'},
+    {k:'seguidores_ganados',   l:'Seguidores ganados',    ico:'➕'},
+    {k:'leads_generados',      l:'Leads generados',       ico:'✨'},
   ],
   YouTube:[
-    {k:'reproducciones',   l:'Vistas',             ico:'▶️'},
-    {k:'likes',            l:'Likes',              ico:'❤️'},
-    {k:'comentarios',      l:'Comentarios',        ico:'💬'},
-    {k:'compartidos',      l:'Compartidos',        ico:'↗️'},
-    {k:'seguidores_ganados',l:'Suscriptores ganados',ico:'➕'},
-    {k:'leads_generados',  l:'Leads generados',    ico:'✨'},
+    {k:'reproducciones',       l:'Vistas',                ico:'▶️'},
+    {k:'alcance_no_seguidores',l:'Vistas no-suscriptores',ico:'🌐'},
+    {k:'likes',                l:'Likes',                 ico:'❤️'},
+    {k:'comentarios',          l:'Comentarios',           ico:'💬'},
+    {k:'compartidos',          l:'Compartidos',           ico:'↗️'},
+    {k:'seguidores_ganados',   l:'Suscriptores ganados',  ico:'➕'},
+    {k:'leads_generados',      l:'Leads generados',       ico:'✨'},
   ],
   Facebook:[
-    {k:'alcance',          l:'Alcance',            ico:'👁'},
-    {k:'impresiones',      l:'Impresiones',        ico:'🔁'},
-    {k:'likes',            l:'Reacciones',         ico:'❤️'},
-    {k:'comentarios',      l:'Comentarios',        ico:'💬'},
-    {k:'compartidos',      l:'Compartidos',        ico:'↗️'},
-    {k:'leads_generados',  l:'Leads generados',    ico:'✨'},
+    {k:'alcance',              l:'Alcance total',         ico:'👁'},
+    {k:'alcance_no_seguidores',l:'Alcance no-seguidores', ico:'🌐'},
+    {k:'impresiones',          l:'Impresiones',           ico:'🔁'},
+    {k:'likes',                l:'Reacciones',            ico:'❤️'},
+    {k:'comentarios',          l:'Comentarios',           ico:'💬'},
+    {k:'compartidos',          l:'Compartidos',           ico:'↗️'},
+    {k:'leads_generados',      l:'Leads generados',       ico:'✨'},
   ],
 };
 
@@ -7416,7 +7423,7 @@ const HOOK_TYPES=[
 
 /* ── Metas mensuales (localStorage) ── */
 function getContGoals(){try{return JSON.parse(localStorage.getItem('lcp_cont_goals')||'{}');}catch{return{};}}
-function setContGoal(k,v){const g=getContGoals();g[k]=v;localStorage.setItem('lcp_cont_goals',JSON.stringify(g));renderMktContenido();}
+function setContGoal(k,v){const g=getContGoals();g[k]=v;localStorage.setItem('lcp_cont_goals',JSON.stringify(g));if(_contSection==='resumen')renderContResumen();else renderMktContenido();}
 function editGoal(k,label,current){
   const v=prompt(`Meta de ${label} para este mes:`,current||'');
   if(v===null)return;
@@ -7444,7 +7451,7 @@ function _repurposePost(id){
   document.getElementById('crNotas').value=`[Repurpose de ${c.plataforma}] ${c.notas||''}`.trim();
   document.getElementById('moContenidoTitle').textContent=`♻️ Repurpose → ${nextPlat}`;
   toggleMetricasContenido();
-  openModal('moContenido');
+  document.getElementById('moContenido').classList.add('open');
 }
 
 // Engagement rate según plataforma
@@ -7516,7 +7523,7 @@ function openContenidoModal(id=null,tipoDefault='idea',fechaDefault=null){
     metrics.forEach(m=>{const el=document.getElementById('crM_'+m.k);if(el)el.value=c[m.k]||'';});
     const ctaEl=document.getElementById('crCta');if(ctaEl)ctaEl.value=c.cta||'ninguno';
   }
-  openModal('moContenido');
+  document.getElementById('moContenido').classList.add('open');
 }
 
 function saveContenido(){
@@ -8664,20 +8671,241 @@ async function delComunidad(id){
 }
 
 /* ── CONTENIDO (sección principal) ── */
-let _contSection='redes';
+let _contSection='resumen';
 function setContSection(tab){
   _contSection=tab;
-  ['redes','comunidad'].forEach(t=>{
+  ['resumen','redes','comunidad'].forEach(t=>{
     const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
     const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl)tabEl.classList.toggle('active',t===tab);
     if(contEl)contEl.style.display=t===tab?'':'none';
   });
+  if(tab==='resumen')renderContResumen();
   if(tab==='redes')renderMktContenido();
   if(tab==='comunidad')renderComunidad();
 }
 function renderContenido(){
-  setContSection(_contSection||'redes');
+  setContSection(_contSection||'resumen');
+}
+
+/* ══════════════════════════════════════════════════════════
+   RESUMEN MENSUAL DE CONTENIDO
+   ══════════════════════════════════════════════════════════ */
+let _resumenMes=new Date().toISOString().slice(0,7);
+
+function navResumenMes(dir){
+  const d=new Date(_resumenMes+'-15');
+  d.setMonth(d.getMonth()+dir);
+  _resumenMes=d.toISOString().slice(0,7);
+  renderContResumen();
+}
+
+function editMetasMes(){
+  const g=getContGoals();
+  const p=prompt('Meta de posts por mes:',g.posts_mes||'');
+  if(p===null)return;
+  const a=prompt('Meta de alcance mensual:',g.alcance_mes||'');
+  if(a===null)return;
+  const gg={...g,posts_mes:parseInt(p)||0,alcance_mes:parseInt(a)||0};
+  localStorage.setItem('lcp_cont_goals',JSON.stringify(gg));
+  renderContResumen();
+}
+
+function renderContResumen(){
+  const el=document.getElementById('contResumen');if(!el)return;
+  const goals=getContGoals();
+  const metaPosts=goals.posts_mes||0;
+  const metaAlcance=goals.alcance_mes||0;
+  const mesActual=new Date().toISOString().slice(0,7);
+  const esFuturo=_resumenMes>mesActual;
+
+  // Posts publicados del mes
+  const pubs=contenidoRedes.filter(c=>c.tipo==='publicado'&&c.fecha?.startsWith(_resumenMes));
+  const alcTotal=pubs.reduce((a,c)=>a+_mainReach(c),0);
+  const guardTotal=pubs.reduce((a,c)=>a+(c.guardados||0),0);
+  const segGanTotal=pubs.reduce((a,c)=>a+(c.seguidores_ganados||0),0);
+
+  // Tasa de guardados del mes (total guardados / total alcance)
+  const tasaGuard=alcTotal>0?(guardTotal/alcTotal*100):null;
+
+  // % no-seguidores: promedio de los posts que tienen el dato
+  const postsConNS=pubs.filter(c=>_mainReach(c)>0&&(c.alcance_no_seguidores||0)>0);
+  const pctNoSeg=postsConNS.length>0
+    ?Math.round(postsConNS.reduce((a,c)=>a+(c.alcance_no_seguidores/_mainReach(c)*100),0)/postsConNS.length)
+    :null;
+
+  // Progress vs metas
+  const postsPct=metaPosts>0?Math.min(100,Math.round(pubs.length/metaPosts*100)):null;
+  const alcPct=metaAlcance>0?Math.min(100,Math.round(alcTotal/metaAlcance*100)):null;
+
+  // Color helpers
+  const pctCol=v=>v>=80?'var(--green)':v>=50?'var(--gold)':'var(--red)';
+  const barCol=v=>v>=80?'var(--green)':v>=50?'var(--gold)':'#E05555';
+
+  const mesLabel=new Date(_resumenMes+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+
+  // ── Tendencia 6 meses ──
+  const meses6=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);meses6.push(d.toISOString().slice(0,7));}
+  const t6=meses6.map(m=>{
+    const pp=contenidoRedes.filter(c=>c.tipo==='publicado'&&c.fecha?.startsWith(m));
+    const alc=pp.reduce((a,c)=>a+_mainReach(c),0);
+    const grd=pp.reduce((a,c)=>a+(c.guardados||0),0);
+    const tg=alc>0?(grd/alc*100).toFixed(1):null;
+    return{m,cnt:pp.length,alc,tg,label:new Date(m+'-15').toLocaleDateString('es-AR',{month:'short'})};
+  });
+  const maxCnt=Math.max(...t6.map(x=>x.cnt),metaPosts||1,1);
+  const maxAlc=Math.max(...t6.map(x=>x.alc),metaAlcance||1,1);
+
+  // ── Tabla posts del mes ──
+  const tablaRows=pubs.length?[...pubs].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(c=>{
+    const alc=_mainReach(c);
+    const grd=c.guardados||0;
+    const ns=c.alcance_no_seguidores||0;
+    const tg=alc>0?(grd/alc*100).toFixed(1):null;
+    const pns=alc>0&&ns>0?Math.round(ns/alc*100):null;
+    const tgCol=tg===null?'var(--muted)':parseFloat(tg)>=3?'var(--green)':parseFloat(tg)>=1.5?'var(--gold)':'var(--muted)';
+    const pnsCol=pns===null?'var(--muted)':pns>=50?'var(--green)':pns>=30?'var(--gold)':'var(--muted)';
+    const fechaShort=c.fecha?c.fecha.slice(5).replace('-','/'):'—';
+    const titulo=(c.titulo||'Sin título').slice(0,28)+(c.titulo?.length>28?'…':'');
+    const plIco=PLAT_CONT_ICO[c.plataforma]||'📱';
+    const plCol=PLAT_CONT_COL[c.plataforma]||'var(--muted)';
+    return`<tr onclick="openContenidoModal('${c.id}')" style="cursor:pointer;transition:.15s" onmouseenter="this.style.background='rgba(255,255,255,.04)'" onmouseleave="this.style.background=''">
+      <td style="padding:9px 10px;font-size:12px;color:var(--muted);white-space:nowrap">${fechaShort}</td>
+      <td style="padding:9px 6px;font-size:14px;text-align:center" title="${c.plataforma||''}">${plIco}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--text);max-width:160px">${titulo}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--blue);font-weight:700;text-align:right">${alc>0?alc.toLocaleString('es-AR'):'—'}</td>
+      <td style="padding:9px 10px;font-size:12px;font-weight:700;color:${pnsCol};text-align:right">${pns!==null?pns+'%':'—'}</td>
+      <td style="padding:9px 10px;font-size:12px;font-weight:700;color:${tgCol};text-align:right">${tg!==null?tg+'%':'—'}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--green);text-align:right">${c.seguidores_ganados>0?'+'+c.seguidores_ganados:'—'}</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Sin posts publicados este mes</td></tr>`;
+
+  el.innerHTML=`
+  <!-- Navegador de mes -->
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <button onclick="navResumenMes(-1)" style="padding:7px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:14px;cursor:pointer;font-weight:700">←</button>
+      <span style="font-size:18px;font-weight:800;color:var(--gl);text-transform:capitalize;min-width:160px;text-align:center">${mesLabel}</span>
+      <button onclick="navResumenMes(1)" style="padding:7px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border);color:${esFuturo?'var(--border)':'var(--text)'};font-size:14px;cursor:${esFuturo?'default':'pointer'};font-weight:700" ${esFuturo?'disabled':''}>→</button>
+    </div>
+    <button onclick="editMetasMes()" style="padding:8px 16px;border-radius:10px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">⚙️ Editar metas del mes</button>
+  </div>
+
+  ${metaPosts===0&&metaAlcance===0?`<div style="background:rgba(201,168,76,.07);border:1px dashed rgba(201,168,76,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">
+    💡 Todavía no configuraste tus metas mensuales. Hacé clic en <strong style="color:var(--gold)">⚙️ Editar metas</strong> para empezar a medir tu progreso.
+  </div>`:''}
+
+  <!-- KPIs 2×2 -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
+
+    <!-- Posts -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📋 Posts publicados</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px">
+        <span style="font-size:32px;font-weight:800;color:var(--green)">${pubs.length}</span>
+        ${metaPosts>0?`<span style="font-size:14px;color:var(--muted)">/ ${metaPosts}</span>`:''}
+      </div>
+      ${metaPosts>0?`
+      <div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden">
+        <div style="height:100%;background:${barCol(postsPct)};width:${postsPct}%;border-radius:3px;transition:width .6s"></div>
+      </div>
+      <div style="font-size:11px;color:${pctCol(postsPct)};font-weight:700">${postsPct}% de la meta${postsPct>=100?' ✅':''}</div>`
+      :`<div style="font-size:11px;color:var(--muted)">Sin meta configurada</div>`}
+    </div>
+
+    <!-- Alcance -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">👁 Alcance total</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px">
+        <span style="font-size:32px;font-weight:800;color:var(--blue)">${alcTotal>=1000?(alcTotal/1000).toFixed(1)+'K':alcTotal}</span>
+        ${metaAlcance>0?`<span style="font-size:14px;color:var(--muted)">/ ${metaAlcance>=1000?(metaAlcance/1000).toFixed(0)+'K':metaAlcance}</span>`:''}
+      </div>
+      ${metaAlcance>0?`
+      <div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden">
+        <div style="height:100%;background:${barCol(alcPct)};width:${alcPct}%;border-radius:3px;transition:width .6s"></div>
+      </div>
+      <div style="font-size:11px;color:${pctCol(alcPct)};font-weight:700">${alcPct}% de la meta${alcPct>=100?' ✅':''}</div>`
+      :`<div style="font-size:11px;color:var(--muted)">Sin meta configurada</div>`}
+    </div>
+
+    <!-- Tasa de guardados -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🔖 Tasa de guardados</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
+        <span style="font-size:32px;font-weight:800;color:${tasaGuard===null?'var(--muted)':parseFloat(tasaGuard)>=3?'var(--green)':parseFloat(tasaGuard)>=1.5?'var(--gold)':'var(--red)'}">${tasaGuard!==null?tasaGuard+'%':'—'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">guardados ÷ alcance · bueno ≥ 2%</div>
+      ${tasaGuard!==null?`<div style="font-size:10px;margin-top:4px;color:${parseFloat(tasaGuard)>=3?'var(--green)':parseFloat(tasaGuard)>=1.5?'var(--gold)':'#E05555'};font-weight:700">${parseFloat(tasaGuard)>=3?'🟢 Excelente':parseFloat(tasaGuard)>=1.5?'🟡 Bien, podés mejorar':'🔴 Por debajo del promedio'}</div>`:''}
+    </div>
+
+    <!-- % no-seguidores -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🌐 Alcance no-seguidores</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
+        <span style="font-size:32px;font-weight:800;color:${pctNoSeg===null?'var(--muted)':pctNoSeg>=50?'var(--green)':pctNoSeg>=30?'var(--gold)':'var(--red)'}">${pctNoSeg!==null?pctNoSeg+'%':'—'}</span>
+      </div>
+      <div style="font-size:11px;color:var(--muted)">promedio por post · bueno ≥ 40%</div>
+      ${pctNoSeg!==null?`<div style="font-size:10px;margin-top:4px;color:${pctNoSeg>=50?'var(--green)':pctNoSeg>=30?'var(--gold)':'#E05555'};font-weight:700">${pctNoSeg>=50?'🟢 Muy buena difusión':pctNoSeg>=30?'🟡 En crecimiento':'🔴 Casi solo seguidores'}</div>`
+      :`<div style="font-size:10px;margin-top:4px;color:var(--muted)">Cargá "Alcance no-seguidores" en cada post</div>`}
+    </div>
+
+  </div>
+
+  <!-- Tendencia 6 meses -->
+  <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:24px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px">📈 Posts publicados — últimos 6 meses</div>
+    <div style="display:flex;align-items:flex-end;gap:8px;height:80px">
+      ${t6.map(x=>{
+        const h=x.cnt>0?Math.max(8,Math.round(x.cnt/maxCnt*64)):4;
+        const isCur=x.m===_resumenMes;
+        const isHoy=x.m===mesActual;
+        const metaH=metaPosts>0?Math.round(metaPosts/maxCnt*64):0;
+        return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+          <div style="font-size:10px;font-weight:700;color:${isCur?'var(--gl)':'var(--muted)'}">${x.cnt||''}</div>
+          <div style="width:100%;position:relative;height:64px;display:flex;align-items:flex-end">
+            ${metaPosts>0?`<div style="position:absolute;bottom:${metaH}px;left:0;right:0;border-top:1px dashed rgba(201,168,76,.4)"></div>`:''}
+            <div style="width:100%;background:${isCur?'var(--gl)':isHoy?'var(--gold)':'rgba(91,155,213,.5)'};border-radius:5px 5px 0 0;height:${h}px;transition:height .5s"></div>
+          </div>
+          <div style="font-size:10px;color:${isCur?'var(--gl)':'var(--muted)'};font-weight:${isCur?700:400};text-transform:capitalize">${x.label}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${metaPosts>0?`<div style="display:flex;align-items:center;gap:6px;margin-top:10px"><div style="width:16px;border-top:1px dashed rgba(201,168,76,.5)"></div><span style="font-size:10px;color:var(--muted)">meta: ${metaPosts} posts/mes</span></div>`:''}
+  </div>
+
+  <!-- Tabla posts del mes -->
+  <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <span style="font-size:13px;font-weight:700;color:var(--text)">📋 Posts de ${mesLabel}</span>
+      <span style="font-size:11px;color:var(--muted)">${pubs.length} publicado${pubs.length!==1?'s':''} · click para editar</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="border-bottom:1px solid var(--border)">
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Fecha</th>
+            <th style="padding:8px 6px;font-size:10px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.5px">Red</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Título</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--blue);text-align:right;text-transform:uppercase;letter-spacing:.5px">Alcance</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.5px" title="% del alcance que NO son tus seguidores">No-seg %</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.5px" title="Guardados ÷ Alcance × 100">Guard %</th>
+            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--green);text-align:right;text-transform:uppercase;letter-spacing:.5px">Seg +</th>
+          </tr>
+        </thead>
+        <tbody>${tablaRows}</tbody>
+        ${pubs.length>0?`<tfoot>
+          <tr style="border-top:1px solid var(--border);background:rgba(201,168,76,.04)">
+            <td colspan="3" style="padding:10px 10px;font-size:11px;font-weight:700;color:var(--muted)">TOTAL / PROMEDIO</td>
+            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--blue);text-align:right">${alcTotal>=1000?(alcTotal/1000).toFixed(1)+'K':alcTotal}</td>
+            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--muted);text-align:right">${pctNoSeg!==null?pctNoSeg+'%':'—'}</td>
+            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--muted);text-align:right">${tasaGuard!==null?tasaGuard+'%':'—'}</td>
+            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--green);text-align:right">${segGanTotal>0?'+'+segGanTotal:'—'}</td>
+          </tr>
+        </tfoot>`:''}
+      </table>
+    </div>
+  </div>`;
 }
 
 function renderMkt(){
