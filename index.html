@@ -3175,52 +3175,34 @@ function renderSes(){
   const pvTot=compSes.filter(s=>s.primeraVez).length;
   const chg2=lmesSes.length>0?Math.round((mesSes.length-lmesSes.length)/lmesSes.length*100):0;
   const pendSes=sessions.filter(s=>(s.estado||'Completado')==='Pendiente'||(s.estado||'')==='Confirmado').length;
-  const sesMesARS=mesSes.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
-  const sesMesUSD=mesSes.filter(s=>s.moneda==='USD').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
   const kpiEl=document.getElementById('sesKPIs');
   if(kpiEl)kpiEl.innerHTML=`
     <div class="kc go"><div class="ki">✨</div><div class="kl">Total Completadas</div><div class="kv">${compSes.length}</div><div class="ks">${yrSes.length} en ${yr2}</div></div>
     <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${mesSes.length}</div><div class="kch ${chg2>=0?'up':'dn'}">${chg2>=0?'↑':'↓'} ${Math.abs(chg2)}% vs anterior</div></div>
     <div class="kc or"><div class="ki">⭐</div><div class="kl">1° Vez este mes</div><div class="kv">${pvMes}</div><div class="ks">Total histórico: ${pvTot}</div></div>
-    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes</div><div class="kv">${pendSes}</div><div class="ks">Sin completar</div></div>
-    <div class="kc go" style="border-top-color:#5DD89A"><div class="ki">🇦🇷</div><div class="kl">Cobrado ARS (mes)</div><div class="kv" style="font-size:18px">$${Math.round(sesMesARS).toLocaleString('es-AR')}</div></div>
-    <div class="kc bl"><div class="ki">🇺🇸</div><div class="kl">Cobrado USD (mes)</div><div class="kv" style="font-size:18px">USD ${sesMesUSD.toLocaleString('en-US',{maximumFractionDigits:0})}</div></div>`;
+    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes</div><div class="kv">${pendSes}</div><div class="ks">Sin completar</div></div>`;
 
   // ── RESUMEN ──
   if(_sesTab==='resumen'){
-    // Últimos 6 meses
-    const meses={};
-    for(let i=5;i>=0;i--){const d=new Date(now2.getFullYear(),now2.getMonth()-i,1);meses[d.toISOString().slice(0,7)]=0;}
-    compSes.forEach(s=>{const m=s.fecha?.slice(0,7);if(m in meses)meses[m]++;});
-    const maxM=Math.max(1,...Object.values(meses));
-    const mesBar=Object.entries(meses).map(([m,n])=>`
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
-        <div style="font-size:11px;color:var(--muted);width:42px">${m.slice(5)}</div>
-        <div style="flex:1;background:rgba(201,168,76,.08);border-radius:4px;height:20px;overflow:hidden">
-          <div style="height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));width:${Math.round(n/maxM*100)}%;border-radius:4px;transition:width .4s"></div>
-        </div>
-        <div style="font-size:12px;font-weight:700;color:var(--gl);width:24px;text-align:right">${n}</div>
-      </div>`).join('');
-
-    // Top herramientas
+    // Top herramientas (lista)
     const porHerr={};
-    compSes.forEach(s=>{if(s.sesion){porHerr[s.sesion]=(porHerr[s.sesion]||0)+1;}});
-    const topHerr=Object.entries(porHerr).sort((a,b)=>b[1]-a[1]).slice(0,6).map(([n,c])=>`
+    compSes.forEach(s=>{if(s.sesion)porHerr[s.sesion]=(porHerr[s.sesion]||0)+1;});
+    const topHerr=Object.entries(porHerr).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([n,c])=>`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
         <span style="font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${n}</span>
         <span style="font-size:13px;font-weight:700;color:var(--gl);margin-left:8px">${c}</span>
       </div>`).join('');
 
-    // Top facilitadores
+    // Top facilitadores (lista)
     const porFac={};
-    compSes.forEach(s=>{if(s.facilitador){porFac[s.facilitador]=(porFac[s.facilitador]||0)+1;}});
+    compSes.forEach(s=>{if(s.facilitador)porFac[s.facilitador]=(porFac[s.facilitador]||0)+1;});
     const topFac=Object.entries(porFac).sort((a,b)=>b[1]-a[1]).map(([n,c])=>`
       <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
         <span style="font-size:12px">${n}</span>
         <span style="font-size:13px;font-weight:700;color:var(--purple)">${c}</span>
       </div>`).join('');
 
-    // Últimas 5 sesiones
+    // Últimas sesiones
     const recientes=compSes.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5).map(s=>`
       <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
         <span style="font-size:11px;color:var(--muted);width:64px;flex-shrink:0">${fd(s.fecha)}</span>
@@ -3230,25 +3212,73 @@ function renderSes(){
       </div>`).join('');
 
     document.getElementById('sesResumenBody').innerHTML=`
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px">
-        <div class="cc">
-          <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes</h3>
-          ${mesBar}
-        </div>
-        <div class="cc">
-          <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Top herramientas</h3>
-          ${topHerr||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}
-        </div>
-        <div class="cc">
-          <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🙋 Por facilitador</h3>
-          ${topFac||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}
-        </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:220px"><canvas id="chResAnual"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Top herramientas</h3>${topHerr||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
       </div>
-      <div class="cc" style="margin-top:14px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:180px"><canvas id="chResAcum"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🙋 Por facilitador</h3>${topFac||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📆 Día de la semana</h3><div style="height:180px"><canvas id="chResDia"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📉 Frecuencia por ser</h3><div style="height:180px"><canvas id="chResFreq"></canvas></div></div>
+      </div>
+      <div class="cc">
         <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🕐 Últimas sesiones</h3>
         ${recientes||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}
         <button class="btn btn-s btn-sm" style="margin-top:8px" onclick="setSesTab('historial')">Ver historial completo →</button>
       </div>`;
+
+    // Chart: comparativo anual (líneas)
+    const MN2=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const yrs2=[...new Set(compSes.map(s=>new Date(s.fecha).getFullYear()))].sort();
+    const paleta2=['#9B82D4','#5B9BD5','#C9A84C','#E8C96A'];
+    const lineDs=yrs2.map((y,i)=>({
+      label:String(y),
+      data:MN2.map((_,m)=>{
+        if(y===yr2&&m>now2.getMonth())return null;
+        return compSes.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===y&&d.getMonth()===m;}).length;
+      }),
+      borderColor:paleta2[i]||'#C9A84C',backgroundColor:(paleta2[i]||'#C9A84C')+'18',
+      tension:.4,fill:true,pointRadius:3,pointBackgroundColor:paleta2[i]||'#C9A84C',spanGaps:false
+    }));
+    if(charts.resAnual)charts.resAnual.destroy();
+    charts.resAnual=new Chart(document.getElementById('chResAnual'),{type:'line',data:{labels:MN2,datasets:lineDs},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7A7260',font:{size:11}}}},scales:{x:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.5)'}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+    // Chart: acumulativo histórico
+    if(compSes.length>0){
+      const sorted2=compSes.slice().sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+      const firstM2=sorted2[0].fecha.slice(0,7);
+      const mesesAcum=[];
+      const curA=new Date(firstM2+'-01'),endA=new Date(mesStr2+'-01');
+      while(curA<=endA){mesesAcum.push(curA.toISOString().slice(0,7));curA.setMonth(curA.getMonth()+1);}
+      let acc2=0;
+      const acumData2=mesesAcum.map(m=>{acc2+=compSes.filter(s=>s.fecha&&s.fecha.startsWith(m)).length;return acc2;});
+      if(charts.resAcum)charts.resAcum.destroy();
+      charts.resAcum=new Chart(document.getElementById('chResAcum'),{type:'line',data:{labels:mesesAcum.map(m=>m.slice(5)+'/'+m.slice(2,4)),datasets:[{data:acumData2,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,.1)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9A84C'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+    }
+
+    // Chart: día de la semana
+    const DIAS2=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+    const diaIdx2=[1,2,3,4,5,6,0];
+    const diaData2=diaIdx2.map(d=>compSes.filter(s=>s.fecha&&new Date(s.fecha).getDay()===d).length);
+    if(charts.resDia)charts.resDia.destroy();
+    charts.resDia=new Chart(document.getElementById('chResDia'),{type:'bar',data:{labels:DIAS2,datasets:[{data:diaData2,backgroundColor:diaData2.map((_,i)=>i<5?'rgba(201,168,76,.55)':'rgba(91,155,213,.55)'),borderColor:diaData2.map((_,i)=>i<5?'#C9A84C':'#5B9BD5'),borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+    // Chart: frecuencia por ser
+    const freqMap2={};
+    compSes.forEach(s=>{if(s.ser)freqMap2[s.ser]=(freqMap2[s.ser]||0)+1;});
+    const buckets2=[
+      {label:'1 vez',min:1,max:1,col:'rgba(91,155,213,.7)',border:'#5B9BD5'},
+      {label:'2–3',min:2,max:3,col:'rgba(201,168,76,.7)',border:'#C9A84C'},
+      {label:'4–6',min:4,max:6,col:'rgba(155,130,212,.7)',border:'#9B82D4'},
+      {label:'7–10',min:7,max:10,col:'rgba(61,170,106,.7)',border:'#3DAA6A'},
+      {label:'11+',min:11,max:Infinity,col:'rgba(232,201,106,.9)',border:'#E8C96A'},
+    ];
+    const freqData2=buckets2.map(b=>Object.values(freqMap2).filter(n=>n>=b.min&&n<=b.max).length);
+    if(charts.resFreq)charts.resFreq.destroy();
+    charts.resFreq=new Chart(document.getElementById('chResFreq'),{type:'bar',data:{labels:buckets2.map(b=>b.label),datasets:[{data:freqData2,backgroundColor:buckets2.map(b=>b.col),borderColor:buckets2.map(b=>b.border),borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const tot=Object.keys(freqMap2).length;return `${ctx.raw} seres (${tot?Math.round(ctx.raw/tot*100):0}%)`;},title:([i])=>`Seres con ${buckets2[i.dataIndex].label}`}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
     return;
   }
   const srch=document.getElementById('sesSrch').value.toLowerCase();
