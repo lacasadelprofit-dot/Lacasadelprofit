@@ -408,11 +408,17 @@ th{background:rgba(28,26,46,.88)!important;}
      <div class="tab-bar" style="margin-bottom:18px">
       <button class="tab-btn active" id="sesTabResumen"   onclick="setSesTab('resumen')">📊 Resumen</button>
       <button class="tab-btn"        id="sesTabHistorial" onclick="setSesTab('historial')">📋 Historial</button>
+      <button class="tab-btn"        id="sesTabJC"        onclick="setSesTab('jc')">🧘 JC</button>
      </div>
      <!-- RESUMEN -->
      <div id="sesSec-resumen">
       <div class="kpi-grid" id="sesKPIs" style="margin-bottom:18px"></div>
       <div id="sesResumenBody"></div>
+     </div>
+     <!-- JC -->
+     <div id="sesSec-jc" style="display:none">
+      <div class="kpi-grid" id="jcKPIs" style="margin-bottom:18px"></div>
+      <div id="jcBody"></div>
      </div>
      <!-- HISTORIAL -->
      <div id="sesSec-historial" style="display:none">
@@ -647,7 +653,8 @@ th{background:rgba(28,26,46,.88)!important;}
         <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
         <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
         <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
-        <button class="tab-btn"        id="contTabComunidad" onclick="setContSection('comunidad')">🫂 Comunidad</button>
+        <button class="tab-btn"        id="contTabComunidad"  onclick="setContSection('comunidad')">🫂 Comunidad</button>
+        <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
       </div>
       <!-- Sub-tab: Resumen -->
       <div id="contResumen"></div>
@@ -655,6 +662,8 @@ th{background:rgba(28,26,46,.88)!important;}
       <div id="contRedes" style="display:none"></div>
       <!-- Sub-tab: Manual de Marca -->
       <div id="contManual" style="display:none"></div>
+      <!-- Sub-tab: Generador IA -->
+      <div id="contGenerador" style="display:none"></div>
       <!-- Sub-tab: Comunidad -->
       <div id="contComunidad" style="display:none">
         <div class="tab-bar" style="margin-bottom:14px">
@@ -2992,9 +3001,107 @@ function setSesTab(t){
   _sesTab=t;
   document.getElementById('sesTabResumen')?.classList.toggle('active',t==='resumen');
   document.getElementById('sesTabHistorial')?.classList.toggle('active',t==='historial');
+  document.getElementById('sesTabJC')?.classList.toggle('active',t==='jc');
   document.getElementById('sesSec-resumen').style.display=t==='resumen'?'':'none';
   document.getElementById('sesSec-historial').style.display=t==='historial'?'':'none';
-  renderSes();
+  document.getElementById('sesSec-jc').style.display=t==='jc'?'':'none';
+  if(t==='jc')renderSesJC();else renderSes();
+}
+
+function renderSesJC(){
+  const jcSes=sessions.filter(s=>s.facilitador===FAC_ADMIN&&comp(s));
+  const now=new Date(),yr=now.getFullYear();
+  const mesStr=now.toISOString().slice(0,7);
+  const lm=now.getMonth()===0?12:now.getMonth(),ly=now.getMonth()===0?yr-1:yr;
+  const lmStr=`${ly}-${String(lm).padStart(2,'0')}`;
+  const mesSes=jcSes.filter(s=>s.fecha&&s.fecha.startsWith(mesStr));
+  const lmesSes=jcSes.filter(s=>s.fecha&&s.fecha.startsWith(lmStr));
+  const yrSes=jcSes.filter(s=>new Date(s.fecha).getFullYear()===yr);
+  const chg=lmesSes.length>0?Math.round((mesSes.length-lmesSes.length)/lmesSes.length*100):0;
+  const sereUnicos=new Set(jcSes.map(s=>s.ser)).size;
+  const cobMesARS=mesSes.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
+  const pvTot=jcSes.filter(s=>s.primeraVez).length;
+
+  // KPIs
+  const kpiEl=document.getElementById('jcKPIs');
+  if(kpiEl)kpiEl.innerHTML=`
+    <div class="kc go"><div class="ki">🧘</div><div class="kl">Total Sesiones JC</div><div class="kv">${jcSes.length}</div><div class="ks">${yrSes.length} en ${yr}</div></div>
+    <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${mesSes.length}</div><div class="kch ${chg>=0?'up':'dn'}">${chg>=0?'↑':'↓'} ${Math.abs(chg)}% vs anterior</div></div>
+    <div class="kc pu"><div class="ki">💫</div><div class="kl">Seres Únicos</div><div class="kv">${sereUnicos}</div><div class="ks">${pvTot} primeras veces</div></div>
+    <div class="kc go" style="--kc-top:var(--green)"><div class="ki">💰</div><div class="kl">Cobrado este mes</div><div class="kv" style="font-size:18px">$${Math.round(cobMesARS).toLocaleString('es-AR')}</div></div>`;
+
+  // Layout
+  const bodyEl=document.getElementById('jcBody');
+  if(!bodyEl)return;
+  bodyEl.innerHTML=`
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes</h3><div style="height:220px"><canvas id="chJcAnual"></canvas></div></div>
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Por herramienta</h3><div style="height:220px"><canvas id="chJcTipo"></canvas></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 Días del mes actual</h3><div style="height:180px"><canvas id="chJcMes"></canvas></div></div>
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:180px"><canvas id="chJcAcum"></canvas></div></div>
+    </div>
+    <div class="cc">
+      <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🕐 Últimas sesiones</h3>
+      <div id="jcUltimas"></div>
+    </div>`;
+
+  const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+  // Chart: anual (barras por mes, 2 años)
+  const yrs=[...new Set(jcSes.map(s=>new Date(s.fecha).getFullYear()))].sort();
+  const paleta=['#C9A84C','#E8C96A','#9B82D4','#5B9BD5'];
+  const datasets=yrs.map((y,i)=>({
+    label:String(y),
+    data:MN.map((_,m)=>jcSes.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===y&&d.getMonth()===m;}).length),
+    backgroundColor:paleta[i]+'99',borderColor:paleta[i],borderRadius:4
+  }));
+  if(charts.jcAnual)charts.jcAnual.destroy();
+  charts.jcAnual=new Chart(document.getElementById('chJcAnual'),{type:'bar',data:{labels:MN,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7A7260',font:{size:11}}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+  // Chart: por herramienta (donut)
+  const cTipo={};
+  jcSes.forEach(s=>{if(s.sesion)cTipo[s.sesion]=(cTipo[s.sesion]||0)+1;});
+  const tipoE=Object.entries(cTipo).sort((a,b)=>b[1]-a[1]);
+  if(charts.jcTipo)charts.jcTipo.destroy();
+  charts.jcTipo=new Chart(document.getElementById('chJcTipo'),{type:'doughnut',data:{labels:tipoE.map(([k])=>k),datasets:[{data:tipoE.map(([,v])=>v),backgroundColor:tipoE.map(([k])=>TIPO_C[k]||'#4A3800'),borderWidth:2,borderColor:'#141320'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#7A7260',font:{size:10},boxWidth:12}}}}});
+
+  // Chart: días del mes actual (bar)
+  const diasEnMes=new Date(yr,now.getMonth()+1,0).getDate();
+  const diasData=Array.from({length:diasEnMes},(_,i)=>{
+    const d=`${yr}-${String(now.getMonth()+1).padStart(2,'0')}-${String(i+1).padStart(2,'0')}`;
+    return jcSes.filter(s=>s.fecha===d).length;
+  });
+  if(charts.jcMes)charts.jcMes.destroy();
+  charts.jcMes=new Chart(document.getElementById('chJcMes'),{type:'bar',data:{labels:Array.from({length:diasEnMes},(_,i)=>i+1),datasets:[{data:diasData,backgroundColor:'rgba(201,168,76,.5)',borderColor:'#C9A84C',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+  // Chart: acumulativo histórico (línea)
+  if(jcSes.length>0){
+    const sorted=jcSes.slice().sort((a,b)=>new Date(a.fecha)-new Date(b.fecha));
+    const firstM=sorted[0].fecha.slice(0,7);
+    const meses=[];
+    const cur=new Date(firstM+'-01');
+    const end=new Date(mesStr+'-01');
+    while(cur<=end){meses.push(cur.toISOString().slice(0,7));cur.setMonth(cur.getMonth()+1);}
+    let acc=0;
+    const acumData=meses.map(m=>{acc+=jcSes.filter(s=>s.fecha&&s.fecha.startsWith(m)).length;return acc;});
+    const acumLabels=meses.map(m=>m.slice(5)+'/'+m.slice(2,4));
+    if(charts.jcAcum)charts.jcAcum.destroy();
+    charts.jcAcum=new Chart(document.getElementById('chJcAcum'),{type:'line',data:{labels:acumLabels,datasets:[{label:'Total acumulado',data:acumData,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,.1)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9A84C'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+  }
+
+  // Últimas sesiones
+  const ult=jcSes.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,10);
+  document.getElementById('jcUltimas').innerHTML=ult.map(s=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+      <span style="font-size:11px;color:var(--muted);width:64px;flex-shrink:0">${fd(s.fecha)}</span>
+      <span style="font-size:13px;font-weight:600;flex:1">${s.ser}</span>
+      <span class="bdg ${bc(s.sesion)}" style="font-size:10px">${s.sesion}</span>
+      ${s.primeraVez?'<span class="bdg b-or" style="font-size:9px">⭐ 1°Vez</span>':''}
+      <span class="bdg ${estCls(s.estado||'Completado')}" style="font-size:10px">${s.estado||'Completado'}</span>
+      <button class="btn btn-s btn-sm" onclick="openModal('ses','${s.id}')">✏️</button>
+    </div>`).join('')||'<div style="color:var(--muted);font-size:12px;padding:8px">Sin sesiones registradas para Juan Cruz</div>';
 }
 
 function renderSes(){
@@ -7643,18 +7750,17 @@ function renderMktContenido(){
 
   // Tabs + acciones
   const nav=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-    ${[['posts','📋 Posts'],['ideas','💡 Ideas'],['calendario','📅 Calendario'],['insights','📊 Insights']].map(([k,l])=>`
+    ${[['posts','📋 Contenido'],['calendario','📅 Calendario'],['insights','📊 Insights']].map(([k,l])=>`
       <button onclick="_contTab='${k}';renderMktContenido()" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${_contTab===k?'var(--gold)':'var(--border)'};background:${_contTab===k?'rgba(201,168,76,.15)':'transparent'};color:${_contTab===k?'var(--gold)':'var(--muted)'};transition:all .2s">${l}</button>`).join('')}
     <div style="margin-left:auto;display:flex;gap:6px">
-      <button onclick="openContenidoModal(null,'idea')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(201,168,76,.4);background:rgba(201,168,76,.1);color:var(--gold)">💡 Nueva idea</button>
+      <button onclick="openContenidoModal(null,'idea')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(201,168,76,.4);background:rgba(201,168,76,.1);color:var(--gold)">💡 Idea</button>
       <button onclick="openContenidoModal(null,'planificado')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(91,155,213,.4);background:rgba(91,155,213,.1);color:var(--blue)">📅 Planificar</button>
-      <button onclick="openContenidoModal(null,'publicado')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--gold);border:none;color:#050401">✅ Registrar post</button>
+      <button onclick="openContenidoModal(null,'publicado')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--gold);border:none;color:#050401">✅ Registrar</button>
     </div>
   </div>`;
 
   let body='';
-  if(_contTab==='posts')       body=_renderContPosts(publicados,planificados,hoy);
-  else if(_contTab==='ideas')  body=_renderContIdeas(ideas);
+  if(_contTab==='posts')           body=_renderContLista(contenidoRedes,hoy,publicados);
   else if(_contTab==='calendario') body=_renderContCalendario(contenidoRedes,hoy);
   else if(_contTab==='insights')   body=_renderContInsights(publicados,mes);
 
@@ -8693,7 +8799,7 @@ async function delComunidad(id){
 let _contSection='resumen';
 function setContSection(tab){
   _contSection=tab;
-  ['resumen','redes','manual','comunidad'].forEach(t=>{
+  ['resumen','redes','manual','comunidad','generador'].forEach(t=>{
     const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
     const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl)tabEl.classList.toggle('active',t===tab);
@@ -8703,9 +8809,260 @@ function setContSection(tab){
   if(tab==='redes')renderMktContenido();
   if(tab==='manual')renderContManual();
   if(tab==='comunidad')renderComunidad();
+  if(tab==='generador')renderContGenerador();
 }
 function renderContenido(){
   setContSection(_contSection||'resumen');
+}
+
+/* ══════════════════════════════════════════════════════════
+   GENERADOR DE CONTENIDO IA
+   ══════════════════════════════════════════════════════════ */
+let _genTab='preguntas';
+
+function setGenTab(t){
+  _genTab=t;
+  ['preguntas','post','historia'].forEach(k=>{
+    const btn=document.getElementById('genTab_'+k);
+    const sec=document.getElementById('genExtra_'+k);
+    if(btn)btn.classList.toggle('active',k===t);
+    if(sec)sec.style.display=k===t?'':'none';
+  });
+  // Actualizar placeholder del CTA según el tab
+  const ctaEl=document.getElementById('genCta');
+  if(ctaEl){
+    const ph={
+      preguntas:'No aplica para preguntas',
+      post:'Ej: Guardá este post, Contame en comentarios, Agendá tu sesión...',
+      historia:'Ej: Mandame un DM, Swipe up, Reservá tu sesión...'
+    };
+    ctaEl.placeholder=ph[t]||'';
+  }
+  document.getElementById('genResultBox').style.display='none';
+}
+
+function _genBuyerOptions(m){
+  const buyers=m.buyers||[];
+  let opts='<option value="">— Todos los arquetipos —</option>';
+  buyers.forEach((b,i)=>{if(b&&b.nombre)opts+=`<option value="${i}">👤 ${b.nombre}</option>`;});
+  return opts;
+}
+
+function _buildMarcaCtx(m){
+  const lineas=[];
+  if(m.maNombre)      lineas.push(`MARCA: ${m.maNombre}`);
+  if(m.maEslogan)     lineas.push(`ESLOGAN: ${m.maEslogan}`);
+  if(m.maMision)      lineas.push(`MISIÓN: ${m.maMision}`);
+  if(m.maVision)      lineas.push(`VISIÓN: ${m.maVision}`);
+  if(m.maEstilo)      lineas.push(`ESTILO DE VOZ: ${m.maEstilo}`);
+  if(m.maPalabrasUsar)   lineas.push(`PALABRAS QUE USO: ${m.maPalabrasUsar}`);
+  if(m.maPalabrasEvitar) lineas.push(`PALABRAS QUE EVITO: ${m.maPalabrasEvitar}`);
+  if((m.tonos||[]).length) lineas.push(`TONOS: ${m.tonos.join(', ')}`);
+  if(m.maHashtags)    lineas.push(`HASHTAGS: ${m.maHashtags}`);
+  return lineas.join('\n');
+}
+
+function _buildBuyerCtx(buyer){
+  if(!buyer)return '';
+  const lineas=[];
+  let intro=buyer.nombre||'';
+  if(buyer.edad)intro+=` (${buyer.edad})`;
+  if(buyer.ocupacion)intro+=`, ${buyer.ocupacion}`;
+  if(intro)lineas.push(`BUYER PERSONA: ${intro}`);
+  if(buyer.dolor)  lineas.push(`DOLOR PRINCIPAL: ${buyer.dolor}`);
+  if(buyer.sueno)  lineas.push(`SUEÑO: ${buyer.sueno}`);
+  if(buyer.frase)  lineas.push(`FRASE TÍPICA: "${buyer.frase}"`);
+  return lineas.join('\n');
+}
+
+function generarPrompt(){
+  const m=getManual();
+  const tab=_genTab;
+  const tema=(document.getElementById('genTema')?.value||'').trim();
+  const buyerIdx=document.getElementById('genBuyer')?.value||'';
+  const buyer=buyerIdx!==''?(m.buyers||[])[parseInt(buyerIdx)]||null:null;
+  const cta=tab==='historia'
+    ?(document.getElementById('genCtaHist')?.value||'').trim()
+    :(document.getElementById('genCta')?.value||'').trim();
+  const cantidad=document.getElementById('genCantidad')?.value||'7';
+  const dimension=document.getElementById('genDimension')?.value||'';
+
+  const marcaCtx=_buildMarcaCtx(m)||'(Manual de Marca no completado aún)';
+  const buyerCtx=_buildBuyerCtx(buyer);
+
+  let prompt='';
+
+  if(tab==='preguntas'){
+    prompt=`Sos un experto en comunicación espiritual y expansión de consciencia.
+
+CONTEXTO DE MARCA:
+${marcaCtx}
+${buyerCtx?'\nDIRIGIDO A:\n'+buyerCtx:''}
+
+TAREA:
+Generá ${cantidad} preguntas expansivas de consciencia${tema?` sobre el tema: "${tema}"`:''}${dimension?`\nDimensión: ${dimension}`:''}.
+
+CRITERIOS:
+- Que inviten a una reflexión profunda, no respuestas de sí/no
+- Lenguaje en segunda persona, cálido y directo
+- Que abran posibilidades, no que juzguen
+- Extensión: una sola oración por pregunta
+- Usar el lenguaje y la voz de la marca
+
+Formato de respuesta:
+1. [Pregunta]
+2. [Pregunta]
+...`;
+  }
+  else if(tab==='post'){
+    prompt=`Sos un experto en copywriting para Instagram con enfoque espiritual y de consciencia.
+
+CONTEXTO DE MARCA:
+${marcaCtx}
+${buyerCtx?'\nDIRIGIDO A:\n'+buyerCtx:''}
+
+TAREA:
+Escribí un caption para Instagram${tema?` sobre: "${tema}"`:''}${cta?`\nLlamada a la acción: ${cta}`:''}.
+
+ESTRUCTURA:
+1. Primera línea gancho (que detenga el scroll, sin puntos suspensivos genéricos)
+2. Desarrollo del mensaje (3-5 párrafos cortos con línea en blanco entre ellos)
+3. Llamada a la acción${m.maHashtags?'\n4. Hashtags: '+m.maHashtags:''}
+
+CRITERIOS:
+- Voz auténtica, no corporativa ni forzada
+- Emojis sutiles y alineados al mensaje espiritual
+- Espaciado generoso para lectura mobile
+- Máximo 2200 caracteres`;
+  }
+  else if(tab==='historia'){
+    prompt=`Sos un experto en contenido para Instagram Stories con enfoque espiritual.
+
+CONTEXTO DE MARCA:
+${marcaCtx}
+${buyerCtx?'\nDIRIGIDO A:\n'+buyerCtx:''}
+
+TAREA:
+Creá una secuencia de 5 slides para Instagram Stories${tema?` sobre: "${tema}"`:''}${cta?`\nCierre con CTA: ${cta}`:''}.
+
+FORMATO DE CADA SLIDE:
+SLIDE X:
+- Texto principal: [texto corto, máx 15 palabras]
+- Texto secundario: [opcional, máx 10 palabras]
+- Emoji sugerido: [emoji]
+
+CRITERIOS:
+- Progresión emocional: gancho → desarrollo → reflexión → CTA → cierre
+- Lenguaje simple y visual
+- Que invite a guardar, responder o compartir`;
+  }
+
+  document.getElementById('genResultado').value=prompt;
+  document.getElementById('genResultBox').style.display='';
+  document.getElementById('genCopied').style.display='none';
+  document.getElementById('genResultBox').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function copiarPromptGen(){
+  const txt=document.getElementById('genResultado').value;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const el=document.getElementById('genCopied');
+    el.style.display='block';
+    setTimeout(()=>el.style.display='none',2500);
+  });
+}
+
+function renderContGenerador(){
+  const el=document.getElementById('contGenerador');if(!el)return;
+  const m=getManual();
+  const tieneManual=!!(m.maNombre||m.maMision);
+  const alerta=!tieneManual?`<div style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:12px;padding:12px 16px;margin-bottom:18px;font-size:13px;color:var(--gold)">
+    ⚠ Tu Manual de Marca está vacío — los prompts saldrán sin tu voz ni identidad de marca. <span onclick="setContSection('manual')" style="cursor:pointer;color:var(--gl);text-decoration:underline">Completalo acá →</span>
+  </div>`:'';
+
+  const buyerOpts=_genBuyerOptions(m);
+
+  el.innerHTML=alerta+`
+  <div class="tab-bar" style="margin-bottom:18px">
+    <button class="tab-btn active" id="genTab_preguntas" onclick="setGenTab('preguntas')">💬 Preguntas Expansivas</button>
+    <button class="tab-btn" id="genTab_post" onclick="setGenTab('post')">📷 Post Instagram</button>
+    <button class="tab-btn" id="genTab_historia" onclick="setGenTab('historia')">▶ Historia / Story</button>
+  </div>
+
+  <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:16px">
+
+    <!-- Campos compartidos -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Tema / intención (opcional)</label>
+        <input id="genTema" placeholder="Ej: amor propio, miedo al cambio, hábitos..." style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none">
+      </div>
+      <div>
+        <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Buyer persona</label>
+        <select id="genBuyer" style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none">
+          ${buyerOpts}
+        </select>
+      </div>
+    </div>
+
+    <!-- Extras: Preguntas -->
+    <div id="genExtra_preguntas">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px">
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Cantidad</label>
+          <select id="genCantidad" style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none">
+            <option value="5">5 preguntas</option>
+            <option value="7" selected>7 preguntas</option>
+            <option value="10">10 preguntas</option>
+            <option value="14">14 preguntas (2 semanas)</option>
+            <option value="30">30 preguntas (un mes)</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Dimensión (opcional)</label>
+          <select id="genDimension" style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none">
+            <option value="">Cualquier dimensión</option>
+            <option value="Amor propio">Amor propio</option>
+            <option value="Relaciones">Relaciones</option>
+            <option value="Propósito">Propósito</option>
+            <option value="Dinero y abundancia">Dinero y abundancia</option>
+            <option value="Cuerpo y energía">Cuerpo y energía</option>
+            <option value="Consciencia y presencia">Consciencia y presencia</option>
+            <option value="Creencias limitantes">Creencias limitantes</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Extras: Post e Historia -->
+    <div id="genExtra_post" style="display:none;margin-bottom:16px">
+      <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Llamada a la acción (opcional)</label>
+      <input id="genCta" placeholder="Ej: Guardá este post, Contame en comentarios, Agendá tu sesión..." style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none">
+    </div>
+    <div id="genExtra_historia" style="display:none;margin-bottom:16px">
+      <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">CTA del cierre (opcional)</label>
+      <input id="genCtaHist" placeholder="Ej: Mandame un DM, Reservá tu sesión..." style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none">
+    </div>
+
+    <button onclick="generarPrompt()" style="padding:12px 32px;background:linear-gradient(135deg,var(--gold),var(--gd));border:none;border-radius:10px;color:#050401;font-size:14px;font-weight:800;cursor:pointer;letter-spacing:.3px">✨ Armar Prompt</button>
+  </div>
+
+  <!-- Resultado -->
+  <div id="genResultBox" style="display:none">
+    <div style="background:var(--card2);border:1.5px solid rgba(201,168,76,.3);border-radius:16px;padding:20px 22px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:13px;font-weight:800;color:var(--gl)">📋 Prompt listo para copiar</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span id="genCopied" style="display:none;font-size:12px;color:var(--green);font-weight:700">✅ ¡Copiado!</span>
+          <button onclick="copiarPromptGen()" style="padding:8px 20px;background:linear-gradient(135deg,var(--gold),var(--gd));border:none;border-radius:9px;color:#050401;font-size:13px;font-weight:700;cursor:pointer">📋 Copiar</button>
+        </div>
+      </div>
+      <textarea id="genResultado" rows="20" style="width:100%;padding:12px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:12px;line-height:1.75;outline:none;resize:vertical;font-family:'Courier New',monospace"></textarea>
+      <div style="margin-top:10px;font-size:12px;color:var(--muted)">💡 Pegá este prompt en <strong style="color:var(--text)">ChatGPT</strong> o <strong style="color:var(--text)">Claude</strong> para generar el contenido con tu voz y marca</div>
+    </div>
+  </div>`;
+
+  setGenTab(_genTab||'preguntas');
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -8896,8 +9253,26 @@ function navResumenMes(dir){
 function getFollowers(mes){
   try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');return all[mes]||{};}catch{return{};}
 }
+function getAllFollowers(){
+  try{return JSON.parse(localStorage.getItem('lcp_followers')||'{}');}catch{return{};}
+}
 function saveFollower(mes,plat,val){
   try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');if(!all[mes])all[mes]={};all[mes][plat]=parseInt(val)||0;localStorage.setItem('lcp_followers',JSON.stringify(all));renderContResumen();}catch{}
+}
+/* ── Punto de partida por plataforma ── */
+function getStartPoints(){
+  try{return JSON.parse(localStorage.getItem('lcp_start_points')||'{}');}catch{return{};}
+}
+function saveStartPoint(plat,fecha,seg){
+  try{const s=getStartPoints();s[plat]={fecha,seg:parseInt(seg)||0};localStorage.setItem('lcp_start_points',JSON.stringify(s));renderContResumen();}catch{}
+}
+function editStartPoint(plat,label){
+  const s=getStartPoints();const cur=s[plat]||{};
+  const f=prompt(`Fecha de inicio en ${label} (AAAA-MM):`,cur.fecha||new Date().toISOString().slice(0,7));
+  if(f===null)return;
+  const v=prompt(`Seguidores iniciales en ${label}:`,cur.seg||'0');
+  if(v===null)return;
+  saveStartPoint(plat,f,v);
 }
 
 function editMetasMes(){
@@ -8965,12 +9340,14 @@ function renderContResumen(){
     {k:'facebook', l:'Facebook',ico:'👍',col:'#1877F2'},
   ];
   const fw=getFollowers(_resumenMes);
-  // Calcular el mes anterior para comparar
   const dPrev=new Date(_resumenMes+'-15');dPrev.setMonth(dPrev.getMonth()-1);
   const mesPrev=dPrev.toISOString().slice(0,7);
   const fwPrev=getFollowers(mesPrev);
-  // Historial 6 meses para sparkline
   const fwHistory=meses6.map(m=>getFollowers(m));
+  const startPoints=getStartPoints();
+  // Todos los meses con datos para evolución completa
+  const allFw=getAllFollowers();
+  const allMeses=Object.keys(allFw).sort();
 
   // ── Tabla posts del mes ──
   const tablaRows=pubs.length?[...pubs].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(c=>{
