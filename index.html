@@ -548,6 +548,12 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- HERRAMIENTAS -->
     <div id="sec-herramientas" class="sec">
+     <div class="tab-bar" style="margin-bottom:18px">
+      <button class="tab-btn active" id="herrTab_todas"        onclick="setHerrTab('todas')">Todas</button>
+      <button class="tab-btn"        id="herrTab_experimental" onclick="setHerrTab('Sesión experimental')">✨ Sesión experimental</button>
+      <button class="tab-btn"        id="herrTab_clase"        onclick="setHerrTab('Clase')">📚 Clase</button>
+      <button class="tab-btn"        id="herrTab_practica"     onclick="setHerrTab('Herramienta práctica')">🔧 Herramienta práctica</button>
+     </div>
      <div id="herGrid" class="her-grid"></div>
     </div>
 
@@ -1442,6 +1448,23 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg"><label>Emoji / Ícono</label><input type="text" id="hIco" placeholder="🌀"></div>
   </div>
   <div class="fg"><label>Descripción</label><textarea id="hDesc"></textarea></div>
+  <div class="fg-row">
+   <div class="fg"><label>Tipo</label>
+    <select id="hTipo">
+     <option value="">— Sin clasificar —</option>
+     <option value="Sesión experimental">✨ Sesión experimental</option>
+     <option value="Clase">📚 Clase</option>
+     <option value="Herramienta práctica">🔧 Herramienta práctica</option>
+    </select>
+   </div>
+   <div class="fg"><label>Modalidad</label>
+    <select id="hModalidad">
+     <option value="Presencial">📍 Presencial</option>
+     <option value="Online">💻 Online</option>
+     <option value="Ambas">🌐 Presencial y Online</option>
+    </select>
+   </div>
+  </div>
   <div class="fg-row">
    <div class="fg"><label>Color</label><input type="color" id="hCol" value="#C9A84C"></div>
    <div class="fg" style="display:flex;flex-direction:column;justify-content:flex-end">
@@ -4051,8 +4074,24 @@ function _renderSerDet(s){
 }
 
 /* HERRAMIENTAS */
+let _herrTab='todas';
+function setHerrTab(t){
+  _herrTab=t;
+  ['todas','experimental','clase','practica'].forEach(k=>{
+    const id='herrTab_'+k;
+    const btn=document.getElementById(id);
+    if(!btn)return;
+    const tabVal=k==='todas'?'todas':k==='experimental'?'Sesión experimental':k==='clase'?'Clase':'Herramienta práctica';
+    btn.classList.toggle('active',t===tabVal);
+  });
+  renderHerr();
+}
 function renderHerr(){
-  document.getElementById('herGrid').innerHTML=herramientas.map(h=>{
+  const filtradas=_herrTab==='todas'?herramientas:herramientas.filter(h=>(h.tipo||'')=== _herrTab);
+  const vacia=_herrTab!=='todas'&&!filtradas.length;
+  document.getElementById('herGrid').innerHTML=vacia
+    ?`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:13px">Sin herramientas clasificadas como <strong style="color:var(--text)">${_herrTab}</strong> todavía. Editá una herramienta para asignarle este tipo.</div>`
+    :filtradas.map(h=>{
     const sesCount=sessions.filter(s=>s.sesion===h.nom&&comp(s)).length;
     const allFacs=h.facs||[];
     const facList=allFacs.map(fn=>{
@@ -4073,6 +4112,10 @@ function renderHerr(){
           <div class="hcnt" style="color:var(--gd)">${sesCount} sesiones · ${allFacs.length} facilitadores</div>
           ${h.disponiblePortal?'<span style="font-size:9px;font-weight:700;color:#3DAA6A;background:rgba(61,170,106,.12);border:1px solid rgba(61,170,106,.25);border-radius:10px;padding:1px 7px">✓ En Portal</span>':'<span style="font-size:9px;color:var(--muted)">No visible en Portal</span>'}
         </div>
+      </div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
+        ${h.tipo?`<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.25)">${h.tipo}</span>`:''}
+        ${h.modalidad?`<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;background:rgba(91,155,213,.12);color:#8BBDE8;border:1px solid rgba(91,155,213,.25)">${h.modalidad==='Ambas'?'🌐 Presencial y Online':h.modalidad==='Online'?'💻 Online':'📍 Presencial'}</span>`:''}
       </div>
       <div class="hdesc">${h.desc}</div>
       <div style="font-size:9px;color:var(--gd);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Facilitadores</div>
@@ -4260,6 +4303,8 @@ function openModal(type,id,extra){
     document.getElementById('hDesc').value=h?h.desc:'';
     document.getElementById('hCol').value=h?h.col:'#C9A84C';
     document.getElementById('hDisponible').checked=h?(h.disponiblePortal===true):false;
+    document.getElementById('hTipo').value=h?(h.tipo||''):'';
+    document.getElementById('hModalidad').value=h?(h.modalidad||'Presencial'):'Presencial';
     const hFacs=h?(h.facs||[]):[];
     document.getElementById('hFacList').innerHTML=facs.map(f=>`
       <label style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:12px">
@@ -4402,7 +4447,7 @@ function saveHerr(){
   const nom=document.getElementById('hNom').value.trim();
   if(!nom){alert('El nombre es obligatorio');return;}
   const selFacs=[...document.querySelectorAll('#hFacList input:checked')].map(c=>c.value);
-  const hData={nom,ico:document.getElementById('hIco').value||'🔮',desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked};
+  const hData={nom,ico:document.getElementById('hIco').value||'🔮',desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked,tipo:document.getElementById('hTipo').value,modalidad:document.getElementById('hModalidad').value};
   if(eid){
     const h=herramientas.find(x=>x.id===eid);
     if(h)Object.assign(h,hData);
