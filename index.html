@@ -3041,6 +3041,11 @@ function renderSesJC(){
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 Días del mes actual</h3><div style="height:180px"><canvas id="chJcMes"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:180px"><canvas id="chJcAcum"></canvas></div></div>
     </div>
+    <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌐 Presencial vs Online</h3><div style="height:180px"><canvas id="chJcMod"></canvas></div></div>
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏆 Top seres</h3><div style="height:180px"><canvas id="chJcSeres"></canvas></div></div>
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📆 Día de la semana</h3><div style="height:180px"><canvas id="chJcDia"></canvas></div></div>
+    </div>
     <div style="margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🗓 ${yr} — sesiones por mes</h3><div style="height:180px"><canvas id="chJcYear"></canvas></div></div>
     </div>
@@ -3098,6 +3103,29 @@ function renderSesJC(){
     if(charts.jcAcum)charts.jcAcum.destroy();
     charts.jcAcum=new Chart(document.getElementById('chJcAcum'),{type:'line',data:{labels:acumLabels,datasets:[{label:'Total acumulado',data:acumData,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,.1)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9A84C'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
   }
+
+  // Chart: Presencial vs Online (donut)
+  const pr=jcSes.filter(s=>s.modalidad==='Presencial').length;
+  const on=jcSes.filter(s=>s.modalidad==='Online').length;
+  const ot=jcSes.length-pr-on;
+  if(charts.jcMod)charts.jcMod.destroy();
+  charts.jcMod=new Chart(document.getElementById('chJcMod'),{type:'doughnut',data:{labels:['Presencial','Online','Sin datos'],datasets:[{data:[pr,on,ot],backgroundColor:['#C9A84C','#5B9BD5','#2A2840'],borderWidth:2,borderColor:'#141320'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7A7260',font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} (${jcSes.length?Math.round(ctx.raw/jcSes.length*100):0}%)`}}}}});
+
+  // Chart: Top seres (barras horizontales)
+  const cSer={};
+  jcSes.forEach(s=>{if(s.ser)cSer[s.ser]=(cSer[s.ser]||0)+1;});
+  const topSer=Object.entries(cSer).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  if(charts.jcSeres)charts.jcSeres.destroy();
+  charts.jcSeres=new Chart(document.getElementById('chJcSeres'),{type:'bar',data:{labels:topSer.map(([k])=>k.split(' ')[0]),datasets:[{data:topSer.map(([,v])=>v),backgroundColor:'rgba(155,130,212,.6)',borderColor:'#9B82D4',borderRadius:4,borderWidth:1}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:([i])=>topSer[i.dataIndex][0]}}},scales:{x:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true},y:{ticks:{color:'#EDE5C8',font:{size:11}},grid:{display:false}}}}});
+
+  // Chart: Día de la semana (barras Lun→Dom)
+  const DIAS=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
+  const diaIdx=[1,2,3,4,5,6,0]; // JS getDay: 0=Dom, 1=Lun...
+  const diaData=diaIdx.map(d=>jcSes.filter(s=>s.fecha&&new Date(s.fecha).getDay()===d).length);
+  const diaColors=diaData.map((_,i)=>i<5?'rgba(201,168,76,.55)':'rgba(91,155,213,.55)');
+  const diaBorders=diaData.map((_,i)=>i<5?'#C9A84C':'#5B9BD5');
+  if(charts.jcDia)charts.jcDia.destroy();
+  charts.jcDia=new Chart(document.getElementById('chJcDia'),{type:'bar',data:{labels:DIAS,datasets:[{data:diaData,backgroundColor:diaColors,borderColor:diaBorders,borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
 
   // Chart: solo año actual — barras por mes, mes actual resaltado
   const yearData=MN.map((_,m)=>jcSes.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===yr&&d.getMonth()===m;}).length);
