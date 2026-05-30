@@ -3179,8 +3179,8 @@ function renderSes(){
   if(kpiEl)kpiEl.innerHTML=`
     <div class="kc go"><div class="ki">✨</div><div class="kl">Total Completadas</div><div class="kv">${compSes.length}</div><div class="ks">${yrSes.length} en ${yr2}</div></div>
     <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${mesSes.length}</div><div class="kch ${chg2>=0?'up':'dn'}">${chg2>=0?'↑':'↓'} ${Math.abs(chg2)}% vs anterior</div></div>
-    <div class="kc or"><div class="ki">⭐</div><div class="kl">1° Vez este mes</div><div class="kv">${pvMes}</div><div class="ks">Total histórico: ${pvTot}</div></div>
-    <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes</div><div class="kv">${pendSes}</div><div class="ks">Sin completar</div></div>`;
+    <div class="kc or"><div class="ki">⭐</div><div class="kl">1° Vez este mes</div><div class="kv">${pvMes}</div><div class="ks">Este mes</div></div>
+    <div class="kc pu"><div class="ki">✨</div><div class="kl">Primera Vez</div><div class="kv">${pvTot}</div><div class="ks">total histórico</div></div>`;
 
   // ── RESUMEN ──
   if(_sesTab==='resumen'){
@@ -3213,15 +3213,19 @@ function renderSes(){
 
     document.getElementById('sesResumenBody').innerHTML=`
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
-        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:220px"><canvas id="chResAnual"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:220px"><canvas id="chResAcum"></canvas></div></div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Top herramientas</h3>${topHerr||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
-        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:180px"><canvas id="chResAcum"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:180px"><canvas id="chResAnual"></canvas></div></div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🙋 Por facilitador</h3>${topFac||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌐 Presencial vs Online</h3><div style="height:180px"><canvas id="chResMod"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏆 Top seres</h3><div style="height:180px"><canvas id="chResSeres"></canvas></div></div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📆 Día de la semana</h3><div style="height:180px"><canvas id="chResDia"></canvas></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📉 Frecuencia por ser</h3><div style="height:180px"><canvas id="chResFreq"></canvas></div></div>
       </div>
       <div class="cc">
@@ -3258,6 +3262,20 @@ function renderSes(){
       if(charts.resAcum)charts.resAcum.destroy();
       charts.resAcum=new Chart(document.getElementById('chResAcum'),{type:'line',data:{labels:mesesAcum.map(m=>m.slice(5)+'/'+m.slice(2,4)),datasets:[{data:acumData2,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,.1)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9A84C'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
     }
+
+    // Chart: Presencial vs Online
+    const pr2=compSes.filter(s=>s.modalidad==='Presencial').length;
+    const on2=compSes.filter(s=>s.modalidad==='Online').length;
+    const ot2=compSes.length-pr2-on2;
+    if(charts.resMod)charts.resMod.destroy();
+    charts.resMod=new Chart(document.getElementById('chResMod'),{type:'doughnut',data:{labels:['Presencial','Online','Sin datos'],datasets:[{data:[pr2,on2,ot2],backgroundColor:['#C9A84C','#5B9BD5','#2A2840'],borderWidth:2,borderColor:'#141320'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7A7260',font:{size:11},boxWidth:12}},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} (${compSes.length?Math.round(ctx.raw/compSes.length*100):0}%)`}}}}});
+
+    // Chart: Top seres
+    const cSer2={};
+    compSes.forEach(s=>{if(s.ser)cSer2[s.ser]=(cSer2[s.ser]||0)+1;});
+    const topSer2=Object.entries(cSer2).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    if(charts.resSeres)charts.resSeres.destroy();
+    charts.resSeres=new Chart(document.getElementById('chResSeres'),{type:'bar',data:{labels:topSer2.map(([k])=>k.split(' ')[0]),datasets:[{data:topSer2.map(([,v])=>v),backgroundColor:'rgba(155,130,212,.6)',borderColor:'#9B82D4',borderRadius:4,borderWidth:1}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:([i])=>topSer2[i.dataIndex][0]}}},scales:{x:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true},y:{ticks:{color:'#EDE5C8',font:{size:11}},grid:{display:false}}}}});
 
     // Chart: día de la semana
     const DIAS2=['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
