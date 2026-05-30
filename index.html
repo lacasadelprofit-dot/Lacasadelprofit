@@ -1818,7 +1818,21 @@ th{background:rgba(28,26,46,.88)!important;}
    </div>
   </div>
   <div class="fg"><label>Título / Tema</label><input type="text" id="crTitulo" placeholder="Ej: Qué son las Barras de Access"></div>
-  <div class="fg"><label>Hook (primera línea)</label><input type="text" id="crHook" placeholder="Ej: ¿Qué pasaría si pudieras soltar todo en 90 minutos?"></div>
+  <div class="fg-row">
+   <div class="fg" style="flex:2"><label>Hook (primera línea)</label><input type="text" id="crHook" placeholder="Ej: ¿Qué pasaría si pudieras soltar todo en 90 minutos?"></div>
+   <div class="fg"><label>Tipo de hook</label>
+    <select id="crHookTipo">
+     <option value="">— Sin clasificar —</option>
+     <option value="pregunta">❓ Pregunta</option>
+     <option value="dato">📊 Dato sorprendente</option>
+     <option value="historia">📖 Historia personal</option>
+     <option value="provocacion">🔥 Provocación</option>
+     <option value="lista">📋 Lista / Tips</option>
+     <option value="resultado">🏆 Resultado / Prueba</option>
+     <option value="desafio">💪 Desafío / Reto</option>
+    </select>
+   </div>
+  </div>
   <div class="fg"><label>Fecha <span id="crFechaLabel" style="color:var(--muted);font-size:11px">(publicación)</span></label><input type="date" id="crFecha"></div>
   <div class="fg"><label>Notas</label><textarea id="crNotas" placeholder="Ideas, referencias, qué incluir..."></textarea></div>
   <!-- Métricas — solo para publicados -->
@@ -7383,6 +7397,49 @@ const PLAT_METRICS={
   ],
 };
 
+const HOOK_TYPES=[
+  {k:'pregunta',    l:'Pregunta',           ico:'❓', col:'#5B9BD5'},
+  {k:'dato',        l:'Dato sorprendente',  ico:'📊', col:'#3DB8A8'},
+  {k:'historia',    l:'Historia personal',  ico:'📖', col:'#9B82D4'},
+  {k:'provocacion', l:'Provocación',        ico:'🔥', col:'#E05555'},
+  {k:'lista',       l:'Lista / Tips',       ico:'📋', col:'#3DAA6A'},
+  {k:'resultado',   l:'Resultado / Prueba', ico:'🏆', col:'#C9A84C'},
+  {k:'desafio',     l:'Desafío / Reto',     ico:'💪', col:'#D4863A'},
+];
+
+/* ── Metas mensuales (localStorage) ── */
+function getContGoals(){try{return JSON.parse(localStorage.getItem('lcp_cont_goals')||'{}');}catch{return{};}}
+function setContGoal(k,v){const g=getContGoals();g[k]=v;localStorage.setItem('lcp_cont_goals',JSON.stringify(g));renderMktContenido();}
+function editGoal(k,label,current){
+  const v=prompt(`Meta de ${label} para este mes:`,current||'');
+  if(v===null)return;
+  const n=parseFloat(v);if(isNaN(n)||n<0)return;
+  setContGoal(k,n);toast(`Meta actualizada: ${n.toLocaleString('es-AR')} ${label}`);
+}
+
+/* ── Repurposing ── */
+function _repurposePost(id){
+  const c=contenidoRedes.find(x=>x.id===id);if(!c)return;
+  const plats=['Instagram','TikTok','YouTube','Facebook'].filter(p=>p!==c.plataforma);
+  const nextPlat=plats[0]||'Instagram';
+  const fmts={Instagram:'Reel',TikTok:'Reel',YouTube:'Video',Facebook:'Post'};
+  // Abrir modal como nuevo post, mismo contenido, diferente plataforma
+  const c2={...c,id:null,tipo:'planificado',plataforma:nextPlat,formato:fmts[nextPlat]||'Post',fecha:new Date().toISOString().slice(0,10)};
+  document.getElementById('crId').value='';
+  document.getElementById('crTipo').value='planificado';
+  document.getElementById('crPlat').value=nextPlat;
+  document.getElementById('crFormato').value=fmts[nextPlat]||'Post';
+  document.getElementById('crPilar').value=c.pilar||'barras';
+  document.getElementById('crTitulo').value=c.titulo||'';
+  document.getElementById('crHook').value=c.hook||'';
+  document.getElementById('crHookTipo').value=c.hook_tipo||'';
+  document.getElementById('crFecha').value=c2.fecha;
+  document.getElementById('crNotas').value=`[Repurpose de ${c.plataforma}] ${c.notas||''}`.trim();
+  document.getElementById('moContenidoTitle').textContent=`♻️ Repurpose → ${nextPlat}`;
+  toggleMetricasContenido();
+  openModal('moContenido');
+}
+
 // Engagement rate según plataforma
 function _engRate(c){
   const plat=c.plataforma||'Instagram';
@@ -7441,6 +7498,7 @@ function openContenidoModal(id=null,tipoDefault='idea',fechaDefault=null){
   document.getElementById('crPilar').value=c?.pilar||'barras';
   document.getElementById('crTitulo').value=c?.titulo||'';
   document.getElementById('crHook').value=c?.hook||'';
+  document.getElementById('crHookTipo').value=c?.hook_tipo||'';
   document.getElementById('crFecha').value=c?.fecha||fechaDefault||new Date().toISOString().slice(0,10);
   document.getElementById('crNotas').value=c?.notas||'';
   document.getElementById('moContenidoTitle').textContent=id?'✏️ Editar contenido':'📱 Nuevo contenido';
@@ -7464,6 +7522,7 @@ function saveContenido(){
     pilar:document.getElementById('crPilar').value,
     titulo:document.getElementById('crTitulo').value.trim(),
     hook:document.getElementById('crHook').value.trim(),
+    hook_tipo:document.getElementById('crHookTipo').value,
     fecha:document.getElementById('crFecha').value,
     notas:document.getElementById('crNotas').value.trim(),
     createdAt:new Date().toISOString(),
@@ -7506,8 +7565,14 @@ function renderMktContenido(){
   const alcTotal=esteMes.reduce((a,c)=>a+_mainReach(c),0);
   const leadsTotal=esteMes.reduce((a,c)=>a+(c.leads_generados||0),0);
 
+  const goals=getContGoals();
+  const metaPosts=goals.posts_mes||0;
+  const metaAlcance=goals.alcance_mes||0;
+  const postsPct=metaPosts>0?Math.min(100,Math.round(esteMes.length/metaPosts*100)):null;
+  const alcPct=metaAlcance>0?Math.min(100,Math.round(alcTotal/metaAlcance*100)):null;
+
   // KPI strip
-  const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+  const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:${metaPosts||metaAlcance?'12px':'20px'}">
     ${[
       {l:'Posts publicados',v:esteMes.length,s:'este mes',c:'var(--green)',i:'✅'},
       {l:'Alcance total',v:alcTotal>=1000?(alcTotal/1000).toFixed(1)+'K':alcTotal,s:'acumulado mes',c:'var(--blue)',i:'👁'},
@@ -7518,6 +7583,28 @@ function renderMktContenido(){
       <div style="font-size:22px;font-weight:800;color:${k.c};line-height:1">${k.v}</div>
       <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:4px">${k.l}</div>
       <div style="font-size:10px;color:var(--muted)">${k.s}</div>
+    </div>`).join('')}
+  </div>
+  <!-- Metas mensuales -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+    ${[
+      {k:'posts_mes',l:'Posts/mes',val:esteMes.length,meta:metaPosts,pct:postsPct,col:'var(--green)'},
+      {k:'alcance_mes',l:'Alcance meta',val:alcTotal,meta:metaAlcance,pct:alcPct,col:'var(--blue)'},
+    ].map(g=>`<div style="flex:1;min-width:180px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer" onclick="editGoal('${g.k}','${g.l}',${g.meta})" title="Click para editar meta">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${g.l}</span>
+        <span style="font-size:10px;color:var(--muted)">${g.meta>0?`Meta: ${g.meta>=1000?(g.meta/1000).toFixed(0)+'K':g.meta}`:'+  Fijar meta'}</span>
+      </div>
+      ${g.meta>0?`
+        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+          <span style="font-size:20px;font-weight:800;color:${g.pct>=100?'var(--green)':g.pct>=60?g.col:'var(--or)'}">${g.pct}%</span>
+          <span style="font-size:11px;color:var(--muted)">${g.val>=1000?(g.val/1000).toFixed(1)+'K':g.val} / ${g.meta>=1000?(g.meta/1000).toFixed(0)+'K':g.meta}</span>
+        </div>
+        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+          <div style="height:100%;background:${g.pct>=100?'var(--green)':g.pct>=60?g.col:'var(--or)'};width:${g.pct}%;border-radius:3px;transition:width .5s"></div>
+        </div>
+        ${g.pct>=100?`<div style="font-size:10px;color:var(--green);margin-top:4px;font-weight:700">🎉 ¡Meta alcanzada!</div>`:''}`
+      :`<div style="font-size:11px;color:var(--muted)">Sin meta — tocá para fijar una</div>`}
     </div>`).join('')}
   </div>`;
 
@@ -7563,6 +7650,10 @@ function _renderContPosts(publicados,planificados,hoy){
   if(_contFiltFmt)   lista=lista.filter(c=>c.formato===_contFiltFmt);
   if(!lista.length)return filtros+`<div class="es"><div class="ei">📭</div><p>Sin contenido que coincida con los filtros.</p></div>`;
 
+  // calcular promedio de alcance para badge de repurposing
+  const avgReachAll=publicados.filter(c=>_mainReach(c)>0).length
+    ?Math.round(publicados.reduce((a,c)=>a+_mainReach(c),0)/publicados.filter(c=>_mainReach(c)>0).length):0;
+
   const cards=lista.map(c=>{
     const pil=_pilarOf(c.pilar);
     const plCol=PLAT_CONT_COL[c.plataforma]||'var(--muted)';
@@ -7571,6 +7662,7 @@ function _renderContPosts(publicados,planificados,hoy){
     const fecha=c.fecha?new Date(c.fecha+'T12:00:00').toLocaleDateString('es-AR',{day:'2-digit',month:'short',year:'2-digit'}):'-';
     const isPublicado=c.tipo==='publicado';
     const isPlanificado=c.tipo==='planificado';
+    const isTopPost=isPublicado&&avgReachAll>0&&reach>=avgReachAll*1.5;
     // Métricas visibles para publicados
     const metrics=isPublicado?(PLAT_METRICS[c.plataforma]||PLAT_METRICS.Instagram)
       .filter(m=>c[m.k]>0).slice(0,4)
@@ -7603,7 +7695,11 @@ function _renderContPosts(publicados,planificados,hoy){
       </div>
       <!-- métricas -->
       ${metrics?`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding-top:10px;border-top:1px solid var(--border)">${metrics}</div>`:''}
-      ${eng?`<div style="position:absolute;bottom:10px;right:12px;font-size:10px;font-weight:700;color:var(--teal)">${eng}% eng.</div>`:''}
+      ${eng?`<div style="position:absolute;bottom:${isTopPost?'32':'10'}px;right:12px;font-size:10px;font-weight:700;color:var(--teal)">${eng}% eng.</div>`:''}
+      ${isTopPost?`<div style="margin-top:8px;padding:6px 10px;background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.3);border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px">
+        <span style="font-size:10px;color:var(--gold);font-weight:700">♻️ +50% sobre tu promedio — bueno para repurposear</span>
+        <button onclick="event.stopPropagation();_repurposePost('${c.id}')" style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(201,168,76,.2);border:1px solid var(--gold);color:var(--gold);cursor:pointer;white-space:nowrap;font-weight:700">Repurposear →</button>
+      </div>`:''}
     </div>`;
   }).join('');
 
@@ -7677,9 +7773,161 @@ function _renderContCalendario(todos,hoy){
   return cal;
 }
 
+/* ── CONSISTENCY TRACKER ── */
+function _renderConsistency(todos){
+  const hoy=new Date();
+  const dias=364;
+  const map={};
+  todos.filter(c=>c.tipo==='publicado'&&c.fecha).forEach(c=>{map[c.fecha]=(map[c.fecha]||0)+1;});
+  // calcular racha actual
+  let streak=0,d=new Date(hoy);
+  while(true){const ds=d.toISOString().slice(0,10);if(!map[ds])break;streak++;d.setDate(d.getDate()-1);}
+  let maxStreak=0,cur=0;
+  for(let i=dias;i>=0;i--){
+    const dt=new Date(hoy);dt.setDate(dt.getDate()-i);
+    const ds=dt.toISOString().slice(0,10);
+    if(map[ds]){cur++;if(cur>maxStreak)maxStreak=cur;}else cur=0;
+  }
+  // semanas (columnas) × 7 días (filas)
+  const weeks=[];
+  const start=new Date(hoy);start.setDate(start.getDate()-dias);
+  // alinear al lunes
+  const startDay=(start.getDay()+6)%7;start.setDate(start.getDate()-startDay);
+  let ptr=new Date(start);
+  while(ptr<=hoy){
+    const week=[];
+    for(let j=0;j<7;j++){
+      const ds=ptr.toISOString().slice(0,10);
+      week.push({ds,n:map[ds]||0,future:ptr>hoy});
+      ptr.setDate(ptr.getDate()+1);
+    }
+    weeks.push(week);
+  }
+  const goals=getContGoals();
+  const postsXSem=goals.posts_semana||0;
+  const mesLabels=[];let lastM='';
+  weeks.forEach((w,i)=>{const m=w[0].ds.slice(0,7);if(m!==lastM){mesLabels.push({i,m:new Date(w[0].ds+'T12:00:00').toLocaleDateString('es-AR',{month:'short'})});lastM=m;}});
+
+  const cells=weeks.map(w=>`<div style="display:flex;flex-direction:column;gap:2px">`+
+    w.map(({ds,n,future})=>{
+      const col=future?'transparent':n===0?'var(--card2)':n===1?'rgba(201,168,76,.4)':n===2?'rgba(201,168,76,.7)':'var(--gold)';
+      const border=future?'1px solid transparent':n===0?'1px solid var(--border)':'none';
+      return`<div title="${ds}${n?': '+n+' post'+(n>1?'s':''):''}" style="width:11px;height:11px;border-radius:2px;background:${col};border:${border}"></div>`;
+    }).join('')+`</div>`).join('');
+
+  // calcular posts por semana (últimas 8)
+  const ultSems=weeks.slice(-8).map((w,i)=>({i,n:w.reduce((a,d)=>a+(d.n||0),0)}));
+  const metaSemHtml=postsXSem?`<span style="font-size:10px;color:var(--muted)">Meta: ${postsXSem}/semana</span>`:'';
+
+  return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px 18px;margin-bottom:22px">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:12px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--gl)">🟩 Consistency tracker</div>
+        <div style="font-size:11px;color:var(--muted)">Posts publicados en el último año</div>
+      </div>
+      <div style="display:flex;gap:14px;align-items:center">
+        <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--gold)">${streak}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Racha actual</div></div>
+        <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--text)">${maxStreak}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Racha máx.</div></div>
+        <div style="text-align:center"><div style="font-size:18px;font-weight:800;color:var(--green)">${Object.keys(map).length}</div><div style="font-size:9px;color:var(--muted);text-transform:uppercase">Días publicados</div></div>
+        <button onclick="const v=prompt('Posts por semana como objetivo:',${postsXSem||''});if(v&&!isNaN(v))setContGoal('posts_semana',parseFloat(v))" style="font-size:10px;padding:4px 10px;border-radius:8px;background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer">${postsXSem?`⚡ ${postsXSem}/sem`:'+ Meta semanal'}</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:4px">
+      <div style="display:flex;gap:2px;min-width:max-content">${cells}</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;margin-top:8px">
+      <span style="font-size:10px;color:var(--muted)">Menos</span>
+      ${['var(--card2)','rgba(201,168,76,.4)','rgba(201,168,76,.7)','var(--gold)'].map(c=>`<div style="width:10px;height:10px;border-radius:2px;background:${c};border:1px solid var(--border)"></div>`).join('')}
+      <span style="font-size:10px;color:var(--muted)">Más</span>
+      ${metaSemHtml}
+      <!-- últimas 8 semanas -->
+      <div style="margin-left:auto;display:flex;gap:4px;align-items:flex-end">
+        ${ultSems.map(s=>{
+          const h=Math.max(4,Math.round((s.n/(postsXSem||Math.max(...ultSems.map(x=>x.n),1)))*28));
+          const over=postsXSem&&s.n>=postsXSem;
+          return`<div title="Semana: ${s.n} posts" style="width:14px;height:${h}px;background:${over?'var(--green)':'rgba(201,168,76,.5)'};border-radius:3px 3px 0 0"></div>`;
+        }).join('')}
+      </div>
+    </div>
+  </div>`;
+}
+
 /* ── INSIGHTS ── */
 function _renderContInsights(publicados,mes){
   if(!publicados.length)return`<div class="es"><div class="ei">📊</div><p style="margin-bottom:12px">Registrá posts publicados con métricas para ver insights.</p><button class="btn btn-p" onclick="openContenidoModal(null,'publicado')">Registrar primer post</button></div>`;
+
+  // ── CONSISTENCY ──
+  const consistency=_renderConsistency(contenidoRedes);
+
+  // ── TENDENCIAS MES A MES (últimos 6 meses) ──
+  const meses=[];
+  for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);meses.push(d.toISOString().slice(0,7));}
+  const tendData=meses.map((m,i)=>{
+    const posts=publicados.filter(c=>c.fecha?.startsWith(m));
+    const alcSum=posts.reduce((a,c)=>a+_mainReach(c),0);
+    const avg=posts.filter(c=>_mainReach(c)>0).length?Math.round(alcSum/posts.filter(c=>_mainReach(c)>0).length):0;
+    const leads=posts.reduce((a,c)=>a+(c.leads_generados||0),0);
+    const prev=i>0?meses[i-1]:null;
+    const prevAvg=prev?publicados.filter(c=>c.fecha?.startsWith(prev)&&_mainReach(c)>0).length
+      ?Math.round(publicados.filter(c=>c.fecha?.startsWith(prev)).reduce((a,c)=>a+_mainReach(c),0)/publicados.filter(c=>c.fecha?.startsWith(prev)&&_mainReach(c)>0).length):0:0;
+    const diff=prevAvg>0?Math.round((avg-prevAvg)/prevAvg*100):null;
+    return{m,posts:posts.length,avg,leads,diff,label:new Date(m+'-15').toLocaleDateString('es-AR',{month:'short'})};
+  });
+  const maxTendAvg=Math.max(...tendData.map(x=>x.avg),1);
+  const maxTendPosts=Math.max(...tendData.map(x=>x.posts),1);
+
+  const tendChart=`<div style="margin-bottom:24px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">📈 Tendencias — últimos 6 meses</div>
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-bottom:6px">
+      ${tendData.map(x=>{
+        const hAlc=x.avg>0?Math.max(8,Math.round(x.avg/maxTendAvg*80)):4;
+        const isCur=x.m===mes;
+        return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+          ${x.diff!==null?`<div style="font-size:9px;font-weight:700;color:${x.diff>0?'var(--green)':x.diff<0?'var(--red)':'var(--muted)'}">${x.diff>0?'↑':'↓'}${Math.abs(x.diff)}%</div>`:'<div style="font-size:9px;color:transparent">—</div>'}
+          <div style="font-size:10px;font-weight:700;color:${isCur?'var(--gold)':'var(--muted)'}">${x.avg>=1000?(x.avg/1000).toFixed(1)+'K':x.avg||''}</div>
+          <div style="width:100%;background:${isCur?'var(--gold)':'rgba(91,155,213,.6)'};border-radius:5px 5px 0 0;height:${hAlc}px;transition:height .5s;opacity:${x.posts?1:.3}"></div>
+          <div style="font-size:10px;color:${isCur?'var(--gold)':'var(--muted)'};font-weight:${isCur?700:400}">${x.label}</div>
+          <div style="font-size:9px;color:var(--muted)">${x.posts}p</div>
+        </div>`;}).join('')}
+    </div>
+    <div style="display:flex;gap:16px;margin-top:8px">
+      <div style="display:flex;align-items:center;gap:5px"><div style="width:10px;height:10px;border-radius:2px;background:rgba(91,155,213,.6)"></div><span style="font-size:10px;color:var(--muted)">Alcance promedio</span></div>
+      ${(()=>{const last=tendData.filter(x=>x.avg>0);if(last.length<2)return'';const t=last[last.length-1],p=last[last.length-2];const d=p.avg>0?Math.round((t.avg-p.avg)/p.avg*100):null;return d!==null?`<span style="font-size:11px;font-weight:700;color:${d>0?'var(--green)':d<0?'var(--red)':'var(--muted)'}">${d>0?'↑':'↓'} ${Math.abs(d)}% vs mes anterior</span>`:''})()}
+    </div>
+  </div>`;
+
+  // ── ANÁLISIS DE HOOKS ──
+  const hookStats=HOOK_TYPES.map(h=>{
+    const posts=publicados.filter(c=>c.hook_tipo===h.k&&_mainReach(c)>0);
+    if(!posts.length)return null;
+    const avg=Math.round(posts.reduce((a,c)=>a+_mainReach(c),0)/posts.length);
+    const avgEng=posts.filter(c=>_engRate(c)!==null).length
+      ?(posts.reduce((a,c)=>a+parseFloat(_engRate(c)||0),0)/posts.filter(c=>_engRate(c)!==null).length).toFixed(2):null;
+    return{...h,cnt:posts.length,avg,avgEng};
+  }).filter(Boolean).sort((a,b)=>b.avg-a.avg);
+  const maxHookAvg=hookStats.length?Math.max(...hookStats.map(x=>x.avg),1):1;
+
+  const hookChart=hookStats.length?`<div style="margin-bottom:24px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">🎣 Tipos de hook — alcance promedio</div>
+    ${hookStats.map((h,i)=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:9px">
+      <div style="font-size:14px;min-width:22px">${h.ico}</div>
+      <div style="flex:1;min-width:0">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+          <span style="font-size:11px;color:var(--text);font-weight:${i===0?700:400}">${h.l}${i===0?' 🏆':''}</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            ${h.avgEng?`<span style="font-size:10px;color:var(--teal)">${h.avgEng}% eng</span>`:''}
+            <span style="font-size:11px;font-weight:700;color:${i===0?h.col:'var(--text)'}">${h.avg.toLocaleString('es-AR')}</span>
+          </div>
+        </div>
+        <div style="height:6px;background:var(--card2);border-radius:3px;overflow:hidden">
+          <div style="height:100%;background:${h.col};width:${Math.round(h.avg/maxHookAvg*100)}%;border-radius:3px"></div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-top:1px">${h.cnt} post${h.cnt>1?'s':''}</div>
+      </div>
+    </div>`).join('')}
+    ${hookStats.length===0?`<div style="font-size:12px;color:var(--muted)">Clasificá el tipo de hook al cargar posts para ver este análisis.</div>`:''}
+  </div>`:'<div style="background:rgba(201,168,76,.06);border:1px dashed rgba(201,168,76,.2);border-radius:10px;padding:12px;margin-bottom:22px;font-size:12px;color:var(--muted)">💡 Clasificá el tipo de hook en cada post para ver aquí qué tipo convierte mejor.</div>';
+
   const esteMes=[...publicados.filter(c=>c.fecha?.startsWith(mes))];
   const alcTotal=esteMes.reduce((a,c)=>a+_mainReach(c),0);
   const avgAlc=esteMes.length?Math.round(alcTotal/esteMes.length):0;
@@ -7728,7 +7976,7 @@ function _renderContInsights(publicados,mes){
 
   const mesNom=new Date(mes+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
 
-  return`
+  return consistency+tendChart+hookChart+`
   <!-- KPIs mes -->
   <div style="margin-bottom:22px">
     <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Resumen — ${mesNom}</div>
