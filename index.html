@@ -344,8 +344,8 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('journey',this)"><span class="ico">🗺️</span><span>Journey</span></div>
     <div class="nl">Marketing</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
+    <div class="ni" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
     <div class="ni" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
-    <div class="ni" onclick="nav('comunidad',this)"><span class="ico">🫂</span><span>Comunidad</span></div>
     <div class="nl">Inteligencia</div>
     <div class="ni" onclick="nav('profit',this)"><span class="ico">🧠</span><span>Profit IA</span></div>
     <div class="nl">Portales</div>
@@ -641,52 +641,61 @@ th{background:rgba(28,26,46,.88)!important;}
      <div id="journeyAdminDetailView" style="display:none"></div>
     </div>
 
-    <!-- COMUNIDAD -->
-    <div id="sec-comunidad" class="sec">
-      <div class="tab-bar" style="margin-bottom:14px">
-        <button class="tab-btn active" id="comTabResumen"     onclick="setComTab('resumen')">📊 Resumen</button>
-        <button class="tab-btn"        id="comTabTodos"       onclick="setComTab('todos')">Todos</button>
-        <button class="tab-btn"        id="comTabPregunta"    onclick="setComTab('pregunta')">💬 Preguntas</button>
-        <button class="tab-btn"        id="comTabConsciencia" onclick="setComTab('consciencia')">✨ Consciencia</button>
-        <button class="tab-btn"        id="comTabReflexion"   onclick="setComTab('reflexion')">🌿 Reflexiones</button>
-        <button class="tab-btn"        id="comTabConcepto"    onclick="setComTab('concepto')">📖 Conceptos</button>
-        <button class="tab-btn"        id="comTabInfo"        onclick="setComTab('info')">💡 Info</button>
+    <!-- CONTENIDO -->
+    <div id="sec-contenido" class="sec">
+      <div class="tab-bar" style="margin-bottom:18px">
+        <button class="tab-btn active" id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
+        <button class="tab-btn"        id="contTabComunidad" onclick="setContSection('comunidad')">🫂 Comunidad</button>
       </div>
-      <div id="comResumen">
-        <div id="comKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
-          <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
-          <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
+      <!-- Sub-tab: Redes Sociales -->
+      <div id="contRedes"></div>
+      <!-- Sub-tab: Comunidad -->
+      <div id="contComunidad" style="display:none">
+        <div class="tab-bar" style="margin-bottom:14px">
+          <button class="tab-btn active" id="comTabResumen"     onclick="setComTab('resumen')">📊 Resumen</button>
+          <button class="tab-btn"        id="comTabTodos"       onclick="setComTab('todos')">Todos</button>
+          <button class="tab-btn"        id="comTabPregunta"    onclick="setComTab('pregunta')">💬 Preguntas</button>
+          <button class="tab-btn"        id="comTabConsciencia" onclick="setComTab('consciencia')">✨ Consciencia</button>
+          <button class="tab-btn"        id="comTabReflexion"   onclick="setComTab('reflexion')">🌿 Reflexiones</button>
+          <button class="tab-btn"        id="comTabConcepto"    onclick="setComTab('concepto')">📖 Conceptos</button>
+          <button class="tab-btn"        id="comTabInfo"        onclick="setComTab('info')">💡 Info</button>
         </div>
-        <!-- Configuración de hora de envío -->
-        <div class="cc" style="margin-bottom:18px">
-          <h3 style="font-size:13px;color:var(--muted);margin-bottom:14px">⏰ <span style="color:var(--gl)">Configuración de envío diario</span></h3>
-          <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
-            <div>
-              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Hora de envío</label>
-              <input type="time" id="comHoraEnvio" value="08:00"
-                style="padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:700;outline:none;width:120px"
-                onchange="saveComConfig()">
-            </div>
-            <div>
-              <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Días de envío</label>
-              <div style="display:flex;flex-wrap:wrap;gap:6px" id="comDiasEnvio">
-                <label id="comDiaLabel0" onclick="toggleComDia(0)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia0" style="display:none" checked><span>Lu</span></label>
-                <label id="comDiaLabel1" onclick="toggleComDia(1)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia1" style="display:none" checked><span>Ma</span></label>
-                <label id="comDiaLabel2" onclick="toggleComDia(2)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia2" style="display:none" checked><span>Mi</span></label>
-                <label id="comDiaLabel3" onclick="toggleComDia(3)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia3" style="display:none" checked><span>Ju</span></label>
-                <label id="comDiaLabel4" onclick="toggleComDia(4)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia4" style="display:none" checked><span>Vi</span></label>
-                <label id="comDiaLabel5" onclick="toggleComDia(5)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia5" style="display:none" checked><span>Sa</span></label>
-                <label id="comDiaLabel6" onclick="toggleComDia(6)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia6" style="display:none"><span>Do</span></label>
+        <div id="comResumen">
+          <div id="comKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
+            <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
+            <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
+          </div>
+          <!-- Configuración de hora de envío -->
+          <div class="cc" style="margin-bottom:18px">
+            <h3 style="font-size:13px;color:var(--muted);margin-bottom:14px">⏰ <span style="color:var(--gl)">Configuración de envío diario</span></h3>
+            <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
+              <div>
+                <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Hora de envío</label>
+                <input type="time" id="comHoraEnvio" value="08:00"
+                  style="padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:700;outline:none;width:120px"
+                  onchange="saveComConfig()">
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Días de envío</label>
+                <div style="display:flex;flex-wrap:wrap;gap:6px" id="comDiasEnvio">
+                  <label id="comDiaLabel0" onclick="toggleComDia(0)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia0" style="display:none" checked><span>Lu</span></label>
+                  <label id="comDiaLabel1" onclick="toggleComDia(1)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia1" style="display:none" checked><span>Ma</span></label>
+                  <label id="comDiaLabel2" onclick="toggleComDia(2)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia2" style="display:none" checked><span>Mi</span></label>
+                  <label id="comDiaLabel3" onclick="toggleComDia(3)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia3" style="display:none" checked><span>Ju</span></label>
+                  <label id="comDiaLabel4" onclick="toggleComDia(4)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia4" style="display:none" checked><span>Vi</span></label>
+                  <label id="comDiaLabel5" onclick="toggleComDia(5)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia5" style="display:none" checked><span>Sa</span></label>
+                  <label id="comDiaLabel6" onclick="toggleComDia(6)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia6" style="display:none"><span>Do</span></label>
+                </div>
               </div>
             </div>
-          </div>
-          <div style="margin-top:14px;padding:10px 14px;background:rgba(155,130,212,.08);border:1px solid rgba(155,130,212,.2);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
-            💡 <strong style="color:var(--text)">Recordatorio manual:</strong> A la hora configurada, andá a <em>"Para enviar hoy"</em> y presioná el botón 💬 de cada contenido para abrirlo en WhatsApp y enviarlo al grupo.
+            <div style="margin-top:14px;padding:10px 14px;background:rgba(155,130,212,.08);border:1px solid rgba(155,130,212,.2);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
+              💡 <strong style="color:var(--text)">Recordatorio manual:</strong> A la hora configurada, andá a <em>"Para enviar hoy"</em> y presioná el botón 💬 de cada contenido para abrirlo en WhatsApp y enviarlo al grupo.
+            </div>
           </div>
         </div>
+        <div id="comList" style="display:none"></div>
       </div>
-      <div id="comList" style="display:none"></div>
     </div>
 
     <!-- MARKETING -->
@@ -700,7 +709,6 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
-      <button class="tab-btn" id="mktTabContenido" onclick="setMktTab('contenido')">📱 Contenido</button>
       <button class="tab-btn" onclick="navCRM()" style="border-color:rgba(201,168,76,.3);color:var(--gold)">👥 Ir a CRM →</button>
      </div>
      <div id="mktResumen"></div>
@@ -710,7 +718,6 @@ th{background:rgba(28,26,46,.88)!important;}
      <div id="mktMeta" style="display:none"></div>
      <div id="mktRegalos" style="display:none"></div>
      <div id="mktStats" style="display:none"></div>
-     <div id="mktContenido" style="display:none"></div>
     </div>
 
     <!-- CRM -->
@@ -2179,7 +2186,7 @@ async function _silentReload(){
     const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
       facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
       herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,
-      marketing:renderMkt,crm:renderCRM,profit:renderProfit,comunidad:renderComunidad};
+      marketing:renderMkt,crm:renderCRM,profit:renderProfit,contenido:renderContenido};
     if(fn[curSec])fn[curSec]();
     // Indicador visual sutil
     const btn=document.getElementById('reloadBtn');
@@ -2202,7 +2209,7 @@ async function reloadData(){
     const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
       facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
       herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,
-      marketing:renderMkt,crm:renderCRM,profit:renderProfit,comunidad:renderComunidad};
+      marketing:renderMkt,crm:renderCRM,profit:renderProfit,contenido:renderContenido};
     if(fn[curSec])fn[curSec]();
     toast('✅ Datos actualizados');
   }catch(e){
@@ -2437,7 +2444,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',comunidad:'🫂 Comunidad',accesos:'🔗 Accesos Rápidos'};
+const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   sesiones:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -2449,7 +2456,7 @@ const BTNS={
   programas:"<button class=\"btn btn-p\" onclick=\"openModal('prog',null)\">+ Nuevo Programa</button><button class=\"btn btn-s\" onclick=\"syncProgramTemplates()\" style=\"margin-left:8px\" title=\"Carga las semanas, desafíos y hábitos de todos los programas desde el template\">🔄 Cargar Templates</button>",
   journey:"<button class=\"btn btn-p\" onclick=\"openModal('insc',null)\">+ Inscribir Ser</button>",
   marketing:"<button class=\"btn btn-p\" onclick=\"openModal('camp',null)\">+ Nueva Campaña</button>",
-  comunidad:"<button class=\"btn btn-p\" onclick=\"openComunidadModal(null)\">+ Nuevo Contenido</button>",
+  contenido:"<button class=\"btn btn-s\" onclick=\"setContSection('comunidad');openComunidadModal(null)\">+ Comunidad</button><button class=\"btn btn-p\" onclick=\"setContSection('redes');setTimeout(()=>openContenidoModal(null,'publicado'),50)\">+ Nuevo Post</button>",
   crm:"<button class=\"btn btn-s\" onclick=\"exportSeres()\">📤 Exportar</button><button class=\"btn btn-s\" onclick=\"openImport()\">📥 Importar Excel</button><button class=\"btn btn-p\" onclick=\"openModal('ser',null,true)\">🌱 Nuevo Prospecto</button>",
   profit:'',
   accesos:'',
@@ -2462,7 +2469,7 @@ function nav(name,el){
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
-  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,marketing:renderMkt,crm:renderCRM,profit:renderProfit,comunidad:renderComunidad};
+  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
   if(fn[name])fn[name]();
   closeSidebar(); // auto-close on mobile after navigating
 }
@@ -2775,7 +2782,7 @@ function renderAccionables(now){
       ico:'🫂', urgencia:'Hoy',
       titulo:`Comunidad: ${comHoy.length} contenido${comHoy.length!==1?'s':''} para enviar`,
       desc:`${tipos}`,
-      accion:`onclick="nav('comunidad',Array.from(document.querySelectorAll('.ni')).find(n=>n.textContent.includes('Comunidad')))"`,
+      accion:`onclick="nav('contenido',Array.from(document.querySelectorAll('.ni')).find(n=>n.textContent.includes('Contenido')));setTimeout(()=>setContSection('comunidad'),100)"`,
       btnLabel:'Ir a Comunidad'
     });
   }
@@ -7041,7 +7048,7 @@ function doImport(){
 let mktTab='resumen';
 function setMktTab(t){
   mktTab=t;
-  ['resumen','pub','conv','ret','meta','regalos','stats','contenido'].forEach(x=>{
+  ['resumen','pub','conv','ret','meta','regalos','stats'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
@@ -7555,7 +7562,7 @@ function _ideaToPost(id){
 
 /* ── Vista principal ── */
 function renderMktContenido(){
-  const el=document.getElementById('mktContenido');if(!el)return;
+  const el=document.getElementById('contRedes');if(!el)return;
   const hoy=new Date().toISOString().slice(0,10);
   const mes=hoy.slice(0,7);
   const publicados=contenidoRedes.filter(c=>c.tipo==='publicado');
@@ -8654,6 +8661,23 @@ async function delComunidad(id){
   }else{
     toast('Error al eliminar','err');
   }
+}
+
+/* ── CONTENIDO (sección principal) ── */
+let _contSection='redes';
+function setContSection(tab){
+  _contSection=tab;
+  ['redes','comunidad'].forEach(t=>{
+    const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
+    const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
+    if(tabEl)tabEl.classList.toggle('active',t===tab);
+    if(contEl)contEl.style.display=t===tab?'':'none';
+  });
+  if(tab==='redes')renderMktContenido();
+  if(tab==='comunidad')renderComunidad();
+}
+function renderContenido(){
+  setContSection(_contSection||'redes');
 }
 
 function renderMkt(){
