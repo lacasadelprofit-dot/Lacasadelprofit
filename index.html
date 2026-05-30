@@ -3033,21 +3033,22 @@ function renderSesJC(){
   const bodyEl=document.getElementById('jcBody');
   if(!bodyEl)return;
   bodyEl.innerHTML=`
-    <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:220px"><canvas id="chJcAnual"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Por herramienta</h3><div style="height:220px"><canvas id="chJcTipo"></canvas></div></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 Días del mes actual</h3><div style="height:180px"><canvas id="chJcMes"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:180px"><canvas id="chJcAcum"></canvas></div></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:14px;margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌐 Presencial vs Online</h3><div style="height:180px"><canvas id="chJcMod"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏆 Top seres</h3><div style="height:180px"><canvas id="chJcSeres"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📆 Día de la semana</h3><div style="height:180px"><canvas id="chJcDia"></canvas></div></div>
     </div>
-    <div style="margin-bottom:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🗓 ${yr} — sesiones por mes</h3><div style="height:180px"><canvas id="chJcYear"></canvas></div></div>
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📉 Frecuencia por ser</h3><div style="height:180px"><canvas id="chJcFreq"></canvas></div></div>
     </div>
     <div class="cc">
       <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🕐 Últimas sesiones</h3>
@@ -3133,6 +3134,20 @@ function renderSesJC(){
   const yearBorders=yearData.map((_,m)=>m===now.getMonth()?'#E8C96A':'#C9A84C');
   if(charts.jcYear)charts.jcYear.destroy();
   charts.jcYear=new Chart(document.getElementById('chJcYear'),{type:'bar',data:{labels:MN,datasets:[{data:yearData,backgroundColor:yearColors,borderColor:yearBorders,borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:([i])=>MN[i.dataIndex]+' '+yr}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+  // Chart: distribución de frecuencia por ser
+  const freqMap={};
+  jcSes.forEach(s=>{if(s.ser)freqMap[s.ser]=(freqMap[s.ser]||0)+1;});
+  const buckets=[
+    {label:'1 vez',min:1,max:1,col:'rgba(91,155,213,.7)',border:'#5B9BD5'},
+    {label:'2–3',min:2,max:3,col:'rgba(201,168,76,.7)',border:'#C9A84C'},
+    {label:'4–6',min:4,max:6,col:'rgba(155,130,212,.7)',border:'#9B82D4'},
+    {label:'7–10',min:7,max:10,col:'rgba(61,170,106,.7)',border:'#3DAA6A'},
+    {label:'11+',min:11,max:Infinity,col:'rgba(232,201,106,.9)',border:'#E8C96A'},
+  ];
+  const freqData=buckets.map(b=>Object.values(freqMap).filter(n=>n>=b.min&&n<=b.max).length);
+  if(charts.jcFreq)charts.jcFreq.destroy();
+  charts.jcFreq=new Chart(document.getElementById('chJcFreq'),{type:'bar',data:{labels:buckets.map(b=>b.label),datasets:[{data:freqData,backgroundColor:buckets.map(b=>b.col),borderColor:buckets.map(b=>b.border),borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const total=Object.keys(freqMap).length;return `${ctx.raw} seres (${total?Math.round(ctx.raw/total*100):0}%)`;},title:([i])=>`Seres con ${buckets[i.dataIndex].label}`}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
 
   // Últimas sesiones
   const ult=jcSes.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,10);
