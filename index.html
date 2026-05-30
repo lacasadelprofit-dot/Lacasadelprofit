@@ -3009,7 +3009,7 @@ function setSesTab(t){
 }
 
 function renderSesJC(){
-  const jcSes=sessions.filter(s=>s.facilitador===FAC_ADMIN&&comp(s));
+  const jcSes=sessions.filter(s=>s.facilitador&&s.facilitador.toLowerCase().includes('juan cruz')&&comp(s));
   const now=new Date(),yr=now.getFullYear();
   const mesStr=now.toISOString().slice(0,7);
   const lm=now.getMonth()===0?12:now.getMonth(),ly=now.getMonth()===0?yr-1:yr;
@@ -3018,29 +3018,31 @@ function renderSesJC(){
   const lmesSes=jcSes.filter(s=>s.fecha&&s.fecha.startsWith(lmStr));
   const yrSes=jcSes.filter(s=>new Date(s.fecha).getFullYear()===yr);
   const chg=lmesSes.length>0?Math.round((mesSes.length-lmesSes.length)/lmesSes.length*100):0;
-  const sereUnicos=new Set(jcSes.map(s=>s.ser)).size;
-  const cobMesARS=mesSes.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+(s.montoPagado!=null?s.montoPagado:s.monto||0),0);
   const pvTot=jcSes.filter(s=>s.primeraVez).length;
+  const pvMes=mesSes.filter(s=>s.primeraVez).length;
 
-  // KPIs
+  // KPIs: Total | Este año | Este mes | Primera vez
   const kpiEl=document.getElementById('jcKPIs');
   if(kpiEl)kpiEl.innerHTML=`
-    <div class="kc go"><div class="ki">🧘</div><div class="kl">Total Sesiones JC</div><div class="kv">${jcSes.length}</div><div class="ks">${yrSes.length} en ${yr}</div></div>
+    <div class="kc go"><div class="ki">🧘</div><div class="kl">Total Sesiones JC</div><div class="kv">${jcSes.length}</div><div class="ks">histórico acumulado</div></div>
+    <div class="kc bl"><div class="ki">📅</div><div class="kl">Este Año</div><div class="kv">${yrSes.length}</div><div class="ks">en ${yr}</div></div>
     <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${mesSes.length}</div><div class="kch ${chg>=0?'up':'dn'}">${chg>=0?'↑':'↓'} ${Math.abs(chg)}% vs anterior</div></div>
-    <div class="kc pu"><div class="ki">💫</div><div class="kl">Seres Únicos</div><div class="kv">${sereUnicos}</div><div class="ks">${pvTot} primeras veces</div></div>
-    <div class="kc go" style="--kc-top:var(--green)"><div class="ki">💰</div><div class="kl">Cobrado este mes</div><div class="kv" style="font-size:18px">$${Math.round(cobMesARS).toLocaleString('es-AR')}</div></div>`;
+    <div class="kc or"><div class="ki">⭐</div><div class="kl">Primera Vez</div><div class="kv">${pvTot}</div><div class="ks">${pvMes} este mes</div></div>`;
 
   // Layout
   const bodyEl=document.getElementById('jcBody');
   if(!bodyEl)return;
   bodyEl.innerHTML=`
     <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:14px">
-      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes</h3><div style="height:220px"><canvas id="chJcAnual"></canvas></div></div>
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:220px"><canvas id="chJcAnual"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Por herramienta</h3><div style="height:220px"><canvas id="chJcTipo"></canvas></div></div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 Días del mes actual</h3><div style="height:180px"><canvas id="chJcMes"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:180px"><canvas id="chJcAcum"></canvas></div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🗓 ${yr} — sesiones por mes</h3><div style="height:180px"><canvas id="chJcYear"></canvas></div></div>
     </div>
     <div class="cc">
       <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🕐 Últimas sesiones</h3>
@@ -3049,16 +3051,22 @@ function renderSesJC(){
 
   const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
-  // Chart: anual (barras por mes, 2 años)
+  // Chart: comparativo anual — líneas por año, null en meses futuros del año actual
   const yrs=[...new Set(jcSes.map(s=>new Date(s.fecha).getFullYear()))].sort();
-  const paleta=['#C9A84C','#E8C96A','#9B82D4','#5B9BD5'];
-  const datasets=yrs.map((y,i)=>({
+  const paleta=['#9B82D4','#5B9BD5','#C9A84C','#E8C96A'];
+  const lineDatasets=yrs.map((y,i)=>({
     label:String(y),
-    data:MN.map((_,m)=>jcSes.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===y&&d.getMonth()===m;}).length),
-    backgroundColor:paleta[i]+'99',borderColor:paleta[i],borderRadius:4
+    data:MN.map((_,m)=>{
+      if(y===yr&&m>now.getMonth())return null;
+      return jcSes.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===y&&d.getMonth()===m;}).length;
+    }),
+    borderColor:paleta[i]||'#C9A84C',
+    backgroundColor:(paleta[i]||'#C9A84C')+'18',
+    tension:.4,fill:true,pointRadius:3,pointBackgroundColor:paleta[i]||'#C9A84C',
+    spanGaps:false
   }));
   if(charts.jcAnual)charts.jcAnual.destroy();
-  charts.jcAnual=new Chart(document.getElementById('chJcAnual'),{type:'bar',data:{labels:MN,datasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7A7260',font:{size:11}}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+  charts.jcAnual=new Chart(document.getElementById('chJcAnual'),{type:'line',data:{labels:MN,datasets:lineDatasets},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#7A7260',font:{size:11}}}},scales:{x:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.5)'}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
 
   // Chart: por herramienta (donut)
   const cTipo={};
@@ -3090,6 +3098,13 @@ function renderSesJC(){
     if(charts.jcAcum)charts.jcAcum.destroy();
     charts.jcAcum=new Chart(document.getElementById('chJcAcum'),{type:'line',data:{labels:acumLabels,datasets:[{label:'Total acumulado',data:acumData,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,.1)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9A84C'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
   }
+
+  // Chart: solo año actual — barras por mes, mes actual resaltado
+  const yearData=MN.map((_,m)=>jcSes.filter(s=>{const d=new Date(s.fecha);return d.getFullYear()===yr&&d.getMonth()===m;}).length);
+  const yearColors=yearData.map((_,m)=>m===now.getMonth()?'#C9A84C':'rgba(201,168,76,.35)');
+  const yearBorders=yearData.map((_,m)=>m===now.getMonth()?'#E8C96A':'#C9A84C');
+  if(charts.jcYear)charts.jcYear.destroy();
+  charts.jcYear=new Chart(document.getElementById('chJcYear'),{type:'bar',data:{labels:MN,datasets:[{data:yearData,backgroundColor:yearColors,borderColor:yearBorders,borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:([i])=>MN[i.dataIndex]+' '+yr}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
 
   // Últimas sesiones
   const ult=jcSes.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,10);
