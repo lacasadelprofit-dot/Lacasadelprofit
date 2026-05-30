@@ -1830,7 +1830,10 @@ th{background:rgba(28,26,46,.88)!important;}
     </select>
    </div>
   </div>
-  <div class="fg"><label>Título / Tema</label><input type="text" id="crTitulo" placeholder="Ej: Qué son las Barras de Access"></div>
+  <div class="fg-row">
+   <div class="fg" style="flex:2"><label>Título / Tema</label><input type="text" id="crTitulo" placeholder="Ej: Qué son las Barras de Access"></div>
+   <div class="fg"><label title="Usá el mismo nombre para agrupar el mismo video subido a varias plataformas">🔗 Grupo / Serie <span style="font-size:10px;color:var(--muted)">(opcional)</span></label><input type="text" id="crGrupo" placeholder="Ej: video-barras-mayo"></div>
+  </div>
   <div class="fg-row">
    <div class="fg" style="flex:2"><label>Hook (primera línea)</label><input type="text" id="crHook" placeholder="Ej: ¿Qué pasaría si pudieras soltar todo en 90 minutos?"></div>
    <div class="fg"><label>Tipo de hook</label>
@@ -7424,9 +7427,20 @@ const HOOK_TYPES=[
   {k:'desafio',     l:'Desafío / Reto',     ico:'💪', col:'#D4863A'},
 ];
 
-/* ── Metas mensuales (localStorage) ── */
-function getContGoals(){try{return JSON.parse(localStorage.getItem('lcp_cont_goals')||'{}');}catch{return{};}}
-function setContGoal(k,v){const g=getContGoals();g[k]=v;localStorage.setItem('lcp_cont_goals',JSON.stringify(g));if(_contSection==='resumen')renderContResumen();else renderMktContenido();}
+/* ── Metas mensuales por mes (independientes) ── */
+function getMonthGoals(mes){
+  try{const all=JSON.parse(localStorage.getItem('lcp_goals_by_month')||'{}');return all[mes]||{};}catch{return{};}
+}
+function saveMonthGoals(mes,goals){
+  try{const all=JSON.parse(localStorage.getItem('lcp_goals_by_month')||'{}');all[mes]=goals;localStorage.setItem('lcp_goals_by_month',JSON.stringify(all));}catch{}
+}
+// Compat: getContGoals() retorna metas del mes actual
+function getContGoals(){return getMonthGoals(new Date().toISOString().slice(0,7));}
+function setContGoal(k,v){
+  const mes=typeof _resumenMes!=='undefined'&&_contSection==='resumen'?_resumenMes:new Date().toISOString().slice(0,7);
+  const g=getMonthGoals(mes);g[k]=v;saveMonthGoals(mes,g);
+  if(_contSection==='resumen')renderContResumen();else renderMktContenido();
+}
 function editGoal(k,label,current){
   const v=prompt(`Meta de ${label} para este mes:`,current||'');
   if(v===null)return;
@@ -7516,6 +7530,7 @@ function openContenidoModal(id=null,tipoDefault='idea',fechaDefault=null){
   document.getElementById('crTitulo').value=c?.titulo||'';
   document.getElementById('crHook').value=c?.hook||'';
   document.getElementById('crHookTipo').value=c?.hook_tipo||'';
+  document.getElementById('crGrupo').value=c?.grupo||'';
   document.getElementById('crFecha').value=c?.fecha||fechaDefault||new Date().toISOString().slice(0,10);
   document.getElementById('crNotas').value=c?.notas||'';
   document.getElementById('moContenidoTitle').textContent=id?'✏️ Editar contenido':'📱 Nuevo contenido';
@@ -7540,6 +7555,7 @@ function saveContenido(){
     titulo:document.getElementById('crTitulo').value.trim(),
     hook:document.getElementById('crHook').value.trim(),
     hook_tipo:document.getElementById('crHookTipo').value,
+    grupo:document.getElementById('crGrupo').value.trim(),
     fecha:document.getElementById('crFecha').value,
     notas:document.getElementById('crNotas').value.trim(),
     createdAt:new Date().toISOString(),
@@ -8876,20 +8892,28 @@ function navResumenMes(dir){
   renderContResumen();
 }
 
+/* ── Seguidores por mes ── */
+function getFollowers(mes){
+  try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');return all[mes]||{};}catch{return{};}
+}
+function saveFollower(mes,plat,val){
+  try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');if(!all[mes])all[mes]={};all[mes][plat]=parseInt(val)||0;localStorage.setItem('lcp_followers',JSON.stringify(all));renderContResumen();}catch{}
+}
+
 function editMetasMes(){
-  const g=getContGoals();
-  const p=prompt('Meta de posts por mes:',g.posts_mes||'');
+  const g=getMonthGoals(_resumenMes);
+  const mesLabel=new Date(_resumenMes+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  const p=prompt(`Meta de posts para ${mesLabel}:`,g.posts_mes||'');
   if(p===null)return;
-  const a=prompt('Meta de alcance mensual:',g.alcance_mes||'');
+  const a=prompt(`Meta de alcance para ${mesLabel}:`,g.alcance_mes||'');
   if(a===null)return;
-  const gg={...g,posts_mes:parseInt(p)||0,alcance_mes:parseInt(a)||0};
-  localStorage.setItem('lcp_cont_goals',JSON.stringify(gg));
+  saveMonthGoals(_resumenMes,{...g,posts_mes:parseInt(p)||0,alcance_mes:parseInt(a)||0});
   renderContResumen();
 }
 
 function renderContResumen(){
   const el=document.getElementById('contResumen');if(!el)return;
-  const goals=getContGoals();
+  const goals=getMonthGoals(_resumenMes);
   const metaPosts=goals.posts_mes||0;
   const metaAlcance=goals.alcance_mes||0;
   const mesActual=new Date().toISOString().slice(0,7);
@@ -8933,6 +8957,21 @@ function renderContResumen(){
   const maxCnt=Math.max(...t6.map(x=>x.cnt),metaPosts||1,1);
   const maxAlc=Math.max(...t6.map(x=>x.alc),metaAlcance||1,1);
 
+  // ── Seguidores mes a mes ──
+  const platsFollow=[
+    {k:'instagram',l:'Instagram',ico:'📸',col:'#E4405F'},
+    {k:'tiktok',   l:'TikTok',  ico:'🎵',col:'#69C9D0'},
+    {k:'youtube',  l:'YouTube', ico:'▶️', col:'#FF0000'},
+    {k:'facebook', l:'Facebook',ico:'👍',col:'#1877F2'},
+  ];
+  const fw=getFollowers(_resumenMes);
+  // Calcular el mes anterior para comparar
+  const dPrev=new Date(_resumenMes+'-15');dPrev.setMonth(dPrev.getMonth()-1);
+  const mesPrev=dPrev.toISOString().slice(0,7);
+  const fwPrev=getFollowers(mesPrev);
+  // Historial 6 meses para sparkline
+  const fwHistory=meses6.map(m=>getFollowers(m));
+
   // ── Tabla posts del mes ──
   const tablaRows=pubs.length?[...pubs].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(c=>{
     const alc=_mainReach(c);
@@ -8943,13 +8982,15 @@ function renderContResumen(){
     const tgCol=tg===null?'var(--muted)':parseFloat(tg)>=3?'var(--green)':parseFloat(tg)>=1.5?'var(--gold)':'var(--muted)';
     const pnsCol=pns===null?'var(--muted)':pns>=50?'var(--green)':pns>=30?'var(--gold)':'var(--muted)';
     const fechaShort=c.fecha?c.fecha.slice(5).replace('-','/'):'—';
-    const titulo=(c.titulo||'Sin título').slice(0,28)+(c.titulo?.length>28?'…':'');
+    const titulo=(c.titulo||'Sin título').slice(0,26)+(c.titulo?.length>26?'…':'');
     const plIco=PLAT_CONT_ICO[c.plataforma]||'📱';
-    const plCol=PLAT_CONT_COL[c.plataforma]||'var(--muted)';
+    // Posts del mismo grupo (otras plataformas)
+    const hermanos=c.grupo?pubs.filter(x=>x.grupo===c.grupo&&x.id!==c.id):[];
+    const hermIcos=hermanos.map(h=>`<span title="${h.plataforma}">${PLAT_CONT_ICO[h.plataforma]||'📱'}</span>`).join('');
     return`<tr onclick="openContenidoModal('${c.id}')" style="cursor:pointer;transition:.15s" onmouseenter="this.style.background='rgba(255,255,255,.04)'" onmouseleave="this.style.background=''">
       <td style="padding:9px 10px;font-size:12px;color:var(--muted);white-space:nowrap">${fechaShort}</td>
-      <td style="padding:9px 6px;font-size:14px;text-align:center" title="${c.plataforma||''}">${plIco}</td>
-      <td style="padding:9px 10px;font-size:12px;color:var(--text);max-width:160px">${titulo}</td>
+      <td style="padding:9px 6px;font-size:14px;text-align:center" title="${c.plataforma||''}">${plIco}${hermIcos?`<span style="font-size:10px;opacity:.6">${hermIcos}</span>`:''}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--text);max-width:160px">${titulo}${c.grupo?`<div style="font-size:9px;color:var(--gold);margin-top:1px">🔗 ${c.grupo}</div>`:''}</td>
       <td style="padding:9px 10px;font-size:12px;color:var(--blue);font-weight:700;text-align:right">${alc>0?alc.toLocaleString('es-AR'):'—'}</td>
       <td style="padding:9px 10px;font-size:12px;font-weight:700;color:${pnsCol};text-align:right">${pns!==null?pns+'%':'—'}</td>
       <td style="padding:9px 10px;font-size:12px;font-weight:700;color:${tgCol};text-align:right">${tg!==null?tg+'%':'—'}</td>
@@ -9048,6 +9089,60 @@ function renderContResumen(){
       }).join('')}
     </div>
     ${metaPosts>0?`<div style="display:flex;align-items:center;gap:6px;margin-top:10px"><div style="width:16px;border-top:1px dashed rgba(201,168,76,.5)"></div><span style="font-size:10px;color:var(--muted)">meta: ${metaPosts} posts/mes</span></div>`:''}
+  </div>
+
+  <!-- Seguidores por plataforma -->
+  <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:24px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <span style="font-size:13px;font-weight:800;color:var(--gl)">👥 Seguidores — ${mesLabel}</span>
+      <span style="font-size:11px;color:var(--muted)">Ingresá el total al cierre del mes</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+      ${platsFollow.map(p=>{
+        const cur=fw[p.k]||0;
+        const prev=fwPrev[p.k]||0;
+        const diff=cur&&prev?cur-prev:null;
+        const pct=diff!==null&&prev>0?((diff/prev)*100).toFixed(1):null;
+        const diffCol=diff>0?'var(--green)':diff<0?'var(--red)':'var(--muted)';
+        // Sparkline: last 6 months values
+        const vals=fwHistory.map(h=>h[p.k]||0);
+        const maxV=Math.max(...vals,1);
+        const spark=vals.map((v,i)=>{
+          const h=v>0?Math.max(4,Math.round(v/maxV*28)):2;
+          const isCur=i===vals.length-1;
+          return`<div style="flex:1;background:${isCur?p.col:'rgba(255,255,255,.15)'};border-radius:2px 2px 0 0;height:${h}px;align-self:flex-end"></div>`;
+        }).join('');
+        return`<div style="background:var(--card);border:1px solid var(--border);border-top:2px solid ${p.col};border-radius:12px;padding:14px">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+            <span style="font-size:16px">${p.ico}</span>
+            <span style="font-size:11px;font-weight:700;color:var(--muted)">${p.l}</span>
+          </div>
+          <input type="number" value="${cur||''}" placeholder="0"
+            onchange="saveFollower('${_resumenMes}','${p.k}',this.value)"
+            style="width:100%;padding:8px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;font-weight:800;text-align:center;outline:none;margin-bottom:8px">
+          ${diff!==null?`<div style="font-size:11px;font-weight:700;color:${diffCol};text-align:center">${diff>0?'↑':diff<0?'↓':'='} ${Math.abs(diff).toLocaleString('es-AR')} ${pct?`(${diff>0?'+':''}${pct}%)`:''}</div>`
+          :`<div style="font-size:10px;color:var(--muted);text-align:center">Cargá el mes anterior para ver variación</div>`}
+          <div style="display:flex;align-items:flex-end;gap:2px;height:32px;margin-top:10px">${spark}</div>
+        </div>`;
+      }).join('')}
+    </div>
+    <!-- Proyección hacia 10K -->
+    ${(()=>{
+      const ig=fw.instagram||0;
+      if(!ig)return'';
+      const remaining=10000-ig;
+      if(remaining<=0)return`<div style="background:rgba(61,170,106,.1);border:1px solid rgba(61,170,106,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--green);font-weight:700">🎉 ¡Superaste los 10.000 seguidores en Instagram!</div>`;
+      // Calcular promedio mensual de crecimiento
+      const igHistory=fwHistory.map(h=>h.instagram||0).filter(v=>v>0);
+      const growthRates=[];
+      for(let i=1;i<igHistory.length;i++){if(igHistory[i-1]>0)growthRates.push(igHistory[i]-igHistory[i-1]);}
+      const avgGrowth=growthRates.length?Math.round(growthRates.reduce((a,b)=>a+b,0)/growthRates.length):null;
+      const mesesFalta=avgGrowth>0?Math.ceil(remaining/avgGrowth):null;
+      return`<div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted)">
+        ⭐ <strong style="color:var(--gl)">Meta 10K Instagram:</strong> te faltan <strong style="color:var(--gold)">${remaining.toLocaleString('es-AR')} seguidores</strong>
+        ${mesesFalta?` · A tu ritmo actual: ~${mesesFalta} meses`:'· Cargá más meses para ver proyección'}
+      </div>`;
+    })()}
   </div>
 
   <!-- Tabla posts del mes -->
