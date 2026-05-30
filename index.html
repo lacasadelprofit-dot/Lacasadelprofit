@@ -3162,6 +3162,62 @@ function renderSesJC(){
     </div>`).join('')||'<div style="color:var(--muted);font-size:12px;padding:8px">Sin sesiones registradas para Juan Cruz</div>';
 }
 
+function setInacFiltro(dias){
+  window._inacFiltro=dias;
+  [30,60,90].forEach(d=>{
+    const btn=document.getElementById('inacBtn'+d);
+    if(!btn)return;
+    btn.className=d===dias?'btn btn-p btn-sm':'btn btn-s btn-sm';
+  });
+  renderInactivos();
+}
+
+function renderInactivos(){
+  const el=document.getElementById('inacBody');if(!el)return;
+  const compSes=window._inacSesData||sessions.filter(comp);
+  const dias=window._inacFiltro||30;
+  const hoy=new Date();
+
+  // Última sesión por ser
+  const ultimaMap={};
+  compSes.forEach(s=>{
+    if(!s.ser||!s.fecha)return;
+    if(!ultimaMap[s.ser]||s.fecha>ultimaMap[s.ser].fecha)
+      ultimaMap[s.ser]={fecha:s.fecha,sesion:s.sesion};
+  });
+
+  const inactivos=Object.entries(ultimaMap)
+    .map(([nombre,{fecha,sesion}])=>({
+      nombre,fecha,sesion,
+      dias:Math.floor((hoy-new Date(fecha))/86400000)
+    }))
+    .filter(x=>x.dias>=dias)
+    .sort((a,b)=>b.dias-a.dias);
+
+  if(!inactivos.length){
+    el.innerHTML=`<div style="color:var(--muted);font-size:13px;padding:12px 0">✅ Sin seres inactivos hace ${dias}+ días</div>`;
+    return;
+  }
+
+  const col=d=>d>=90?'var(--red)':d>=60?'var(--or)':'var(--gold)';
+  const bg=d=>d>=90?'rgba(224,85,85,.12)':d>=60?'rgba(212,134,58,.12)':'rgba(201,168,76,.1)';
+
+  el.innerHTML=inactivos.map(x=>{
+    const ser=seres.find(s=>s.nombre===x.nombre);
+    const cel=ser?.cel||ser?.telefono||ser?.whatsapp||'';
+    const wa=cel?`<a href="${waLink(cel,x.nombre)}" target="_blank" class="btn btn-s btn-sm" style="font-size:11px">💬 WA</a>`:'';
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--card2);border-radius:10px;margin-bottom:6px;border-left:3px solid ${col(x.dias)}">
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:600;color:var(--text)">${x.nombre}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">Última: ${fd(x.fecha)} · ${x.sesion||'—'}</div>
+      </div>
+      <span style="font-size:12px;font-weight:700;padding:3px 10px;border-radius:20px;background:${bg(x.dias)};color:${col(x.dias)};white-space:nowrap">${x.dias}d</span>
+      ${wa}
+      <button class="btn btn-s btn-sm" onclick="openModal('ses')" style="font-size:11px">+ Sesión</button>
+    </div>`;
+  }).join('');
+}
+
 function renderSes(){
   // ── KPIs (siempre) ──
   const now2=new Date(),yr2=now2.getFullYear(),mesStr2=now2.toISOString().slice(0,7);
@@ -3226,7 +3282,19 @@ function renderSes(){
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📆 Día de la semana</h3><div style="height:180px"><canvas id="chResDia"></canvas></div></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 Nuevos seres por mes</h3><div style="height:180px"><canvas id="chResNuevos"></canvas></div></div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📉 Frecuencia por ser</h3><div style="height:180px"><canvas id="chResFreq"></canvas></div></div>
+      </div>
+      <div class="cc" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+          <h3 style="font-size:13px;color:var(--muted)">💤 Seres inactivos</h3>
+          <div style="display:flex;gap:6px" id="inacFiltros">
+            <button onclick="setInacFiltro(30)" id="inacBtn30" class="btn btn-p btn-sm">30+ días</button>
+            <button onclick="setInacFiltro(60)" id="inacBtn60" class="btn btn-s btn-sm">60+ días</button>
+            <button onclick="setInacFiltro(90)" id="inacBtn90" class="btn btn-s btn-sm">90+ días</button>
+          </div>
+        </div>
+        <div id="inacBody"></div>
       </div>
       <div class="cc">
         <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🕐 Últimas sesiones</h3>
@@ -3297,6 +3365,24 @@ function renderSes(){
     const freqData2=buckets2.map(b=>Object.values(freqMap2).filter(n=>n>=b.min&&n<=b.max).length);
     if(charts.resFreq)charts.resFreq.destroy();
     charts.resFreq=new Chart(document.getElementById('chResFreq'),{type:'bar',data:{labels:buckets2.map(b=>b.label),datasets:[{data:freqData2,backgroundColor:buckets2.map(b=>b.col),borderColor:buckets2.map(b=>b.border),borderWidth:1,borderRadius:6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>{const tot=Object.keys(freqMap2).length;return `${ctx.raw} seres (${tot?Math.round(ctx.raw/tot*100):0}%)`;},title:([i])=>`Seres con ${buckets2[i.dataIndex].label}`}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+    // Chart: nuevos seres por mes (últimos 12 meses)
+    const nuevosMap={};
+    compSes.forEach(s=>{
+      if(!s.ser||!s.fecha)return;
+      if(!nuevosMap[s.ser]||s.fecha<nuevosMap[s.ser])nuevosMap[s.ser]=s.fecha;
+    });
+    const ultimos12=[];
+    for(let i=11;i>=0;i--){const d=new Date(now2.getFullYear(),now2.getMonth()-i,1);ultimos12.push(d.toISOString().slice(0,7));}
+    const nuevosData=ultimos12.map(m=>Object.values(nuevosMap).filter(f=>f.startsWith(m)).length);
+    const nuevosColors=nuevosData.map((_,i)=>i===11?'#C9A84C':'rgba(201,168,76,.45)');
+    if(charts.resNuevos)charts.resNuevos.destroy();
+    charts.resNuevos=new Chart(document.getElementById('chResNuevos'),{type:'bar',data:{labels:ultimos12.map(m=>m.slice(5)+'/'+m.slice(2,4)),datasets:[{data:nuevosData,backgroundColor:nuevosColors,borderColor:'#C9A84C',borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:([i])=>ultimos12[i.dataIndex],label:ctx=>`${ctx.raw} nuevo${ctx.raw!==1?'s':''}`}}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+    // Seres inactivos
+    window._inacFiltro=window._inacFiltro||30;
+    window._inacSesData=compSes;
+    renderInactivos();
     return;
   }
   const srch=document.getElementById('sesSrch').value.toLowerCase();
