@@ -646,12 +646,15 @@ th{background:rgba(28,26,46,.88)!important;}
       <div class="tab-bar" style="margin-bottom:18px">
         <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
         <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
+        <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
         <button class="tab-btn"        id="contTabComunidad" onclick="setContSection('comunidad')">🫂 Comunidad</button>
       </div>
       <!-- Sub-tab: Resumen -->
       <div id="contResumen"></div>
       <!-- Sub-tab: Redes Sociales -->
       <div id="contRedes" style="display:none"></div>
+      <!-- Sub-tab: Manual de Marca -->
+      <div id="contManual" style="display:none"></div>
       <!-- Sub-tab: Comunidad -->
       <div id="contComunidad" style="display:none">
         <div class="tab-bar" style="margin-bottom:14px">
@@ -8674,7 +8677,7 @@ async function delComunidad(id){
 let _contSection='resumen';
 function setContSection(tab){
   _contSection=tab;
-  ['resumen','redes','comunidad'].forEach(t=>{
+  ['resumen','redes','manual','comunidad'].forEach(t=>{
     const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
     const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl)tabEl.classList.toggle('active',t===tab);
@@ -8682,10 +8685,183 @@ function setContSection(tab){
   });
   if(tab==='resumen')renderContResumen();
   if(tab==='redes')renderMktContenido();
+  if(tab==='manual')renderContManual();
   if(tab==='comunidad')renderComunidad();
 }
 function renderContenido(){
   setContSection(_contSection||'resumen');
+}
+
+/* ══════════════════════════════════════════════════════════
+   MANUAL DE MARCA
+   ══════════════════════════════════════════════════════════ */
+const LCP_MANUAL_KEY='lcp_brand_manual';
+function getManual(){
+  try{return JSON.parse(localStorage.getItem(LCP_MANUAL_KEY)||'{}');}catch{return{};}
+}
+function saveManual(){
+  const m=getManual();
+  // Identidad
+  ['maNombre','maEslogan','maMision','maVision','maHashtags'].forEach(id=>{
+    const el=document.getElementById(id);if(el)m[id]=el.value;
+  });
+  // Voz
+  ['maEstilo','maPalabrasUsar','maPalabrasEvitar'].forEach(id=>{
+    const el=document.getElementById(id);if(el)m[id]=el.value;
+  });
+  // Tonos (checkboxes)
+  const tonos=[];
+  document.querySelectorAll('.tono-check:checked').forEach(cb=>tonos.push(cb.value));
+  m.tonos=tonos;
+  // Colores
+  ['maColor1','maColor2','maColor3','maColorFondo','maColorTexto'].forEach(id=>{
+    const el=document.getElementById(id);if(el)m[id]=el.value;
+  });
+  // Tipografía
+  ['maTipoP','maTipoS','maTipoTam'].forEach(id=>{
+    const el=document.getElementById(id);if(el)m[id]=el.value;
+  });
+  // Buyers
+  m.buyers=m.buyers||[{},{},{}];
+  [0,1,2].forEach(i=>{
+    const b={};
+    ['Nombre','Edad','Ocupacion','Dolor','Sueno','Objecion','Red','Contenido','Frase'].forEach(f=>{
+      const el=document.getElementById(`maB${i}${f}`);if(el)b[f.toLowerCase()]=el.value;
+    });
+    m.buyers[i]=b;
+  });
+  localStorage.setItem(LCP_MANUAL_KEY,JSON.stringify(m));
+  // Indicador visual
+  const btn=document.getElementById('manualSaveBtn');
+  if(btn){btn.textContent='✅ Guardado';btn.style.background='var(--green)';
+    setTimeout(()=>{btn.textContent='💾 Guardar manual';btn.style.background='var(--gold)';},1800);}
+}
+
+function renderContManual(){
+  const el=document.getElementById('contManual');if(!el)return;
+  const m=getManual();
+  const buyers=m.buyers||[{},{},{}];
+  const tonos_opciones=[
+    {k:'empatico',l:'Empático'},
+    {k:'inspirador',l:'Inspirador'},
+    {k:'directo',l:'Directo'},
+    {k:'espiritual',l:'Espiritual'},
+    {k:'cercano',l:'Cercano'},
+    {k:'educativo',l:'Educativo'},
+    {k:'provocador',l:'Provocador'},
+    {k:'amoroso',l:'Amoroso'},
+  ];
+  const redes_opt=['Instagram','TikTok','YouTube','Facebook','WhatsApp','LinkedIn'];
+  const inp=(id,ph,val='',type='text')=>`<input id="${id}" type="${type}" placeholder="${ph}" value="${(val||'').replace(/"/g,'&quot;')}"
+    style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none"
+    onblur="saveManual()">`;
+  const ta=(id,ph,val='')=>`<textarea id="${id}" placeholder="${ph}" rows="3"
+    style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none;resize:vertical"
+    onblur="saveManual()">${(val||'').replace(/</g,'&lt;')}</textarea>`;
+  const lbl=(txt)=>`<label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">${txt}</label>`;
+  const sec=(title,ico,content)=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:800;color:var(--gl);margin-bottom:16px;display:flex;align-items:center;gap:8px">${ico} ${title}</div>
+    ${content}
+  </div>`;
+
+  const buyerCard=(i,b,colArr)=>`
+  <div style="background:var(--card);border:1px solid ${colArr[i]+'55'};border-top:3px solid ${colArr[i]};border-radius:16px;padding:20px">
+    <div style="font-size:12px;font-weight:800;color:${colArr[i]};text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">Buyer Persona ${i+1}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>${lbl('Nombre ficticio')}${inp(`maB${i}Nombre`,'Ej: María',b.nombre)}</div>
+      <div>${lbl('Edad')}${inp(`maB${i}Edad`,'Ej: 35-45 años',b.edad)}</div>
+    </div>
+    <div style="margin-bottom:10px">${lbl('Ocupación')}${inp(`maB${i}Ocupacion`,'Ej: Profesional independiente, madre, emprendedora...',b.ocupacion)}</div>
+    <div style="margin-bottom:10px">${lbl('🔥 Dolor principal — ¿qué la mantiene despierta a la noche?')}${ta(`maB${i}Dolor`,'Ej: Siente que no puede con todo, su mente no para, vive en estrés...',b.dolor)}</div>
+    <div style="margin-bottom:10px">${lbl('✨ Sueño — ¿qué quiere lograr/sentir?')}${ta(`maB${i}Sueno`,'Ej: Quiere volver a sentirse liviana, presente, con claridad...',b.sueno)}</div>
+    <div style="margin-bottom:10px">${lbl('🚧 Objeción principal — ¿por qué dudaría en comprar?')}${ta(`maB${i}Objecion`,'Ej: "No sé si esto funciona para mí", "No tengo tiempo", "Es caro"...',b.objecion)}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div>${lbl('Red social favorita')}
+        <select id="maB${i}Red" onblur="saveManual()" onchange="saveManual()"
+          style="width:100%;padding:9px 12px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:13px;outline:none">
+          ${redes_opt.map(r=>`<option ${b.red===r?'selected':''}>${r}</option>`).join('')}
+        </select>
+      </div>
+      <div>${lbl('¿Qué contenido le llega?')}${inp(`maB${i}Contenido`,'Ej: Historias reales, preguntas...',b.contenido)}</div>
+    </div>
+    <div>${lbl('💬 Frase que ella diría')}${inp(`maB${i}Frase`,'Ej: "Sé que algo tiene que cambiar pero no sé por dónde empezar"',b.frase)}</div>
+  </div>`;
+
+  const colArr=['#C17A48','#9B82D4','#3DB8A8'];
+
+  el.innerHTML=`
+  <div style="max-width:760px">
+
+    ${sec('Identidad de marca','🏛️',`
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+        <div>${lbl('Nombre de la marca')}${inp('maNombre','Ej: La Casa del Profit',m.maNombre||'La Casa del Profit')}</div>
+        <div>${lbl('Eslogan / tagline')}${inp('maEslogan','Ej: Vivir en profit es tu estado natural',m.maEslogan)}</div>
+      </div>
+      <div style="margin-bottom:12px">${lbl('Misión — ¿por qué existís?')}${ta('maMision','Ej: Contribuir con 1.000.000 de herramientas de consciencia...',m.maMision)}</div>
+      <div style="margin-bottom:12px">${lbl('Visión — ¿a dónde van?')}${ta('maVision','Ej: Ser el centro de transformación espiritual de referencia en Latinoamérica...',m.maVision)}</div>
+      <div>${lbl('Hashtags principales (separados por espacio)')}${inp('maHashtags','#barrasdeaccess #consciencia #lacasadelprofit',m.maHashtags)}</div>
+    `)}
+
+    ${sec('Voz y tono','🗣️',`
+      <div style="margin-bottom:14px">
+        ${lbl('Tonos de la marca (seleccioná los que aplican)')}
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          ${tonos_opciones.map(t=>`<label style="display:flex;align-items:center;gap:5px;padding:6px 12px;border-radius:20px;cursor:pointer;border:1px solid var(--border);font-size:12px;font-weight:600;background:${(m.tonos||[]).includes(t.k)?'rgba(201,168,76,.2)':'var(--card)'};color:${(m.tonos||[]).includes(t.k)?'var(--gold)':'var(--muted)'};transition:all .15s" onclick="this.querySelector('input').click();saveManual();this.style.background=this.querySelector('input').checked?'rgba(201,168,76,.2)':'var(--card)';this.style.color=this.querySelector('input').checked?'var(--gold)':'var(--muted)'">
+            <input type="checkbox" class="tono-check" value="${t.k}" ${(m.tonos||[]).includes(t.k)?'checked':''} style="display:none">${t.l}
+          </label>`).join('')}
+        </div>
+      </div>
+      <div style="margin-bottom:12px">${lbl('Estilo de escritura — ¿cómo escribís?')}${ta('maEstilo','Ej: Escribo en segunda persona (vos/tú), con preguntas que invitan a reflexionar, sin tecnicismos...',m.maEstilo)}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div>${lbl('✅ Palabras / frases que SÍ usás')}${ta('maPalabrasUsar','Ej: expansión, liviandad, consciencia, ser, profit...',m.maPalabrasUsar)}</div>
+        <div>${lbl('❌ Palabras / frases que NO usás')}${ta('maPalabrasEvitar','Ej: cura, terapia, solución, problema...',m.maPalabrasEvitar)}</div>
+      </div>
+    `)}
+
+    ${sec('Paleta de colores','🎨',`
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">
+        ${[
+          {id:'maColor1',l:'Color principal',v:m.maColor1||'#C17A48'},
+          {id:'maColor2',l:'Color secundario',v:m.maColor2||'#C9A84C'},
+          {id:'maColor3',l:'Color acento',v:m.maColor3||'#9B82D4'},
+          {id:'maColorFondo',l:'Fondo',v:m.maColorFondo||'#0A0800'},
+          {id:'maColorTexto',l:'Texto',v:m.maColorTexto||'#F5E6C8'},
+        ].map(c=>`<div style="text-align:center">
+          <div style="width:48px;height:48px;border-radius:12px;background:${c.v};margin:0 auto 8px;border:2px solid var(--border);cursor:pointer;position:relative;overflow:hidden">
+            <input type="color" id="${c.id}" value="${c.v}" onchange="this.parentElement.style.background=this.value;saveManual()"
+              style="position:absolute;inset:-4px;width:calc(100%+8px);height:calc(100%+8px);opacity:0;cursor:pointer;border:none">
+          </div>
+          <div style="font-size:10px;color:var(--muted);font-weight:600">${c.l}</div>
+          <div style="font-size:10px;color:var(--text);font-family:monospace">${c.v}</div>
+        </div>`).join('')}
+      </div>
+    `)}
+
+    ${sec('Tipografía','✍️',`
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+        <div>${lbl('Fuente principal (títulos)')}${inp('maTipoP','Ej: Playfair Display, Cinzel...',m.maTipoP)}</div>
+        <div>${lbl('Fuente secundaria (cuerpo)')}${inp('maTipoS','Ej: Lato, Open Sans...',m.maTipoS)}</div>
+        <div>${lbl('Tamaño base / jerarquía')}${inp('maTipoTam','Ej: 16px cuerpo, 32px título...',m.maTipoTam)}</div>
+      </div>
+    `)}
+
+    <!-- BUYER PERSONAS -->
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:16px">
+      <div style="font-size:13px;font-weight:800;color:var(--gl);margin-bottom:6px;display:flex;align-items:center;gap:8px">🎯 Buyer Personas</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.6">Definí las 3 personas reales a las que le hablás. Cuanto más específico, más efectivo el contenido.</p>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        ${[0,1,2].map(i=>buyerCard(i,buyers[i]||{},colArr)).join('')}
+      </div>
+    </div>
+
+    <div style="display:flex;justify-content:flex-end;padding-bottom:8px">
+      <button id="manualSaveBtn" onclick="saveManual()"
+        style="padding:12px 28px;border-radius:12px;background:var(--gold);border:none;color:#050401;font-size:14px;font-weight:800;cursor:pointer;transition:all .2s">
+        💾 Guardar manual
+      </button>
+    </div>
+
+  </div>`;
 }
 
 /* ══════════════════════════════════════════════════════════
