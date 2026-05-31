@@ -573,6 +573,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn"        id="pracTab_creacion"   onclick="setPracTab('creacion')">✨ Creación Consciente</button>
       <button class="tab-btn"        id="pracTab_abundancia" onclick="setPracTab('abundancia')">💰 Dinero y Abundancia</button>
       <button class="tab-btn"        id="pracTab_energia"    onclick="setPracTab('energia')">⚡ Energía y Presencia</button>
+      <button class="tab-btn"        id="pracTab_favoritos"  onclick="setPracTab('favoritos')">⭐ Favoritos</button>
      </div>
      <div id="pracContent"></div>
     </div>
@@ -1228,6 +1229,10 @@ th{background:rgba(28,26,46,.88)!important;}
    <input type="checkbox" id="nsPV">
    <label for="nsPV">⭐ Es la primera vez de esta sesión para el ser</label>
   </div>
+  <div class="fg">
+   <label>Herramientas utilizadas <span style="color:var(--muted);font-weight:400;font-size:11px">(de la Biblioteca)</span></label>
+   <div id="nsHerramientasUsadas" style="display:flex;flex-wrap:wrap;gap:6px;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;min-height:40px"></div>
+  </div>
   <div class="fg"><label>Observaciones</label><textarea id="nsObs" placeholder="Notas sobre la sesión..."></textarea></div>
   <div class="fg-row">
    <div class="fg"><label>Moneda</label>
@@ -1468,6 +1473,22 @@ th{background:rgba(28,26,46,.88)!important;}
  </div>
 </div>
 
+<!-- MODAL CONSULTA RÁPIDA HERRAMIENTA -->
+<div id="moHerView" style="display:none;position:fixed;inset:0;z-index:9500;background:rgba(6,6,10,.97);overflow-y:auto;padding:24px 20px 60px" onclick="if(event.target===this)closeHerView()">
+ <button onclick="closeHerView()" style="position:fixed;top:20px;right:20px;background:rgba(255,255,255,.08);border:none;border-radius:50%;width:40px;height:40px;font-size:20px;color:var(--text);cursor:pointer;z-index:1">✕</button>
+ <div style="max-width:680px;margin:0 auto;padding-top:20px">
+  <div id="hvPilarBadge" style="margin-bottom:20px;text-align:center"></div>
+  <h1 id="hvNom" style="font-size:36px;font-weight:800;color:var(--gl);text-align:center;line-height:1.2;margin-bottom:28px"></h1>
+  <div id="hvPregunta" style="font-size:26px;font-style:italic;color:var(--gold);text-align:center;line-height:1.5;padding:24px 20px;border:1px solid rgba(201,168,76,.25);border-radius:20px;background:rgba(201,168,76,.05);margin-bottom:28px"></div>
+  <div id="hvProposito" style="font-size:15px;color:var(--muted);text-align:center;margin-bottom:28px;line-height:1.7"></div>
+  <div id="hvAplicacion" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:32px"></div>
+  <div id="hvInstrRow" style="display:none">
+   <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;text-align:center">Paso a paso</div>
+   <div id="hvInstr" style="font-size:14px;color:var(--text);line-height:1.9;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px 24px;white-space:pre-wrap"></div>
+  </div>
+ </div>
+</div>
+
 <!-- MODAL HERRAMIENTA -->
 <div class="mo" id="moHerr">
  <div class="mb">
@@ -1478,7 +1499,7 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg" id="hIcoField"><label>Emoji / Ícono</label><input type="text" id="hIco" placeholder="🌀"></div>
   </div>
   <div class="fg"><label>Descripción</label><textarea id="hDesc"></textarea></div>
-  <div class="fg-row">
+  <div class="fg-row" id="hDurRow">
    <div class="fg"><label>Duración</label>
     <select id="hDuracion">
      <option value="">— Sin especificar —</option>
@@ -1494,9 +1515,9 @@ th{background:rgba(28,26,46,.88)!important;}
    </div>
    <div class="fg"></div>
   </div>
-  <div class="fg-row">
+  <div class="fg-row" id="hColRow">
    <div class="fg"><label>Color</label><input type="color" id="hCol" value="#C9A84C"></div>
-   <div class="fg" style="display:flex;flex-direction:column;justify-content:flex-end">
+   <div class="fg" id="hDisponibleField" style="display:flex;flex-direction:column;justify-content:flex-end">
     <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:10px 0">
      <input type="checkbox" id="hDisponible" style="accent-color:var(--gold);width:16px;height:16px">
      <span style="font-size:13px;font-weight:600;color:var(--text)">Disponible en Portal del Ser</span>
@@ -4138,12 +4159,12 @@ function _renderSerDet(s){
 /* HERRAMIENTAS */
 function onHerrTipoChange(){
   const esPrac=_herrTab==='Herramienta práctica';
-  const icoF=document.getElementById('hIcoField');
-  if(icoF)icoF.style.display=esPrac?'none':'';
-  const sf=document.getElementById('hSesFields');
-  if(sf)sf.style.display=esPrac?'none':'';
-  const pf=document.getElementById('hPracFields');
-  if(pf)pf.style.display=esPrac?'':'none';
+  const icoF=document.getElementById('hIcoField');if(icoF)icoF.style.display=esPrac?'none':'';
+  const sf=document.getElementById('hSesFields');if(sf)sf.style.display=esPrac?'none':'';
+  const pf=document.getElementById('hPracFields');if(pf)pf.style.display=esPrac?'':'none';
+  const durRow=document.getElementById('hDurRow');if(durRow)durRow.style.display=esPrac?'none':'';
+  const colRow=document.getElementById('hColRow');if(colRow)colRow.style.display=esPrac?'none':'';
+  const dispF=document.getElementById('hDisponibleField');if(dispF)dispF.style.display=esPrac?'none':'';
 }
 let _herrTab='Sesión experimental';
 function setHerrTab(t){
@@ -4233,9 +4254,35 @@ let _pracTab='mapa';
 
 function setPracTab(t){
   _pracTab=t;
-  const keys=['mapa','todas','despertar','liberacion','expansion','creacion','abundancia','energia'];
+  const keys=['mapa','todas','despertar','liberacion','expansion','creacion','abundancia','energia','favoritos'];
   keys.forEach(k=>{document.getElementById('pracTab_'+k)?.classList.toggle('active',k===t);});
   renderPracticas();
+}
+function openHerView(id){
+  const h=herramientas.find(x=>x.id===id);if(!h)return;
+  const pilar=PILARES.find(p=>p.k===h.pilar)||null;
+  document.getElementById('hvNom').textContent=h.nom||'';
+  document.getElementById('hvPregunta').textContent=h.contexto||'';
+  document.getElementById('hvProposito').textContent=h.cuando||'';
+  document.getElementById('hvPilarBadge').innerHTML=pilar?`<span style="font-size:13px;font-weight:700;padding:4px 16px;border-radius:20px;background:${pilar.col}20;color:${pilar.col};border:1px solid ${pilar.col}40">${pilar.ico} ${pilar.l}</span>`:'';
+  const chips=(h.aplicacion||'').split(',').filter(Boolean).map(a=>`<span style="font-size:12px;padding:4px 14px;border-radius:20px;background:var(--card2);border:1px solid var(--border);color:var(--muted)">${a.trim()}</span>`).join('');
+  document.getElementById('hvAplicacion').innerHTML=chips;
+  const instrRow=document.getElementById('hvInstrRow');
+  const instrEl=document.getElementById('hvInstr');
+  if(h.instrucciones){instrRow.style.display='';instrEl.textContent=h.instrucciones;}
+  else instrRow.style.display='none';
+  document.getElementById('moHerView').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeHerView(){
+  document.getElementById('moHerView').style.display='none';
+  document.body.style.overflow='';
+}
+function toggleFav(id){
+  const h=herramientas.find(x=>x.id===id);if(!h)return;
+  h.favorito=!h.favorito;
+  save();renderPracticas();
+  toast(h.favorito?'⭐ Agregado a favoritos':'Removido de favoritos');
 }
 
 function _pracCard(h,idx,lista){
@@ -4256,9 +4303,11 @@ function _pracCard(h,idx,lista){
     ${chips?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px">${chips}</div>`:''}
     ${dur}
     <div style="display:flex;gap:6px;margin-top:10px">
+      <button class="btn btn-s btn-sm" onclick="toggleFav('${h.id}')" title="${h.favorito?'Quitar de favoritos':'Agregar a favoritos'}" style="color:${h.favorito?'#F59E0B':'var(--muted)'}">${h.favorito?'⭐':'☆'}</button>
+      <button class="btn btn-p btn-sm" onclick="openHerView('${h.id}')" title="Modo consulta">👁 Ver</button>
       <button class="btn btn-s btn-sm" onclick="moveHerr('${h.id}',-1)" ${idx===0?'disabled':''} style="opacity:${idx===0?'.35':'1'}">↑</button>
       <button class="btn btn-s btn-sm" onclick="moveHerr('${h.id}',1)" ${idx===lista.length-1?'disabled':''} style="opacity:${idx===lista.length-1?'.35':'1'}">↓</button>
-      <button class="btn btn-s btn-sm" style="flex:1" onclick="openModal('herr','${h.id}')">✏️ Editar</button>
+      <button class="btn btn-s btn-sm" style="flex:1" onclick="openModal('herr','${h.id}')">✏️</button>
       <button class="btn btn-s btn-sm" onclick="delHerr('${h.id}')">🗑</button>
     </div>
   </div>`;
@@ -4359,11 +4408,13 @@ function renderPracticas(){
   const el=document.getElementById('pracContent');if(!el)return;
   if(_pracTab==='mapa'){el.innerHTML=renderMapaPilares();return;}
   const all=herramientas.filter(h=>h.tipo==='Herramienta práctica').slice().sort((a,b)=>(a.orden??999)-(b.orden??999));
-  const lista=_pracTab==='todas'?all:all.filter(h=>h.pilar===_pracTab);
+  const lista=_pracTab==='todas'?all:_pracTab==='favoritos'?all.filter(h=>h.favorito):all.filter(h=>h.pilar===_pracTab);
   const pilar=PILARES.find(p=>p.k===_pracTab);
   el.innerHTML=(pilar?`<div style="background:${pilar.col}12;border:1px solid ${pilar.col}30;border-left:4px solid ${pilar.col};border-radius:14px;padding:14px 18px;margin-bottom:18px"><div style="font-size:14px;font-weight:700;color:${pilar.col}">${pilar.ico} ${pilar.l}</div><div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">"${pilar.intencion}"</div></div>`:'')
     +(!lista.length
-      ?`<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Sin herramientas en este pilar.<br><button class="btn btn-p btn-sm" style="margin-top:12px" onclick="_herrTab='Herramienta práctica';openModal('herr')">+ Agregar</button></div>`
+      ?_pracTab==='favoritos'
+        ?`<div style="text-align:center;padding:48px 20px"><div style="font-size:40px;margin-bottom:12px">☆</div><div style="color:var(--muted);font-size:14px">Todavía no tenés favoritos.<br>Tocá ☆ en cualquier herramienta para agregarla acá.</div></div>`
+        :`<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Sin herramientas en este pilar.<br><button class="btn btn-p btn-sm" style="margin-top:12px" onclick="_herrTab='Herramienta práctica';openModal('herr')">+ Agregar</button></div>`
       :`<div class="her-grid">${lista.map((h,i)=>_pracCard(h,i,lista)).join('')}</div>`);
 }
 function renderHerr(){
@@ -4448,6 +4499,17 @@ function openModal(type,id,extra){
       document.getElementById('nsProv').value=ses.provincia||'Buenos Aires';
       document.getElementById('nsPV').checked=ses.primeraVez||false;
       document.getElementById('nsObs').value=ses.observacion||'';
+      // Herramientas de la biblioteca usadas en esta sesión
+      const usadas=ses?ses.herramientasUsadas||[]:[];
+      const practicas=herramientas.filter(h=>h.tipo==='Herramienta práctica').sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));
+      document.getElementById('nsHerramientasUsadas').innerHTML=practicas.map(h=>{
+        const sel=usadas.includes(h.id);
+        const pilar=PILARES.find(p=>p.k===h.pilar);
+        const col=pilar?pilar.col:'var(--gold)';
+        return`<label style="display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:600;background:${sel?col+'25':'var(--card)'};border:1px solid ${sel?col+'60':'var(--border)'};color:${sel?col:'var(--muted)'}">
+          <input type="checkbox" value="${h.id}" ${sel?'checked':''} style="display:none"> ${h.nom}
+        </label>`;
+      }).join('')||'<span style="font-size:12px;color:var(--muted)">Sin herramientas en la biblioteca todavía</span>';
       document.getElementById('nsMoneda').value=ses.moneda||'ARS';
       document.getElementById('nsMonto').value=ses.monto||0;
       document.getElementById('nsPagado').value=ses.montoPagado!=null?ses.montoPagado:(ses.monto||0);
@@ -7138,6 +7200,7 @@ function saveSes(){
     programa:document.getElementById('nsPrograma').value,
     facilitador:document.getElementById('nsFac').value,
     observacion:document.getElementById('nsObs').value,descripcion:'',
+    herramientasUsadas:[...document.querySelectorAll('#nsHerramientasUsadas input:checked')].map(c=>c.value),
     pais:document.getElementById('nsPais').value,
     provincia:document.getElementById('nsProv').value,
     modalidad:document.getElementById('nsMod').value,
