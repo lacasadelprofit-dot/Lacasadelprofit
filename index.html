@@ -337,11 +337,11 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('calendario',this)"><span class="ico">📅</span><span>Calendario</span></div>
     <div class="nl">Gestión</div>
     <div class="ni" onclick="nav('seres',this)"><span class="ico">💫</span><span>Seres</span></div>
-    <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="ni" onclick="nav('herramientas',this)"><span class="ico">🔮</span><span>Sesiones / Facilitadores</span></div>
-    <div class="ni" onclick="nav('practicas',this)"><span class="ico">🌿</span><span>Herramientas Prácticas</span></div>
+    <div class="ni" onclick="nav('practicas',this)"><span class="ico">🌿</span><span>Herramientas</span></div>
     <div class="ni" onclick="nav('programas',this)"><span class="ico">📚</span><span>Programas</span></div>
     <div class="ni" onclick="nav('journey',this)"><span class="ico">🗺️</span><span>Journey</span></div>
+    <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
     <div class="ni" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
@@ -571,7 +571,6 @@ th{background:rgba(28,26,46,.88)!important;}
        <button class="tab-btn" id="pmTabRegistros" onclick="setProgMainTab('registros')">📋 Registros</button>
       </div>
       <div id="pmSecProgramas">
-       <div id="progPregDia"></div>
        <div id="progKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
        <div id="progGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px"></div>
       </div>
@@ -2498,7 +2497,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas Prácticas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   sesiones:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -4151,6 +4150,34 @@ function renderHerrFacs(){
         <button class="btn btn-s btn-sm" style="margin-top:10px;width:100%" onclick="openModal('fac','${f.id}')">✏️ Editar</button>
       </div>`;
     }).join('')||'<div style="color:var(--muted);font-size:13px;padding:20px">Sin facilitadores cargados</div>'}
+    </div>
+    <div class="tc" style="margin-top:18px">
+      <table><thead><tr>
+        <th>Nombre</th><th>Herramientas</th><th>Ubicación</th>
+        <th>Modalidad / Precio</th><th>Sesiones</th><th>Este Año</th>
+        <th>Contacto</th><th></th>
+      </tr></thead><tbody>${facs.map(f=>{
+        const tot=sessions.filter(s=>s.facilitador===f.nombre&&comp(s)).length;
+        const yr=new Date().getFullYear();
+        const yrc=sessions.filter(s=>s.facilitador===f.nombre&&new Date(s.fecha).getFullYear()===yr&&comp(s)).length;
+        const mods=[f.pres?'Presencial':'',f.onl?'Online':''].filter(Boolean).join(' / ');
+        return`<tr>
+          <td><strong style="color:var(--gl)">${f.nombre}</strong>${f.bio?`<div style="font-size:11px;color:var(--muted);margin-top:1px">${f.bio.substring(0,55)}${f.bio.length>55?'...':''}</div>`:''}</td>
+          <td style="font-size:11px;color:var(--muted)">${(f.herramientas||[]).slice(0,4).join(', ')||'—'}${(f.herramientas||[]).length>4?` +${(f.herramientas||[]).length-4}`:''}</td>
+          <td style="font-size:11px;color:var(--muted)">${[f.ciudad,f.pais].filter(Boolean).join(', ')||'—'}</td>
+          <td>
+            <span class="bdg b-go" style="font-size:10px">${mods||'—'}</span>
+            ${f.precios&&Object.keys(f.precios).length?Object.entries(f.precios).map(([h,p])=>`<div style="font-size:10px;color:var(--muted);margin-top:2px">${h.split(' ').slice(0,2).join(' ')}: <span style="color:var(--gl)">$${p.toLocaleString('es-AR')}</span></div>`).join(''):f.precio?`<span class="bdg b-gr" style="font-size:10px;margin-left:3px">$${f.precio.toLocaleString('es-AR')}</span>`:''}
+          </td>
+          <td><strong>${tot}</strong></td>
+          <td>${yrc}</td>
+          <td style="font-size:11px">${f.email?`📧 ${f.email}`:''}${f.cel?`<br>📱 ${f.cel}`:''}</td>
+          <td>
+            <button class="btn btn-s btn-sm" onclick="openModal('fac','${f.id}')">✏️</button>
+            <button class="btn btn-s btn-sm" onclick="delFacilitador(${f.id})">🗑</button>
+          </td>
+        </tr>`;
+      }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Sin facilitadores</td></tr>'}</tbody></table>
     </div>`;
 }
 function renderPracticas(){
@@ -7299,7 +7326,6 @@ function renderFinBalance(){
 
 /* PROGRAMAS */
 function renderProg(){
-  const el=document.getElementById('progPregDia');if(el)el.innerHTML=_buildPregBoxes();
   const compSes=sessions.filter(comp);
   const withProg=compSes.filter(s=>s.programa).length;
   const standalone=compSes.filter(s=>!s.programa).length;
