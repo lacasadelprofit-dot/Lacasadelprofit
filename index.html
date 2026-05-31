@@ -564,16 +564,9 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- HERRAMIENTAS PRÁCTICAS / BIBLIOTECA -->
     <div id="sec-practicas" class="sec">
-     <div class="tab-bar" style="margin-bottom:18px;flex-wrap:wrap" id="pracTabBar">
-      <button class="tab-btn active" id="pracTab_mapa"       onclick="setPracTab('mapa')">🗺️ Mapa</button>
-      <button class="tab-btn"        id="pracTab_todas"      onclick="setPracTab('todas')">✦ Todas</button>
-      <button class="tab-btn"        id="pracTab_despertar"  onclick="setPracTab('despertar')">🌅 Despertar</button>
-      <button class="tab-btn"        id="pracTab_liberacion" onclick="setPracTab('liberacion')">🔓 Liberación</button>
-      <button class="tab-btn"        id="pracTab_expansion"  onclick="setPracTab('expansion')">🌱 Expansión</button>
-      <button class="tab-btn"        id="pracTab_creacion"   onclick="setPracTab('creacion')">✨ Creación Consciente</button>
-      <button class="tab-btn"        id="pracTab_abundancia" onclick="setPracTab('abundancia')">💰 Dinero y Abundancia</button>
-      <button class="tab-btn"        id="pracTab_energia"    onclick="setPracTab('energia')">⚡ Energía y Presencia</button>
-      <button class="tab-btn"        id="pracTab_favoritos"  onclick="setPracTab('favoritos')">⭐ Favoritos</button>
+     <div class="tab-bar" style="margin-bottom:18px" id="pracTabBar">
+      <button class="tab-btn active" id="pracTab_mapa"      onclick="setPracTab('mapa')">🗺️ Mapa</button>
+      <button class="tab-btn"        id="pracTab_practicas"  onclick="setPracTab('practicas')">🌿 Herramientas prácticas</button>
       <button class="tab-btn"        id="pracTab_preguntas"  onclick="setPracTab('preguntas')">💬 Preguntas Expansivas</button>
      </div>
      <div id="pracContent"></div>
@@ -4287,12 +4280,11 @@ function renderHerrFacs(){
       }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:20px">Sin facilitadores</td></tr>'}</tbody></table>
     </div>`;
 }
-let _pracTab='mapa';
+let _pracTab='mapa', _pracFiltro='todas';
 
 function setPracTab(t){
   _pracTab=t;
-  const keys=['mapa','todas','despertar','liberacion','expansion','creacion','abundancia','energia','favoritos','preguntas'];
-  keys.forEach(k=>{document.getElementById('pracTab_'+k)?.classList.toggle('active',k===t);});
+  ['mapa','practicas','preguntas'].forEach(k=>{document.getElementById('pracTab_'+k)?.classList.toggle('active',k===t);});
   const pracPreguntas=document.getElementById('pracPreguntas');
   const pracContent=document.getElementById('pracContent');
   if(t==='preguntas'){
@@ -4305,6 +4297,10 @@ function setPracTab(t){
     pracPreguntas.style.display='none';
     renderPracticas();
   }
+}
+function setPracFiltro(f){
+  _pracFiltro=f;
+  renderPracticas();
 }
 function openHerView(id){
   const h=herramientas.find(x=>x.id===id);if(!h)return;
@@ -4388,7 +4384,7 @@ function renderMapaPilares(){
             <span style="margin-left:auto;font-size:11px;padding:3px 10px;border-radius:20px;background:${p.col}18;color:${p.col};font-weight:700">${herrs.length} herramienta${herrs.length!==1?'s':''}</span>
           </div>
           <div style="font-size:13px;color:var(--muted);line-height:1.65;margin-bottom:12px;font-style:italic">"${p.intencion}"</div>
-          ${herrs.length?`<div style="display:flex;flex-wrap:wrap;gap:6px">${herrs.map(h=>`<span onclick="setPracTab('${p.k}')" style="cursor:pointer;font-size:11px;padding:3px 10px;border-radius:20px;background:${p.col}15;border:1px solid ${p.col}35;color:${p.col};font-weight:600">${h.nom}</span>`).join('')}</div>`:`<div style="font-size:12px;color:var(--muted);font-style:italic">Próximamente...</div>`}
+          ${herrs.length?`<div style="display:flex;flex-wrap:wrap;gap:6px">${herrs.map(h=>`<span onclick="setPracTab('practicas');setPracFiltro('${p.k}')" style="cursor:pointer;font-size:11px;padding:3px 10px;border-radius:20px;background:${p.col}15;border:1px solid ${p.col}35;color:${p.col};font-weight:600">${h.nom}</span>`).join('')}</div>`:`<div style="font-size:12px;color:var(--muted);font-style:italic">Próximamente...</div>`}
           ${i<PILARES.length-1?`<div style="text-align:center;margin-top:14px;font-size:18px;color:var(--muted)">↓</div>`:''}
         </div>`;
       }).join('')}
@@ -4455,12 +4451,25 @@ function initBiblioteca(){
 function renderPracticas(){
   const el=document.getElementById('pracContent');if(!el)return;
   if(_pracTab==='mapa'){el.innerHTML=renderMapaPilares();return;}
+  const filtros=[
+    {k:'todas',l:'✦ Todas',col:'var(--gold)'},
+    {k:'favoritos',l:'⭐ Favoritos',col:'#F59E0B'},
+    ...PILARES.map(p=>({k:p.k,l:`${p.ico} ${p.l}`,col:p.col}))
+  ];
+  const filterBar=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px">${
+    filtros.map(f=>`<button onclick="setPracFiltro('${f.k}')" style="font-size:11px;padding:5px 14px;border-radius:20px;cursor:pointer;border:1px solid;transition:all .15s;${
+      _pracFiltro===f.k
+        ?`background:${f.col};border-color:${f.col};color:#050401;font-weight:700`
+        :`background:transparent;border-color:var(--border);color:var(--muted)`
+    }">${f.l}</button>`).join('')
+  }</div>`;
   const all=herramientas.filter(h=>h.tipo==='Herramienta práctica').slice().sort((a,b)=>(a.orden??999)-(b.orden??999));
-  const lista=_pracTab==='todas'?all:_pracTab==='favoritos'?all.filter(h=>h.favorito):all.filter(h=>h.pilar===_pracTab);
-  const pilar=PILARES.find(p=>p.k===_pracTab);
-  el.innerHTML=(pilar?`<div style="background:${pilar.col}12;border:1px solid ${pilar.col}30;border-left:4px solid ${pilar.col};border-radius:14px;padding:14px 18px;margin-bottom:18px"><div style="font-size:14px;font-weight:700;color:${pilar.col}">${pilar.ico} ${pilar.l}</div><div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">"${pilar.intencion}"</div></div>`:'')
+  const lista=_pracFiltro==='todas'?all:_pracFiltro==='favoritos'?all.filter(h=>h.favorito):all.filter(h=>h.pilar===_pracFiltro);
+  const pilar=PILARES.find(p=>p.k===_pracFiltro);
+  el.innerHTML=filterBar
+    +(pilar?`<div style="background:${pilar.col}12;border:1px solid ${pilar.col}30;border-left:4px solid ${pilar.col};border-radius:14px;padding:14px 18px;margin-bottom:18px"><div style="font-size:14px;font-weight:700;color:${pilar.col}">${pilar.ico} ${pilar.l}</div><div style="font-size:12px;color:var(--muted);margin-top:4px;font-style:italic">"${pilar.intencion}"</div></div>`:'')
     +(!lista.length
-      ?_pracTab==='favoritos'
+      ?_pracFiltro==='favoritos'
         ?`<div style="text-align:center;padding:48px 20px"><div style="font-size:40px;margin-bottom:12px">☆</div><div style="color:var(--muted);font-size:14px">Todavía no tenés favoritos.<br>Tocá ☆ en cualquier herramienta para agregarla acá.</div></div>`
         :`<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Sin herramientas en este pilar.<br><button class="btn btn-p btn-sm" style="margin-top:12px" onclick="_herrTab='Herramienta práctica';openModal('herr')">+ Agregar</button></div>`
       :`<div class="her-grid">${lista.map((h,i)=>_pracCard(h,i,lista)).join('')}</div>`);
