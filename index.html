@@ -11365,6 +11365,11 @@ async function refreshLiveData(){
     ]);
     if(!ii.error&&ii.data) inscripciones=_unwrap(ii.data);
     if(!ss.error&&ss.data) sessions=_unwrap(ss.data);
+    // No re-renderizar si hay un modal abierto o el usuario está editando un campo
+    const modalAbierto=!!document.querySelector('.mo.open');
+    const tag=(document.activeElement||{}).tagName||'';
+    const editando=modalAbierto||['INPUT','TEXTAREA','SELECT'].includes(tag)||document.activeElement?.isContentEditable;
+    if(editando){_showPollDot();return;}
     // Re-render silencioso según la sección activa
     const renders={
       journey:    renderJourneyAdmin,
