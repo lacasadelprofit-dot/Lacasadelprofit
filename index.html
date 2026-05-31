@@ -4267,9 +4267,12 @@ function _pracCard(h,idx,lista){
 function renderMapaPilares(){
   const all=herramientas.filter(h=>h.tipo==='Herramienta práctica');
   return`
-    <div style="margin-bottom:28px">
-      <div style="font-size:22px;font-weight:800;color:var(--gl);margin-bottom:6px">La Biblioteca del Ser</div>
-      <div style="font-size:14px;color:var(--muted);max-width:620px;line-height:1.7">Un camino de evolución donde cada pilar representa una etapa. No se recorre de forma lineal — se vuelve a cada uno según lo que la vida invita a explorar.</div>
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:28px">
+      <div>
+        <div style="font-size:22px;font-weight:800;color:var(--gl);margin-bottom:6px">La Biblioteca del Ser</div>
+        <div style="font-size:14px;color:var(--muted);max-width:620px;line-height:1.7">Un camino de evolución donde cada pilar representa una etapa. No se recorre de forma lineal — se vuelve a cada uno según lo que la vida invita a explorar.</div>
+      </div>
+      ${herramientas.filter(h=>h.tipo==='Herramienta práctica').length===0?`<button class="btn btn-p" onclick="initBiblioteca()">✦ Cargar Biblioteca Base</button>`:`<span style="font-size:12px;color:var(--muted)">${herramientas.filter(h=>h.tipo==='Herramienta práctica').length} herramientas cargadas</span>`}
     </div>
     <div style="display:flex;flex-direction:column;gap:16px">
       ${PILARES.map((p,i)=>{
@@ -4290,6 +4293,63 @@ function renderMapaPilares(){
         </div>`;
       }).join('')}
     </div>`;
+}
+
+const BIBLIOTECA=[
+  {nom:'Enunciado Aclarador',     pilar:'despertar',  cuando:'Separar hechos de interpretaciones para ver la realidad con claridad.',      contexto:'¿Qué está ocurriendo realmente?',                              aplicacion:'Conflictos, decisiones, relaciones',       col:'#9B82D4'},
+  {nom:'Verdad',                  pilar:'despertar',  cuando:'Acceder a una verdad más profunda más allá de la mente racional.',            contexto:'¿De qué estoy siendo consciente?',                             aplicacion:'Decisiones',                               col:'#9B82D4'},
+  {nom:'Escuchar',                pilar:'despertar',  cuando:'Escuchar más allá de las palabras y percibir lo que no se dice.',             contexto:'¿Qué no está siendo dicho?',                                   aplicacion:'Comunicación',                             col:'#9B82D4'},
+  {nom:'Carta al Niño que Fuiste',pilar:'despertar',  cuando:'Recuperar recursos olvidados y sanar heridas del pasado.',                    contexto:'¿Qué necesitaba escuchar?',                                    aplicacion:'Sanación emocional',                       col:'#9B82D4'},
+  {nom:'Claridad',                pilar:'despertar',  cuando:'Ver sin distorsión y acceder a la propia verdad.',                            contexto:'¿Qué es verdad para mí?',                                      aplicacion:'Decisiones',                               col:'#9B82D4'},
+  {nom:'Punto de Enlace',         pilar:'despertar',  cuando:'Conectar la dimensión material con la dimensión de consciencia.',             contexto:'¿Cómo integro ambas dimensiones?',                             aplicacion:'Desarrollo personal',                      col:'#9B82D4'},
+  {nom:'POD & POC',               pilar:'liberacion', cuando:'Disolver cargas energéticas, juicios y puntos de vista fijos.',              contexto:'Todo lo que esto es, POD & POC',                               aplicacion:'Creencias, emociones, dinero',             col:'#5B9BD5'},
+  {nom:'Dejar de Juzgar',         pilar:'liberacion', cuando:'Recuperar energía atrapada en juicios hacia uno mismo o los demás.',         contexto:'¿Y si no estuviera juzgando esto?',                            aplicacion:'Personas, negocios, situaciones',          col:'#5B9BD5'},
+  {nom:'Humildad',                pilar:'liberacion', cuando:'Soltar conclusiones y abrirse a no saber para aprender desde cero.',          contexto:'¿Y si no supiera nada?',                                       aplicacion:'Liderazgo y crecimiento',                  col:'#5B9BD5'},
+  {nom:'¿Es esto mío?',           pilar:'liberacion', cuando:'Diferenciar las propias energías de las energías ajenas que se perciben.',   contexto:'¿Esto me pertenece?',                                          aplicacion:'Relaciones y liderazgo',                   col:'#5B9BD5'},
+  {nom:'Matar al Personaje',      pilar:'liberacion', cuando:'Soltar identidades y personajes limitantes que ya no sirven.',               contexto:'¿Quién sería sin esta historia?',                               aplicacion:'Transformación personal',                  col:'#5B9BD5'},
+  {nom:'Preguntar',               pilar:'expansion',  cuando:'Abrir posibilidades y salir de la limitación de las conclusiones.',          contexto:'¿Qué más es posible?',                                         aplicacion:'Cualquier situación',                      col:'#3DAA6A'},
+  {nom:'Buscar la Incomodidad',   pilar:'expansion',  cuando:'Encontrar oportunidades ocultas dentro de lo que genera resistencia.',       contexto:'¿Qué me está mostrando esto?',                                 aplicacion:'Cambios y crecimiento',                    col:'#3DAA6A'},
+  {nom:'¿Qué más es posible?',    pilar:'expansion',  cuando:'Salir de la limitación mental y expandir el campo de lo que se puede crear.',contexto:'¿Qué más es posible?',                                         aplicacion:'Todas las áreas',                          col:'#3DAA6A'},
+  {nom:'¿Cómo puede mejorar esto?',pilar:'expansion', cuando:'Abrir nuevas posibilidades de mejora en cualquier situación.',               contexto:'¿Cómo puede mejorar esto?',                                    aplicacion:'Desafíos',                                 col:'#3DAA6A'},
+  {nom:'¿Qué hay en mí que puede expandirse infinitamente?',pilar:'expansion',cuando:'Reconocer el potencial ilimitado que reside en uno mismo.',contexto:'¿Qué capacidad aún no reconozco?',              aplicacion:'Crecimiento',                              col:'#3DAA6A'},
+  {nom:'¿Qué capacidad no estoy reconociendo?',pilar:'expansion',cuando:'Descubrir talentos y capacidades ocultos.',                       contexto:'¿Qué sé que no sé que sé?',                                    aplicacion:'Propósito',                                col:'#3DAA6A'},
+  {nom:'Pedir',                   pilar:'creacion',   cuando:'Activar la recepción y abrir el canal para recibir lo que se desea.',        contexto:'¿Qué estoy dispuesto a recibir?',                              aplicacion:'Dinero, relaciones, proyectos',            col:'#C9A84C'},
+  {nom:'Intención',               pilar:'creacion',   cuando:'Dirigir conscientemente la energía hacia lo que se quiere crear.',           contexto:'¿Qué deseo crear?',                                            aplicacion:'Objetivos',                                col:'#C9A84C'},
+  {nom:'Claridad de Creación',    pilar:'creacion',   cuando:'Convertir el conocimiento en resultados concretos y accionables.',           contexto:'El conocimiento solo vale cuando se usa',                       aplicacion:'Aprendizaje y negocios',                   col:'#C9A84C'},
+  {nom:'Organización del Conocimiento',pilar:'creacion',cuando:'Convertir el conocimiento en resultados concretos.',                       contexto:'El conocimiento solo vale cuando se usa',                       aplicacion:'Aprendizaje y negocios',                   col:'#C9A84C'},
+  {nom:'Realidad Presuntiva',     pilar:'creacion',   cuando:'Detectar supuestos ocultos que limitan la creación.',                        contexto:'¿Qué estoy asumiendo?',                                        aplicacion:'Dinero y relaciones',                      col:'#C9A84C'},
+  {nom:'Duración',                pilar:'creacion',   cuando:'Sostener procesos en el tiempo con voluntad y continuidad.',                 contexto:'¿Cuánto estoy dispuesto a sostener esto?',                     aplicacion:'Hábitos',                                  col:'#C9A84C'},
+  {nom:'Imaginación',             pilar:'creacion',   cuando:'Acceder a nuevas posibilidades que aún no existen en la realidad.',          contexto:'¿Qué puedo imaginar que aún no existe?',                       aplicacion:'Innovación',                               col:'#C9A84C'},
+  {nom:'Acción',                  pilar:'creacion',   cuando:'Convertir la consciencia y la intención en resultados concretos.',           contexto:'¿Qué acción puedo tomar hoy?',                                 aplicacion:'Ejecución',                                col:'#C9A84C'},
+  {nom:'¿Me gusta el dinero?',    pilar:'abundancia', cuando:'Explorar y expandir la relación con el dinero y la prosperidad.',            contexto:'¿Cuál es mi punto de vista sobre el dinero?',                  aplicacion:'Finanzas',                                 col:'#10B981'},
+  {nom:'¿Cómo puedo contribuir hoy?',pilar:'abundancia',cuando:'Orientar la energía al servicio y la contribución genuina.',              contexto:'¿A quién puedo contribuir?',                                   aplicacion:'Trabajo y relaciones',                     col:'#10B981'},
+  {nom:'Facilidad, Gozo y Gloria',pilar:'abundancia', cuando:'Crear y recibir sin sufrimiento ni esfuerzo innecesario.',                  contexto:'Todo llega con facilidad, gozo y gloria',                      aplicacion:'Vida y negocios',                          col:'#10B981'},
+  {nom:'Barras de Access',        pilar:'energia',    cuando:'Liberar limitaciones energéticas almacenadas en el cerebro.',               contexto:'Recibir sin esfuerzo',                                         aplicacion:'Bienestar y expansión',                    col:'#D4863A'},
+  {nom:'Soledad Consciente',      pilar:'energia',    cuando:'Escuchar la propia voz interior en el silencio.',                           contexto:'¿Qué surge en el silencio?',                                   aplicacion:'Reflexión',                                col:'#D4863A'},
+  {nom:'Concentración',           pilar:'energia',    cuando:'Enfocar la energía en una sola dirección con presencia total.',             contexto:'¿Dónde está mi atención?',                                     aplicacion:'Productividad',                            col:'#D4863A'},
+  {nom:'Organización de la Energía',pilar:'energia',  cuando:'Canalizar la energía de forma efectiva hacia lo que importa.',              contexto:'¿Dónde está yendo mi energía?',                                aplicacion:'Negocios y vida',                          col:'#D4863A'},
+  {nom:'Frecuencia',              pilar:'energia',    cuando:'Mantener coherencia energética en el estado interno desde el que se crea.', contexto:'¿Desde qué energía estoy creando?',                            aplicacion:'Manifestación',                            col:'#D4863A'},
+];
+
+function initBiblioteca(){
+  if(!confirm(`¿Cargar las ${BIBLIOTECA.length} herramientas de la Biblioteca del Ser? Solo se agregarán las que no existan todavía.`))return;
+  let agregadas=0;
+  BIBLIOTECA.forEach((b,i)=>{
+    const existe=herramientas.some(h=>h.nom===b.nom&&h.tipo==='Herramienta práctica');
+    if(!existe){
+      herramientas.push({
+        id:'bib_'+Date.now()+'_'+i,
+        tipo:'Herramienta práctica',
+        nom:b.nom, pilar:b.pilar, cuando:b.cuando, contexto:b.contexto,
+        aplicacion:b.aplicacion, col:b.col, desc:b.cuando,
+        disponiblePortal:false, orden:i+1
+      });
+      agregadas++;
+    }
+  });
+  if(agregadas>0){save();toast(`✅ ${agregadas} herramientas cargadas en la Biblioteca`);}
+  else toast('Todas las herramientas ya estaban cargadas');
+  renderPracticas();
 }
 
 function renderPracticas(){
