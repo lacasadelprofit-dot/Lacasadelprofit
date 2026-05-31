@@ -614,7 +614,7 @@ async function openRegalos(){
   grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">🎁</div><p>Cargando regalos...</p></div>';
   try{
     const {data,error}=await _sb.from('regalos').select('id,data');
-    const lista=(error||!data?.length)?[]:data.map(r=>({id:r.id,...r.data})).filter(r=>r.activo!==false);
+    const lista=(error||!data?.length)?[]:data.map(r=>({id:r.id,...r.data})).filter(r=>r.activo!==false&&(!r.marca||r.marca==='lcp'||r.marca==='ambos')).sort((a,b)=>(a.orden??9999)-(b.orden??9999));
     if(!lista.length){
       grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">✦</div><p>Próximamente habrá regalos especiales para vos.</p></div>';
       return;
