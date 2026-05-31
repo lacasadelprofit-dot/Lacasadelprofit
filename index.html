@@ -1442,7 +1442,10 @@ th{background:rgba(28,26,46,.88)!important;}
  <div class="mb">
   <h2 id="moHerrTitle">🔮 Herramienta</h2>
   <input type="hidden" id="hId">
-  <div class="fg"><label>Nombre *</label><input type="text" id="hNom"></div>
+  <div class="fg-row">
+   <div class="fg"><label>Nombre *</label><input type="text" id="hNom"></div>
+   <div class="fg" id="hIcoField"><label>Emoji / Ícono</label><input type="text" id="hIco" placeholder="🌀"></div>
+  </div>
   <div class="fg"><label>Descripción</label><textarea id="hDesc"></textarea></div>
   <div class="fg-row">
    <div class="fg"><label>Duración</label>
@@ -4079,10 +4082,13 @@ function _renderSerDet(s){
 
 /* HERRAMIENTAS */
 function onHerrTipoChange(){
-  const esPrac=document.getElementById('hTipo').value==='Herramienta práctica';
-  document.getElementById('hSesFields').style.display=esPrac?'none':'';
-  document.getElementById('hPracFields').style.display=esPrac?'':'none';
-  document.getElementById('hModalidad').closest('.fg').closest('.fg-row').style.display=esPrac?'none':'';
+  const esPrac=_herrTab==='Herramienta práctica';
+  const icoF=document.getElementById('hIcoField');
+  if(icoF)icoF.style.display=esPrac?'none':'';
+  const sf=document.getElementById('hSesFields');
+  if(sf)sf.style.display=esPrac?'none':'';
+  const pf=document.getElementById('hPracFields');
+  if(pf)pf.style.display=esPrac?'':'none';
 }
 let _herrTab='Sesión experimental';
 function setHerrTab(t){
@@ -4113,7 +4119,7 @@ function renderHerr(){
     }).join('');
     return `<div class="hc">
       <div class="hh">
-        <div class="hi" style="background:${h.col}18;border:1px solid ${h.col}33;font-size:13px;font-weight:800;color:${h.col}">${(h.nom||'').substring(0,2).toUpperCase()}</div>
+        <div class="hi" style="background:${h.col}18;border:1px solid ${h.col}33;font-size:${h.tipo==='Herramienta práctica'?'13px':'20px'};font-weight:${h.tipo==='Herramienta práctica'?'800':'400'};color:${h.col}">${h.tipo==='Herramienta práctica'?(h.nom||'').substring(0,2).toUpperCase():(h.ico||'🔮')}</div>
         <div>
           <div class="hn">${h.nom}</div>
           <div class="hcnt" style="color:var(--gd)">${sesCount} sesiones${allFacs.length?' · '+allFacs.length+' facilitadores':''}</div>
@@ -4334,6 +4340,7 @@ function openModal(type,id,extra){
     document.getElementById('hContexto').value=h?(h.contexto||''):'';
     document.getElementById('hInstrucciones').value=h?(h.instrucciones||''):'';
     const esPrac=(h?h.tipo:_herrTab)==='Herramienta práctica';
+    document.getElementById('hIcoField').style.display=esPrac?'none':'';
     document.getElementById('hSesFields').style.display=esPrac?'none':'';
     document.getElementById('hPracFields').style.display=esPrac?'':'none';
     const hFacs=h?(h.facs||[]):[];
@@ -4479,7 +4486,7 @@ function saveHerr(){
   if(!nom){alert('El nombre es obligatorio');return;}
   const selFacs=[...document.querySelectorAll('#hFacList input:checked')].map(c=>c.value);
   const tipoActual=eid?(herramientas.find(x=>x.id===eid)?.tipo||_herrTab):_herrTab;
-  const hData={nom,desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked,tipo:tipoActual,duracion:document.getElementById('hDuracion').value,cuando:document.getElementById('hCuando').value,contexto:document.getElementById('hContexto').value,instrucciones:document.getElementById('hInstrucciones').value};
+  const hData={nom,ico:tipoActual!=='Herramienta práctica'?document.getElementById('hIco').value||'🔮':undefined,desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked,tipo:tipoActual,duracion:document.getElementById('hDuracion').value,cuando:document.getElementById('hCuando').value,contexto:document.getElementById('hContexto').value,instrucciones:document.getElementById('hInstrucciones').value};
   if(eid){
     const h=herramientas.find(x=>x.id===eid);
     if(h)Object.assign(h,hData);
