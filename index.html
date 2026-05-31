@@ -9348,7 +9348,7 @@ async function savePregMasiva(){
     if(!texto)return;
     const matiz=tr.querySelector('.preg-matiz')?.value||'';
     comunidad.push({
-      id:'preg_'+Date.now()+'_'+Math.random().toString(36).substr(2,5),
+      id:crypto.randomUUID(),
       tipo:'pregunta',
       texto,
       matiz:matiz||null,
