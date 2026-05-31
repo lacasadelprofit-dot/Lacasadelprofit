@@ -160,8 +160,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .intake-card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid rgba(201,168,76,.18);border-radius:18px;padding:24px 20px;margin-bottom:12px;
   box-shadow:0 4px 16px rgba(0,0,0,.3);}
+.intake-card textarea,.intake-card input[type=text]{width:100%;padding:12px 14px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(232,201,106,.2);border-radius:12px;
+  color:var(--text);font-size:13px;line-height:1.7;outline:none;resize:vertical;min-height:90px;
+  font-family:inherit;transition:border-color .2s;}
+.intake-card input[type=text]{min-height:unset;resize:none;}
+.intake-card textarea:focus,.intake-card input[type=text]:focus{border-color:rgba(232,201,106,.6);}
+.intake-card textarea::placeholder,.intake-card input[type=text]::placeholder{color:rgba(120,110,90,.7);}
 .intake-q{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.4;}
 .intake-q .qnum{color:var(--gold);font-weight:800;margin-right:6px;}
+/* Star rating */
+.star-row{display:flex;gap:10px;justify-content:center;padding:8px 0;}
+.star-btn{font-size:32px;cursor:pointer;transition:transform .15s,filter .15s;filter:grayscale(1) opacity(.35);line-height:1;}
+.star-btn.active{filter:none;}
+.star-btn:hover{transform:scale(1.15);}
 .radio-group{display:flex;flex-direction:column;gap:8px;}
 .radio-opt{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--card2);
   border:1px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;}
@@ -910,10 +922,11 @@ function renderIntakeView(){
   document.getElementById('intakeContent').innerHTML=`
     <div class="intake-completed-banner">
       <span style="font-size:24px">💫</span>
-      <div>
+      <div style="flex:1">
         <div style="font-size:14px;font-weight:700;color:#5DD89A">Integración completada</div>
         <div style="font-size:12px;color:var(--muted);margin-top:2px">${tipo} · ${fDate(s.intakeFecha||s.fecha)}</div>
       </div>
+      ${s.intakeEstrellas?`<div style="font-size:22px;letter-spacing:2px">${'★'.repeat(s.intakeEstrellas)}<span style="opacity:.2">${'★'.repeat(5-s.intakeEstrellas)}</span></div>`:''}
     </div>
     ${fields.map(f=>`
     <div class="intake-view-card">
@@ -938,6 +951,7 @@ function renderIntakeForm(){
     testimonio:s.intakeTestimonio||null,
     info:s.intakeInfo||null
   };
+  _estrellas=s.intakeEstrellas||0;
 
   document.getElementById('intakeContent').innerHTML=`
     <div class="intake-hero">
@@ -963,15 +977,22 @@ function renderIntakeForm(){
       <div class="intake-q"><span class="qnum">4.</span>¿Qué <strong>palabra o frase</strong> representa lo que viviste?</div>
       <input type="text" id="iPalabra" placeholder="Una palabra, una frase, una imagen..." value="${s.intakePalabra||''}">
     </div>
+    <div class="intake-card" style="text-align:center">
+      <div class="intake-q" style="text-align:center"><span class="qnum">5.</span>¿Cómo calificarías tu experiencia?</div>
+      <div class="star-row" id="starRow">
+        ${[1,2,3,4,5].map(n=>`<span class="star-btn${(s.intakeEstrellas||0)>=n?' active':''}" onclick="setStars(${n})">★</span>`).join('')}
+      </div>
+      <div id="starLabel" style="font-size:12px;color:rgba(232,201,106,.6);margin-top:6px;min-height:18px">${['','Necesito más tiempo','Fue interesante','Buena experiencia','Muy transformadora','¡Increíble, gracias!'][s.intakeEstrellas||0]||''}</div>
+    </div>
     <div class="intake-card">
-      <div class="intake-q"><span class="qnum">5.</span>¿Recomendarías esta experiencia?</div>
+      <div class="intake-q"><span class="qnum">6.</span>¿Recomendarías esta experiencia?</div>
       <div class="radio-group" id="rgRec">
         ${radioOpt('rgRec','recomienda','Si','Sí',radios.recomienda==='Si')}
         ${radioOpt('rgRec','recomienda','No','No',radios.recomienda==='No')}
       </div>
     </div>
     <div class="intake-card">
-      <div class="intake-q"><span class="qnum">6.</span>¿Querés que compartamos tu testimonio en redes?</div>
+      <div class="intake-q"><span class="qnum">7.</span>¿Querés que compartamos tu testimonio en redes?</div>
       <div class="radio-group" id="rgTest">
         ${radioOpt('rgTest','testimonio','Si con nombre','Sí, con mi nombre',radios.testimonio==='Si con nombre')}
         ${radioOpt('rgTest','testimonio','Si anonimo','Sí, pero en forma anónima',radios.testimonio==='Si anonimo')}
@@ -979,7 +1000,7 @@ function renderIntakeForm(){
       </div>
     </div>
     <div class="intake-card">
-      <div class="intake-q"><span class="qnum">7.</span>¿Te gustaría recibir info sobre próximos encuentros o programas?</div>
+      <div class="intake-q"><span class="qnum">8.</span>¿Te gustaría recibir info sobre próximos encuentros o programas?</div>
       <div class="radio-group" id="rgInfo">
         ${radioOpt('rgInfo','info','WhatsApp','Sí, por WhatsApp',radios.info==='WhatsApp')}
         ${radioOpt('rgInfo','info','Email','Sí, por Email',radios.info==='Email')}
@@ -987,7 +1008,7 @@ function renderIntakeForm(){
       </div>
     </div>
     <div class="intake-card">
-      <div class="intake-q"><span class="qnum">8.</span>¿Querés dejarle un mensaje al facilitador o a La Casa del Profit?</div>
+      <div class="intake-q"><span class="qnum">9.</span>¿Querés dejarle un mensaje al facilitador o a La Casa del Profit?</div>
       <textarea id="iMensaje" placeholder="Cualquier cosa que quieras compartir...">${s.intakeMensaje||''}</textarea>
     </div>
 
@@ -998,6 +1019,16 @@ function renderIntakeForm(){
     </p>`;
 }
 
+let _estrellas=0;
+function setStars(n){
+  _estrellas=n;
+  const labels=['','Necesito más tiempo','Fue interesante','Buena experiencia','Muy transformadora','¡Increíble, gracias!'];
+  document.querySelectorAll('.star-btn').forEach((s,i)=>{
+    s.classList.toggle('active',i<n);
+  });
+  const lbl=document.getElementById('starLabel');
+  if(lbl)lbl.textContent=labels[n]||'';
+}
 function radioOpt(groupId, key, val, label, selected){
   return`<div class="radio-opt${selected?' selected':''}" onclick="selectRadio('${groupId}','${key}','${val}',this)">
     <input type="radio" name="${key}" value="${val}"${selected?' checked':''}>
@@ -1029,6 +1060,7 @@ async function submitIntake(){
     intakeDurante:durante,
     intakeDespues:(document.getElementById('iDespues')?.value||'').trim(),
     intakePalabra:(document.getElementById('iPalabra')?.value||'').trim(),
+    intakeEstrellas:_estrellas||0,
     intakeRecomienda:radios.recomienda||'',
     intakeTestimonio:radios.testimonio||'',
     intakeInfo:radios.info||'',
