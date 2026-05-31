@@ -549,8 +549,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <!-- HERRAMIENTAS -->
     <div id="sec-herramientas" class="sec">
      <div class="tab-bar" style="margin-bottom:18px">
-      <button class="tab-btn active" id="herrTab_todas"        onclick="setHerrTab('todas')">Todas</button>
-      <button class="tab-btn"        id="herrTab_experimental" onclick="setHerrTab('Sesión experimental')">✨ Sesión experimental</button>
+      <button class="tab-btn active" id="herrTab_experimental" onclick="setHerrTab('Sesión experimental')">✨ Sesión experimental</button>
       <button class="tab-btn"        id="herrTab_clase"        onclick="setHerrTab('Clase')">📚 Clase</button>
       <button class="tab-btn"        id="herrTab_practica"     onclick="setHerrTab('Herramienta práctica')">🔧 Herramienta práctica</button>
      </div>
@@ -1443,28 +1442,8 @@ th{background:rgba(28,26,46,.88)!important;}
  <div class="mb">
   <h2 id="moHerrTitle">🔮 Herramienta</h2>
   <input type="hidden" id="hId">
-  <div class="fg-row">
-   <div class="fg"><label>Nombre *</label><input type="text" id="hNom"></div>
-   <div class="fg"><label>Emoji / Ícono</label><input type="text" id="hIco" placeholder="🌀"></div>
-  </div>
+  <div class="fg"><label>Nombre *</label><input type="text" id="hNom"></div>
   <div class="fg"><label>Descripción</label><textarea id="hDesc"></textarea></div>
-  <div class="fg-row">
-   <div class="fg"><label>Tipo</label>
-    <select id="hTipo" onchange="onHerrTipoChange()">
-     <option value="">— Sin clasificar —</option>
-     <option value="Sesión experimental">✨ Sesión experimental</option>
-     <option value="Clase">📚 Clase</option>
-     <option value="Herramienta práctica">🔧 Herramienta práctica</option>
-    </select>
-   </div>
-   <div class="fg"><label>Modalidad</label>
-    <select id="hModalidad">
-     <option value="Presencial">📍 Presencial</option>
-     <option value="Online">💻 Online</option>
-     <option value="Ambas">🌐 Presencial y Online</option>
-    </select>
-   </div>
-  </div>
   <div class="fg-row">
    <div class="fg"><label>Duración</label>
     <select id="hDuracion">
@@ -4105,23 +4084,20 @@ function onHerrTipoChange(){
   document.getElementById('hPracFields').style.display=esPrac?'':'none';
   document.getElementById('hModalidad').closest('.fg').closest('.fg-row').style.display=esPrac?'none':'';
 }
-let _herrTab='todas';
+let _herrTab='Sesión experimental';
 function setHerrTab(t){
   _herrTab=t;
-  ['todas','experimental','clase','practica'].forEach(k=>{
-    const id='herrTab_'+k;
-    const btn=document.getElementById(id);
-    if(!btn)return;
-    const tabVal=k==='todas'?'todas':k==='experimental'?'Sesión experimental':k==='clase'?'Clase':'Herramienta práctica';
-    btn.classList.toggle('active',t===tabVal);
+  ['experimental','clase','practica'].forEach(k=>{
+    const tabVal=k==='experimental'?'Sesión experimental':k==='clase'?'Clase':'Herramienta práctica';
+    document.getElementById('herrTab_'+k)?.classList.toggle('active',t===tabVal);
   });
   renderHerr();
 }
 function renderHerr(){
-  const filtradas=_herrTab==='todas'?herramientas:herramientas.filter(h=>(h.tipo||'')=== _herrTab);
-  const vacia=_herrTab!=='todas'&&!filtradas.length;
-  document.getElementById('herGrid').innerHTML=vacia
-    ?`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:13px">Sin herramientas clasificadas como <strong style="color:var(--text)">${_herrTab}</strong> todavía. Editá una herramienta para asignarle este tipo.</div>`
+  const filtradas=herramientas.filter(h=>(h.tipo||'')=== _herrTab)
+    .slice().sort((a,b)=>(a.orden??999)-(b.orden??999));
+  document.getElementById('herGrid').innerHTML=!filtradas.length
+    ?`<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--muted);font-size:13px">Sin herramientas en <strong style="color:var(--text)">${_herrTab}</strong> todavía.<br><button class="btn btn-p btn-sm" style="margin-top:12px" onclick="openModal('herr')">+ Agregar</button></div>`
     :filtradas.map(h=>{
     const sesCount=sessions.filter(s=>s.sesion===h.nom&&comp(s)).length;
     const allFacs=h.facs||[];
@@ -4137,16 +4113,14 @@ function renderHerr(){
     }).join('');
     return `<div class="hc">
       <div class="hh">
-        <div class="hi" style="background:${h.col}18;border:1px solid ${h.col}33">${h.ico}</div>
+        <div class="hi" style="background:${h.col}18;border:1px solid ${h.col}33;font-size:13px;font-weight:800;color:${h.col}">${(h.nom||'').substring(0,2).toUpperCase()}</div>
         <div>
           <div class="hn">${h.nom}</div>
-          <div class="hcnt" style="color:var(--gd)">${sesCount} sesiones · ${allFacs.length} facilitadores</div>
+          <div class="hcnt" style="color:var(--gd)">${sesCount} sesiones${allFacs.length?' · '+allFacs.length+' facilitadores':''}</div>
           ${h.disponiblePortal?'<span style="font-size:9px;font-weight:700;color:#3DAA6A;background:rgba(61,170,106,.12);border:1px solid rgba(61,170,106,.25);border-radius:10px;padding:1px 7px">✓ En Portal</span>':'<span style="font-size:9px;color:var(--muted)">No visible en Portal</span>'}
         </div>
       </div>
       <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px">
-        ${h.tipo?`<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.25)">${h.tipo}</span>`:''}
-        ${h.modalidad?`<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;background:rgba(91,155,213,.12);color:#8BBDE8;border:1px solid rgba(91,155,213,.25)">${h.modalidad==='Ambas'?'🌐 Presencial y Online':h.modalidad==='Online'?'💻 Online':'📍 Presencial'}</span>`:''}
         ${h.duracion?`<span style="font-size:10px;font-weight:700;padding:2px 9px;border-radius:10px;background:rgba(61,170,106,.1);color:#5DD89A;border:1px solid rgba(61,170,106,.25)">⏱ ${Number(h.duracion)>=60?Math.floor(Number(h.duracion)/60)+'h'+(Number(h.duracion)%60?' '+Number(h.duracion)%60+'min':''):h.duracion+' min'}</span>`:''}
       </div>
       <div class="hdesc">${h.desc}</div>
@@ -4156,11 +4130,28 @@ function renderHerr(){
       ${h.tipo!=='Herramienta práctica'?`<div style="font-size:9px;color:var(--gd);font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Facilitadores</div>
       <div class="hfacs">${facList||'<span style="font-size:11px;color:var(--muted)">Sin asignar</span>'}</div>`:''}
       <div style="display:flex;gap:6px;margin-top:10px">
+        <button class="btn btn-s btn-sm" onclick="moveHerr('${h.id}',-1)" title="Subir">↑</button>
+        <button class="btn btn-s btn-sm" onclick="moveHerr('${h.id}',1)" title="Bajar">↓</button>
         <button class="btn btn-s btn-sm" style="flex:1" onclick="openModal('herr','${h.id}')">✏️ Editar</button>
         <button class="btn btn-s btn-sm" onclick="delHerr('${h.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
+}
+
+function moveHerr(id, dir){
+  const visibles=herramientas.filter(h=>(h.tipo||'')=== _herrTab)
+    .slice().sort((a,b)=>(a.orden??999)-(b.orden??999));
+  const idx=visibles.findIndex(h=>String(h.id)===String(id));
+  const swapIdx=idx+dir;
+  if(swapIdx<0||swapIdx>=visibles.length)return;
+  // Asignar orden si no tienen
+  visibles.forEach((h,i)=>{const ref=herramientas.find(x=>x.id===h.id);if(ref)ref.orden=i;});
+  const a=herramientas.find(x=>x.id===visibles[idx].id);
+  const b=herramientas.find(x=>x.id===visibles[swapIdx].id);
+  if(!a||!b)return;
+  [a.orden,b.orden]=[b.orden,a.orden];
+  save();renderHerr();
 }
 
 /* MODALS */
@@ -4338,13 +4329,13 @@ function openModal(type,id,extra){
     document.getElementById('hDesc').value=h?h.desc:'';
     document.getElementById('hCol').value=h?h.col:'#C9A84C';
     document.getElementById('hDisponible').checked=h?(h.disponiblePortal===true):false;
-    document.getElementById('hTipo').value=h?(h.tipo||''):'';
-    document.getElementById('hModalidad').value=h?(h.modalidad||'Presencial'):'Presencial';
     document.getElementById('hDuracion').value=h?(h.duracion||''):'';
     document.getElementById('hCuando').value=h?(h.cuando||''):'';
     document.getElementById('hContexto').value=h?(h.contexto||''):'';
     document.getElementById('hInstrucciones').value=h?(h.instrucciones||''):'';
-    onHerrTipoChange();
+    const esPrac=(h?h.tipo:_herrTab)==='Herramienta práctica';
+    document.getElementById('hSesFields').style.display=esPrac?'none':'';
+    document.getElementById('hPracFields').style.display=esPrac?'':'none';
     const hFacs=h?(h.facs||[]):[];
     document.getElementById('hFacList').innerHTML=facs.map(f=>`
       <label style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:12px">
@@ -4487,7 +4478,8 @@ function saveHerr(){
   const nom=document.getElementById('hNom').value.trim();
   if(!nom){alert('El nombre es obligatorio');return;}
   const selFacs=[...document.querySelectorAll('#hFacList input:checked')].map(c=>c.value);
-  const hData={nom,ico:document.getElementById('hIco').value||'🔮',desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked,tipo:document.getElementById('hTipo').value,modalidad:document.getElementById('hModalidad').value,duracion:document.getElementById('hDuracion').value,cuando:document.getElementById('hCuando').value,contexto:document.getElementById('hContexto').value,instrucciones:document.getElementById('hInstrucciones').value};
+  const tipoActual=eid?(herramientas.find(x=>x.id===eid)?.tipo||_herrTab):_herrTab;
+  const hData={nom,desc:document.getElementById('hDesc').value,col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked,tipo:tipoActual,duracion:document.getElementById('hDuracion').value,cuando:document.getElementById('hCuando').value,contexto:document.getElementById('hContexto').value,instrucciones:document.getElementById('hInstrucciones').value};
   if(eid){
     const h=herramientas.find(x=>x.id===eid);
     if(h)Object.assign(h,hData);
