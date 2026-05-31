@@ -283,6 +283,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
   </div>
   <div class="stats-row" id="statsRow"></div>
+  <div id="preguntaDiaBox" style="margin-bottom:20px"></div>
   <div id="proximaBox"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
     <button class="btn-sec btn-sec-regalos" onclick="openRegalos()">
@@ -503,6 +504,35 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <script>
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+async function loadPreguntaDia(){
+  const el=document.getElementById('preguntaDiaBox');if(!el)return;
+  try{
+    const{data,error}=await _sb.from('comunidad_contenido').select('id,data')
+      .filter('data->>tipo','eq','pregunta')
+      .or('data->>activo.is.null,data->>activo.eq.true');
+    const pregs=(error||!data?.length)?[]:data.map(r=>({id:r.id,...(r.data||{})})).filter(p=>p.texto);
+    if(!pregs.length){el.innerHTML='';return;}
+    // Hash personalizado: fecha + id del ser
+    const hoy=new Date().toISOString().slice(0,10);
+    const seed=hoy+(curSer?.id||curSer?.email||'x');
+    let h=0;for(let i=0;i<seed.length;i++)h=(Math.imul(31,h)+seed.charCodeAt(i))|0;
+    const p=pregs[Math.abs(h)%pregs.length];
+    el.innerHTML=`
+      <div style="background:linear-gradient(135deg,rgba(14,12,26,.95),rgba(20,18,40,.9));
+        border:1px solid rgba(232,201,106,.25);border-radius:20px;padding:22px 20px;
+        position:relative;overflow:hidden;backdrop-filter:blur(12px)">
+        <div style="position:absolute;top:-20px;right:-10px;font-size:100px;opacity:.04;
+          color:var(--gl);line-height:1;pointer-events:none">✦</div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
+          color:rgba(232,201,106,.7);margin-bottom:14px">✦ Tu pregunta de hoy</div>
+        <div style="font-size:18px;font-weight:700;color:#EDE5C8;line-height:1.55;
+          font-style:italic">${p.texto}</div>
+        ${p.matiz?`<div style="margin-top:12px;font-size:11px;color:rgba(232,201,106,.55);
+          font-weight:600">${p.matiz}</div>`:''}
+      </div>`;
+  }catch(e){document.getElementById('preguntaDiaBox').innerHTML='';}
+}
+
 function trackRegaloSer(rid,nombre,serNombre,serEmail){
   try{
     _sb.from('regalo_eventos').insert({data:{
@@ -772,6 +802,7 @@ function renderStats(){
     <div class="stat-card"><div class="stat-val" style="color:var(--green)">${comp}</div><div class="stat-lbl">Completadas</div></div>
     <div class="stat-card"><div class="stat-val" style="color:var(--purple)">${conIntake}</div><div class="stat-lbl">Integradas</div></div>
   `;
+  loadPreguntaDia();
 }
 
 function renderFilters(){
