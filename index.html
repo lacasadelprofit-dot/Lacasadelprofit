@@ -574,8 +574,83 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn"        id="pracTab_abundancia" onclick="setPracTab('abundancia')">💰 Dinero y Abundancia</button>
       <button class="tab-btn"        id="pracTab_energia"    onclick="setPracTab('energia')">⚡ Energía y Presencia</button>
       <button class="tab-btn"        id="pracTab_favoritos"  onclick="setPracTab('favoritos')">⭐ Favoritos</button>
+      <button class="tab-btn"        id="pracTab_preguntas"  onclick="setPracTab('preguntas')">💬 Preguntas Expansivas</button>
      </div>
      <div id="pracContent"></div>
+     <!-- Preguntas Expansivas (movido desde Contenido) -->
+     <div id="pracPreguntas" style="display:none">
+       <div class="tab-bar" style="margin-bottom:14px">
+         <button class="tab-btn active" id="comTabResumen"     onclick="setComTab('resumen')">📊 Resumen</button>
+         <button class="tab-btn"        id="comTabTodos"       onclick="setComTab('todos')">Todos</button>
+         <button class="tab-btn"        id="comTabPregunta"    onclick="setComTab('pregunta')">💬 Preguntas</button>
+         <button class="tab-btn"        id="comTabConsciencia" onclick="setComTab('consciencia')">✨ Consciencia</button>
+         <button class="tab-btn"        id="comTabReflexion"   onclick="setComTab('reflexion')">🌿 Reflexiones</button>
+         <button class="tab-btn"        id="comTabConcepto"    onclick="setComTab('concepto')">📖 Conceptos</button>
+         <button class="tab-btn"        id="comTabInfo"        onclick="setComTab('info')">💡 Info</button>
+         <button class="tab-btn"        id="comTabMasiva"      onclick="setComTab('masiva')">📥 Carga masiva</button>
+       </div>
+       <div id="comResumen">
+         <div id="comKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
+         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
+           <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
+           <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
+         </div>
+         <div class="cc" style="margin-bottom:18px">
+           <h3 style="font-size:13px;color:var(--muted);margin-bottom:14px">⏰ <span style="color:var(--gl)">Configuración de envío diario</span></h3>
+           <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
+             <div>
+               <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Hora de envío</label>
+               <input type="time" id="comHoraEnvio" value="08:00"
+                 style="padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:700;outline:none;width:120px"
+                 onchange="saveComConfig()">
+             </div>
+             <div>
+               <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Días de envío</label>
+               <div style="display:flex;flex-wrap:wrap;gap:6px" id="comDiasEnvio">
+                 <label id="comDiaLabel0" onclick="toggleComDia(0)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia0" style="display:none" checked><span>Lu</span></label>
+                 <label id="comDiaLabel1" onclick="toggleComDia(1)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia1" style="display:none" checked><span>Ma</span></label>
+                 <label id="comDiaLabel2" onclick="toggleComDia(2)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia2" style="display:none" checked><span>Mi</span></label>
+                 <label id="comDiaLabel3" onclick="toggleComDia(3)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia3" style="display:none" checked><span>Ju</span></label>
+                 <label id="comDiaLabel4" onclick="toggleComDia(4)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia4" style="display:none" checked><span>Vi</span></label>
+                 <label id="comDiaLabel5" onclick="toggleComDia(5)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia5" style="display:none" checked><span>Sa</span></label>
+                 <label id="comDiaLabel6" onclick="toggleComDia(6)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia6" style="display:none"><span>Do</span></label>
+               </div>
+             </div>
+           </div>
+           <div style="margin-top:14px;padding:10px 14px;background:rgba(155,130,212,.08);border:1px solid rgba(155,130,212,.2);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
+             💡 <strong style="color:var(--text)">Recordatorio manual:</strong> A la hora configurada, andá a <em>"Para enviar hoy"</em> y presioná el botón 💬 de cada contenido para abrirlo en WhatsApp y enviarlo al grupo.
+           </div>
+         </div>
+       </div>
+       <div id="comList" style="display:none"></div>
+       <div id="comMasiva" style="display:none">
+         <div class="cc" style="margin-bottom:18px">
+           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
+             <div>
+               <h3 style="font-size:15px;font-weight:700;color:var(--gl);margin:0 0 4px">📥 Carga masiva de Preguntas Expansivas</h3>
+               <p style="font-size:12px;color:var(--muted);margin:0">Escribí o pegá desde Excel (col A = pregunta, col B = matiz). Só se guardan las filas con texto.</p>
+             </div>
+             <div style="display:flex;gap:8px;flex-wrap:wrap">
+               <button class="btn btn-s btn-sm" onclick="addPregRow()">+ Fila</button>
+               <button class="btn btn-p btn-sm" onclick="savePregMasiva()">💾 Guardar todas</button>
+             </div>
+           </div>
+           <div style="overflow-x:auto">
+             <table style="width:100%;border-collapse:collapse" id="pregMasivaTable">
+               <thead>
+                 <tr style="border-bottom:1px solid var(--border)">
+                   <th style="width:36px;text-align:center;font-size:10px;color:var(--muted);padding:6px 4px">#</th>
+                   <th style="text-align:left;font-size:10px;color:var(--muted);padding:6px 8px;text-transform:uppercase;letter-spacing:.5px">Pregunta expansiva *</th>
+                   <th style="width:220px;text-align:left;font-size:10px;color:var(--muted);padding:6px 8px;text-transform:uppercase;letter-spacing:.5px">Matiz (opcional)</th>
+                   <th style="width:36px"></th>
+                 </tr>
+               </thead>
+               <tbody id="pregMasivaBody"></tbody>
+             </table>
+           </div>
+         </div>
+       </div>
+     </div>
     </div>
 
     <!-- PROGRAMAS -->
@@ -680,7 +755,6 @@ th{background:rgba(28,26,46,.88)!important;}
         <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
         <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
         <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
-        <button class="tab-btn"        id="contTabComunidad"  onclick="setContSection('comunidad')">🫂 Comunidad</button>
         <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
       </div>
       <!-- Sub-tab: Resumen -->
@@ -691,53 +765,6 @@ th{background:rgba(28,26,46,.88)!important;}
       <div id="contManual" style="display:none"></div>
       <!-- Sub-tab: Generador IA -->
       <div id="contGenerador" style="display:none"></div>
-      <!-- Sub-tab: Comunidad -->
-      <div id="contComunidad" style="display:none">
-        <div class="tab-bar" style="margin-bottom:14px">
-          <button class="tab-btn active" id="comTabResumen"     onclick="setComTab('resumen')">📊 Resumen</button>
-          <button class="tab-btn"        id="comTabTodos"       onclick="setComTab('todos')">Todos</button>
-          <button class="tab-btn"        id="comTabPregunta"    onclick="setComTab('pregunta')">💬 Preguntas</button>
-          <button class="tab-btn"        id="comTabConsciencia" onclick="setComTab('consciencia')">✨ Consciencia</button>
-          <button class="tab-btn"        id="comTabReflexion"   onclick="setComTab('reflexion')">🌿 Reflexiones</button>
-          <button class="tab-btn"        id="comTabConcepto"    onclick="setComTab('concepto')">📖 Conceptos</button>
-          <button class="tab-btn"        id="comTabInfo"        onclick="setComTab('info')">💡 Info</button>
-        </div>
-        <div id="comResumen">
-          <div id="comKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
-            <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
-            <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
-          </div>
-          <!-- Configuración de hora de envío -->
-          <div class="cc" style="margin-bottom:18px">
-            <h3 style="font-size:13px;color:var(--muted);margin-bottom:14px">⏰ <span style="color:var(--gl)">Configuración de envío diario</span></h3>
-            <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
-              <div>
-                <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Hora de envío</label>
-                <input type="time" id="comHoraEnvio" value="08:00"
-                  style="padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:700;outline:none;width:120px"
-                  onchange="saveComConfig()">
-              </div>
-              <div>
-                <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Días de envío</label>
-                <div style="display:flex;flex-wrap:wrap;gap:6px" id="comDiasEnvio">
-                  <label id="comDiaLabel0" onclick="toggleComDia(0)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia0" style="display:none" checked><span>Lu</span></label>
-                  <label id="comDiaLabel1" onclick="toggleComDia(1)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia1" style="display:none" checked><span>Ma</span></label>
-                  <label id="comDiaLabel2" onclick="toggleComDia(2)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia2" style="display:none" checked><span>Mi</span></label>
-                  <label id="comDiaLabel3" onclick="toggleComDia(3)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia3" style="display:none" checked><span>Ju</span></label>
-                  <label id="comDiaLabel4" onclick="toggleComDia(4)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia4" style="display:none" checked><span>Vi</span></label>
-                  <label id="comDiaLabel5" onclick="toggleComDia(5)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia5" style="display:none" checked><span>Sa</span></label>
-                  <label id="comDiaLabel6" onclick="toggleComDia(6)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia6" style="display:none"><span>Do</span></label>
-                </div>
-              </div>
-            </div>
-            <div style="margin-top:14px;padding:10px 14px;background:rgba(155,130,212,.08);border:1px solid rgba(155,130,212,.2);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
-              💡 <strong style="color:var(--text)">Recordatorio manual:</strong> A la hora configurada, andá a <em>"Para enviar hoy"</em> y presioná el botón 💬 de cada contenido para abrirlo en WhatsApp y enviarlo al grupo.
-            </div>
-          </div>
-        </div>
-        <div id="comList" style="display:none"></div>
-      </div>
     </div>
 
     <!-- MARKETING -->
@@ -2577,7 +2604,7 @@ const BTNS={
   programas:"<button class=\"btn btn-p\" onclick=\"openModal('prog',null)\">+ Nuevo Programa</button><button class=\"btn btn-s\" onclick=\"syncProgramTemplates()\" style=\"margin-left:8px\" title=\"Carga las semanas, desafíos y hábitos de todos los programas desde el template\">🔄 Cargar Templates</button>",
   journey:"<button class=\"btn btn-p\" onclick=\"openModal('insc',null)\">+ Inscribir Ser</button>",
   marketing:"<button class=\"btn btn-p\" onclick=\"openModal('camp',null)\">+ Nueva Campaña</button>",
-  contenido:"<button class=\"btn btn-s\" onclick=\"setContSection('comunidad');openComunidadModal(null)\">+ Comunidad</button><button class=\"btn btn-p\" onclick=\"setContSection('redes');setTimeout(()=>openContenidoModal(null,'publicado'),50)\">+ Nuevo Post</button>",
+  contenido:"<button class=\"btn btn-p\" onclick=\"setContSection('redes');setTimeout(()=>openContenidoModal(null,'publicado'),50)\">+ Nuevo Post</button>",
   crm:"<button class=\"btn btn-s\" onclick=\"exportSeres()\">📤 Exportar</button><button class=\"btn btn-s\" onclick=\"openImport()\">📥 Importar Excel</button><button class=\"btn btn-p\" onclick=\"openModal('ser',null,true)\">🌱 Nuevo Prospecto</button>",
   profit:'',
   accesos:'',
@@ -2916,7 +2943,7 @@ function renderAccionables(now){
       ico:'🫂', urgencia:'Hoy',
       titulo:`Comunidad: ${comHoy.length} contenido${comHoy.length!==1?'s':''} para enviar`,
       desc:`${tipos}`,
-      accion:`onclick="nav('contenido',Array.from(document.querySelectorAll('.ni')).find(n=>n.textContent.includes('Contenido')));setTimeout(()=>setContSection('comunidad'),100)"`,
+      accion:`onclick="nav('practicas',Array.from(document.querySelectorAll('.ni')).find(n=>n.textContent.includes('Herramientas')));setTimeout(()=>setPracTab('preguntas'),100)"`,
       btnLabel:'Ir a Comunidad'
     });
   }
@@ -4264,9 +4291,20 @@ let _pracTab='mapa';
 
 function setPracTab(t){
   _pracTab=t;
-  const keys=['mapa','todas','despertar','liberacion','expansion','creacion','abundancia','energia','favoritos'];
+  const keys=['mapa','todas','despertar','liberacion','expansion','creacion','abundancia','energia','favoritos','preguntas'];
   keys.forEach(k=>{document.getElementById('pracTab_'+k)?.classList.toggle('active',k===t);});
-  renderPracticas();
+  const pracPreguntas=document.getElementById('pracPreguntas');
+  const pracContent=document.getElementById('pracContent');
+  if(t==='preguntas'){
+    pracContent.style.display='none';
+    pracPreguntas.style.display='';
+    renderComunidad();
+    initPregMasiva();
+  } else {
+    pracContent.style.display='';
+    pracPreguntas.style.display='none';
+    renderPracticas();
+  }
 }
 function openHerView(id){
   const h=herramientas.find(x=>x.id===id);if(!h)return;
@@ -9242,13 +9280,82 @@ let _comTab='resumen', _comMatizTab='todos', _curComId=null;
 function setComTab(t){
   _comTab=t;
   _comMatizTab='todos';
-  ['resumen','todos','pregunta','consciencia','reflexion','concepto','info'].forEach(k=>{
+  ['resumen','todos','pregunta','consciencia','reflexion','concepto','info','masiva'].forEach(k=>{
     document.getElementById('comTab'+k.charAt(0).toUpperCase()+k.slice(1))?.classList.toggle('active',k===t);
   });
   const esResumen=t==='resumen';
+  const esMasiva=t==='masiva';
   document.getElementById('comResumen').style.display=esResumen?'':'none';
-  document.getElementById('comList').style.display=esResumen?'none':'';
-  if(!esResumen)_renderComList();
+  document.getElementById('comList').style.display=(!esResumen&&!esMasiva)?'':'none';
+  document.getElementById('comMasiva').style.display=esMasiva?'':'none';
+  if(!esResumen&&!esMasiva)_renderComList();
+}
+
+let _pregMasivaInited=false;
+function initPregMasiva(){
+  if(_pregMasivaInited)return;
+  _pregMasivaInited=true;
+  for(let i=0;i<8;i++)addPregRow();
+  document.getElementById('pregMasivaBody').addEventListener('paste',function(e){
+    const active=document.activeElement;
+    if(!active||!this.contains(active))return;
+    e.preventDefault();
+    const text=(e.clipboardData||window.clipboardData).getData('text');
+    const lines=text.split(/\r?\n/).filter(l=>l.trim());
+    lines.forEach((line,i)=>{
+      const parts=line.split('\t');
+      const rows=this.querySelectorAll('tr');
+      let tr=rows[rows.length-1];
+      if(i>0||tr.querySelector('.preg-texto').value.trim())tr=_addPregRowEl(this);
+      if(parts[0])tr.querySelector('.preg-texto').value=parts[0].trim();
+      if(parts[1])tr.querySelector('.preg-matiz').value=parts[1].trim();
+    });
+    _renumPregRows();
+  });
+}
+function _addPregRowEl(tbody){
+  const tr=document.createElement('tr');
+  tr.style.borderBottom='1px solid var(--border)';
+  const n=tbody.children.length+1;
+  tr.innerHTML=`<td style="text-align:center;font-size:11px;color:var(--muted);padding:6px 4px;width:36px">${n}</td>
+    <td style="padding:4px 8px"><input type="text" class="preg-texto" placeholder="Escribí la pregunta expansiva..." style="width:100%;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></td>
+    <td style="padding:4px 8px"><input type="text" class="preg-matiz" placeholder="Matiz..." style="width:100%;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></td>
+    <td style="text-align:center;padding:4px"><button onclick="this.closest('tr').remove();_renumPregRows()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px" title="Eliminar fila">✕</button></td>`;
+  tbody.appendChild(tr);
+  return tr;
+}
+function addPregRow(){
+  _addPregRowEl(document.getElementById('pregMasivaBody'));
+}
+function _renumPregRows(){
+  document.querySelectorAll('#pregMasivaBody tr').forEach((tr,i)=>{
+    tr.querySelector('td:first-child').textContent=i+1;
+  });
+}
+function savePregMasiva(){
+  const rows=document.querySelectorAll('#pregMasivaBody tr');
+  let count=0;
+  rows.forEach(tr=>{
+    const texto=tr.querySelector('.preg-texto').value.trim();
+    if(!texto)return;
+    const matiz=tr.querySelector('.preg-matiz').value.trim();
+    comunidad.push({
+      id:'preg_'+Date.now()+'_'+Math.random().toString(36).substr(2,5),
+      tipo:'pregunta',
+      texto,
+      matiz:matiz||null,
+      activo:true,
+      fechaCreacion:new Date().toISOString().split('T')[0]
+    });
+    count++;
+  });
+  if(!count){toast('No hay preguntas para guardar','err');return;}
+  save();
+  renderComunidad();
+  document.getElementById('pregMasivaBody').innerHTML='';
+  _pregMasivaInited=false;
+  initPregMasiva();
+  toast(`✅ ${count} pregunta${count!==1?'s':''} guardada${count!==1?'s':''}`);
 }
 
 function renderComunidad(){
