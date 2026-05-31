@@ -2647,15 +2647,25 @@ function _buildPregBoxes(){
   const hoy=new Date().toISOString().split('T')[0];
   let h=0;for(let i=0;i<hoy.length;i++)h=(Math.imul(31,h)+hoy.charCodeAt(i))|0;
   const pDia=pregs[Math.abs(h)%pregs.length];
+  const herrs=herramientas.filter(x=>x.tipo==='Herramienta práctica'&&x.cuando);
+  const hDia=herrs.length?herrs[Math.abs(h+7)%herrs.length]:null;
   const box=(titulo,col,grad,p)=>`<div style="flex:1;min-width:200px;background:var(--card2);border:1px solid #2A2840;border-left:3px solid ${col};border-radius:14px;padding:16px 18px;position:relative;overflow:hidden">
     <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,${grad})"></div>
     <div style="font-size:9px;font-weight:700;color:${col};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">✦ ${titulo}</div>
     <div style="font-size:14px;color:var(--text);line-height:1.65;font-style:italic;font-weight:600">${p.texto||''}</div>
     ${p.matiz?`<div style="font-size:10px;color:var(--muted);margin-top:6px">${p.matiz}</div>`:''}
   </div>`;
+  const boxHerr=(h)=>`<div style="flex:1;min-width:200px;background:var(--card2);border:1px solid #2A2840;border-left:3px solid ${h.col||'#3DAA6A'};border-radius:14px;padding:16px 18px;position:relative;overflow:hidden">
+    <div style="position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,${h.col||'#3DAA6A'},${h.col||'#3DAA6A'}88)"></div>
+    <div style="font-size:9px;font-weight:700;color:${h.col||'#3DAA6A'};text-transform:uppercase;letter-spacing:1.5px;margin-bottom:8px">✦ Herramienta del día</div>
+    <div style="font-size:14px;color:var(--text);line-height:1.65;font-weight:700;margin-bottom:4px">${h.nom}</div>
+    <div style="font-size:12px;color:var(--text);line-height:1.6;font-style:italic">${h.cuando}</div>
+    ${h.contexto?`<div style="font-size:10px;color:var(--muted);margin-top:6px">${h.contexto}</div>`:''}
+  </div>`;
   return`<div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:18px">
     ${box('Pregunta del momento','var(--purple)','var(--purple),var(--pl)',pRand)}
     ${box('Pregunta del día','#C9A84C','#C9A84C,var(--gold)',pDia)}
+    ${hDia?boxHerr(hDia):''}
   </div>`;
 }
 function renderPregDiaAdmin(){
