@@ -503,6 +503,17 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 <script>
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+function trackRegaloSer(rid,nombre,serNombre,serEmail){
+  try{
+    _sb.from('regalo_eventos').insert({data:{
+      tipo:'descarga',regaloId:rid,regaloNombre:nombre,
+      serNombre,serEmail,canal:'portal_lcp',
+      fecha:new Date().toISOString().split('T')[0],
+      mes:new Date().toISOString().slice(0,7),
+      ts:new Date().toISOString()
+    }}).then();
+  }catch(e){}
+}
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
@@ -622,13 +633,18 @@ async function openRegalos(){
     const sn=encodeURIComponent(curSer?.nombre||'');
     const se=encodeURIComponent(curSer?.email||'');
     grid.innerHTML=lista.map(r=>{
-      const tUrl=`${window.location.origin}/api/track-regalo?rid=${encodeURIComponent(r.id)}&sn=${sn}&se=${se}&canal=portal_lcp`;
+      const nom=(r.nombre||'Regalo').replace(/'/g,'\\x27');
       return`<div class="regalo-card">
         <div class="regalo-body">
           <span class="regalo-ico">${r.icono||'🎁'}</span>
           <div class="regalo-nombre">${r.nombre||'Regalo'}</div>
           ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
-          <a class="btn-regalo-dl" href="${tUrl}" target="_blank">⬇️ Descargar PDF</a>
+          ${r.pdfUrl
+            ?`<a class="btn-regalo-dl" href="${r.pdfUrl}" target="_blank"
+                onclick="trackRegaloSer('${r.id}','${nom}',decodeURIComponent('${sn}'),decodeURIComponent('${se}'))">
+                ⬇️ Descargar PDF
+              </a>`
+            :`<div class="btn-regalo-dl" style="opacity:.45;cursor:not-allowed">Próximamente</div>`}
         </div>
       </div>`;
     }).join('');
