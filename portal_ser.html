@@ -283,7 +283,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
   </div>
   <div class="stats-row" id="statsRow"></div>
-  <div id="preguntaDiaBox" style="margin-bottom:20px"></div>
   <div id="proximaBox"></div>
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
     <button class="btn-sec btn-sec-regalos" onclick="openRegalos()">
@@ -319,6 +318,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       Visión
     </a>
   </div>
+  <div id="preguntaDiaBox" style="margin-bottom:20px"></div>
   <div class="sec-title">✨ Mis Sesiones</div>
   <div class="filter-row" id="filterRow"></div>
   <div class="ses-list" id="sesList"></div>
@@ -518,16 +518,16 @@ async function loadPreguntaDia(){
     let h=0;for(let i=0;i<seed.length;i++)h=(Math.imul(31,h)+seed.charCodeAt(i))|0;
     const p=pregs[Math.abs(h)%pregs.length];
     el.innerHTML=`
-      <div style="background:linear-gradient(135deg,rgba(14,12,26,.95),rgba(20,18,40,.9));
-        border:1px solid rgba(232,201,106,.25);border-radius:20px;padding:22px 20px;
-        position:relative;overflow:hidden;backdrop-filter:blur(12px)">
-        <div style="position:absolute;top:-20px;right:-10px;font-size:100px;opacity:.04;
+      <div style="background:rgba(10,8,20,.38);
+        border:1px solid rgba(232,201,106,.22);border-radius:20px;padding:22px 20px;
+        position:relative;overflow:hidden">
+        <div style="position:absolute;top:-20px;right:-10px;font-size:100px;opacity:.06;
           color:var(--gl);line-height:1;pointer-events:none">✦</div>
         <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-          color:rgba(232,201,106,.7);margin-bottom:14px">✦ Tu pregunta de hoy</div>
+          color:rgba(232,201,106,.65);margin-bottom:14px">✦ Tu pregunta de hoy</div>
         <div style="font-size:18px;font-weight:700;color:#EDE5C8;line-height:1.55;
           font-style:italic">${p.texto}</div>
-        ${p.matiz?`<div style="margin-top:12px;font-size:11px;color:rgba(232,201,106,.55);
+        ${p.matiz?`<div style="margin-top:12px;font-size:11px;color:rgba(232,201,106,.5);
           font-weight:600">${p.matiz}</div>`:''}
       </div>`;
   }catch(e){document.getElementById('preguntaDiaBox').innerHTML='';}
