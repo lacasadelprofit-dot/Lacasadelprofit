@@ -584,36 +584,7 @@ th{background:rgba(28,26,46,.88)!important;}
        </div>
        <div id="comResumen">
          <div id="comKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
-         <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:18px" id="comCalRow">
-           <div class="cc" id="comCalBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 <span style="color:var(--gl)">Programación del mes</span></h3><div id="comCal"></div></div>
-           <div class="cc" id="comHoyBox"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">⚡ <span style="color:var(--gl)">Para enviar hoy</span></h3><div id="comHoy"></div></div>
-         </div>
-         <div class="cc" style="margin-bottom:18px">
-           <h3 style="font-size:13px;color:var(--muted);margin-bottom:14px">⏰ <span style="color:var(--gl)">Configuración de envío diario</span></h3>
-           <div style="display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:start">
-             <div>
-               <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Hora de envío</label>
-               <input type="time" id="comHoraEnvio" value="08:00"
-                 style="padding:9px 12px;background:var(--card2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:15px;font-weight:700;outline:none;width:120px"
-                 onchange="saveComConfig()">
-             </div>
-             <div>
-               <label style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:6px">Días de envío</label>
-               <div style="display:flex;flex-wrap:wrap;gap:6px" id="comDiasEnvio">
-                 <label id="comDiaLabel0" onclick="toggleComDia(0)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia0" style="display:none" checked><span>Lu</span></label>
-                 <label id="comDiaLabel1" onclick="toggleComDia(1)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia1" style="display:none" checked><span>Ma</span></label>
-                 <label id="comDiaLabel2" onclick="toggleComDia(2)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia2" style="display:none" checked><span>Mi</span></label>
-                 <label id="comDiaLabel3" onclick="toggleComDia(3)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia3" style="display:none" checked><span>Ju</span></label>
-                 <label id="comDiaLabel4" onclick="toggleComDia(4)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia4" style="display:none" checked><span>Vi</span></label>
-                 <label id="comDiaLabel5" onclick="toggleComDia(5)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia5" style="display:none" checked><span>Sa</span></label>
-                 <label id="comDiaLabel6" onclick="toggleComDia(6)" style="display:flex;align-items:center;gap:4px;padding:5px 10px;border-radius:8px;background:var(--card2);border:1px solid var(--border);cursor:pointer;font-size:12px;font-weight:600;transition:all .15s"><input type="checkbox" id="comDia6" style="display:none"><span>Do</span></label>
-               </div>
-             </div>
-           </div>
-           <div style="margin-top:14px;padding:10px 14px;background:rgba(155,130,212,.08);border:1px solid rgba(155,130,212,.2);border-radius:10px;font-size:12px;color:var(--muted);line-height:1.6">
-             💡 <strong style="color:var(--text)">Recordatorio manual:</strong> A la hora configurada, andá a <em>"Para enviar hoy"</em> y presioná el botón 💬 de cada contenido para abrirlo en WhatsApp y enviarlo al grupo.
-           </div>
-         </div>
+         <div id="comResumenAreas"></div>
        </div>
        <div id="comList" style="display:none"></div>
        <div id="comMasiva" style="display:none">
@@ -621,9 +592,18 @@ th{background:rgba(28,26,46,.88)!important;}
            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:10px">
              <div>
                <h3 style="font-size:15px;font-weight:700;color:var(--gl);margin:0 0 4px">📥 Carga masiva de Preguntas Expansivas</h3>
-               <p style="font-size:12px;color:var(--muted);margin:0">Escribí o pegá desde Excel (col A = pregunta, col B = matiz). Só se guardan las filas con texto.</p>
+               <p style="font-size:12px;color:var(--muted);margin:0">Escribí o pegá desde Excel (col A = pregunta). Solo se guardan las filas con texto.</p>
              </div>
-             <div style="display:flex;gap:8px;flex-wrap:wrap">
+             <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+               <span style="font-size:11px;color:var(--muted)">Aplicar tipo a todas:</span>
+               <select id="pregMasivaTipoGlobal" style="padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">
+                 <option value="pregunta">💬 Pregunta Expansiva</option>
+                 <option value="consciencia">✨ Consciencia</option>
+                 <option value="reflexion">🌿 Reflexión</option>
+                 <option value="concepto">📖 Concepto</option>
+                 <option value="info">💡 Info de Valor</option>
+               </select>
+               <button class="btn btn-s btn-sm" onclick="aplicarTipoATodas()">Aplicar</button>
                <button class="btn btn-s btn-sm" onclick="addPregRow()">+ Fila</button>
                <button class="btn btn-p btn-sm" onclick="savePregMasiva()">💾 Guardar todas</button>
              </div>
@@ -634,7 +614,7 @@ th{background:rgba(28,26,46,.88)!important;}
                  <tr style="border-bottom:1px solid var(--border)">
                    <th style="width:36px;text-align:center;font-size:10px;color:var(--muted);padding:6px 4px">#</th>
                    <th style="text-align:left;font-size:10px;color:var(--muted);padding:6px 8px;text-transform:uppercase;letter-spacing:.5px">Pregunta expansiva *</th>
-                   <th style="width:220px;text-align:left;font-size:10px;color:var(--muted);padding:6px 8px;text-transform:uppercase;letter-spacing:.5px">Matiz (opcional)</th>
+                   <th style="width:200px;text-align:left;font-size:10px;color:var(--muted);padding:6px 8px;text-transform:uppercase;letter-spacing:.5px">Tipo</th>
                    <th style="width:36px"></th>
                  </tr>
                </thead>
@@ -9317,21 +9297,36 @@ function initPregMasiva(){
       let tr=rows[rows.length-1];
       if(i>0||tr.querySelector('.preg-texto').value.trim())tr=_addPregRowEl(this);
       if(parts[0])tr.querySelector('.preg-texto').value=parts[0].trim();
-      if(parts[1])tr.querySelector('.preg-matiz').value=parts[1].trim();
     });
     _renumPregRows();
   });
 }
-function _addPregRowEl(tbody){
+const _PREG_TIPO_OPTS=[
+  {v:'pregunta',   l:'💬 Pregunta Expansiva'},
+  {v:'consciencia',l:'✨ Consciencia'},
+  {v:'reflexion',  l:'🌿 Reflexión'},
+  {v:'concepto',   l:'📖 Concepto'},
+  {v:'info',       l:'💡 Info de Valor'},
+];
+function _pregTipoSelect(val){
+  return`<select class="preg-tipo" style="width:100%;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">${
+    _PREG_TIPO_OPTS.map(o=>`<option value="${o.v}"${o.v===val?' selected':''}>${o.l}</option>`).join('')
+  }</select>`;
+}
+function _addPregRowEl(tbody,tipo){
   const tr=document.createElement('tr');
   tr.style.borderBottom='1px solid var(--border)';
   const n=tbody.children.length+1;
   tr.innerHTML=`<td style="text-align:center;font-size:11px;color:var(--muted);padding:6px 4px;width:36px">${n}</td>
     <td style="padding:4px 8px"><input type="text" class="preg-texto" placeholder="Escribí la pregunta expansiva..." style="width:100%;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></td>
-    <td style="padding:4px 8px"><input type="text" class="preg-matiz" placeholder="Matiz..." style="width:100%;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:13px;outline:none"></td>
+    <td style="padding:4px 8px">${_pregTipoSelect(tipo||'pregunta')}</td>
     <td style="text-align:center;padding:4px"><button onclick="this.closest('tr').remove();_renumPregRows()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px 6px;border-radius:6px" title="Eliminar fila">✕</button></td>`;
   tbody.appendChild(tr);
   return tr;
+}
+function aplicarTipoATodas(){
+  const val=document.getElementById('pregMasivaTipoGlobal').value;
+  document.querySelectorAll('#pregMasivaBody .preg-tipo').forEach(s=>s.value=val);
 }
 function addPregRow(){
   _addPregRowEl(document.getElementById('pregMasivaBody'));
@@ -9347,12 +9342,11 @@ function savePregMasiva(){
   rows.forEach(tr=>{
     const texto=tr.querySelector('.preg-texto').value.trim();
     if(!texto)return;
-    const matiz=tr.querySelector('.preg-matiz').value.trim();
+    const tipo=tr.querySelector('.preg-tipo')?.value||'pregunta';
     comunidad.push({
       id:'preg_'+Date.now()+'_'+Math.random().toString(36).substr(2,5),
-      tipo:'pregunta',
+      tipo,
       texto,
-      matiz:matiz||null,
       activo:true,
       fechaCreacion:new Date().toISOString().split('T')[0]
     });
@@ -9368,36 +9362,39 @@ function savePregMasiva(){
 }
 
 function renderComunidad(){
-  const hoy=new Date().toISOString().split('T')[0];
-  const esteMes=new Date().toISOString().slice(0,7);
-  const delMes=comunidad.filter(c=>c.fechaProgramada?.startsWith(esteMes));
-  const enviadas=comunidad.filter(c=>c.enviado).length;
-  const pendientes=comunidad.filter(c=>!c.enviado&&c.activo!==false).length;
-  const preguntas=comunidad.filter(c=>c.tipo==='pregunta').length;
+  const total=comunidad.length;
 
-  // KPIs
-  document.getElementById('comKPIs').innerHTML=`
-    <div class="kc pu"><div class="ki">🫂</div><div class="kl">Total programados</div><div class="kv">${comunidad.length}</div><div class="ks">en todos los tipos</div></div>
-    <div class="kc go"><div class="ki">📅</div><div class="kl">Este mes</div><div class="kv">${delMes.length}</div><div class="ks">de 30 días disponibles</div></div>
-    <div class="kc gr"><div class="ki">✅</div><div class="kl">Enviados</div><div class="kv">${enviadas}</div></div>
-    <div class="kc bl"><div class="ki">⏳</div><div class="kl">Pendientes</div><div class="kv">${pendientes}</div></div>
-    <div class="kc rd"><div class="ki">💬</div><div class="kl">Preguntas cargadas</div><div class="kv">${preguntas}</div><div class="ks">para el portal público</div></div>
-  `;
+  // KPIs totales
+  document.getElementById('comKPIs').innerHTML=Object.entries(COM_TIPOS).map(([k,t])=>{
+    const n=comunidad.filter(c=>c.tipo===k).length;
+    return`<div class="kc" style="border-top:3px solid ${t.col}"><div class="ki">${t.ico}</div><div class="kl">${t.l}</div><div class="kv" style="color:${t.col}">${n}</div><div class="ks">contenidos cargados</div></div>`;
+  }).join('')+`<div class="kc go"><div class="ki">✦</div><div class="kl">Total general</div><div class="kv">${total}</div></div>`;
 
-  // Calendario del mes
-  _renderComCalendar();
-
-  // Para enviar hoy
-  const deHoy=comunidad.filter(c=>c.fechaProgramada===hoy&&c.activo!==false);
-  const hoyEl=document.getElementById('comHoy');
-  if(!deHoy.length){
-    hoyEl.innerHTML=`<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Sin contenido programado para hoy.<br><button class="btn btn-p btn-sm" style="margin-top:10px" onclick="openComunidadModal(null,'${hoy}')">+ Agregar para hoy</button></div>`;
-  }else{
-    hoyEl.innerHTML=deHoy.map(c=>_comCardMini(c)).join('');
-  }
+  // Resumen por área
+  const areas=document.getElementById('comResumenAreas');if(!areas)return;
+  areas.innerHTML=`<div style="display:flex;flex-direction:column;gap:14px">${
+    Object.entries(COM_TIPOS).map(([k,t])=>{
+      const items=comunidad.filter(c=>c.tipo===k&&c.activo!==false);
+      const muestra=items.slice(0,3);
+      return`<div class="cc" style="border-left:4px solid ${t.col}">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${items.length?'12px':'0'}">
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-size:20px">${t.ico}</span>
+            <div>
+              <div style="font-size:14px;font-weight:700;color:${t.col}">${t.l}</div>
+              <div style="font-size:11px;color:var(--muted)">${items.length} contenido${items.length!==1?'s':''}</div>
+            </div>
+          </div>
+          <button class="btn btn-s btn-sm" onclick="setComTab('${k}')">Ver todos →</button>
+        </div>
+        ${muestra.length?`<div style="display:flex;flex-direction:column;gap:6px">${
+          muestra.map(c=>`<div style="font-size:12px;color:var(--text);padding:7px 10px;background:${t.bg};border:1px solid ${t.border};border-radius:8px;line-height:1.5">${c.texto}</div>`).join('')
+        }${items.length>3?`<div style="font-size:11px;color:var(--muted);padding:4px 10px">...y ${items.length-3} más</div>`:''}</div>`:'<div style="font-size:12px;color:var(--muted);font-style:italic">Sin contenido cargado aún.</div>'}
+      </div>`;
+    }).join('')
+  }</div>`;
 
   _renderComList();
-  loadComConfig();
 }
 
 function _renderComCalendar(){
