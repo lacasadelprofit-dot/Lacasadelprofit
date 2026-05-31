@@ -9340,7 +9340,7 @@ function _renumPregRows(){
     tr.querySelector('td:first-child').textContent=i+1;
   });
 }
-function savePregMasiva(){
+async function savePregMasiva(){
   const rows=document.querySelectorAll('#pregMasivaBody tr');
   let count=0;
   rows.forEach(tr=>{
@@ -9358,12 +9358,14 @@ function savePregMasiva(){
     count++;
   });
   if(!count){toast('No hay preguntas para guardar','err');return;}
-  save();
+  toast('💾 Guardando...');
+  saveLocalCache();
+  await _syncSupabase();
   renderComunidad();
   document.getElementById('pregMasivaBody').innerHTML='';
   _pregMasivaInited=false;
   initPregMasiva();
-  toast(`✅ ${count} pregunta${count!==1?'s':''} guardada${count!==1?'s':''}`);
+  toast(`✅ ${count} pregunta${count!==1?'s':''} guardada${count!==1?'s':''}. Ya podés refrescar.`);
 }
 
 function renderComunidad(){
