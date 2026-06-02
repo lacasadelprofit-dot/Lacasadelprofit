@@ -940,7 +940,7 @@ function openLeadGate(regaloId){
   if(!r)return;
   _curRegalo=r;
   const saved=localStorage.getItem('jcc_lead');
-  if(saved){_dlRegalo(r);return;}
+  if(saved){const p=JSON.parse(saved);_dlRegalo(r,{serNombre:p.nombre,serEmail:p.celular});return;}
   document.getElementById('lgIco').textContent=r.icono||'🎁';
   document.getElementById('lgNombre').textContent=r.nombre||'Recibir regalo';
   document.getElementById('lgMsg').textContent='';
@@ -954,9 +954,9 @@ function openLeadGate(regaloId){
 }
 function closeLGBtn(){document.getElementById('modalLeadGate').classList.remove('open');document.body.style.overflow='';}
 function closeLG(e){if(e.target===document.getElementById('modalLeadGate'))closeLGBtn();}
-function _dlRegalo(r){
+function _dlRegalo(r,serInfo={}){
   if(r.pdfUrl)window.open(r.pdfUrl,'_blank');
-  track('descarga',{regaloId:r.id,regaloNombre:r.nombre,canal:'landing_jcc'});
+  track('descarga',{regaloId:r.id,regaloNombre:r.nombre,canal:'landing_jcc',...serInfo});
 }
 async function submitLeadGate(){
   const nombre=document.getElementById('lgInputNombre').value.trim();
@@ -988,7 +988,7 @@ async function submitLeadGate(){
     }
     localStorage.setItem('jcc_lead',JSON.stringify({nombre,celular}));
     msg.textContent='✦ Descargando...';
-    setTimeout(()=>{_dlRegalo(_curRegalo);closeLGBtn();},700);
+    setTimeout(()=>{_dlRegalo(_curRegalo,{serNombre:nombre,serEmail:celular});closeLGBtn();},700);
   }catch(e){
     console.warn(e);_dlRegalo(_curRegalo);closeLGBtn();
   }
