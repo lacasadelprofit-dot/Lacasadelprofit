@@ -976,12 +976,15 @@ async function submitLeadGate(){
         await _sb.from('seres').update({data:{...d,regalosDescargados:desc}}).eq('id',ser.id);
       }
     }else{
-      await _sb.from('seres').insert({data:{
-        nombre,celular,prospecto:true,fuente:'regalos_jcc',
-        regalosDescargados:[_curRegalo.nombre||''],
-        fechaAlta:new Date().toISOString().split('T')[0],
-        ts:new Date().toISOString()
-      }});
+      await _sb.from('seres').insert({
+        id:crypto.randomUUID(),
+        data:{
+          nombre,celular,prospecto:true,fuente:'regalos_jcc',
+          regalosDescargados:[_curRegalo.nombre||''],
+          fechaAlta:new Date().toISOString().split('T')[0],
+          ts:new Date().toISOString()
+        }
+      });
     }
     localStorage.setItem('jcc_lead',JSON.stringify({nombre,celular}));
     msg.textContent='✦ Descargando...';
