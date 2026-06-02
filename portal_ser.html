@@ -545,11 +545,11 @@ async function loadPreguntaDia(){
   }catch(e){document.getElementById('preguntaDiaBox').innerHTML='';}
 }
 
-function trackRegaloSer(rid,nombre,serNombre,serEmail){
+function trackRegaloSer(rid,nombre,serNombre,serEmail,serId){
   try{
     _sb.from('regalo_eventos').insert({data:{
       tipo:'descarga',regaloId:rid,regaloNombre:nombre,
-      serNombre,serEmail,canal:'portal_lcp',
+      serNombre,serEmail,serId,canal:'portal_lcp',
       fecha:new Date().toISOString().split('T')[0],
       mes:new Date().toISOString().slice(0,7),
       ts:new Date().toISOString()
@@ -674,6 +674,7 @@ async function openRegalos(){
     }
     const sn=encodeURIComponent(curSer?.nombre||'');
     const se=encodeURIComponent(curSer?.email||'');
+    const sid=curSer?.id||'';
     grid.innerHTML=lista.map(r=>{
       const nom=(r.nombre||'Regalo').replace(/'/g,'\\x27');
       return`<div class="regalo-card">
@@ -683,7 +684,7 @@ async function openRegalos(){
           ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
           ${r.pdfUrl
             ?`<a class="btn-regalo-dl" href="${r.pdfUrl}" target="_blank"
-                onclick="trackRegaloSer('${r.id}','${nom}',decodeURIComponent('${sn}'),decodeURIComponent('${se}'))">
+                onclick="trackRegaloSer('${r.id}','${nom}',decodeURIComponent('${sn}'),decodeURIComponent('${se}'),'${sid}')">
                 ⬇️ Descargar PDF
               </a>`
             :`<div class="btn-regalo-dl" style="opacity:.45;cursor:not-allowed">Próximamente</div>`}
