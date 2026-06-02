@@ -4072,6 +4072,12 @@ function _renderSerDet(s){
       </div>
       ${(s.sintomas||[]).length?`<div style="margin-top:8px;font-size:12px"><span style="color:var(--muted)">Siente:</span> ${s.sintomas.map(x=>`<span style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--gold);margin-left:4px">${x}</span>`).join('')}</div>`:''}
       ${s.momento?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">Cuándo:</span> <strong>${s.momento}${s.momentoOtro?' — '+s.momentoOtro:''}</strong></div>`:''}
+      ${(s.sintomas||[]).length&&!s.etapaProsp?'':(s.sintomas||[]).length?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">Siente:</span> ${(s.sintomas||[]).map(x=>`<span style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--gold);margin-left:4px">${x}</span>`).join('')}</div>`:''}
+      ${s.momentoDia?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">Lo siente más:</span> <strong>${s.momentoDia}</strong></div>`:''}
+      ${s.cuando?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">¿Cuándo?</span> <strong>${s.cuando}</strong></div>`:''}
+      ${s.patron?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">Patrón:</span> <strong>${s.patron}</strong></div>`:''}
+      ${s.expBarras?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">¿Recibió Barras?</span> <strong>${s.expBarras}</strong></div>`:''}
+      ${s.paraQue?`<div style="margin-top:6px;font-size:12px"><span style="color:var(--muted)">¿Para qué aprende?</span> <strong>${s.paraQue}</strong></div>`:''}
       ${s.mensajeRegistro?`<div style="margin-top:8px;font-size:12px;color:var(--muted);font-style:italic;border-top:1px solid rgba(61,170,106,.15);padding-top:8px">"${s.mensajeRegistro}"</div>`:''}
       ${(s.regalosDescargados||[]).length?`<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(61,170,106,.15)"><span style="font-size:11px;color:var(--muted)">🎁 Regalos descargados:</span> ${(s.regalosDescargados||[]).map(r=>`<span style="background:rgba(201,168,76,.1);border:1px solid rgba(201,168,76,.25);border-radius:6px;padding:1px 7px;font-size:11px;color:var(--gold);margin-left:4px">${r}</span>`).join('')}</div>`:''}
     </div>`:'';
@@ -11309,10 +11315,12 @@ function renderCRM(){
           const canalTextCol=canal.includes('WhatsApp')?'var(--green)':canal.includes('IG')?'#8B5CF6':'var(--muted)';
           const herr=p.herramientaInteres||'';
           const regalos=(p.regalosDescargados||[]);
+          const extras=[p.momentoDia,p.cuando,p.patron,p.expBarras?`Barras: ${p.expBarras}`:null,p.paraQue].filter(Boolean);
           return `<div class="cc" style="padding:10px;margin-bottom:7px;cursor:pointer" onclick="openProspDetail('${p.id}')">
             <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">${p.nombre}</div>
             ${herr?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${herr}</div>`:''}
-            ${regalos.length?`<div style="font-size:10px;color:var(--gold);margin-bottom:5px">🎁 ${regalos.join(' · ')}</div>`:''}
+            ${regalos.length?`<div style="font-size:10px;color:var(--gold);margin-bottom:4px">🎁 ${regalos.join(' · ')}</div>`:''}
+            ${extras.length?`<div style="font-size:10px;color:var(--muted);margin-bottom:5px">${extras.join(' · ')}</div>`:''}
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
               ${canal?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${canalCol};color:${canalTextCol}">${canal}</span>`:''}
               ${dias!==null?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--card2);color:var(--muted)">hace ${dias}d</span>`:''}
