@@ -13,17 +13,14 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;line-height:1.6;}
 
-/* ── HEADER ── */
 .header{background:var(--card);border-bottom:1px solid var(--border);padding:18px 32px;
   display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:100;}
 .header-ico{font-size:28px;}
 .header-title{font-size:18px;font-weight:800;color:var(--gl);letter-spacing:.5px;}
 .header-sub{font-size:12px;color:var(--muted);}
 
-/* ── LAYOUT ── */
 .layout{display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 65px);}
 
-/* ── SIDEBAR ── */
 .sidebar{background:var(--card);border-right:1px solid var(--border);padding:24px 0;position:sticky;top:65px;height:calc(100vh - 65px);overflow-y:auto;}
 .s-section{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase;padding:0 20px;margin:20px 0 8px;}
 .s-link{display:flex;align-items:center;gap:10px;padding:9px 20px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;text-decoration:none;border-left:2px solid transparent;}
@@ -31,24 +28,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .s-link.active{color:var(--gl);background:rgba(201,168,76,.1);border-left-color:var(--gold);}
 .s-link .ico{font-size:15px;width:20px;text-align:center;}
 
-/* ── CONTENT ── */
 .content{padding:36px 40px;max-width:860px;}
 .section{display:none;}
 .section.active{display:block;}
 
-/* ── TYPOGRAPHY ── */
 h2{font-size:22px;font-weight:800;color:var(--gl);margin-bottom:6px;}
 .section-sub{font-size:14px;color:var(--muted);margin-bottom:28px;line-height:1.7;}
 h3{font-size:15px;font-weight:700;color:var(--gold);margin:28px 0 10px;display:flex;align-items:center;gap:8px;}
 h3::before{content:'';display:block;width:3px;height:16px;background:var(--gold);border-radius:2px;}
 p{font-size:14px;color:var(--text);line-height:1.75;margin-bottom:12px;}
 
-/* ── CARDS ── */
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px 22px;margin-bottom:14px;}
 .card-title{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:6px;display:flex;align-items:center;gap:8px;}
 .card p{margin-bottom:0;color:var(--muted);font-size:13px;}
 
-/* ── STEPS ── */
 .steps{display:flex;flex-direction:column;gap:0;}
 .step{display:grid;grid-template-columns:32px 1fr;gap:14px;align-items:start;padding:14px 0;border-bottom:1px solid var(--border);}
 .step:last-child{border-bottom:none;}
@@ -57,26 +50,30 @@ p{font-size:14px;color:var(--text);line-height:1.75;margin-bottom:12px;}
 .step-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:3px;}
 .step-desc{font-size:13px;color:var(--muted);line-height:1.6;}
 
-/* ── TABLE ── */
 .tbl{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:13px;}
 .tbl th{text-align:left;padding:8px 12px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);}
 .tbl td{padding:10px 12px;border-bottom:1px solid rgba(42,40,64,.5);color:var(--text);vertical-align:top;}
 .tbl tr:last-child td{border-bottom:none;}
 .tbl td:first-child{color:var(--gl);font-weight:600;}
 
-/* ── BADGES ── */
 .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;}
 .b-gold{background:rgba(201,168,76,.15);color:var(--gl);}
 .b-green{background:rgba(61,170,106,.15);color:#5DD89A;}
 .b-blue{background:rgba(91,155,213,.15);color:#8BBDE8;}
 .b-red{background:rgba(224,85,85,.15);color:#F08080;}
 
-/* ── TIP ── */
 .tip{background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:14px 16px;margin:14px 0;font-size:13px;color:var(--text);}
 .tip strong{color:var(--gl);}
 
-/* ── URL ── */
+.vision-box{background:linear-gradient(135deg,rgba(201,168,76,.1),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.3);border-radius:16px;padding:24px 26px;margin-bottom:20px;}
+.vision-box .num{font-size:36px;font-weight:800;color:var(--gl);margin-bottom:4px;}
+.vision-box .label{font-size:13px;color:var(--muted);}
+
 .url{font-family:monospace;font-size:12px;background:var(--card2);border:1px solid var(--border);border-radius:6px;padding:2px 8px;color:var(--gl);}
+
+.flow{display:flex;gap:0;margin:16px 0;flex-wrap:wrap;}
+.flow-item{background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--text);flex:1;min-width:120px;text-align:center;}
+.flow-arrow{display:flex;align-items:center;padding:0 6px;color:var(--muted);font-size:18px;}
 
 @media(max-width:700px){
   .layout{grid-template-columns:1fr;}
@@ -90,124 +87,225 @@ p{font-size:14px;color:var(--text);line-height:1.75;margin-bottom:12px;}
 <div class="header">
   <div class="header-ico">📖</div>
   <div>
-    <div class="header-title">Manual de Uso — Sistema La Casa del Profit</div>
-    <div class="header-sub">Guía completa para operar el sistema</div>
+    <div class="header-title">Manual de Uso — La Casa del Profit</div>
+    <div class="header-sub">Guía completa del sistema · Actualizado junio 2026</div>
   </div>
 </div>
 
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <nav class="sidebar">
     <div class="s-section">Introducción</div>
-    <a class="s-link active" onclick="show('overview')"><span class="ico">🏠</span> Vista general</a>
+    <a class="s-link active" onclick="show('vision')"><span class="ico">✦</span> Visión</a>
+    <a class="s-link" onclick="show('overview')"><span class="ico">🏠</span> Vista general</a>
     <a class="s-link" onclick="show('portales')"><span class="ico">🌐</span> Portales y URLs</a>
 
-    <div class="s-section">Admin</div>
+    <div class="s-section">Captación</div>
+    <a class="s-link" onclick="show('crm')"><span class="ico">🌱</span> CRM / Prospectos</a>
+    <a class="s-link" onclick="show('regalos')"><span class="ico">🎁</span> Regalos y leads</a>
+    <a class="s-link" onclick="show('preguntas')"><span class="ico">✦</span> Preguntas Expansivas</a>
+
+    <div class="s-section">Operaciones</div>
     <a class="s-link" onclick="show('seres')"><span class="ico">💫</span> Seres</a>
     <a class="s-link" onclick="show('sesiones')"><span class="ico">✨</span> Sesiones</a>
+    <a class="s-link" onclick="show('calendario')"><span class="ico">📅</span> Calendario</a>
+
+    <div class="s-section">Programas</div>
     <a class="s-link" onclick="show('programas')"><span class="ico">📚</span> Programas</a>
     <a class="s-link" onclick="show('onboarding')"><span class="ico">◈</span> Onboarding</a>
+    <a class="s-link" onclick="show('journey')"><span class="ico">🗺️</span> Journey</a>
+
+    <div class="s-section">Contenido y Marketing</div>
+    <a class="s-link" onclick="show('herramientas')"><span class="ico">🔧</span> Herramientas</a>
+    <a class="s-link" onclick="show('contenido')"><span class="ico">✍️</span> Contenido</a>
     <a class="s-link" onclick="show('marketing')"><span class="ico">📣</span> Marketing</a>
-    <a class="s-link" onclick="show('calendario')"><span class="ico">📅</span> Calendario</a>
-    <a class="s-link" onclick="show('regalos')"><span class="ico">🎁</span> Regalos</a>
 
     <div class="s-section">Portales Públicos</div>
     <a class="s-link" onclick="show('portal-ser')"><span class="ico">🌀</span> Portal del Ser</a>
     <a class="s-link" onclick="show('portal-programa')"><span class="ico">📚</span> Portal del Programa</a>
-    <a class="s-link" onclick="show('recursos-jcc')"><span class="ico">🌿</span> Recursos JCC</a>
+    <a class="s-link" onclick="show('jcc')"><span class="ico">🌿</span> Página JCC</a>
 
     <div class="s-section">Sistema</div>
     <a class="s-link" onclick="show('supabase')"><span class="ico">🗄️</span> Base de datos</a>
     <a class="s-link" onclick="show('deploy')"><span class="ico">🚀</span> Deploy</a>
   </nav>
 
-  <!-- CONTENT -->
   <main class="content">
 
-    <!-- OVERVIEW -->
-    <div class="section active" id="sec-overview">
-      <h2>Vista general del sistema</h2>
-      <p class="section-sub">El sistema tiene tres partes: el Admin (solo para vos), los Portales Públicos (para clientes), y la Base de Datos en Supabase que conecta todo.</p>
+    <!-- VISIÓN -->
+    <div class="section active" id="sec-vision">
+      <h2>La visión</h2>
+      <p class="section-sub">Todo el sistema existe para hacer posible una misión: 1.000.000 de herramientas de consciencia para que los seres puedan vivir en amor, unidad, sabiduría y poder.</p>
 
-      <div class="card">
-        <div class="card-title">🏠 Admin</div>
-        <p>Panel privado donde manejás todo: seres, sesiones, programas, marketing, calendario y más. Solo accesible desde tu computadora abriendo el archivo <span class="url">1_ADMINISTRACION/index.html</span>.</p>
-      </div>
-      <div class="card">
-        <div class="card-title">🌐 Portales Públicos</div>
-        <p>Páginas que ven tus clientes: portal del ser, portal del programa, onboarding, recursos JCC, registro. Están en Vercel en <span class="url">lacasadelprofit.vercel.app</span>.</p>
-      </div>
-      <div class="card">
-        <div class="card-title">🗄️ Supabase</div>
-        <p>Base de datos donde se guarda todo. Admin y portales leen y escriben ahí. No necesitás entrar a Supabase normalmente — el admin lo maneja por vos.</p>
+      <div class="vision-box">
+        <div class="num">1.000.000</div>
+        <div class="label">de sesiones y herramientas de consciencia — no como meta numérica, sino como símbolo de impacto real. Cada ser que se transforma, transforma su entorno.</div>
       </div>
 
-      <h3>Flujo típico de trabajo</h3>
-      <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Llega un prospecto</div><div class="step-desc">Se registra en /registro.html o /registro_jcc.html → aparece automáticamente en Admin → Seres como prospecto.</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Completás el onboarding</div><div class="step-desc">Le mandás el link /onboarding.html → lo llena → aparece en Admin → Programas → Registros.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Creás la inscripción</div><div class="step-desc">Desde Admin → Journey → inscribís al ser en un programa. Le das acceso al portal del programa.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Se hacen sesiones</div><div class="step-desc">Las cargás en Admin → Sesiones. El ser las ve en su portal y puede completar el formulario post-sesión.</div></div></div>
-        <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Seguimiento continuo</div><div class="step-desc">El ser accede a su portal del programa para ver avance, hábitos, semanas y comunicarse con vos.</div></div></div>
+      <h3>¿Qué es La Casa del Profit?</h3>
+      <p>Es un espacio de transformación personal y espiritual donde convergen herramientas energéticas, mentales y emocionales. Barras de Access, Proceso de Cuerpos, Clases y Programas son los vehículos. El propósito es más profundo: que cada ser elija conscientemente quién quiere ser.</p>
+
+      <h3>Los tres pilares del sistema</h3>
+      <div class="card"><div class="card-title">🌱 Atraer</div><p>La página pública JCC, las preguntas expansivas y los regalos capturan la atención de personas que resuenan con el trabajo. Cada pregunta compartida, cada regalo descargado, es una puerta de entrada.</p></div>
+      <div class="card"><div class="card-title">✨ Transformar</div><p>Las sesiones individuales (Barras, Proceso de Cuerpos) y los programas (90 días) son donde ocurre la transformación real. El sistema registra todo para que nada se pierda.</p></div>
+      <div class="card"><div class="card-title">📈 Sostener</div><p>El portal del programa, los hábitos, las semanas y la comunicación continua sostienen el proceso en el tiempo. Un ser activo es un ser que sigue expandiendo.</p></div>
+
+      <h3>Flujo general de un ser</h3>
+      <div class="flow">
+        <div class="flow-item">🌿 Descubre<br><span style="font-size:10px;color:var(--muted)">Página JCC / Pregunta / Regalo</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">💬 Contacta<br><span style="font-size:10px;color:var(--muted)">Agenda sesión / Prospecto</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">✨ Experimenta<br><span style="font-size:10px;color:var(--muted)">1ª sesión</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">📚 Se compromete<br><span style="font-size:10px;color:var(--muted)">Programa 90 días</span></div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-item">🌟 Se transforma<br><span style="font-size:10px;color:var(--muted)">Proceso completo</span></div>
       </div>
     </div>
 
-    <!-- PORTALES -->
+    <!-- VISTA GENERAL -->
+    <div class="section" id="sec-overview">
+      <h2>Vista general del sistema</h2>
+      <p class="section-sub">El sistema tiene tres capas: el Admin (solo para vos), los Portales Públicos (para clientes y prospectos), y Supabase (base de datos que conecta todo).</p>
+
+      <div class="card"><div class="card-title">🏠 Admin — <span class="url">1_ADMINISTRACION/index.html</span></div><p>Panel privado con todo el control: seres, sesiones, CRM, programas, journey, marketing, herramientas, contenido y finanzas. Solo accesible desde tu computadora.</p></div>
+      <div class="card"><div class="card-title">🌐 Portales Públicos — <span class="url">lacasadelprofit.vercel.app</span></div><p>Páginas que ven tus clientes y prospectos. Están en Vercel y se actualizan automáticamente al hacer push a GitHub.</p></div>
+      <div class="card"><div class="card-title">🗄️ Supabase</div><p>Base de datos donde se guarda todo. Admin y portales leen y escriben ahí. No necesitás entrar a Supabase normalmente.</p></div>
+
+      <h3>Flujo típico de trabajo diario</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Revisar CRM</div><div class="step-desc">Admin → CRM → ver prospectos nuevos, seguir con los contactados, ver quién tiene acción pendiente hoy.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Cargar sesiones del día</div><div class="step-desc">Admin → Sesiones → agregar las sesiones que hiciste o que están agendadas. Actualizar estados.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Revisar nuevos registros</div><div class="step-desc">Admin → Programas → Registros → ver si llegaron nuevos onboardings. Agregarles notas y vincularlos.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Marketing / Regalos</div><div class="step-desc">Admin → Marketing → Regalos → ver quién descargó recientemente. Contactar por WhatsApp si corresponde.</div></div></div>
+      </div>
+    </div>
+
+    <!-- PORTALES Y URLS -->
     <div class="section" id="sec-portales">
       <h2>Portales y URLs</h2>
-      <p class="section-sub">Todas las páginas públicas están en Vercel. Podés compartir estas URLs directamente con tus clientes.</p>
+      <p class="section-sub">Todas las páginas públicas están en Vercel. Compartís estas URLs con clientes y prospectos según corresponda.</p>
       <table class="tbl">
         <tr><th>URL</th><th>Para quién</th><th>Qué hace</th></tr>
-        <tr><td>/onboarding.html</td><td>Nuevos clientes PDC</td><td>Formulario de onboarding de 5 preguntas. Al finalizar guarda en Supabase y aparece en Admin → Programas → Registros.</td></tr>
-        <tr><td>/portal_ser.html</td><td>Clientes de sesiones</td><td>Login con email → ven sus sesiones, pueden agendar y acceder a sus regalos.</td></tr>
-        <tr><td>/portal_programa.html</td><td>Clientes de programas</td><td>Login con código → ven su programa, hábitos, semanas, material y comunicación.</td></tr>
-        <tr><td>/recursos_jcc.html</td><td>Público general JCC</td><td>Preguntas expansivas + regalos. Página pública sin login.</td></tr>
-        <tr><td>/registro.html</td><td>Nuevos prospectos</td><td>Formulario de captación general. Guarda en Seres como prospecto.</td></tr>
-        <tr><td>/registro_jcc.html</td><td>Prospectos JCC</td><td>Formulario especializado para Barras de Access y sesiones JCC.</td></tr>
-        <tr><td>/regalos.html</td><td>Público general</td><td>Galería de regalos descargables con seguimiento de descargas.</td></tr>
-        <tr><td>/vision.html</td><td>Público general</td><td>Avance hacia 1.000.000 de sesiones. Página pública.</td></tr>
+        <tr><td>/recursos_jcc.html</td><td>Público general JCC</td><td>Página principal de Juan Cruz: preguntas expansivas, regalos con gate de leads, sesiones, clases, quién soy. Ideal para la bio de Instagram.</td></tr>
+        <tr><td>/preguntas_jcc.html</td><td>Público general</td><td>Grilla explorable de preguntas expansivas con filtros por área. Botón para compartir como imagen en Stories.</td></tr>
+        <tr><td>/registro_jcc.html</td><td>Prospectos JCC</td><td>Formulario de registro para sesiones y clases. Detecta si el número ya existe y actualiza sin duplicar.</td></tr>
+        <tr><td>/portal_ser.html</td><td>Clientes de sesiones</td><td>Login con email → ven sus sesiones, regalos y pregunta del día personalizada.</td></tr>
+        <tr><td>/portal_programa.html</td><td>Clientes de programas</td><td>Login con código → acceden a su programa completo: hábitos, semanas, material, sesiones, Mi Compromiso.</td></tr>
+        <tr><td>/onboarding.html</td><td>Nuevos clientes PDC</td><td>Formulario de onboarding de inicio de programa. Aparece en Admin → Programas → Registros.</td></tr>
+        <tr><td>/registro.html</td><td>Nuevos prospectos generales</td><td>Formulario de captación general. Guarda en Seres como prospecto.</td></tr>
+        <tr><td>/vision.html</td><td>Público general</td><td>Avance hacia 1.000.000 de sesiones.</td></tr>
       </table>
+      <div class="tip"><strong>Dominio propio:</strong> La página /recursos_jcc.html está siendo rediseñada para vivir en <strong>juancruzconsciencia.lat</strong>. Cuando esté lista, se configura en Vercel apuntando al nuevo archivo.</div>
+    </div>
+
+    <!-- CRM -->
+    <div class="section" id="sec-crm">
+      <h2>CRM / Prospectos</h2>
+      <p class="section-sub">Kanban de prospectos con 5 etapas. Cada persona que llega al sistema — por regalo, por formulario o cargada manualmente — aparece acá.</p>
+
+      <h3>Las 5 etapas del pipeline</h3>
+      <table class="tbl">
+        <tr><th>Etapa</th><th>Qué significa</th></tr>
+        <tr><td>🆕 Nuevo</td><td>Acaba de llegar, sin contacto aún</td></tr>
+        <tr><td>💬 Contactado</td><td>Ya le escribiste o hablaste</td></tr>
+        <tr><td>📅 Agendado</td><td>Tiene sesión confirmada</td></tr>
+        <tr><td>✅ Convertido</td><td>Ya es cliente (compró sesión o programa)</td></tr>
+        <tr><td>— Sin etapa</td><td>Prospectos sin clasificar</td></tr>
+      </table>
+
+      <h3>Qué muestra cada card</h3>
+      <p>Cada card del kanban muestra: nombre del prospecto, sesión que le interesa (Barras, Proceso, Clase), qué regalos descargó (🎁 chips dorados) y hace cuántos días llegó. Tocás la card para abrir su ficha completa.</p>
+
+      <h3>Cómo llegan los prospectos</h3>
+      <div class="card"><div class="card-title">🎁 Por regalo</div><p>Alguien descarga un regalo en la página JCC → pone nombre + WhatsApp → se crea automáticamente como prospecto en CRM con los regalos que descargó.</p></div>
+      <div class="card"><div class="card-title">📋 Por formulario</div><p>Alguien completa /registro_jcc.html para agendar una sesión → aparece en CRM con la sesión que le interesa.</p></div>
+      <div class="card"><div class="card-title">✋ Manual</div><p>Podés crear un prospecto directamente desde Admin → Seres → + Nuevo Ser marcando "Prospecto".</p></div>
+
+      <div class="tip"><strong>Deduplicación:</strong> Si alguien descarga un regalo y después llena el formulario de sesión con el mismo WhatsApp, el sistema los une en un solo registro. No se duplican.</div>
+    </div>
+
+    <!-- REGALOS Y LEADS -->
+    <div class="section" id="sec-regalos">
+      <h2>Regalos y captura de leads</h2>
+      <p class="section-sub">Los regalos (PDFs gratuitos) son la principal herramienta de captación. Cada descarga genera un lead en el CRM.</p>
+
+      <h3>Crear un regalo</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Marketing → Regalos → + Nuevo Regalo</div><div class="step-desc">Nombre, ícono, descripción y URL del PDF.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Elegí la marca</div><div class="step-desc">"JCC" → aparece en la página JCC. "LCP" → otros portales. "Ambos" → en todos.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Ordenalo</div><div class="step-desc">Flechas ↑ ↓ para definir el orden en que aparecen.</div></div></div>
+      </div>
+
+      <h3>Flujo de descarga (con gate de leads)</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Visita la página y toca "Recibir regalo"</div><div class="step-desc">Aparece un modal pidiendo nombre + WhatsApp.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Llena el formulario</div><div class="step-desc">Se guarda en Supabase como prospecto. Se descarga el PDF automáticamente.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Descarga otro regalo</div><div class="step-desc">Como ya está registrado, descarga directo sin modal. El nuevo regalo se suma a su historial.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Lo ves en el CRM</div><div class="step-desc">Admin → CRM → aparece como prospecto con los regalos descargados en la card.</div></div></div>
+      </div>
+
+      <h3>Ver quién descargó</h3>
+      <p>Admin → Marketing → Regalos → tab Resumen → sección "Personas que descargaron". Muestra nombre, regalo, fecha y canal. Si el ser tiene ficha, hay un botón "Ver ser →" para ir directo.</p>
+      <p>También desde la ficha de cada ser (tab 🎁 Regalos) ves el historial completo de qué descargó y cuándo.</p>
+    </div>
+
+    <!-- PREGUNTAS EXPANSIVAS -->
+    <div class="section" id="sec-preguntas">
+      <h2>Preguntas Expansivas</h2>
+      <p class="section-sub">Las preguntas expansivas son el corazón del contenido público. Se cargan en el admin y aparecen automáticamente en la página JCC y en el portal del programa.</p>
+
+      <h3>Cargar preguntas</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Herramientas → Preguntas Expansivas</div><div class="step-desc">Podés cargar una por una o en masa desde Excel (pegás y asignás áreas).</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Asignás el área</div><div class="step-desc">Identidad / Dinero / Cuerpo / Relaciones / Propósito / Consciencia.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Aparece en todos lados</div><div class="step-desc">Automáticamente en la página JCC, en preguntas_jcc.html y en el Portal del Programa (pregunta del día).</div></div></div>
+      </div>
+
+      <h3>Dónde aparecen</h3>
+      <div class="card"><div class="card-title">📅 Pregunta del día</div><p>Basada en un hash del día del año — siempre la misma pregunta para ese día, para todos. Cambia automáticamente a medianoche.</p></div>
+      <div class="card"><div class="card-title">✦ Grilla explorable</div><p>En /preguntas_jcc.html podés ver todas las preguntas con filtros por área y compartirlas como imagen de Instagram Story.</p></div>
+      <div class="card"><div class="card-title">🌿 Portal del Programa</div><p>En la tab General del portal aparece una pregunta del día personalizada (basada en el ID del ser + fecha).</p></div>
+
+      <div class="tip"><strong>Compartir en Stories:</strong> Cada pregunta tiene un botón ↗ Compartir. En el celular abre el menú nativo del teléfono para compartir a Instagram, WhatsApp, etc. En desktop descarga la imagen PNG lista para subir.</div>
     </div>
 
     <!-- SERES -->
     <div class="section" id="sec-seres">
       <h2>Seres</h2>
-      <p class="section-sub">Es tu base de contactos. Cada persona que pasa por el sistema — prospecto o cliente — tiene un registro acá.</p>
+      <p class="section-sub">Tu base de contactos completa. Cada persona que pasa por el sistema — prospecto, cliente o participante de programa — tiene un registro acá.</p>
 
-      <h3>Crear un ser manualmente</h3>
-      <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Seres → + Nuevo Ser</div><div class="step-desc">Completá nombre, email y celular como mínimo.</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Definí el origen</div><div class="step-desc">De dónde vino: Instagram, WhatsApp, referido, etc.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Guardá</div><div class="step-desc">El ser queda disponible para asignar sesiones y programas.</div></div></div>
-      </div>
+      <h3>Tipos de seres</h3>
+      <div class="card"><div class="card-title">🌱 Prospecto</div><p>Todavía no compró. Llegó por regalo, formulario o lo cargaste vos. Aparece en el CRM con su etapa.</p></div>
+      <div class="card"><div class="card-title">✨ Ser</div><p>Ya tuvo al menos una sesión. Se convierte desde prospecto con un click en el CRM.</p></div>
+      <div class="card"><div class="card-title">📚 Participante</div><p>Ser inscripto en un programa. Tiene acceso al portal del programa.</p></div>
 
-      <div class="tip"><strong>Tip:</strong> Cuando alguien se registra desde /registro.html o /registro_jcc.html, se crea solo automáticamente como prospecto. No necesitás crearlo a mano.</div>
-
-      <h3>Campos principales</h3>
+      <h3>Ficha del ser — tabs</h3>
       <table class="tbl">
-        <tr><th>Campo</th><th>Para qué sirve</th></tr>
-        <tr><td>Nombre</td><td>Se usa en los portales y en las sesiones</td></tr>
-        <tr><td>Email</td><td>Es el login del Portal del Ser</td></tr>
-        <tr><td>Prospecto</td><td>Si está marcado, es alguien que aún no compró</td></tr>
-        <tr><td>Etapa</td><td>Nuevo / Contactado / Calificado / Cliente / Inactivo</td></tr>
-        <tr><td>Origen</td><td>De dónde llegó — útil para saber qué canal funciona</td></tr>
+        <tr><th>Tab</th><th>Qué tiene</th></tr>
+        <tr><td>📋 Resumen</td><td>KPIs (sesiones, primera vez, última), info de prospecto con etapa, regalos descargados (chips dorados), review</td></tr>
+        <tr><td>✨ Sesiones</td><td>Historial completo de sesiones con estado y herramienta</td></tr>
+        <tr><td>💫 Formularios</td><td>Intakes post-sesión completados por el ser</td></tr>
+        <tr><td>🎁 Regalos</td><td>Historial de regalos descargados con fecha y canal</td></tr>
       </table>
+
+      <div class="tip"><strong>Regalos descargados:</strong> Si el ser descargó regalos desde la página JCC, aparecen como chips dorados en la ficha y en su card del CRM — útil para personalizar la conversación de seguimiento.</div>
     </div>
 
     <!-- SESIONES -->
     <div class="section" id="sec-sesiones">
       <h2>Sesiones</h2>
-      <p class="section-sub">Registrás acá cada sesión que hacés — antes, durante o después de realizarla.</p>
+      <p class="section-sub">Registrás acá cada sesión — antes, durante o después de realizarla. Están disponibles 3 tipos principales: Barras de Access, Proceso de Cuerpos y Clase de Barras.</p>
 
       <h3>Cargar una sesión</h3>
       <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Sesiones → + Nueva Sesión</div><div class="step-desc">Elegí el ser, el tipo de sesión, fecha y hora.</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Asigná facilitador</div><div class="step-desc">Si hay más de un facilitador en el equipo.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Estado de la sesión</div><div class="step-desc">Pendiente → cuando se confirma. Completado → cuando ya se realizó. Cancelado si no fue.</div></div></div>
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Sesiones → + Nueva Sesión</div><div class="step-desc">Elegí el ser, el tipo de herramienta, fecha y hora.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Asigná facilitador y estado</div><div class="step-desc">Pendiente al confirmar. Completado cuando ya se realizó.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">El ser la ve en su portal</div><div class="step-desc">Aparece automáticamente en /portal_ser.html cuando el ser entra con su email.</div></div></div>
       </div>
 
-      <h3>Estados de sesión</h3>
+      <h3>Estados</h3>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
         <span class="badge b-gold">Pendiente</span>
         <span class="badge b-green">Completado</span>
@@ -215,165 +313,234 @@ p{font-size:14px;color:var(--text);line-height:1.75;margin-bottom:12px;}
         <span class="badge b-blue">Reagendado</span>
       </div>
 
-      <div class="tip"><strong>Formulario post-sesión:</strong> Cuando una sesión está completada, el ser puede llenar un formulario de integración desde su portal. Ves las respuestas en Admin → Sesiones → detalle de la sesión.</div>
-    </div>
-
-    <!-- PROGRAMAS -->
-    <div class="section" id="sec-programas">
-      <h2>Programas</h2>
-      <p class="section-sub">Los programas son el contenido estructurado que ofrecés. Podés crear varios programas y inscribir seres en ellos.</p>
-
-      <h3>Crear un programa</h3>
-      <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Programas → + Nuevo Programa</div><div class="step-desc">Nombre, descripción, ícono, duración en semanas/meses.</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Definí las semanas</div><div class="step-desc">Desde Journey → cada semana tiene desafíos, hábitos y material.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Inscribí seres</div><div class="step-desc">Journey → Inscribir Ser → elegís quién y desde cuándo empieza.</div></div></div>
-      </div>
-
-      <h3>Pestaña Registros</h3>
-      <p>Dentro de Programas hay una pestaña <strong>📋 Registros</strong> que muestra todos los onboardings completados. Desde ahí podés:</p>
-      <div class="steps">
-        <div class="step"><div class="step-num">👁</div><div class="step-body"><div class="step-title">Ver todo</div><div class="step-desc">Ver las respuestas completas del cliente + agregar tus notas de facilitador (impresión, bloqueos, hipótesis, ratings).</div></div></div>
-        <div class="step"><div class="step-num">🔗</div><div class="step-body"><div class="step-title">Vincular</div><div class="step-desc">Asociar ese onboarding a un programa específico.</div></div></div>
-      </div>
-    </div>
-
-    <!-- ONBOARDING -->
-    <div class="section" id="sec-onboarding">
-      <h2>Onboarding</h2>
-      <p class="section-sub">El formulario de onboarding es lo primero que completa un nuevo cliente del programa PDC (Proyecta · Dirige · Construye).</p>
-
-      <h3>Flujo completo</h3>
-      <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Mandás el link al cliente</div><div class="step-desc"><span class="url">lacasadelprofit.vercel.app/onboarding.html</span></div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">El cliente llena 5 preguntas</div><div class="step-desc">Nombre, email, objetivos, situación actual, compromisos, logro esperado y tiempo disponible.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Se guarda en Supabase</div><div class="step-desc">Automáticamente, al tocar "Finalizar ✓". No necesitás hacer nada.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Lo ves en el Admin</div><div class="step-desc">Admin → Programas → pestaña Registros → aparece con estado "Pendiente".</div></div></div>
-        <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Agregás tus notas</div><div class="step-desc">Tocás "Ver todo" → completás impresión, bloqueos, hipótesis, potencial y disposición (1-10).</div></div></div>
-        <div class="step"><div class="step-num">6</div><div class="step-body"><div class="step-title">Vinculás al programa</div><div class="step-desc">Tocás "Vincular" → asignás a qué programa corresponde → queda marcado como "Asignado".</div></div></div>
-      </div>
-    </div>
-
-    <!-- MARKETING -->
-    <div class="section" id="sec-marketing">
-      <h2>Marketing</h2>
-      <p class="section-sub">Seguimiento de campañas, prospectos, retención y estadísticas de clicks.</p>
+      <h3>Tabs del admin de Sesiones</h3>
       <table class="tbl">
-        <tr><th>Pestaña</th><th>Qué muestra</th></tr>
-        <tr><td>📢 Publicidades</td><td>Campañas activas, presupuesto, resultados</td></tr>
-        <tr><td>🎯 Conversión</td><td>Cuántos prospectos se convierten en clientes</td></tr>
-        <tr><td>🔄 Retención</td><td>Seguimiento de clientes activos vs inactivos</td></tr>
-        <tr><td>🔵 Meta Ads</td><td>Integración con datos de Meta/Facebook Ads</td></tr>
-        <tr><td>🌱 Prospectos</td><td>Lista de prospectos y su etapa</td></tr>
-        <tr><td>🎁 Regalos</td><td>Estadísticas de descargas de cada regalo</td></tr>
-        <tr><td>📊 Estadísticas</td><td>Clicks por botón en recursos_jcc.html — cuántas personas tocaron cada botón</td></tr>
+        <tr><th>Tab</th><th>Qué muestra</th></tr>
+        <tr><td>📊 Resumen</td><td>KPIs globales, gráficos (acumulativo, por herramienta, por facilitador, comparativo anual, presencial vs online)</td></tr>
+        <tr><td>📋 Historial</td><td>Tabla completa filtrable y paginada</td></tr>
+        <tr><td>🧘 JC</td><td>Dashboard personal de Juan Cruz — sus propias sesiones, gráficos y métricas</td></tr>
       </table>
 
-      <div class="tip"><strong>Estadísticas de clicks:</strong> Cada vez que alguien toca un botón en la página de Recursos JCC (Agendá sesión, Otra pregunta, Recibir regalo, Reservar sesión) queda registrado. Lo ves en Marketing → Estadísticas.</div>
+      <div class="tip"><strong>Formulario post-sesión:</strong> Cuando una sesión está completada, el ser puede llenar un formulario de integración desde su portal. Ves las respuestas en la ficha del ser → tab Formularios.</div>
     </div>
 
     <!-- CALENDARIO -->
     <div class="section" id="sec-calendario">
       <h2>Calendario</h2>
-      <p class="section-sub">Vista de todas las sesiones organizadas por fecha. Tiene dos modos.</p>
-      <div class="card"><div class="card-title">📅 Vista Mensual</div><p>Muestra el mes completo con puntos de colores por sesión. Si hay muchas en un día muestra "+X más".</p></div>
-      <div class="card"><div class="card-title">📆 Vista Semanal</div><p>Muestra los 7 días de la semana con todas las sesiones del día visibles, con hora incluida.</p></div>
-      <div class="tip"><strong>Navegación:</strong> Usá las flechas ‹ › para moverte entre meses/semanas. El botón "Hoy" vuelve a la fecha actual.</div>
+      <p class="section-sub">Vista de todas las sesiones organizadas por fecha.</p>
+      <div class="card"><div class="card-title">📅 Vista Mensual</div><p>Muestra el mes completo con puntos de colores por sesión. Clic en un día para ver el detalle.</p></div>
+      <div class="card"><div class="card-title">📆 Vista Semanal</div><p>Muestra los 7 días de la semana con todas las sesiones y sus horarios.</p></div>
+      <div class="tip"><strong>Navegación:</strong> Flechas ‹ › para moverte entre períodos. El botón "Hoy" vuelve a la fecha actual.</div>
     </div>
 
-    <!-- REGALOS -->
-    <div class="section" id="sec-regalos">
-      <h2>Regalos</h2>
-      <p class="section-sub">PDFs y recursos que ofrecés gratuitamente. Se muestran en /regalos.html y en /recursos_jcc.html.</p>
+    <!-- PROGRAMAS -->
+    <div class="section" id="sec-programas">
+      <h2>Programas</h2>
+      <p class="section-sub">Los programas son el contenido estructurado que ofrecés — hoy el principal es el PDC (Proyecta · Dirige · Construye) de 90 días.</p>
 
-      <h3>Crear un regalo</h3>
+      <h3>Crear un programa</h3>
       <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Regalos → + Nuevo Regalo</div><div class="step-desc">Nombre, ícono, descripción y URL del PDF (Google Drive, Supabase Storage, etc.).</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Elegí la marca</div><div class="step-desc">"JCC" → aparece solo en recursos_jcc.html. "LCP" → aparece en regalos.html. "Ambos" → en los dos.</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Ordenalo</div><div class="step-desc">Usá las flechas ↑ ↓ para definir el orden en que aparecen.</div></div></div>
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Admin → Programas → + Nuevo</div><div class="step-desc">Nombre, descripción, ícono, color y duración en semanas.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Definí las semanas en Journey</div><div class="step-desc">Cada semana tiene título, desafíos, hábitos, material y preguntas de cierre.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Inscribí seres</div><div class="step-desc">Journey → Inscribir Ser → elegís quién, desde cuándo empieza y le generás el código de acceso.</div></div></div>
       </div>
-      <div class="tip"><strong>Seguimiento:</strong> Cada descarga queda registrada en Supabase. Lo ves en Marketing → Regalos.</div>
+
+      <h3>Pestaña Registros</h3>
+      <p>Muestra todos los onboardings completados por clientes vía /onboarding.html. Se dividen en <strong>Sin asignar</strong> (llegaron pero no los vinculaste) y <strong>Asignados</strong> (ya los vinculaste a un programa).</p>
+      <table class="tbl">
+        <tr><th>Botón</th><th>Qué hace</th></tr>
+        <tr><td>👁 Ver todo</td><td>Abre las respuestas completas del cliente. Podés agregar tus notas de facilitador: impresión, bloqueos, hipótesis, potencial y disposición (1-10).</td></tr>
+        <tr><td>🔗 Vincular</td><td>Asocia el onboarding a un programa e inscripción específica. A partir de ahí el ser lo ve en su portal.</td></tr>
+        <tr><td>🗑 Eliminar</td><td>Borra el registro (para limpiar duplicados o errores).</td></tr>
+      </table>
+      <div class="tip"><strong>Importante:</strong> El ser NO ve sus respuestas en el portal hasta que vos vinculés el registro. Mientras no lo vinculés, solo ve un botón para completar el formulario.</div>
+    </div>
+
+    <!-- ONBOARDING -->
+    <div class="section" id="sec-onboarding">
+      <h2>Onboarding</h2>
+      <p class="section-sub">Formulario que completa el cliente al inicio del programa. Captura sus objetivos, situación, compromisos y expectativas.</p>
+
+      <h3>Flujo completo</h3>
+      <div class="steps">
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Le mandás el link al cliente</div><div class="step-desc"><span class="url">lacasadelprofit.vercel.app/onboarding.html</span></div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">El cliente completa el formulario</div><div class="step-desc">Objetivos, situación actual, compromisos, logro esperado al día 91 y tiempo diario disponible.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Aparece en Admin → Programas → Registros</div><div class="step-desc">Con estado "Sin asignar". Podés ver las respuestas y agregar tus notas de facilitador.</div></div></div>
+        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Lo vinculás al programa</div><div class="step-desc">Tocás "Vincular" → elegís el programa y la inscripción → queda "Asignado".</div></div></div>
+        <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-title">El ser lo ve en su portal</div><div class="step-desc">En Portal del Programa → tab "Mi Compromiso" aparecen todas sus respuestas.</div></div></div>
+      </div>
+    </div>
+
+    <!-- JOURNEY -->
+    <div class="section" id="sec-journey">
+      <h2>Journey</h2>
+      <p class="section-sub">Es la vista de administración de una inscripción específica — el espacio de trabajo principal para acompañar a un ser en su programa.</p>
+
+      <h3>Acceder al Journey de un ser</h3>
+      <p>Admin → Journey → elegís el programa → seleccionás el ser inscripto.</p>
+
+      <h3>Tabs del Journey</h3>
+      <table class="tbl">
+        <tr><th>Tab</th><th>Qué tiene</th></tr>
+        <tr><td>🚀 Onboarding</td><td>Respuestas del portal del ser (para qué está acá, resultado deseado, hábitos elegidos) + tus notas de facilitador (editable).</td></tr>
+        <tr><td>✨ Sesiones</td><td>Sesiones del programa semana por semana + sesiones extra asignadas. Podés editar fecha, facilitador y estado inline.</td></tr>
+        <tr><td>🗓 Calendario</td><td>Vista mensual del progreso del ser: hábitos, desafíos y sesiones.</td></tr>
+        <tr><td>📁 Material</td><td>Material de la inscripción.</td></tr>
+        <tr><td>📝 Notas</td><td>Notas del facilitador sobre el proceso del ser.</td></tr>
+        <tr><td>💬 Comunicación</td><td>Mensajes entre facilitador y ser.</td></tr>
+        <tr><td>📅 Semanas</td><td>Vista semana por semana: podés cargar intención, mensaje del facilitador y pregunta de cierre.</td></tr>
+      </table>
+    </div>
+
+    <!-- HERRAMIENTAS -->
+    <div class="section" id="sec-herramientas">
+      <h2>Herramientas</h2>
+      <p class="section-sub">Catálogo de herramientas del sistema: sesiones experimentales, clases y herramientas prácticas. También incluye las Preguntas Expansivas.</p>
+
+      <h3>Tipos de herramientas</h3>
+      <div class="card"><div class="card-title">✨ Sesión Experimental</div><p>Barras de Access, Proceso de Cuerpos, Sesión Profit. Tienen facilitadores, modalidad y duración. Se usan al cargar sesiones.</p></div>
+      <div class="card"><div class="card-title">📚 Clase</div><p>Clase de Barras de Access. Tiene duración, facilitadores y modalidad.</p></div>
+      <div class="card"><div class="card-title">🔧 Herramienta Práctica</div><p>Recursos de autoaplicación. Tienen campos: cuándo usarla, contexto e instrucciones. Se pueden ordenar con ↑ ↓.</p></div>
+      <div class="card"><div class="card-title">💬 Preguntas Expansivas</div><p>Banco de preguntas organizadas por área. Se cargan masivamente desde Excel. Aparecen en la página JCC, en preguntas_jcc.html y en el portal del programa.</p></div>
+
+      <h3>Mapa de herramientas</h3>
+      <p>La tab 🗺️ Mapa organiza las herramientas por pilares (Despertar, Liberación, Expansión, etc.) con chips clickeables que navegan a la vista filtrada.</p>
+    </div>
+
+    <!-- CONTENIDO -->
+    <div class="section" id="sec-contenido">
+      <h2>Contenido</h2>
+      <p class="section-sub">Gestión del Manual de Marca, redes sociales, comunidad y generador de contenido con IA.</p>
+
+      <h3>Sub-secciones</h3>
+      <div class="card"><div class="card-title">📖 Manual de Marca</div><p>Identidad (nombre, eslogan, misión, visión, hashtags), voz (estilo, palabras usar/evitar, tonos), colores, tipografía y buyer personas. Se guarda en Supabase.</p></div>
+      <div class="card"><div class="card-title">📱 Redes Sociales</div><p>Registro de publicaciones y métricas por red.</p></div>
+      <div class="card"><div class="card-title">🤖 Generador IA</div><p>3 modos: Preguntas Expansivas / Post Instagram / Historia-Story. Usa el Manual de Marca para armar un prompt listo para copiar en ChatGPT o Claude.</p></div>
+    </div>
+
+    <!-- MARKETING -->
+    <div class="section" id="sec-marketing">
+      <h2>Marketing</h2>
+      <p class="section-sub">Seguimiento de prospectos, regalos, conversiones y estadísticas de la página.</p>
+
+      <table class="tbl">
+        <tr><th>Pestaña</th><th>Qué muestra</th></tr>
+        <tr><td>📊 Resumen</td><td>KPIs globales del embudo de marketing</td></tr>
+        <tr><td>📢 Publicidades</td><td>Campañas activas, presupuesto y resultados</td></tr>
+        <tr><td>🎯 Conversión</td><td>Cuántos prospectos se convierten en clientes y en qué tiempo</td></tr>
+        <tr><td>🔄 Retención</td><td>Seguimiento de clientes activos vs inactivos</td></tr>
+        <tr><td>🔵 Meta Ads</td><td>Datos de campañas de Meta/Facebook</td></tr>
+        <tr><td>🎁 Regalos</td><td>Totales de descargas, por canal, por mes, top regalos y <strong>lista de personas que descargaron</strong> con botón para ver su ficha</td></tr>
+        <tr><td>📊 Stats Landing</td><td>Clicks en botones de la página JCC — cuántas personas tocaron cada CTA</td></tr>
+      </table>
     </div>
 
     <!-- PORTAL SER -->
     <div class="section" id="sec-portal-ser">
       <h2>Portal del Ser</h2>
-      <p class="section-sub">Portal privado para clientes de sesiones individuales. Se loguean con su email.</p>
+      <p class="section-sub">Portal privado para clientes de sesiones individuales. Acceden con su email — sin contraseña.</p>
 
-      <h3>Qué ve el cliente</h3>
-      <div class="card"><div class="card-title">✨ Mis Sesiones</div><p>Lista de todas sus sesiones: pendientes, completadas, canceladas. Puede filtrar por estado.</p></div>
-      <div class="card"><div class="card-title">📅 Próxima sesión</div><p>Cuántos días faltan para la próxima sesión agendada.</p></div>
-      <div class="card"><div class="card-title">🎁 Regalos</div><p>Acceso a los regalos disponibles sin salir del portal.</p></div>
-      <div class="card"><div class="card-title">📅 Agendar sesión</div><p>Formulario para pedir una nueva sesión → llega a vos por WhatsApp.</p></div>
+      <h3>Qué ve el ser</h3>
+      <div class="card"><div class="card-title">✦ Pregunta del día</div><p>Pregunta expansiva personalizada basada en el ID del ser + fecha. Diferente para cada uno.</p></div>
+      <div class="card"><div class="card-title">✨ Mis Sesiones</div><p>Lista de todas sus sesiones: pendientes, completadas, canceladas. Puede filtrar por estado y completar el formulario post-sesión.</p></div>
+      <div class="card"><div class="card-title">🎁 Regalos</div><p>Accede a los regalos disponibles (marca LCP o Ambos). Cada descarga queda registrada y vinculada a su perfil.</p></div>
+      <div class="card"><div class="card-title">📅 Próxima sesión</div><p>Cuenta regresiva de días hasta la próxima sesión agendada.</p></div>
 
-      <div class="tip"><strong>Login:</strong> El cliente escribe su email → el sistema lo busca en la tabla Seres → si existe, entra. No hay contraseña.</div>
+      <div class="tip"><strong>Login sin contraseña:</strong> El ser escribe su email → el sistema lo busca en la tabla Seres → si existe, entra. Si no está registrado, no accede.</div>
     </div>
 
     <!-- PORTAL PROGRAMA -->
     <div class="section" id="sec-portal-programa">
       <h2>Portal del Programa</h2>
-      <p class="section-sub">Portal para clientes inscriptos en programas. Se loguean con un código único.</p>
+      <p class="section-sub">Portal para clientes inscriptos en programas. Acceden con un código único que les generás vos desde el admin.</p>
 
       <h3>Secciones del portal</h3>
       <table class="tbl">
-        <tr><th>Pestaña</th><th>Qué tiene</th></tr>
-        <tr><td>🏠 General</td><td>Resumen del programa, para qué lo hace, resultado deseado, pregunta del día</td></tr>
-        <tr><td>✅ Hábitos</td><td>Registro diario de hábitos con racha</td></tr>
-        <tr><td>📊 Mi Avance</td><td>Progreso global y por área (espiritual, mental, física, social)</td></tr>
-        <tr><td>📅 Semanas</td><td>Contenido semana por semana: desafíos y material</td></tr>
-        <tr><td>🗓 Calendario</td><td>Sus sesiones en vista de calendario</td></tr>
-        <tr><td>📁 Material</td><td>Archivos y recursos del programa</td></tr>
+        <tr><th>Tab</th><th>Qué tiene</th></tr>
+        <tr><td>🏠 General</td><td>Resumen del programa, pregunta del día personalizada, checklist de hábito de hoy, carta al yo futuro, días en el proceso</td></tr>
+        <tr><td>✅ Hábitos</td><td>Registro diario de hábitos elegidos al inicio del programa, con racha y calendario mensual</td></tr>
+        <tr><td>📅 Semanas</td><td>Contenido semana por semana: desafíos, material, intención y pregunta de cierre cargadas por el facilitador</td></tr>
+        <tr><td>📁 Material</td><td>Todos los recursos del programa organizados por tipo</td></tr>
+        <tr><td>🗓 Calendario</td><td>Progreso mensual: hábitos (H), desafíos (D) y sesiones del programa</td></tr>
+        <tr><td>🏅 Logros</td><td>Hitos desbloqueados y progreso por área (espiritual, mental, física, social)</td></tr>
+        <tr><td>✨ Sesiones</td><td>Sesiones del programa y sesiones individuales</td></tr>
         <tr><td>📝 Notas</td><td>Notas personales por semana</td></tr>
         <tr><td>💬 Comunicación</td><td>Mensajes con el facilitador</td></tr>
+        <tr><td>📋 Mi Compromiso</td><td>Respuestas del onboarding: objetivos, situación inicial, compromisos, logro esperado. <strong>Solo aparece después de que el facilitador vincula el registro.</strong></td></tr>
       </table>
-
-      <div class="tip"><strong>Pregunta del día:</strong> Cada día aparece una pregunta expansiva distinta — la misma para todos los participantes. Cambia automáticamente a medianoche.</div>
     </div>
 
-    <!-- RECURSOS JCC -->
-    <div class="section" id="sec-recursos-jcc">
-      <h2>Recursos JCC</h2>
-      <p class="section-sub">Página pública de Juan Cruz Consciencia con preguntas expansivas y regalos.</p>
-      <div class="card"><div class="card-title">✦ Pregunta del momento</div><p>Muestra una pregunta aleatoria por usuario. El botón "Otra pregunta" rota por todas las disponibles.</p></div>
-      <div class="card"><div class="card-title">Preguntas expansivas</div><p>Todas las preguntas activas cargadas en Admin → Comunidad. Se agregan desde ahí.</p></div>
-      <div class="card"><div class="card-title">🎁 Regalos para vos</div><p>Regalos con marca "JCC" o "Ambos". En grilla de 2 columnas.</p></div>
-      <div class="tip"><strong>Estadísticas:</strong> Los clicks en todos los botones quedan registrados. Se ven en Admin → Marketing → Estadísticas.</div>
+    <!-- JCC -->
+    <div class="section" id="sec-jcc">
+      <h2>Página JCC (Juan Cruz Consciencia)</h2>
+      <p class="section-sub">La página pública principal de Juan Cruz. Ideal para la bio de Instagram. Próximamente en juancruzconsciencia.lat.</p>
+
+      <h3>Secciones de la página</h3>
+      <div class="card"><div class="card-title">✦ Pregunta del día + Pregunta del momento</div><p>La pregunta del día usa hash por fecha (siempre la misma ese día). La del momento rota aleatoriamente. Ambas tienen botón ↗ Compartir que genera una imagen Story.</p></div>
+      <div class="card"><div class="card-title">🎁 Regalos</div><p>Con gate de leads: el visitante pone nombre + WhatsApp antes de descargar. Se guarda como prospecto en el CRM. Segunda descarga: descarga directo y suma el regalo al historial.</p></div>
+      <div class="card"><div class="card-title">🌀 Sesiones y Clases</div><p>Barras de Access, Proceso de Cuerpos y Clase de Barras. Cada una con su información, beneficios y botón de reserva.</p></div>
+      <div class="card"><div class="card-title">✦ Quién Soy</div><p>Historia de Juan Cruz, su camino espiritual, filosofía y la visión de La Casa del Profit.</p></div>
+
+      <h3>Página de preguntas (/preguntas_jcc.html)</h3>
+      <p>Página dedicada solo a preguntas expansivas. Tiene filtros por área (Identidad, Dinero, Cuerpo, Relaciones, Propósito, Consciencia), paginación de 12 en 12 y botón de compartir en Stories en cada card.</p>
+
+      <div class="tip"><strong>Estadísticas:</strong> Cada click en botones de la página queda registrado. Lo ves en Admin → Marketing → Stats Landing.</div>
     </div>
 
     <!-- SUPABASE -->
     <div class="section" id="sec-supabase">
       <h2>Base de datos</h2>
-      <p class="section-sub">Supabase es donde se guarda toda la información. No necesitás entrar normalmente — el admin lo maneja. Pero si necesitás revisarla directamente, acá están las tablas.</p>
+      <p class="section-sub">Supabase es donde se guarda todo. No necesitás entrar normalmente — el admin lo maneja. Pero si necesitás revisarla directamente, acá están las tablas.</p>
+
+      <h3>Patrón de datos</h3>
+      <p>Todas las tablas usan el mismo patrón: <span class="url">id</span> (texto, generado manualmente con UUID o timestamp) + <span class="url">data</span> (JSONB con toda la información). Esto hace que el sistema sea muy flexible — podés agregar nuevos campos sin modificar la estructura de la base de datos.</p>
+
+      <h3>Tablas principales</h3>
       <table class="tbl">
         <tr><th>Tabla</th><th>Qué guarda</th></tr>
-        <tr><td>seres</td><td>Todos los contactos: prospectos y clientes</td></tr>
-        <tr><td>sessions</td><td>Todas las sesiones registradas</td></tr>
-        <tr><td>programas</td><td>Los programas creados</td></tr>
-        <tr><td>inscripciones</td><td>Qué ser está en qué programa, con su progreso</td></tr>
-        <tr><td>onboardings</td><td>Formularios de onboarding completados por clientes</td></tr>
-        <tr><td>herramientas</td><td>Tipos de sesión disponibles</td></tr>
-        <tr><td>regalos</td><td>PDFs y recursos descargables</td></tr>
-        <tr><td>regalo_eventos</td><td>Registro de descargas y clicks en botones</td></tr>
-        <tr><td>comunidad_contenido</td><td>Preguntas expansivas y contenido de comunidad</td></tr>
+        <tr><td>seres</td><td>Todos los contactos: prospectos y clientes. Incluye regalosDescargados, sesionInteres, etapa CRM.</td></tr>
+        <tr><td>sessions</td><td>Todas las sesiones registradas con fecha, herramienta, facilitador y estado.</td></tr>
+        <tr><td>programas</td><td>Los programas creados con sus semanas, herramientas y configuración.</td></tr>
+        <tr><td>inscripciones</td><td>Qué ser está en qué programa, con su progreso, hábitos y semanas.</td></tr>
+        <tr><td>onboardings</td><td>Formularios de onboarding completados. Se vinculan a inscripciones desde el admin.</td></tr>
+        <tr><td>herramientas</td><td>Catálogo de sesiones experimentales, clases y herramientas prácticas.</td></tr>
+        <tr><td>regalos</td><td>PDFs y recursos descargables con marca, orden y URL del PDF.</td></tr>
+        <tr><td>regalo_eventos</td><td>Registro de descargas con nombre, celular, regalo, fecha y canal.</td></tr>
+        <tr><td>comunidad_contenido</td><td>Preguntas expansivas, reflexiones, conceptos e información de comunidad.</td></tr>
+        <tr><td>configuracion</td><td>Manual de Marca y configuraciones del sistema.</td></tr>
+        <tr><td>sintesis</td><td>Insights de conversaciones con IA guardados desde Profit IA.</td></tr>
       </table>
-      <div class="tip"><strong>Importante:</strong> Todas las tablas usan el mismo patrón: <span class="url">id</span> + <span class="url">data (jsonb)</span>. Toda la información del registro va dentro del campo <span class="url">data</span>.</div>
+
+      <h3>Políticas de seguridad (RLS)</h3>
+      <p>Las tablas sensibles (seres, sessions, programas, etc.) solo son accesibles con sesión autenticada. La tabla <span class="url">seres</span> permite INSERT/UPDATE/SELECT desde el portal público solo para registros marcados como <span class="url">prospecto: true</span>. Los seres reales (clientes) no son accesibles desde el portal.</p>
     </div>
 
     <!-- DEPLOY -->
     <div class="section" id="sec-deploy">
       <h2>Deploy — Actualizar la web</h2>
-      <p class="section-sub">Cuando se hacen cambios en los archivos, hay que subirlos a GitHub para que Vercel actualice la web automáticamente.</p>
+      <p class="section-sub">Cuando Claude (o vos) hace cambios en los archivos, hay que subirlos a GitHub para que Vercel actualice la web automáticamente.</p>
 
-      <h3>Cómo actualizar un archivo</h3>
+      <h3>Cómo actualizar</h3>
       <div class="steps">
-        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">Ir al repositorio en GitHub</div><div class="step-desc">github.com/lacasadelprofit-dot/Lacasadelprofit</div></div></div>
-        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Navegar a la carpeta del archivo</div><div class="step-desc">Ej: 2_PORTALES_PUBLICOS → recursos_jcc.html</div></div></div>
-        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Editar o reemplazar el archivo</div><div class="step-desc">Tocás el lápiz ✏️ para editar, o subís el archivo nuevo arrastrándolo.</div></div></div>
-        <div class="step"><div class="step-num">4</div><div class="step-body"><div class="step-title">Hacer commit</div><div class="step-desc">Escribís un mensaje breve de qué cambió y confirmás.</div></div></div>
-        <div class="step"><div class="step-num">5</div><div class="step-body"><div class="step-title">Esperar 1-2 minutos</div><div class="step-desc">Vercel detecta el commit y despliega automáticamente. La web queda actualizada.</div></div></div>
+        <div class="step"><div class="step-num">1</div><div class="step-body"><div class="step-title">git add + git commit + git push</div><div class="step-desc">Desde la terminal en la carpeta del proyecto. O desde GitHub Desktop si preferís visual.</div></div></div>
+        <div class="step"><div class="step-num">2</div><div class="step-body"><div class="step-title">Vercel detecta el push</div><div class="step-desc">Automáticamente. En 1-2 minutos la web está actualizada.</div></div></div>
+        <div class="step"><div class="step-num">3</div><div class="step-body"><div class="step-title">Verificar en Vercel</div><div class="step-desc">lacasadelprofit.vercel.app → si algo falla, Vercel muestra el error en el dashboard.</div></div></div>
       </div>
 
-      <div class="tip"><strong>Vercel Analytics:</strong> Para activar el seguimiento de visitas, entrá al dashboard de Vercel → tu proyecto → pestaña Analytics → habilitarlo. Es gratis y da visitas, visitantes únicos y de dónde vienen.</div>
+      <h3>Archivos clave</h3>
+      <table class="tbl">
+        <tr><th>Archivo</th><th>Qué es</th></tr>
+        <tr><td>1_ADMINISTRACION/index.html</td><td>El admin completo (SPA de miles de líneas)</td></tr>
+        <tr><td>2_PORTALES_PUBLICOS/recursos_jcc.html</td><td>Página pública JCC con gate de leads</td></tr>
+        <tr><td>2_PORTALES_PUBLICOS/preguntas_jcc.html</td><td>Grilla de preguntas expansivas</td></tr>
+        <tr><td>2_PORTALES_PUBLICOS/registro_jcc.html</td><td>Formulario de sesiones con dedup</td></tr>
+        <tr><td>2_PORTALES_PUBLICOS/portal_ser.html</td><td>Portal del ser (sesiones individuales)</td></tr>
+        <tr><td>2_PORTALES_PUBLICOS/portal_programa.html</td><td>Portal del programa (90 días)</td></tr>
+        <tr><td>4_BASE_DE_DATOS/*.sql</td><td>Scripts SQL de referencia — ya ejecutados en Supabase</td></tr>
+        <tr><td>vercel.json</td><td>Configuración de rutas y dominios en Vercel</td></tr>
+      </table>
+
+      <div class="tip"><strong>SQL en Supabase:</strong> Cuando Claude genera un archivo .sql, hay que ejecutarlo manualmente en Supabase → SQL Editor. Los archivos .sql en 4_BASE_DE_DATOS son el historial de todo lo ejecutado.</div>
     </div>
 
   </main>
