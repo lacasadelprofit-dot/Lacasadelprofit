@@ -1132,14 +1132,6 @@ th{background:rgba(28,26,46,.88)!important;}
           <span class="acceso-ext">↗</span>
         </a>
 
-        <a href="/regalos.html" target="_blank" class="acceso-card" style="text-decoration:none">
-          <div class="acceso-ico">🎁</div>
-          <div class="acceso-info">
-            <div class="acceso-titulo">Regalos Digitales</div>
-            <div class="acceso-desc">Página pública de regalos y recursos</div>
-          </div>
-          <span class="acceso-ext">↗</span>
-        </a>
 
         <a href="/recursos_jcc.html" target="_blank" class="acceso-card" style="text-decoration:none">
           <div class="acceso-ico">🌿</div>
@@ -5272,6 +5264,7 @@ function renderProgRegistros(){
         <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
           <button class="btn btn-s" onclick="verOnboarding('${o.id}')">👁 Ver todo</button>
           ${o.estado!=='asignado'?`<button class="btn btn-p" onclick="vincularOnboarding('${o.id}')">🔗 Vincular</button>`:`<button class="btn btn-s" onclick="vincularOnboarding('${o.id}')">↩ Cambiar</button>`}
+          <button class="btn btn-s" style="color:#e06060;border-color:rgba(220,60,60,.3)" onclick="eliminarOnboarding('${o.id}')">🗑 Eliminar</button>
         </div>
       </div>
     </div>`;
@@ -5380,6 +5373,18 @@ function confirmarVincular(){
   const ser=insc?seres.find(x=>x.id===insc.serId):null;
   toast(progId&&inscId?`🔗 Vinculado a ${ser?ser.nombre||ser.email:'ser'}`:'Vínculo removido');
 }
+async function eliminarOnboarding(id){
+  const o=onboardings.find(x=>x.id===id);if(!o)return;
+  const nom=o.nombre||'este registro';
+  if(!confirm(`¿Eliminar el registro de ${nom}? Esta acción no se puede deshacer.`))return;
+  const {error}=await _sb.from('onboardings').delete().eq('id',String(id));
+  if(error){toast('Error al eliminar: '+error.message);return;}
+  onboardings=onboardings.filter(x=>x.id!==id);
+  saveLocalCache();
+  renderProgRegistros();
+  toast('Registro eliminado');
+}
+
 function renderProgInscritos(){
   const el=document.getElementById('progInscritosView');if(!el)return;
   const p=programas.find(x=>x.id===curJourneyProgId);if(!p)return;
