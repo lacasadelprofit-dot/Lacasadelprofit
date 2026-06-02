@@ -386,7 +386,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
     <!-- PASO 2: Formulario -->
     <div id="modalPaso2" style="display:none">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
         <button onclick="backToStep1()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1">←</button>
         <div>
           <div id="paso2Titulo" style="font-size:17px;font-weight:800;color:var(--text)"></div>
@@ -394,14 +394,79 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
         </div>
       </div>
       <input id="regHoney" type="text" tabindex="-1" autocomplete="off" style="position:absolute;opacity:0;height:0;pointer-events:none">
+
+      <!-- Campos base: siempre visibles -->
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
         <input id="regNombre" type="text" placeholder="Tu nombre" autocomplete="off"
           style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit">
         <input id="regWapp" type="tel" placeholder="WhatsApp (ej: 1134567890)" autocomplete="off"
           style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit">
-        <textarea id="regMensaje" placeholder="¿Algo que quieras contarme antes? (opcional)" rows="3"
+      </div>
+
+      <!-- Campos Barras -->
+      <div id="camposBarras" style="display:none;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Qué sentís?</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="sintRuido" style="accent-color:var(--terra);width:16px;height:16px"> Mucho ruido mental</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="sintEstres" style="accent-color:var(--terra);width:16px;height:16px"> Estrés / Ansiedad</label>
+          <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer"><input type="checkbox" id="sintCansancio" style="accent-color:var(--terra);width:16px;height:16px"> Cansancio general</label>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Cuándo lo sentís más?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="momentoDia" value="En el trabajo" style="accent-color:var(--terra)"> En el trabajo</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="momentoDia" value="Por la noche" style="accent-color:var(--terra)"> Por la noche</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="momentoDia" value="Durante todo el día" style="accent-color:var(--terra)"> Durante todo el día</label>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Cuándo querés hacerla?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuando" value="Esta semana" style="accent-color:var(--terra)"> Esta semana</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuando" value="Próximas 2 semanas" style="accent-color:var(--terra)"> Próximas 2 sem.</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuando" value="Este mes" style="accent-color:var(--terra)"> Este mes</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuando" value="No sé todavía" style="accent-color:var(--terra)"> No sé todavía</label>
+        </div>
+      </div>
+
+      <!-- Campos Proceso de Cuerpos -->
+      <div id="camposProceso" style="display:none;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Hay algún patrón que sentís que se repite?</div>
+        <textarea id="patronProceso" placeholder="Contame brevemente..." rows="2"
+          style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit;resize:none;margin-bottom:14px"></textarea>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Cuándo querés hacerla?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuandoProceso" value="Esta semana" style="accent-color:var(--terra)"> Esta semana</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuandoProceso" value="Próximas 2 semanas" style="accent-color:var(--terra)"> Próximas 2 sem.</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuandoProceso" value="Este mes" style="accent-color:var(--terra)"> Este mes</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuandoProceso" value="No sé todavía" style="accent-color:var(--terra)"> No sé todavía</label>
+        </div>
+      </div>
+
+      <!-- Campos Clase -->
+      <div id="camposClase" style="display:none;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Ya recibiste sesiones de Barras?</div>
+        <div style="display:flex;gap:8px;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="expClase" value="Sí" style="accent-color:var(--terra)"> Sí</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="expClase" value="No" style="accent-color:var(--terra)"> No</label>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Para qué querés aprender?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="paraQueClase" value="Uso personal" style="accent-color:var(--terra)"> Uso personal</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="paraQueClase" value="Ofrecer sesiones" style="accent-color:var(--terra)"> Ofrecer sesiones</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="paraQueClase" value="Los dos" style="accent-color:var(--terra)"> Los dos</label>
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px">¿Cuándo te gustaría hacer la clase?</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuandoClase" value="Próximas 2 semanas" style="accent-color:var(--terra)"> Próximas 2 sem.</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuandoClase" value="Este mes" style="accent-color:var(--terra)"> Este mes</label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;background:var(--card2);border:1px solid var(--border);border-radius:20px;padding:6px 12px"><input type="radio" name="cuandoClase" value="No sé todavía" style="accent-color:var(--terra)"> No sé todavía</label>
+        </div>
+      </div>
+
+      <!-- Mensaje siempre visible -->
+      <div style="margin-bottom:14px">
+        <textarea id="regMensaje" placeholder="¿Algo que quieras contarme antes? (opcional)" rows="2"
           style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit;resize:none;line-height:1.5"></textarea>
       </div>
+
       <button id="regSubmitBtn" onclick="submitRegistro()"
         style="width:100%;padding:14px;background:var(--terra);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
         Enviar ✦
@@ -864,6 +929,13 @@ function selectSesion(key, nombre, ico){
   document.getElementById('regNombre').value='';
   document.getElementById('regWapp').value='';
   document.getElementById('regMensaje').value='';
+  // Mostrar campos según sesión
+  document.getElementById('camposBarras').style.display=key==='barras'?'':'none';
+  document.getElementById('camposProceso').style.display=key==='proceso_cuerpos'?'':'none';
+  document.getElementById('camposClase').style.display=key==='clase_barras'?'':'none';
+  // Reset checkboxes y radios
+  ['sintRuido','sintEstres','sintCansancio'].forEach(id=>{const el=document.getElementById(id);if(el)el.checked=false;});
+  document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
   document.getElementById('modalPaso1').style.display='none';
   document.getElementById('modalPaso2').style.display='';
   track('click_btn',{boton:'modal_elegir_'+key});
@@ -882,18 +954,36 @@ async function submitRegistro(){
   btn.textContent='⏳ Un momento...';btn.disabled=true;
   const SESION_MAP={barras:'Barras de Access',proceso_cuerpos:'Proceso de Cuerpos',clase_barras:'Clase de Barras de Access®',no_se:'Sin definir'};
   const sesionInteres=SESION_MAP[_sesionKey]||_sesionNombre;
+  // Recolectar campos extra según sesión
+  const extras={};
+  if(_sesionKey==='barras'){
+    const sints=[];
+    if(document.getElementById('sintRuido')?.checked)sints.push('Mucho ruido mental');
+    if(document.getElementById('sintEstres')?.checked)sints.push('Estrés / Ansiedad');
+    if(document.getElementById('sintCansancio')?.checked)sints.push('Cansancio general');
+    extras.sintomas=sints;
+    extras.momentoDia=document.querySelector('input[name=momentoDia]:checked')?.value||'';
+    extras.cuando=document.querySelector('input[name=cuando]:checked')?.value||'';
+  } else if(_sesionKey==='proceso_cuerpos'){
+    extras.patron=document.getElementById('patronProceso')?.value.trim()||'';
+    extras.cuando=document.querySelector('input[name=cuandoProceso]:checked')?.value||'';
+  } else if(_sesionKey==='clase_barras'){
+    extras.expBarras=document.querySelector('input[name=expClase]:checked')?.value||'';
+    extras.paraQue=document.querySelector('input[name=paraQueClase]:checked')?.value||'';
+    extras.cuando=document.querySelector('input[name=cuandoClase]:checked')?.value||'';
+  }
   try{
     const {data:existing}=await _sb.from('seres').select('id,data').filter('data->>celular','eq',celular).limit(1);
     if(existing&&existing.length){
       const d=existing[0].data||{};
       await _sb.from('seres').update({data:{...d,herramientaInteres:sesionInteres,sesionInteres,
         mensajeRegistro:mensaje||d.mensajeRegistro||'',
-        nombre:d.nombre||nombre,etapaProsp:d.etapaProsp||'Nuevo'},updated_at:new Date().toISOString()}).eq('id',existing[0].id);
+        nombre:d.nombre||nombre,etapaProsp:d.etapaProsp||'Nuevo',...extras},updated_at:new Date().toISOString()}).eq('id',existing[0].id);
     } else {
       await _sb.from('seres').insert({id:crypto.randomUUID(),data:{
         nombre,celular,prospecto:true,fuente:'recursos_jcc',
         herramientaInteres:sesionInteres,sesionInteres,
-        mensajeRegistro:mensaje,etapaProsp:'Nuevo',
+        mensajeRegistro:mensaje,etapaProsp:'Nuevo',...extras,
         fechaAlta:new Date().toISOString().split('T')[0],ts:new Date().toISOString()
       }});
     }
