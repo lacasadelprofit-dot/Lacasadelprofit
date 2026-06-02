@@ -345,40 +345,78 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="modal-sheet" style="position:relative">
     <button class="modal-close" onclick="closeModalBtn()" aria-label="Cerrar">✕</button>
     <div class="modal-handle"></div>
-    <div class="modal-title">¿Qué te llama?</div>
-    <div class="modal-sub">Elegí lo que más resuena con lo que estás buscando ahora.</div>
-    <a class="modal-sesion" href="/registro_jcc.html?sesion=barras" onclick="track('click_btn',{boton:'modal_elegir_barras'})">
-      <div class="modal-sesion-ico">🌀</div>
-      <div class="modal-sesion-info">
-        <div class="modal-sesion-nombre">Barras de Access</div>
-        <div class="modal-sesion-desc">Liberar carga mental, relajación profunda, claridad · 60 min</div>
+
+    <!-- PASO 1: Elegir sesión -->
+    <div id="modalPaso1">
+      <div class="modal-title">¿Qué te llama?</div>
+      <div class="modal-sub">Elegí lo que más resuena con lo que estás buscando ahora.</div>
+      <div class="modal-sesion" onclick="selectSesion('barras','Barras de Access','🌀')">
+        <div class="modal-sesion-ico">🌀</div>
+        <div class="modal-sesion-info">
+          <div class="modal-sesion-nombre">Barras de Access</div>
+          <div class="modal-sesion-desc">Liberar carga mental, relajación profunda, claridad · 60 min</div>
+        </div>
+        <div class="modal-sesion-arr">→</div>
       </div>
-      <div class="modal-sesion-arr">→</div>
-    </a>
-    <a class="modal-sesion" href="/registro_jcc.html?sesion=proceso_cuerpos" onclick="track('click_btn',{boton:'modal_elegir_proceso_cuerpos'})">
-      <div class="modal-sesion-ico">🌿</div>
-      <div class="modal-sesion-info">
-        <div class="modal-sesion-nombre">Proceso de Cuerpos</div>
-        <div class="modal-sesion-desc">Conectar con tu cuerpo, liberar bloqueos · 60 min</div>
+      <div class="modal-sesion" onclick="selectSesion('proceso_cuerpos','Proceso de Cuerpos','🌿')">
+        <div class="modal-sesion-ico">🌿</div>
+        <div class="modal-sesion-info">
+          <div class="modal-sesion-nombre">Proceso de Cuerpos</div>
+          <div class="modal-sesion-desc">Conectar con tu cuerpo, liberar bloqueos · 60 min</div>
+        </div>
+        <div class="modal-sesion-arr">→</div>
       </div>
-      <div class="modal-sesion-arr">→</div>
-    </a>
-    <a class="modal-sesion" href="/registro_jcc.html?tipo=clase_barras" onclick="track('click_btn',{boton:'modal_elegir_clase_barras'})">
-      <div class="modal-sesion-ico">📚</div>
-      <div class="modal-sesion-info">
-        <div class="modal-sesion-nombre">Clase de Barras de Access®</div>
-        <div class="modal-sesion-desc">Aprendé a dar sesiones · 8 horas · Un solo día</div>
+      <div class="modal-sesion" onclick="selectSesion('clase_barras','Clase de Barras de Access®','📚')">
+        <div class="modal-sesion-ico">📚</div>
+        <div class="modal-sesion-info">
+          <div class="modal-sesion-nombre">Clase de Barras de Access®</div>
+          <div class="modal-sesion-desc">Aprendé a dar sesiones · 8 horas · Un solo día</div>
+        </div>
+        <div class="modal-sesion-arr">→</div>
       </div>
-      <div class="modal-sesion-arr">→</div>
-    </a>
-    <hr class="modal-divider">
-    <a class="modal-nosé" href="/registro_jcc.html" onclick="track('click_btn',{boton:'modal_no_se_cual'})">
-      <div style="font-size:22px">💬</div>
-      <div class="modal-nosé-text">
-        <strong>No sé cuál elegir</strong>
-        Contame dónde estás y lo vemos juntos
+      <hr class="modal-divider">
+      <div class="modal-nosé" onclick="selectSesion('no_se','Sin definir','💬')">
+        <div style="font-size:22px">💬</div>
+        <div class="modal-nosé-text">
+          <strong>No sé cuál elegir</strong>
+          Contame dónde estás y lo vemos juntos
+        </div>
       </div>
-    </a>
+    </div>
+
+    <!-- PASO 2: Formulario -->
+    <div id="modalPaso2" style="display:none">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+        <button onclick="backToStep1()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:0;line-height:1">←</button>
+        <div>
+          <div id="paso2Titulo" style="font-size:17px;font-weight:800;color:var(--text)"></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:2px">Completá tus datos y te contactamos</div>
+        </div>
+      </div>
+      <input id="regHoney" type="text" tabindex="-1" autocomplete="off" style="position:absolute;opacity:0;height:0;pointer-events:none">
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px">
+        <input id="regNombre" type="text" placeholder="Tu nombre" autocomplete="off"
+          style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit">
+        <input id="regWapp" type="tel" placeholder="WhatsApp (ej: 1134567890)" autocomplete="off"
+          style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit">
+        <textarea id="regMensaje" placeholder="¿Algo que quieras contarme antes? (opcional)" rows="3"
+          style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit;resize:none;line-height:1.5"></textarea>
+      </div>
+      <button id="regSubmitBtn" onclick="submitRegistro()"
+        style="width:100%;padding:14px;background:var(--terra);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+        Enviar ✦
+      </button>
+      <div id="regMsg" style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px;min-height:16px"></div>
+    </div>
+
+    <!-- PASO 3: Éxito -->
+    <div id="modalPaso3" style="display:none;text-align:center;padding:16px 0">
+      <div style="font-size:52px;margin-bottom:16px">✨</div>
+      <div style="font-size:19px;font-weight:800;color:var(--text);margin-bottom:8px">¡Listo!</div>
+      <div style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:24px">Recibimos tu registro. Juan Cruz te contacta pronto para coordinar todo.</div>
+      <button onclick="closeModalBtn()" style="padding:12px 28px;background:var(--terra);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit">Cerrar</button>
+    </div>
+
   </div>
 </div>
 
@@ -459,14 +497,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
   </div>
 
-  <div style="text-align:center;margin-top:24px">
-    <a href="/preguntas_jcc.html" onclick="track('click_btn',{boton:'ver_todas_preguntas'})"
-      style="display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;
-      color:var(--terra-d);text-decoration:none;padding:10px 22px;border:1.5px solid var(--terra);
-      border-radius:20px;transition:all .2s;">
-      Explorar todas las preguntas ↗
-    </a>
-  </div>
 </section>
 
 <hr class="sec-div">
@@ -805,10 +835,77 @@ let allPregsOrig=[], allPregsShuffled=[], filteredPregs=[];
 const PAGE=12; let shown=0;
 
 /* ── MODAL SESIONES ── */
-function openModal(){document.getElementById('modalSesiones').classList.add('open');document.body.style.overflow='hidden';track('modal_open',{modal:'elegir_sesion'});}
-function closeModalBtn(){document.getElementById('modalSesiones').classList.remove('open');document.body.style.overflow='';}
+let _sesionKey='', _sesionNombre='';
+function openModal(){
+  backToStep1();
+  document.getElementById('modalSesiones').classList.add('open');
+  document.body.style.overflow='hidden';
+  track('modal_open',{modal:'elegir_sesion'});
+}
+function closeModalBtn(){
+  document.getElementById('modalSesiones').classList.remove('open');
+  document.body.style.overflow='';
+}
 function closeModal(e){if(e.target===document.getElementById('modalSesiones'))closeModalBtn();}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeModalBtn();closeLGBtn();}});
+
+function backToStep1(){
+  document.getElementById('modalPaso1').style.display='';
+  document.getElementById('modalPaso2').style.display='none';
+  document.getElementById('modalPaso3').style.display='none';
+  document.getElementById('regMsg').textContent='';
+  document.getElementById('regSubmitBtn').textContent='Enviar ✦';
+  document.getElementById('regSubmitBtn').disabled=false;
+}
+
+function selectSesion(key, nombre, ico){
+  _sesionKey=key; _sesionNombre=nombre;
+  document.getElementById('paso2Titulo').textContent=ico+' '+nombre;
+  document.getElementById('regNombre').value='';
+  document.getElementById('regWapp').value='';
+  document.getElementById('regMensaje').value='';
+  document.getElementById('modalPaso1').style.display='none';
+  document.getElementById('modalPaso2').style.display='';
+  track('click_btn',{boton:'modal_elegir_'+key});
+  setTimeout(()=>document.getElementById('regNombre').focus(),100);
+}
+
+async function submitRegistro(){
+  const nombre=document.getElementById('regNombre').value.trim();
+  const celular=document.getElementById('regWapp').value.trim().replace(/\D/g,'');
+  const mensaje=document.getElementById('regMensaje').value.trim();
+  const msg=document.getElementById('regMsg');
+  const btn=document.getElementById('regSubmitBtn');
+  if(document.getElementById('regHoney').value){return;}
+  if(!nombre||nombre.length<2){msg.textContent='Poné tu nombre para continuar.';return;}
+  if(celular.length<8||celular.length>15){msg.textContent='Poné un WhatsApp válido.';return;}
+  btn.textContent='⏳ Un momento...';btn.disabled=true;
+  const SESION_MAP={barras:'Barras de Access',proceso_cuerpos:'Proceso de Cuerpos',clase_barras:'Clase de Barras de Access®',no_se:'Sin definir'};
+  const sesionInteres=SESION_MAP[_sesionKey]||_sesionNombre;
+  try{
+    const {data:existing}=await _sb.from('seres').select('id,data').filter('data->>celular','eq',celular).limit(1);
+    if(existing&&existing.length){
+      const d=existing[0].data||{};
+      await _sb.from('seres').update({data:{...d,herramientaInteres:sesionInteres,sesionInteres,
+        mensajeRegistro:mensaje||d.mensajeRegistro||'',
+        nombre:d.nombre||nombre,etapaProsp:d.etapaProsp||'Nuevo'},updated_at:new Date().toISOString()}).eq('id',existing[0].id);
+    } else {
+      await _sb.from('seres').insert({id:crypto.randomUUID(),data:{
+        nombre,celular,prospecto:true,fuente:'recursos_jcc',
+        herramientaInteres:sesionInteres,sesionInteres,
+        mensajeRegistro:mensaje,etapaProsp:'Nuevo',
+        fechaAlta:new Date().toISOString().split('T')[0],ts:new Date().toISOString()
+      }});
+    }
+    track('registro',{sesion:sesionInteres,canal:'recursos_jcc'});
+    document.getElementById('modalPaso2').style.display='none';
+    document.getElementById('modalPaso3').style.display='';
+  }catch(e){
+    console.warn(e);
+    msg.textContent='Hubo un error. Intentá de nuevo.';
+    btn.textContent='Enviar ✦';btn.disabled=false;
+  }
+}
 
 /* ── TRACKING ── */
 function track(tipo,extra={}){
@@ -1067,18 +1164,8 @@ async function init(){
       .or('data->>activo.is.null,data->>activo.eq.true');
     allPregsOrig=(error||!data?.length)?[]:data.map(r=>r.data||{}).filter(p=>p.activo!==false);
     allPregs=[...allPregsOrig];
-    allPregsShuffled=[...allPregsOrig];
-    for(let i=allPregsShuffled.length-1;i>0;i--){
-      const j=Math.floor(Math.random()*(i+1));
-      [allPregsShuffled[i],allPregsShuffled[j]]=[allPregsShuffled[j],allPregsShuffled[i]];
-    }
-    filteredPregs=[...allPregsShuffled];
-    const n=filteredPregs.length;
-    document.getElementById('countBadge').textContent=`${n} pregunta${n!==1?'s':''}`;
-    renderGrid(true);
   }catch(e){
     console.warn(e);
-    document.getElementById('qGrid').innerHTML='<div class="empty"><div class="ei">✦</div><p>No se pudieron cargar las preguntas.</p></div>';
   }
   document.getElementById('loader').style.display='none';
   showDia();
