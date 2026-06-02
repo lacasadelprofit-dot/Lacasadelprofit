@@ -935,12 +935,30 @@ window.addEventListener('load',()=>track('page_view'));
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 let _regalosLista=[],_curRegalo=null;
 
+async function _addRegaloToExisting(celular,regaloNombre){
+  try{
+    const {data:existing}=await _sb.from('seres').select('id,data').filter('data->>celular','eq',celular).limit(1);
+    if(!existing?.length)return;
+    const d=existing[0].data||{};
+    const desc=Array.isArray(d.regalosDescargados)?d.regalosDescargados:[];
+    if(!desc.includes(regaloNombre)){
+      desc.push(regaloNombre);
+      await _sb.from('seres').update({data:{...d,regalosDescargados:desc}}).eq('id',existing[0].id);
+    }
+  }catch(e){console.warn(e);}
+}
+
 function openLeadGate(regaloId){
   const r=_regalosLista.find(x=>String(x.id)===String(regaloId));
   if(!r)return;
   _curRegalo=r;
   const saved=localStorage.getItem('jcc_lead');
-  if(saved){const p=JSON.parse(saved);_dlRegalo(r,{serNombre:p.nombre,serEmail:p.celular});return;}
+  if(saved){
+    const p=JSON.parse(saved);
+    _addRegaloToExisting(p.celular,r.nombre);
+    _dlRegalo(r,{serNombre:p.nombre,serEmail:p.celular});
+    return;
+  }
   document.getElementById('lgIco').textContent=r.icono||'🎁';
   document.getElementById('lgNombre').textContent=r.nombre||'Recibir regalo';
   document.getElementById('lgMsg').textContent='';
