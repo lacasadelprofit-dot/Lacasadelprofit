@@ -531,6 +531,7 @@ html,body{height:100%;font-family:'Segoe UI',system-ui,sans-serif;background:var
 <script>
 const SUPA_URL = 'https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY = 'sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+let portalHerramientas = [];
 const SAVE_FN  = '/api/save-progreso';
 
 let _sb, curSer=null, curInsc=null, curProg=null;
@@ -666,6 +667,7 @@ async function doLogin(){
       if(!inscList.find(i=>String(i.code||'').trim().toUpperCase()===code))throw new Error('cred');
       progs=await withTimeout(sbQ('programas',{}));
       try{sessions=await withTimeout(sbQ('sessions',{serId:ser.id}));}catch{sessions=[];}
+      try{portalHerramientas=await withTimeout(sbQ('herramientas',{}));}catch{portalHerramientas=[];}
     }
     if(!_sb)_sb=supabase.createClient(SUPA_URL,SUPA_KEY);
     allInscList=inscList;allProgsList=progs;allSessions=sessions;
@@ -2737,6 +2739,65 @@ function toggleMaterialVisto(mid){
 // ══════════════════════════════════════════════════════════════════════════════
 // NOTAS
 // ══════════════════════════════════════════════════════════════════════════════
+let _agenFiltro='todas';
+function setAgenFiltro(f){
+  _agenFiltro=f;
+  const box=document.getElementById('agenGrid');
+  if(!box)return;
+  const herrs=portalHerramientas.filter(h=>(h.disponiblePortal===true||h.disponiblePortal==='true')&&(h.tipo==='Sesión experimental'||h.tipo==='Clase')).sort((a,b)=>(a.orden??999)-(b.orden??999));
+  const fil=f==='todas'?herrs:herrs.filter(h=>{
+    const mod=(h.modalidad||'').toLowerCase();
+    if(f==='presencial')return mod==='presencial'||mod==='ambas'||mod.includes('presencial');
+    if(f==='online')return mod==='online'||mod==='ambas'||mod.includes('online');
+    return true;
+  });
+  ['todas','presencial','online'].forEach(k=>{
+    const btn=document.getElementById('agenBtn_'+k);
+    if(btn){btn.style.background=k===f?'var(--accent)':'transparent';btn.style.color=k===f?'#fff':'var(--muted)';btn.style.border=k===f?'1.5px solid var(--accent)':'1.5px solid var(--border)';}
+  });
+  box.innerHTML=fil.length?fil.map(h=>herrCard(h)).join('')
+    :`<div style="grid-column:1/-1;text-align:center;padding:24px;color:var(--muted);font-size:13px">No hay herramientas disponibles en esta modalidad</div>`;
+}
+function herrCard(h){
+  const tipo=h.tipo||'';
+  const mod=h.modalidad||'';
+  const tipoCol={'Sesión experimental':'var(--accent)','Clase':'#5B9BD5','Herramienta práctica':'#3DAA6A'}[tipo]||'var(--muted)';
+  const modIco=mod==='Online'?'💻':mod==='Ambas'?'🌐':'📍';
+  const msg=encodeURIComponent(`Hola! Me gustaría agendar una ${tipo||'sesión'} de ${h.nom||h.nombre} 🙏`);
+  return `<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden">
+    <div style="height:3px;background:${h.col||'var(--accent)'}"></div>
+    <div style="padding:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+        <div style="width:40px;height:40px;border-radius:10px;background:${h.col||'var(--accent)'}22;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0">${h.ico||'🔮'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:14px;font-weight:700;color:var(--text)">${h.nom||h.nombre||''}</div>
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
+            ${tipo?`<span style="font-size:10px;font-weight:700;padding:1px 8px;border-radius:10px;background:${tipoCol}18;color:${tipoCol};border:1px solid ${tipoCol}33">${tipo}</span>`:''}
+            ${mod?`<span style="font-size:10px;font-weight:600;padding:1px 8px;border-radius:10px;background:var(--card2);color:var(--muted)">${modIco} ${mod==='Ambas'?'Presencial y Online':mod}</span>`:''}
+            ${h.duracion?`<span style="font-size:10px;font-weight:600;padding:1px 8px;border-radius:10px;background:var(--card2);color:var(--muted)">⏱ ${Number(h.duracion)>=60?Math.floor(Number(h.duracion)/60)+'h'+(Number(h.duracion)%60?' '+Number(h.duracion)%60+'min':''):h.duracion+' min'}</span>`:''}
+          </div>
+        </div>
+      </div>
+      ${h.desc?`<p style="font-size:12px;color:var(--muted);line-height:1.65;margin-bottom:8px">${h.desc}</p>`:''}
+      ${h.cuando?`<p style="font-size:11px;color:var(--muted);margin-bottom:4px">🕐 <em>${h.cuando}</em></p>`:''}
+      ${h.contexto?`<p style="font-size:11px;color:var(--muted);margin-bottom:8px">🎯 ${h.contexto}</p>`:''}
+      ${h.instrucciones?`<details style="margin-bottom:12px"><summary style="font-size:12px;font-weight:700;color:var(--accent);cursor:pointer;list-style:none">Ver instrucciones ↓</summary><div style="font-size:12px;color:var(--text);line-height:1.75;margin-top:8px;white-space:pre-wrap;background:var(--card2);border-radius:8px;padding:10px">${h.instrucciones}</div></details>`:''}
+      ${h.tipo!=='Herramienta práctica'?`<a href="/registro_jcc.html?herr=${encodeURIComponent(h.nom||h.nombre||'')}" style="display:block;text-align:center;padding:10px;background:var(--accent);border-radius:10px;color:#fff;font-size:13px;font-weight:700;text-decoration:none">Solicitar sesión ✦</a>`:''}
+    </div>
+  </div>`;
+}
+function buildAgendar(col){
+  const herrs=portalHerramientas.filter(h=>(h.disponiblePortal===true||h.disponiblePortal==='true')&&(h.tipo==='Sesión experimental'||h.tipo==='Clase')).sort((a,b)=>(a.orden??999)-(b.orden??999));
+  if(!herrs.length)return '';
+  return `<div style="margin-top:28px;padding-top:24px;border-top:1px solid var(--border)">
+    <div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:6px">✨ Agendar nueva sesión</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Elegí la herramienta y solicitá tu sesión</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">
+      ${herrs.map(h=>herrCard(h)).join('')}
+    </div>
+  </div>`;
+}
+
 function renderSesionesTab(){
   const col=curProg.col||'#C9A84C';
   // Recopilar sesiones de todas las fuentes, deduplicar por id/fecha+tipo
@@ -2793,6 +2854,7 @@ function renderSesionesTab(){
     ${sinFecha.length?sep('Sin fecha asignada',proximas.length?18:0)+sinFecha.map(sesCard).join(''):''}
     ${pasadas.length?sep('Historial',proximas.length||sinFecha.length?18:0)+pasadas.map(sesCard).join(''):''}
     ${!all.length?emptyHTML:''}
+    ${buildAgendar(col)}
   `;
 }
 
@@ -2942,8 +3004,8 @@ async function renderProcesoTab(){
     if(error)throw error;
     const allOnbs=(data||[]).map(r=>({id:r.id,...(r.data||{})}))
       .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
-    // Priorizar el vinculado al programa actual, luego cualquiera por email
-    const onb=allOnbs.find(o=>o.progId===curInsc.programaId)||allOnbs[0];
+    // Solo mostrar si fue vinculado por el admin a esta inscripción
+    const onb=allOnbs.find(o=>o.estado==='asignado'&&(o.inscId===curInsc.id||o.progId===curInsc.programaId));
     if(!onb){
       el.innerHTML=buildProcesoSinOnboarding();
       el.dataset.procesoOk='1';
