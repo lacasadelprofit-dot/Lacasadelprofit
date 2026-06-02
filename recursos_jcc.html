@@ -75,6 +75,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn-next{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.18);border-radius:20px;
   color:rgba(255,255,255,.72);font-size:12px;font-weight:600;padding:6px 16px;cursor:pointer;transition:all .2s;}
 .btn-next:hover{background:rgba(255,255,255,.2);color:#fff;}
+.btn-next:disabled{opacity:.5;cursor:wait;}
+.btn-share-dia{background:rgba(193,122,72,.12);border:1px solid rgba(193,122,72,.3);border-radius:20px;
+  color:var(--terra-d);font-size:12px;font-weight:600;padding:6px 16px;cursor:pointer;transition:all .2s;}
+.btn-share-dia:hover{background:rgba(193,122,72,.22);}
+.btn-share-dia:disabled{opacity:.5;cursor:wait;}
 
 /* ── REGALOS ── */
 .regalos-wrap{max-width:680px;margin:0 auto 52px;padding:0 16px;}
@@ -405,14 +410,18 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <span class="dia-badge" id="diaBadge"></span>
     </div>
     <div class="dia-q" id="diaQ">Cargando...</div>
-    <div class="dia-dim" id="diaDim"></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+      <div class="dia-dim" id="diaDim"></div>
+      <button class="btn-share-dia" id="btnShareDia" onclick="shareDia(this)">↗ Compartir</button>
+    </div>
   </div>
   <div class="featured-card">
     <div class="featured-label">✦ Pregunta del momento</div>
     <div class="featured-q" id="featuredQ">Cargando...</div>
     <div class="featured-dim" id="featuredDim"></div>
-    <div class="featured-next">
+    <div class="featured-next" style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn-next" onclick="nextFeatured();track('click_btn',{boton:'pregunta_siguiente'})">Otra pregunta →</button>
+      <button class="btn-next" id="btnShareFeat" onclick="shareFeatured(this)">↗ Compartir</button>
     </div>
   </div>
 </div>
@@ -677,7 +686,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </div>
   </div>
 
-
 </div>
 
 <hr class="page-sep">
@@ -904,10 +912,12 @@ window.addEventListener('load',()=>track('page_view'));
 
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 let allPregs=[], allPregsOrig=[], featIdx=0;
+let _diaArea='Consciencia', _featuredArea='Consciencia';
 
 function showFeatured(){
   if(!allPregs.length)return;
   const p=allPregs[featIdx%allPregs.length];
+  _featuredArea=p.matiz||'Consciencia';
   document.getElementById('featuredQ').textContent=p.texto;
   document.getElementById('featuredDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+(p.matiz||'');
 }
@@ -926,6 +936,7 @@ function showDia(){
     return;
   }
   const p=allPregsOrig[dayOfYear%allPregsOrig.length];
+  _diaArea=p.matiz||'Consciencia';
   document.getElementById('diaQ').textContent=p.texto;
   document.getElementById('diaDim').textContent=(DIM_ICO[p.matiz]||'✦')+' '+(p.matiz||'');
 }
@@ -963,6 +974,91 @@ async function loadRegalos(){
   }catch(e){
     document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
   }
+}
+
+/* ── COMPARTIR COMO STORY ── */
+function getWrappedLines(ctx,text,maxW){
+  const words=text.split(' ');const lines=[];let cur='';
+  words.forEach(w=>{
+    const test=cur?cur+' '+w:w;
+    if(ctx.measureText(test).width>maxW&&cur){lines.push(cur);cur=w;}
+    else cur=test;
+  });
+  if(cur)lines.push(cur);
+  return lines;
+}
+
+function generateStoryImage(texto,area){
+  return new Promise(resolve=>{
+    const W=900,H=1600;
+    const cv=document.createElement('canvas');
+    cv.width=W;cv.height=H;
+    const c=cv.getContext('2d');
+    c.fillStyle='#1C1200';c.fillRect(0,0,W,H);
+    const g=c.createRadialGradient(W/2,H*.42,0,W/2,H*.42,520);
+    g.addColorStop(0,'rgba(193,122,72,.18)');g.addColorStop(1,'rgba(0,0,0,0)');
+    c.fillStyle=g;c.fillRect(0,0,W,H);
+    c.font='bold 400px Georgia,serif';
+    c.fillStyle='rgba(193,122,72,.05)';
+    c.textAlign='center';c.textBaseline='middle';
+    c.fillText('✦',W/2,H*.44);
+    const ico=DIM_ICO[area]||'✦';
+    c.font='bold 26px "Segoe UI",system-ui,sans-serif';
+    c.fillStyle='rgba(193,122,72,.85)';
+    c.textAlign='center';c.textBaseline='alphabetic';
+    c.fillText((ico+'  '+(area||'Consciencia')).toUpperCase(),W/2,330);
+    c.strokeStyle='rgba(193,122,72,.3)';c.lineWidth=1;
+    c.beginPath();c.moveTo(W/2-60,358);c.lineTo(W/2+60,358);c.stroke();
+    const PAD=130;
+    let fs=52;
+    c.font=`bold ${fs}px "Segoe UI",system-ui,sans-serif`;
+    let lines=getWrappedLines(c,texto,W-PAD);
+    if(lines.length>6){fs=42;c.font=`bold ${fs}px "Segoe UI",system-ui,sans-serif`;lines=getWrappedLines(c,texto,W-PAD);}
+    if(lines.length>8){fs=34;c.font=`bold ${fs}px "Segoe UI",system-ui,sans-serif`;lines=getWrappedLines(c,texto,W-PAD);}
+    const lh=fs*1.44;
+    const startY=H/2-lines.length*lh/2-20;
+    c.fillStyle='#F5F0E8';c.textAlign='center';c.textBaseline='top';
+    lines.forEach((l,i)=>c.fillText(l,W/2,startY+i*lh));
+    c.strokeStyle='rgba(193,122,72,.4)';c.lineWidth=1;
+    c.beginPath();c.moveTo(100,H-270);c.lineTo(W-100,H-270);c.stroke();
+    c.font='18px Georgia,serif';c.fillStyle='rgba(193,122,72,.6)';
+    c.textAlign='center';c.textBaseline='middle';c.fillText('✦',W/2,H-270);
+    c.font='bold 36px "Segoe UI",system-ui,sans-serif';
+    c.fillStyle='#F5F0E8';c.textBaseline='alphabetic';
+    c.fillText('Juan Cruz Consciencia',W/2,H-200);
+    c.font='22px "Segoe UI",system-ui,sans-serif';
+    c.fillStyle='rgba(193,122,72,.7)';
+    c.fillText('Preguntas Expansivas',W/2,H-160);
+    resolve(cv);
+  });
+}
+
+async function _doShare(texto,area,btn){
+  const orig=btn.innerHTML;
+  btn.textContent='⏳';btn.disabled=true;
+  try{
+    const cv=await generateStoryImage(texto,area);
+    const blob=await new Promise(r=>cv.toBlob(r,'image/png'));
+    const file=new File([blob],'pregunta-expansiva.png',{type:'image/png'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:'Pregunta Expansiva · Juan Cruz Consciencia'});
+    } else {
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download='pregunta-expansiva.png';
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
+    }
+  }catch(e){if(e.name!=='AbortError')console.warn(e);}
+  btn.innerHTML=orig;btn.disabled=false;
+}
+
+function shareDia(btn){
+  const texto=document.getElementById('diaQ').textContent;
+  _doShare(texto,_diaArea,btn);
+}
+function shareFeatured(btn){
+  const texto=document.getElementById('featuredQ').textContent;
+  _doShare(texto,_featuredArea,btn);
 }
 
 async function init(){
