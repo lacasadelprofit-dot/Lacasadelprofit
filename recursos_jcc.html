@@ -928,7 +928,7 @@ const MONTHS=['enero','febrero','marzo','abril','mayo','junio','julio','agosto',
 
 /* ── TRACKING ── */
 function track(tipo,extra={}){
-  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'landing_jcc',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}});}catch(e){}
+  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'landing_jcc',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}}).then();}catch(e){}
 }
 window.addEventListener('load',()=>track('page_view'));
 

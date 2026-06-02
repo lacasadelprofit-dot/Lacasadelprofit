@@ -11303,9 +11303,11 @@ function renderCRM(){
           const canalCol=canal.includes('WhatsApp')?'rgba(61,170,106,.15)':canal.includes('IG')?'rgba(139,92,246,.15)':'rgba(120,120,140,.1)';
           const canalTextCol=canal.includes('WhatsApp')?'var(--green)':canal.includes('IG')?'#8B5CF6':'var(--muted)';
           const herr=p.herramientaInteres||'';
+          const regalos=(p.regalosDescargados||[]);
           return `<div class="cc" style="padding:10px;margin-bottom:7px;cursor:pointer" onclick="openProspDetail('${p.id}')">
             <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px">${p.nombre}</div>
-            ${herr?`<div style="font-size:11px;color:var(--muted);margin-bottom:6px">${herr}</div>`:''}
+            ${herr?`<div style="font-size:11px;color:var(--muted);margin-bottom:4px">${herr}</div>`:''}
+            ${regalos.length?`<div style="font-size:10px;color:var(--gold);margin-bottom:5px">🎁 ${regalos.join(' · ')}</div>`:''}
             <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px">
               ${canal?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:${canalCol};color:${canalTextCol}">${canal}</span>`:''}
               ${dias!==null?`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--card2);color:var(--muted)">hace ${dias}d</span>`:''}
