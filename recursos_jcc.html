@@ -383,6 +383,28 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
 </div>
 
+<!-- MODAL LEAD GATE REGALO -->
+<div class="modal-overlay" id="modalLeadGate" onclick="closeLG(event)">
+  <div class="modal-sheet" style="position:relative">
+    <button class="modal-close" onclick="closeLGBtn()" aria-label="Cerrar">✕</button>
+    <div class="modal-handle"></div>
+    <div style="font-size:36px;margin-bottom:10px;text-align:center" id="lgIco">🎁</div>
+    <div class="modal-title" id="lgNombre">Recibir regalo</div>
+    <div class="modal-sub">Dejá tu nombre y WhatsApp — te llega al instante.</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
+      <input id="lgInputNombre" type="text" placeholder="Tu nombre"
+        style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit">
+      <input id="lgInputWapp" type="tel" placeholder="WhatsApp (ej: 1134567890)"
+        style="padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;background:var(--card);color:var(--text);width:100%;outline:none;font-family:inherit">
+    </div>
+    <button id="lgSubmitBtn" onclick="submitLeadGate()"
+      style="width:100%;padding:14px;background:var(--terra);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:800;cursor:pointer;font-family:inherit">
+      Recibir regalo ✦
+    </button>
+    <div id="lgMsg" style="text-align:center;font-size:12px;color:var(--muted);margin-top:10px;min-height:16px"></div>
+  </div>
+</div>
+
 <!-- HEADER -->
 <header class="site-header">
   <div class="brand">Juan Cruz <span>Consciencia</span></div>
@@ -911,6 +933,64 @@ function track(tipo,extra={}){
 window.addEventListener('load',()=>track('page_view'));
 
 const DIM_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
+let _regalosLista=[],_curRegalo=null;
+
+function openLeadGate(regaloId){
+  const r=_regalosLista.find(x=>String(x.id)===String(regaloId));
+  if(!r)return;
+  _curRegalo=r;
+  const saved=localStorage.getItem('jcc_lead');
+  if(saved){_dlRegalo(r);return;}
+  document.getElementById('lgIco').textContent=r.icono||'🎁';
+  document.getElementById('lgNombre').textContent=r.nombre||'Recibir regalo';
+  document.getElementById('lgMsg').textContent='';
+  document.getElementById('lgInputNombre').value='';
+  document.getElementById('lgInputWapp').value='';
+  document.getElementById('lgSubmitBtn').textContent='Recibir regalo ✦';
+  document.getElementById('lgSubmitBtn').disabled=false;
+  document.getElementById('modalLeadGate').classList.add('open');
+  document.body.style.overflow='hidden';
+  setTimeout(()=>document.getElementById('lgInputNombre').focus(),100);
+}
+function closeLGBtn(){document.getElementById('modalLeadGate').classList.remove('open');document.body.style.overflow='';}
+function closeLG(e){if(e.target===document.getElementById('modalLeadGate'))closeLGBtn();}
+function _dlRegalo(r){
+  if(r.pdfUrl)window.open(r.pdfUrl,'_blank');
+  track('descarga',{regaloId:r.id,regaloNombre:r.nombre,canal:'landing_jcc'});
+}
+async function submitLeadGate(){
+  const nombre=document.getElementById('lgInputNombre').value.trim();
+  const celular=document.getElementById('lgInputWapp').value.trim().replace(/\D/g,'');
+  const msg=document.getElementById('lgMsg');
+  const btn=document.getElementById('lgSubmitBtn');
+  if(!nombre){msg.textContent='Poné tu nombre para continuar.';return;}
+  if(celular.length<7){msg.textContent='Poné un WhatsApp válido.';return;}
+  btn.textContent='⏳ Un momento...';btn.disabled=true;
+  try{
+    const {data:existing}=await _sb.from('seres').select('id,data').filter('data->>celular','eq',celular).limit(1);
+    if(existing&&existing.length){
+      const ser=existing[0];const d=ser.data||{};
+      const desc=Array.isArray(d.regalosDescargados)?d.regalosDescargados:[];
+      if(!desc.includes(_curRegalo.nombre)){
+        desc.push(_curRegalo.nombre);
+        await _sb.from('seres').update({data:{...d,regalosDescargados:desc}}).eq('id',ser.id);
+      }
+    }else{
+      await _sb.from('seres').insert({data:{
+        nombre,celular,prospecto:true,fuente:'regalos_jcc',
+        regalosDescargados:[_curRegalo.nombre||''],
+        fechaAlta:new Date().toISOString().split('T')[0],
+        ts:new Date().toISOString()
+      }});
+    }
+    localStorage.setItem('jcc_lead',JSON.stringify({nombre,celular}));
+    msg.textContent='✦ Descargando...';
+    setTimeout(()=>{_dlRegalo(_curRegalo);closeLGBtn();},700);
+  }catch(e){
+    console.warn(e);_dlRegalo(_curRegalo);closeLGBtn();
+  }
+  btn.textContent='Recibir regalo ✦';btn.disabled=false;
+}
 let allPregs=[], allPregsOrig=[], featIdx=0;
 let _diaArea='Consciencia', _featuredArea='Consciencia';
 
@@ -954,13 +1034,11 @@ async function loadRegalos(){
       document.getElementById('regalosWrap').innerHTML='<div class="empty"><div class="ei">✦</div><p>Próximamente habrá recursos especiales para vos.</p></div>';
       return;
     }
+    _regalosLista=lista;
     document.getElementById('regalosWrap').innerHTML=`<div class="regalos-grid">${lista.map(r=>{
       const nombre=r.nombre||'Regalo';
       const btnHtml=r.pdfUrl
-        ?`<a class="btn-dl-jcc" href="${r.pdfUrl}" target="_blank"
-            onclick="track('descarga',{regaloId:'${r.id}',regaloNombre:'${nombre.replace(/'/g,'\\x27')}',canal:'landing_jcc'})">
-            🎁 Recibir regalo
-          </a>`
+        ?`<button class="btn-dl-jcc" onclick="openLeadGate('${r.id}')">🎁 Recibir regalo</button>`
         :`<div class="btn-dl-jcc" style="opacity:.45;cursor:not-allowed">Próximamente ✦</div>`;
       return`<div class="regalo-card">
         <div class="regalo-body">
