@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Generar imagen comunidad</title>
+<style>
+  body{background:#111;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-height:100vh;margin:0;font-family:system-ui,sans-serif;gap:20px;}
+  canvas{border-radius:16px;box-shadow:0 0 60px rgba(201,168,76,.3);}
+  button{background:linear-gradient(135deg,#C9A84C,#8B6914);border:none;border-radius:10px;
+    color:#050401;font-size:16px;font-weight:800;padding:14px 36px;cursor:pointer;letter-spacing:.5px;}
+  button:hover{opacity:.9;}
+  p{color:#7A7260;font-size:13px;}
+</style>
+</head>
+<body>
+
+<canvas id="c" width="800" height="800"></canvas>
+<button onclick="descargar()">⬇ Descargar PNG</button>
+<p>Recomendado para foto de grupo de WhatsApp (800×800 px)</p>
+
+<script>
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const W = 800, H = 800, cx = W/2, cy = H/2;
+const TWO_PI = Math.PI * 2;
+
+function draw() {
+  // Fondo
+  const bg = ctx.createRadialGradient(cx, cy * 0.8, 0, cx, cy, W * 0.75);
+  bg.addColorStop(0,  'rgba(58, 42, 6, 1)');
+  bg.addColorStop(0.3,'rgba(22, 18, 3, 1)');
+  bg.addColorStop(0.6,'rgba(10, 13, 5, 1)');
+  bg.addColorStop(1,  'rgba(4,  5,  2, 1)');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Rayos de luz
+  const numRays = 24, rayLen = W * 0.72;
+  for (let i = 0; i < numRays; i++) {
+    const a = (i / numRays) * TWO_PI;
+    const grd = ctx.createLinearGradient(cx, cy, cx + rayLen * Math.cos(a), cy + rayLen * Math.sin(a));
+    grd.addColorStop(0,    'rgba(232,201,106,0.06)');
+    grd.addColorStop(0.15, 'rgba(232,201,106,0.030)');
+    grd.addColorStop(1,    'rgba(232,201,106,0)');
+    ctx.beginPath(); ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + rayLen * Math.cos(a), cy + rayLen * Math.sin(a));
+    ctx.strokeStyle = grd; ctx.lineWidth = 1; ctx.stroke();
+  }
+
+  // Flor de la vida
+  const fR = 72;
+  ctx.strokeStyle = 'rgba(232,201,106,0.55)';
+  ctx.lineWidth = 1.1;
+  function circ(x, y) { ctx.beginPath(); ctx.arc(x, y, fR, 0, TWO_PI); ctx.stroke(); }
+  circ(cx, cy - 60);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TWO_PI;
+    circ(cx + fR * Math.cos(a), (cy - 60) + fR * Math.sin(a));
+  }
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TWO_PI + Math.PI/6, d = Math.sqrt(3) * fR;
+    circ(cx + d * Math.cos(a), (cy - 60) + d * Math.sin(a));
+  }
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TWO_PI;
+    circ(cx + 2 * fR * Math.cos(a), (cy - 60) + 2 * fR * Math.sin(a));
+  }
+  // círculo exterior
+  ctx.globalAlpha = 0.7; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(cx, cy - 60, fR * 2, 0, TWO_PI); ctx.stroke();
+  ctx.lineWidth = 0.8; ctx.globalAlpha = 0.4;
+  ctx.beginPath(); ctx.arc(cx, cy - 60, fR * 2 + 9, 0, TWO_PI); ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, cy - 60, fR * 2 + 22, 0, TWO_PI); ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // Glow central
+  const glow = ctx.createRadialGradient(cx, cy - 60, 0, cx, cy - 60, fR * 1.8);
+  glow.addColorStop(0,   'rgba(255,210,80,0.22)');
+  glow.addColorStop(0.5, 'rgba(201,168,76,0.07)');
+  glow.addColorStop(1,   'rgba(201,168,76,0)');
+  ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
+
+  // Icono casa (SVG path → canvas)
+  const s = 52, hTop = (cy - 60) - s * 1.35, hBot = (cy - 60) + s * 0.95;
+  const hL = cx - s, hR = cx + s, wallY = (cy - 60) - s * 0.05;
+  for (let pass = 0; pass < 2; pass++) {
+    ctx.strokeStyle = pass === 0
+      ? 'rgba(232,201,106,0.30)'
+      : 'rgba(232,201,106,0.80)';
+    ctx.lineWidth = pass === 0 ? 5 : 1.8;
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.beginPath();
+    ctx.moveTo(hL - s * 0.18, wallY); ctx.lineTo(cx, hTop); ctx.lineTo(hR + s * 0.18, wallY);
+    ctx.moveTo(hL, wallY); ctx.lineTo(hL, hBot);
+    ctx.moveTo(hR, wallY); ctx.lineTo(hR, hBot);
+    ctx.moveTo(hL, hBot); ctx.lineTo(hR, hBot);
+    ctx.stroke();
+    const dW = s * 0.28, dTop = (cy - 60) + s * 0.05;
+    ctx.beginPath();
+    ctx.moveTo(cx - dW, hBot); ctx.lineTo(cx - dW, dTop);
+    ctx.arc(cx, dTop, dW, Math.PI, 0);
+    ctx.lineTo(cx + dW, hBot); ctx.stroke();
+  }
+
+  // Viñeta bordes
+  const vig = ctx.createRadialGradient(cx, cy, W * 0.35, cx, cy, W * 0.78);
+  vig.addColorStop(0, 'rgba(4,5,2,0)');
+  vig.addColorStop(1, 'rgba(3,4,1,0.82)');
+  ctx.fillStyle = vig; ctx.fillRect(0, 0, W, H);
+
+  // Separador dorado
+  const lineY = cy + 120;
+  const lineGrd = ctx.createLinearGradient(cx - 180, lineY, cx + 180, lineY);
+  lineGrd.addColorStop(0,   'rgba(201,168,76,0)');
+  lineGrd.addColorStop(0.3, 'rgba(232,201,106,0.6)');
+  lineGrd.addColorStop(0.7, 'rgba(232,201,106,0.6)');
+  lineGrd.addColorStop(1,   'rgba(201,168,76,0)');
+  ctx.strokeStyle = lineGrd; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(cx - 180, lineY); ctx.lineTo(cx + 180, lineY); ctx.stroke();
+
+  // Texto: LA CASA DEL PROFIT
+  ctx.textAlign = 'center';
+  ctx.font = 'bold 42px "Segoe UI", system-ui, sans-serif';
+  ctx.letterSpacing = '4px';
+
+  // sombra/glow texto
+  ctx.shadowColor = 'rgba(201,168,76,0.6)';
+  ctx.shadowBlur = 24;
+  const tGrd = ctx.createLinearGradient(cx - 180, 0, cx + 180, 0);
+  tGrd.addColorStop(0,   '#F5E4A8');
+  tGrd.addColorStop(0.5, '#E8C96A');
+  tGrd.addColorStop(1,   '#C9A84C');
+  ctx.fillStyle = tGrd;
+  ctx.fillText('LA CASA DEL PROFIT', cx, lineY + 52);
+
+  ctx.shadowBlur = 0;
+
+  // Subtítulo COMUNIDAD
+  ctx.font = '600 18px "Segoe UI", system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(201,168,76,0.65)';
+  ctx.letterSpacing = '6px';
+  ctx.fillText('C O M U N I D A D', cx, lineY + 90);
+
+  // Frase
+  ctx.font = '14px "Segoe UI", system-ui, sans-serif';
+  ctx.fillStyle = 'rgba(122,114,96,0.85)';
+  ctx.letterSpacing = '0px';
+  ctx.fillText('Transformación · Propósito · Consciencia', cx, lineY + 120);
+}
+
+draw();
+
+function descargar() {
+  const link = document.createElement('a');
+  link.download = 'comunidad_lacasadelprofit.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+</script>
+</body>
+</html>
