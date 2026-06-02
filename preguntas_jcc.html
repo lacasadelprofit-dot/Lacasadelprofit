@@ -237,7 +237,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <div class="dia-q" id="diaQ">Cargando...</div>
     <div class="dia-footer">
       <div class="dia-area" id="diaArea"></div>
-      <button class="dia-copy" id="diaCopyBtn" onclick="copyDia()">📋 Copiar pregunta</button>
     </div>
   </div>
 </div>
@@ -298,14 +297,26 @@ function closeModal(e){if(e.target===document.getElementById('modalSesiones'))cl
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeModalBtn();});
 
 function copyText(texto,btn){
-  navigator.clipboard.writeText(texto).then(()=>{
-    const orig=btn.textContent;
-    btn.textContent='✓ Copiada';btn.classList.add('copied');
-    setTimeout(()=>{btn.textContent=orig;btn.classList.remove('copied');},2000);
-  }).catch(()=>{});
+  const orig=btn.textContent;
+  const ok=()=>{btn.textContent='✓ Copiada';btn.classList.add('copied');setTimeout(()=>{btn.textContent=orig;btn.classList.remove('copied');},2000);};
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(texto).then(ok).catch(()=>fallbackCopy(texto,ok));
+  } else {
+    fallbackCopy(texto,ok);
+  }
+}
+function fallbackCopy(texto,ok){
+  const ta=document.createElement('textarea');
+  ta.value=texto;ta.style.cssText='position:fixed;opacity:0;top:0;left:0';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');ok();}catch(e){}
+  document.body.removeChild(ta);
 }
 function copyDia(){copyText(diaTexto,document.getElementById('diaCopyBtn'));}
-function copyQ(btn,texto){copyText(texto,btn);}
+function copyQ(btn){
+  const texto=btn.closest('.q-card').querySelector('.q-text').textContent;
+  copyText(texto,btn);
+}
 
 function showDia(){
   const now=new Date();
@@ -337,12 +348,11 @@ function qCardHTML(p){
   const ico=DIM_ICO[p.matiz]||'✦';
   const area=p.matiz||'Consciencia';
   const texto=p.texto||'';
-  return`<div class="q-card">
+  return`<div class="q-card" data-area="${area}">
     <div class="q-area-tag">${ico} ${area}</div>
     <div class="q-text">${texto}</div>
     <div class="q-actions">
-      <button class="q-copy" onclick="copyQ(this,${JSON.stringify(texto)})">📋 Copiar</button>
-      <button class="q-share" onclick="shareQ(this,${JSON.stringify(texto)},${JSON.stringify(area)})">↗ Compartir</button>
+      <button class="q-share" onclick="shareQ(this)">↗ Compartir</button>
     </div>
   </div>`;
 }
@@ -437,7 +447,10 @@ function generateStoryImage(texto,area){
   });
 }
 
-async function shareQ(btn,texto,area){
+async function shareQ(btn){
+  const card=btn.closest('.q-card');
+  const texto=card.querySelector('.q-text').textContent;
+  const area=card.dataset.area||'Consciencia';
   const orig=btn.innerHTML;
   btn.textContent='⏳';btn.disabled=true;
   try{
@@ -448,8 +461,9 @@ async function shareQ(btn,texto,area){
       await navigator.share({files:[file],title:'Pregunta Expansiva · Juan Cruz Consciencia'});
     } else {
       const url=URL.createObjectURL(blob);
-      const a=document.createElement('a');a.href=url;a.download='pregunta-expansiva.png';a.click();
-      URL.revokeObjectURL(url);
+      const a=document.createElement('a');a.href=url;a.download='pregunta-expansiva.png';
+      document.body.appendChild(a);a.click();
+      setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},1000);
     }
   }catch(e){if(e.name!=='AbortError')console.warn(e);}
   btn.innerHTML=orig;btn.disabled=false;
