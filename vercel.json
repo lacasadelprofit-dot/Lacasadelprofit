@@ -1,21 +1,21 @@
-{
-  "rewrites": [
-    {
-      "has": [{ "type": "host", "value": "juancruzconsciencia.lat" }],
-      "source": "/(.*)",
-      "destination": "/recursos_jcc.html"
-    },
-    {
-      "has": [{ "type": "host", "value": "www.juancruzconsciencia.lat" }],
-      "source": "/(.*)",
-      "destination": "/recursos_jcc.html"
-    },
-    {
-      "has": [{ "type": "host", "value": "registro.juancruzconsciencia.lat" }],
-      "source": "/(.*)",
-      "destination": "/registro_jcc.html"
-    },
-    { "source": "/(.*)", "destination": "/$1" }
-  ]
-}
+ {
+    "rewrites": [
+      {
+        "has": [{ "type": "host", "value": "juancruzconsciencia.lat" }],
+        "source": "/(.*)",
+        "destination": "/recursos_jcc.html"
+      },
+      {
+        "has": [{ "type": "host", "value": "www.juancruzconsciencia.lat" }],
+        "source": "/(.*)",
+        "destination": "/recursos_jcc.html"
+      },
+      {
+        "has": [{ "type": "host", "value": "registro.juancruzconsciencia.lat" }],
+        "source": "/(.*)",
+        "destination": "/registro_jcc.html"
+      },
+      { "source": "/(.*)", "destination": "/$1" }
+    ]
+  }
 
