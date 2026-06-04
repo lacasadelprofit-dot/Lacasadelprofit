@@ -8963,6 +8963,8 @@ function _renderContInsights(publicados,mes){
 /* ── ESTADÍSTICAS DE CLICKS ── */
 let _mktStatsPeriod=30,_statsSubTab='resumen';
 
+function _fmtDur(s){if(!s||s<=0)return'—';if(s<60)return s+'s';const m=Math.floor(s/60);const r=s%60;return r>0?m+'m '+r+'s':m+'m';}
+
 function _statsLabel(b){
   const L={'header_agendar':'Header — Agendá una sesión','header_agendar_sesion':'Header — Agendá una sesión','hero_ver_sesiones':'Hero → Ver sesiones','hero_explorar_preguntas':'Hero → Explorar preguntas','nav_preguntas':'Nav → Preguntas','nav_regalos':'Nav → Regalos','nav_sesiones':'Nav → Sesiones','nav_clases':'Nav → Clases','nav_quien_soy':'Nav → Quién Soy','pregunta_siguiente':'Preguntas → Otra pregunta','reservar_barras':'Reservar Barras (card)','reservar_barras_det':'Reservar Barras (detalle)','reservar_proceso':'Reservar Proceso (card)','reservar_proceso_det':'Reservar Proceso (detalle)','reservar_clase':'Reservar Clase (card)','reservar_clase_det':'Reservar Clase (detalle)','cta_final':'CTA final — Agendá','ver_mas_detail-barras':'Ver más — Barras','ver_mas_detail-proceso':'Ver más — Proceso','ver_mas_detail-clase':'Ver más — Clase','modal_elegir_barras':'Modal → eligió Barras','modal_elegir_proceso_cuerpos':'Modal → eligió Proceso','modal_elegir_clase_barras':'Modal → eligió Clase','modal_elegir_no_se':'Modal → Sin definir','ver_mas_preguntas':'Preguntas → Ver más'};
   if(L[b])return L[b];
@@ -9028,12 +9030,13 @@ function _renderStatsPorMes(all){
   all.forEach(e=>{
     const mes=e.mes||(e.fecha?e.fecha.slice(0,7):null);
     if(!mes)return;
-    if(!md[mes])md[mes]={views:0,clicks:0,registros:0,modal:0,ses:{}};
+    if(!md[mes])md[mes]={views:0,clicks:0,registros:0,modal:0,ses:{},durTotal:0,durCount:0};
     const m=md[mes];
     if(e.tipo==='page_view')m.views++;
     else if(e.tipo==='click_btn')m.clicks++;
     else if(e.tipo==='modal_open')m.modal++;
     else if(e.tipo==='registro'){m.registros++;const k=SES_MAP[e.sesion];if(k)m.ses[k]=(m.ses[k]||0)+1;}
+    else if(e.tipo==='page_exit'&&e.duracion>0){m.durTotal+=e.duracion;m.durCount++;}
   });
 
   const meses=Object.entries(md).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,6).reverse();
@@ -9047,11 +9050,15 @@ function _renderStatsPorMes(all){
       const sesTop=Object.entries(m.ses).sort((a,b)=>b[1]-a[1])[0];
       return`<div class="card" style="padding:16px">
         <div style="font-size:14px;font-weight:800;color:var(--gl);margin-bottom:12px">${mesLabel(mes)}</div>
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:${sesTop?'12':'0'}px">
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px">
           <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:var(--text)">${m.views}</div><div style="font-size:10px;color:var(--muted)">Visitas</div></div>
           <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:var(--text)">${m.clicks}</div><div style="font-size:10px;color:var(--muted)">Clicks</div></div>
           <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:var(--text)">${m.registros}</div><div style="font-size:10px;color:var(--muted)">Formularios</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:${sesTop?'12':'0'}px">
           <div style="text-align:center;background:${conv>0?'rgba(201,168,76,.12)':'var(--card2)'};border:${conv>0?'1px solid rgba(201,168,76,.3)':'none'};border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:${conv>0?'var(--gl)':'var(--muted)'}">${conv}%</div><div style="font-size:10px;color:var(--muted)">Conversión</div></div>
+          <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:14px;font-weight:800;color:var(--text)">${_fmtDur(m.durCount>0?Math.round(m.durTotal/m.durCount):0)}</div><div style="font-size:10px;color:var(--muted)">Tiempo prom.</div></div>
+          <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:14px;font-weight:800;color:var(--text)">${_fmtDur(m.durTotal)}</div><div style="font-size:10px;color:var(--muted)">Tiempo total</div></div>
         </div>
         ${sesTop?`<div style="font-size:11px;color:var(--muted)">Sesión más pedida: <strong style="color:${SES_INFO[sesTop[0]]?.col||'var(--text)'}">${SES_INFO[sesTop[0]]?.l||sesTop[0]}</strong> (${sesTop[1]})</div>`:''}
       </div>`;
@@ -9091,6 +9098,8 @@ async function renderMktStats(){
     const clickEvs=evs.filter(e=>e.tipo==='click_btn'&&e.boton);
     const totalClicks=clickEvs.length;
     const convRate=views>0?Math.round(registros/views*100):0;
+    const exitEvs=evs.filter(e=>e.tipo==='page_exit'&&e.duracion>0);
+    const avgDur=exitEvs.length?Math.round(exitEvs.reduce((s,e)=>s+(e.duracion||0),0)/exitEvs.length):0;
 
     const SES_INFO={barras:{l:'Barras de Access',col:'#C17A48'},proceso_cuerpos:{l:'Proceso de Cuerpos',col:'#7B9E87'},clase_barras:{l:'Clase de Barras',col:'#4A7FA5'},no_se:{l:'Sin definir',col:'#9B82D4'}};
     const sesCounts={};
@@ -9132,6 +9141,7 @@ async function renderMktStats(){
         <div class="kpi-card"><div class="kv">${totalClicks}</div><div class="kl">Clicks totales</div></div>
         <div class="kpi-card"><div class="kv">${registros}</div><div class="kl">Formularios</div></div>
         <div class="kpi-card"><div class="kv">${convRate}%</div><div class="kl">Conversión</div></div>
+        <div class="kpi-card"><div class="kv">${_fmtDur(avgDur)}</div><div class="kl">Tiempo promedio</div></div>
       </div>
 
       <div class="card" style="margin-bottom:16px;padding:18px">
