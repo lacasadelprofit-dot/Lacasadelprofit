@@ -4,12 +4,12 @@
       {
         "has": [{ "type": "host", "value": "juancruzconsciencia.lat" }],
         "source": "/(.*)",
-        "destination": "/2_PORTALES_PUBLICOS/recursos_jcc.html"
+        "destination": "/recursos_jcc.html"
       },
       {
         "has": [{ "type": "host", "value": "www.juancruzconsciencia.lat" }],
         "source": "/(.*)",
-        "destination": "/2_PORTALES_PUBLICOS/recursos_jcc.html"
+        "destination": "/recursos_jcc.html"
       },
       {
         "has": [{ "type": "host", "value": "registro.juancruzconsciencia.lat" }],
