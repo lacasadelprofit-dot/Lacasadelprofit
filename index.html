@@ -8961,34 +8961,57 @@ function _renderContInsights(publicados,mes){
 }
 
 /* ── ESTADÍSTICAS DE CLICKS ── */
+let _mktStatsPeriod=30;
 async function renderMktStats(){
   const el=document.getElementById('mktStats');
   if(!el)return;
   el.innerHTML=`<div class="es"><div class="ei">⏳</div><p>Cargando estadísticas...</p></div>`;
   try{
     const{data}=await _sb.from('regalo_eventos').select('data');
-    const evs=(data||[]).map(r=>r.data||{}).filter(e=>e.tipo==='click_btn'&&e.boton);
-    if(!evs.length){
-      el.innerHTML=`<div class="es"><div class="ei">📊</div><p>Aún no hay clicks registrados.<br><span style="font-size:12px;color:var(--muted)">Los clicks de recursos_jcc.html aparecerán acá una vez que la página esté activa.</span></p></div>`;
-      return;
-    }
-    // Agrupar por botón
-    const byBtn={};
-    evs.forEach(e=>{
-      byBtn[e.boton]=(byBtn[e.boton]||0)+1;
-    });
-    const sorted=Object.entries(byBtn).sort((a,b)=>b[1]-a[1]);
-    const total=evs.length;
+    const all=(data||[]).map(r=>r.data||{});
 
-    // Agrupar por fecha (últimos 30 días)
-    const byDate={};
-    evs.forEach(e=>{if(e.fecha)byDate[e.fecha]=(byDate[e.fecha]||0)+1;});
-    const fechas=Object.entries(byDate).sort((a,b)=>a[0].localeCompare(b[0])).slice(-14);
+    // Filtrar por período
+    const cutoff=new Date();
+    cutoff.setDate(cutoff.getDate()-_mktStatsPeriod);
+    const cutoffStr=cutoff.toISOString().split('T')[0];
+    const evs=all.filter(e=>!e.fecha||e.fecha>=cutoffStr);
 
-    // Labels legibles
+    // KPIs base
+    const views=evs.filter(e=>e.tipo==='page_view').length;
+    const modalOpens=evs.filter(e=>e.tipo==='modal_open').length;
+    const registros=evs.filter(e=>e.tipo==='registro').length;
+    const clickEvs=evs.filter(e=>e.tipo==='click_btn'&&e.boton);
+    const totalClicks=clickEvs.length;
+    const convRate=views>0?Math.round(registros/views*100):0;
+
+    // Labels completos
     const LABELS={
+      'header_agendar':'Header — Agendá una sesión',
       'header_agendar_sesion':'Header — Agendá una sesión',
-      'pregunta_siguiente':'Pregunta — Otra pregunta →',
+      'hero_ver_sesiones':'Hero → Ver sesiones',
+      'hero_explorar_preguntas':'Hero → Explorar preguntas',
+      'nav_preguntas':'Nav → Preguntas',
+      'nav_regalos':'Nav → Regalos',
+      'nav_sesiones':'Nav → Sesiones',
+      'nav_clases':'Nav → Clases',
+      'nav_quien_soy':'Nav → Quién Soy',
+      'pregunta_siguiente':'Preguntas → Otra pregunta',
+      'reservar_barras':'Reservar Barras (card)',
+      'reservar_barras_det':'Reservar Barras (detalle)',
+      'reservar_proceso':'Reservar Proceso (card)',
+      'reservar_proceso_det':'Reservar Proceso (detalle)',
+      'reservar_clase':'Reservar Clase (card)',
+      'reservar_clase_det':'Reservar Clase (detalle)',
+      'cta_final':'CTA final — Agendá',
+      'ver_mas_detail-barras':'Ver más — Barras',
+      'ver_mas_detail-proceso':'Ver más — Proceso',
+      'ver_mas_detail-clase':'Ver más — Clase',
+      'modal_elegir_barras':'Modal → eligió Barras',
+      'modal_elegir_proceso_cuerpos':'Modal → eligió Proceso',
+      'modal_elegir_clase_barras':'Modal → eligió Clase',
+      'modal_elegir_no_se':'Modal → Sin definir',
+      'ver_mas_preguntas':'Preguntas → Ver más',
+      'pregunta_siguiente':'Preguntas → Otra pregunta',
       'cta_quiero_ir_mas_profundo':'CTA — Quiero ir más profundo',
     };
     const label=b=>{
@@ -8997,40 +9020,121 @@ async function renderMktStats(){
       return b;
     };
 
+    // Interés por sesión
+    const SES_INFO={barras:{l:'Barras de Access',col:'#C17A48'},proceso_cuerpos:{l:'Proceso de Cuerpos',col:'#7B9E87'},clase_barras:{l:'Clase de Barras',col:'#4A7FA5'},no_se:{l:'Sin definir',col:'#9B82D4'}};
+    const sesCounts={};
+    clickEvs.filter(e=>e.boton?.startsWith('reservar_')).forEach(e=>{
+      const k=e.boton.replace('reservar_','').replace('_det','');
+      sesCounts[k]=(sesCounts[k]||0)+1;
+    });
+    evs.filter(e=>e.tipo==='registro').forEach(e=>{
+      const map={'Barras de Access':'barras','Proceso de Cuerpos':'proceso_cuerpos','Clase de Barras de Access®':'clase_barras','Sin definir':'no_se'};
+      const k=map[e.sesion]||e.sesion;
+      if(k)sesCounts[k]=(sesCounts[k]||0)+1;
+    });
+    const sesEntries=Object.entries(sesCounts).sort((a,b)=>b[1]-a[1]);
+    const sesTot=sesEntries.reduce((s,[,n])=>s+n,0);
+
+    // Clicks por botón
+    const byBtn={};
+    clickEvs.forEach(e=>{byBtn[e.boton]=(byBtn[e.boton]||0)+1;});
+    const sorted=Object.entries(byBtn).sort((a,b)=>b[1]-a[1]);
+
+    // Clicks por día (N días)
+    const days=[],byDate={};
+    for(let i=_mktStatsPeriod-1;i>=0;i--){
+      const d=new Date();d.setDate(d.getDate()-i);
+      const ds=d.toISOString().split('T')[0];
+      days.push(ds);byDate[ds]=0;
+    }
+    clickEvs.filter(e=>e.fecha).forEach(e=>{if(byDate.hasOwnProperty(e.fecha))byDate[e.fecha]++;});
+    const fechas=days.map(d=>[d,byDate[d]]);
+    const maxN=Math.max(...fechas.map(([,n])=>n),1);
+
+    const funnelSteps=[{l:'Visitas',n:views,ico:'👁'},{l:'Abrieron modal',n:modalOpens,ico:'🔔'},{l:'Enviaron formulario',n:registros,ico:'✅'}];
+    const funnelMax=Math.max(...funnelSteps.map(s=>s.n),1);
+
     el.innerHTML=`
+      <div style="display:flex;gap:6px;margin-bottom:18px">
+        ${[7,14,30].map(p=>`<button onclick="_mktStatsPeriod=${p};renderMktStats()"
+          style="padding:5px 16px;border-radius:20px;border:1.5px solid ${p===_mktStatsPeriod?'var(--gl)':'var(--border)'};
+          background:${p===_mktStatsPeriod?'rgba(201,168,76,.15)':'none'};
+          color:${p===_mktStatsPeriod?'var(--gl)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer">${p} días</button>`).join('')}
+      </div>
+
       <div class="kpi-grid" style="margin-bottom:20px">
-        <div class="kpi-card"><div class="kv">${total}</div><div class="kl">Clicks totales</div></div>
-        <div class="kpi-card"><div class="kv">${sorted.length}</div><div class="kl">Botones distintos</div></div>
-        <div class="kpi-card"><div class="kv">${sorted[0]?sorted[0][1]:0}</div><div class="kl">Más clickeado</div></div>
+        <div class="kpi-card"><div class="kv">${views}</div><div class="kl">Visitas</div></div>
+        <div class="kpi-card"><div class="kv">${totalClicks}</div><div class="kl">Clicks totales</div></div>
+        <div class="kpi-card"><div class="kv">${registros}</div><div class="kl">Formularios enviados</div></div>
+        <div class="kpi-card"><div class="kv">${convRate}%</div><div class="kl">Tasa conversión</div></div>
       </div>
 
       <div class="card" style="margin-bottom:16px;padding:18px">
-        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">Clicks por botón</div>
-        ${sorted.map(([btn,n])=>{
-          const pct=Math.round(n/total*100);
-          return`<div style="margin-bottom:12px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-              <span style="font-size:13px;color:var(--text)">${label(btn)}</span>
-              <span style="font-size:13px;font-weight:700;color:var(--gl)">${n} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pct}%)</span></span>
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🔻 Funnel de conversión</div>
+        ${funnelSteps.map((s,i)=>{
+          const pct=Math.round(s.n/funnelMax*100);
+          const conv=i>0&&funnelSteps[i-1].n>0?Math.round(s.n/funnelSteps[i-1].n*100):null;
+          return`<div style="margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+              <span style="font-size:13px;color:var(--text)">${s.ico} ${s.l}</span>
+              <div style="display:flex;align-items:center;gap:8px">
+                ${conv!==null?`<span style="font-size:11px;color:var(--muted)">↓ ${conv}%</span>`:''}
+                <span style="font-size:14px;font-weight:800;color:var(--gl)">${s.n}</span>
+              </div>
             </div>
-            <div style="height:6px;background:var(--card2);border-radius:4px;overflow:hidden">
+            <div style="height:8px;background:var(--card2);border-radius:4px;overflow:hidden">
               <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:4px;transition:width .4s"></div>
             </div>
           </div>`;
         }).join('')}
       </div>
 
-      ${fechas.length?`<div class="card" style="padding:18px">
-        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">Clicks por día (últimos 14 días)</div>
-        <div style="display:flex;align-items:flex-end;gap:6px;height:80px">
-          ${(()=>{const mx=Math.max(...fechas.map(([,n])=>n),1);return fechas.map(([f,n])=>`
-            <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px" title="${f}: ${n} clicks">
-              <span style="font-size:9px;color:var(--muted)">${n}</span>
-              <div style="width:100%;background:linear-gradient(180deg,var(--gl),var(--gold));border-radius:3px 3px 0 0;height:${Math.round(n/mx*60)}px;min-height:3px"></div>
-              <span style="font-size:8px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">${f.slice(5)}</span>
-            </div>`).join('');})()}
-        </div>
+      ${sesEntries.length?`<div class="card" style="margin-bottom:16px;padding:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🌀 Interés por sesión</div>
+        ${sesEntries.map(([k,n])=>{
+          const info=SES_INFO[k]||{l:k,col:'#9B82D4'};
+          const pct=sesTot>0?Math.round(n/sesTot*100):0;
+          return`<div style="margin-bottom:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:13px;color:var(--text)">${info.l}</span>
+              <span style="font-size:13px;font-weight:700;color:${info.col}">${n} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pct}%)</span></span>
+            </div>
+            <div style="height:6px;background:var(--card2);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:${info.col};border-radius:4px;transition:width .4s"></div>
+            </div>
+          </div>`;
+        }).join('')}
       </div>`:''}
+
+      ${sorted.length?`<div class="card" style="margin-bottom:16px;padding:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🖱 Clicks por botón</div>
+        ${sorted.map(([btn,n])=>{
+          const pct=Math.round(n/totalClicks*100);
+          return`<div style="margin-bottom:11px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+              <span style="font-size:12px;color:var(--text)">${label(btn)}</span>
+              <span style="font-size:12px;font-weight:700;color:var(--gl)">${n} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pct}%)</span></span>
+            </div>
+            <div style="height:5px;background:var(--card2);border-radius:4px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:4px"></div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`:''}
+
+      <div class="card" style="padding:18px">
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">📆 Clicks por día (${_mktStatsPeriod} días)</div>
+        <div style="display:flex;align-items:flex-end;gap:${_mktStatsPeriod>14?2:5}px;height:80px">
+          ${fechas.map(([f,n])=>{
+            const h=n>0?Math.max(4,Math.round(n/maxN*60)):3;
+            return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px" title="${f}: ${n} clicks">
+              ${n>0?`<span style="font-size:8px;color:var(--muted)">${n}</span>`:''}
+              <div style="width:100%;background:${n>0?'linear-gradient(180deg,var(--gl),var(--gold))':'var(--card2)'};border-radius:3px 3px 0 0;height:${h}px;min-height:3px"></div>
+              ${_mktStatsPeriod<=14?`<span style="font-size:7px;color:var(--muted);writing-mode:vertical-rl;transform:rotate(180deg)">${f.slice(5)}</span>`:''}
+            </div>`;
+          }).join('')}
+        </div>
+      </div>
     `;
   }catch(e){
     el.innerHTML=`<div class="es"><div class="ei">⚠️</div><p>Error al cargar estadísticas</p></div>`;
