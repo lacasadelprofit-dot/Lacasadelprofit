@@ -8961,7 +8961,104 @@ function _renderContInsights(publicados,mes){
 }
 
 /* ── ESTADÍSTICAS DE CLICKS ── */
-let _mktStatsPeriod=30;
+let _mktStatsPeriod=30,_statsSubTab='resumen';
+
+function _statsLabel(b){
+  const L={'header_agendar':'Header — Agendá una sesión','header_agendar_sesion':'Header — Agendá una sesión','hero_ver_sesiones':'Hero → Ver sesiones','hero_explorar_preguntas':'Hero → Explorar preguntas','nav_preguntas':'Nav → Preguntas','nav_regalos':'Nav → Regalos','nav_sesiones':'Nav → Sesiones','nav_clases':'Nav → Clases','nav_quien_soy':'Nav → Quién Soy','pregunta_siguiente':'Preguntas → Otra pregunta','reservar_barras':'Reservar Barras (card)','reservar_barras_det':'Reservar Barras (detalle)','reservar_proceso':'Reservar Proceso (card)','reservar_proceso_det':'Reservar Proceso (detalle)','reservar_clase':'Reservar Clase (card)','reservar_clase_det':'Reservar Clase (detalle)','cta_final':'CTA final — Agendá','ver_mas_detail-barras':'Ver más — Barras','ver_mas_detail-proceso':'Ver más — Proceso','ver_mas_detail-clase':'Ver más — Clase','modal_elegir_barras':'Modal → eligió Barras','modal_elegir_proceso_cuerpos':'Modal → eligió Proceso','modal_elegir_clase_barras':'Modal → eligió Clase','modal_elegir_no_se':'Modal → Sin definir','ver_mas_preguntas':'Preguntas → Ver más'};
+  if(L[b])return L[b];
+  if(b.startsWith('regalo_'))return'🎁 '+b.replace(/^regalo_[^_]+_/,'').replace(/-/g,' ');
+  return b;
+}
+
+function _renderClicksPorBoton(clickEvs,totalClicks){
+  const CONV_KEYS=['reservar_barras','reservar_barras_det','reservar_proceso','reservar_proceso_det','reservar_clase','reservar_clase_det','cta_final','header_agendar','header_agendar_sesion'];
+  const NAV_KEYS=['nav_preguntas','nav_regalos','nav_sesiones','nav_clases','nav_quien_soy'];
+  const HERO_KEYS=['hero_ver_sesiones','hero_explorar_preguntas'];
+  const PREG_KEYS=['pregunta_siguiente','ver_mas_preguntas'];
+  const SES_KEYS=['ver_mas_detail-barras','ver_mas_detail-proceso','ver_mas_detail-clase'];
+  const MODAL_KEYS=['modal_elegir_barras','modal_elegir_proceso_cuerpos','modal_elegir_clase_barras','modal_elegir_no_se'];
+
+  const byBtn={};
+  clickEvs.forEach(e=>{byBtn[e.boton]=(byBtn[e.boton]||0)+1;});
+
+  const renderGroup=(keys,highlight)=>{
+    const entries=keys.filter(k=>byBtn[k]).map(k=>[k,byBtn[k]]).sort((a,b)=>b[1]-a[1]);
+    if(!entries.length)return'';
+    return entries.map(([btn,n])=>{
+      const pct=Math.round(n/totalClicks*100);
+      return`<div style="margin-bottom:${highlight?14:10}px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:${highlight?13:12}px;color:var(--text);font-weight:${highlight?700:400}">${_statsLabel(btn)}</span>
+          <span style="font-size:${highlight?13:12}px;font-weight:700;color:${highlight?'var(--gl)':'var(--muted)'}">${n} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pct}%)</span></span>
+        </div>
+        <div style="height:${highlight?6:4}px;background:var(--card2);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${highlight?'linear-gradient(90deg,var(--gold),var(--gl))':'var(--border)'};border-radius:4px"></div>
+        </div>
+      </div>`;
+    }).join('');
+  };
+
+  // Botones no categorizados
+  const allKnown=[...CONV_KEYS,...NAV_KEYS,...HERO_KEYS,...PREG_KEYS,...SES_KEYS,...MODAL_KEYS];
+  const otrosEntries=Object.entries(byBtn).filter(([k])=>!allKnown.includes(k)).sort((a,b)=>b[1]-a[1]);
+
+  const convHtml=renderGroup(CONV_KEYS,true);
+  const navHtml=[...HERO_KEYS,...NAV_KEYS,...PREG_KEYS,...SES_KEYS,...MODAL_KEYS].filter(k=>byBtn[k]).map(k=>[k,byBtn[k]]).sort((a,b)=>b[1]-a[1]);
+
+  if(!totalClicks)return`<div class="es" style="padding:20px 0"><div class="ei">🖱</div><p>Sin clicks registrados en este período</p></div>`;
+
+  return`<div class="card" style="margin-bottom:16px;padding:18px">
+    <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🎯 Conversión</div>
+    ${convHtml||'<p style="font-size:12px;color:var(--muted)">Sin clicks de conversión</p>'}
+    ${navHtml.length?`<div style="border-top:1px solid var(--border);margin:14px 0 12px"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Navegación & exploración</div>
+    ${navHtml.map(([btn,n])=>{const pct=Math.round(n/totalClicks*100);return`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px;color:var(--muted)">${_statsLabel(btn)}</span><span style="font-size:11px;color:var(--muted)">${n} (${pct}%)</span></div><div style="height:3px;background:var(--card2);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--border);border-radius:3px"></div></div></div>`;}).join('')}`:''}
+    ${otrosEntries.length?`<div style="border-top:1px solid var(--border);margin:14px 0 12px"></div>
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Otros</div>
+    ${otrosEntries.map(([btn,n])=>{const pct=Math.round(n/totalClicks*100);return`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px"><span style="font-size:12px;color:var(--muted)">${_statsLabel(btn)}</span><span style="font-size:11px;color:var(--muted)">${n} (${pct}%)</span></div><div style="height:3px;background:var(--card2);border-radius:3px;overflow:hidden"><div style="height:100%;width:${pct}%;background:var(--border);border-radius:3px"></div></div></div>`;}).join('')}`:''}
+  </div>`;
+}
+
+function _renderStatsPorMes(all){
+  const MES_LABELS=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  const SES_INFO={barras:{l:'Barras',col:'#C17A48'},proceso_cuerpos:{l:'Proceso',col:'#7B9E87'},clase_barras:{l:'Clase',col:'#4A7FA5'}};
+  const SES_MAP={'Barras de Access':'barras','Proceso de Cuerpos':'proceso_cuerpos','Clase de Barras de Access®':'clase_barras','Sin definir':'no_se'};
+
+  const md={};
+  all.forEach(e=>{
+    const mes=e.mes||(e.fecha?e.fecha.slice(0,7):null);
+    if(!mes)return;
+    if(!md[mes])md[mes]={views:0,clicks:0,registros:0,modal:0,ses:{}};
+    const m=md[mes];
+    if(e.tipo==='page_view')m.views++;
+    else if(e.tipo==='click_btn')m.clicks++;
+    else if(e.tipo==='modal_open')m.modal++;
+    else if(e.tipo==='registro'){m.registros++;const k=SES_MAP[e.sesion];if(k)m.ses[k]=(m.ses[k]||0)+1;}
+  });
+
+  const meses=Object.entries(md).sort((a,b)=>b[0].localeCompare(a[0])).slice(0,6).reverse();
+  if(!meses.length)return`<div class="es" style="padding:32px 0"><div class="ei">📅</div><p>Sin datos mensuales todavía</p></div>`;
+
+  const mesLabel=s=>{const[y,m]=s.split('-');return MES_LABELS[parseInt(m)-1]+' '+y.slice(2);};
+
+  return`<div style="display:flex;flex-direction:column;gap:14px">
+    ${meses.map(([mes,m])=>{
+      const conv=m.views>0?Math.round(m.registros/m.views*100):0;
+      const sesTop=Object.entries(m.ses).sort((a,b)=>b[1]-a[1])[0];
+      return`<div class="card" style="padding:16px">
+        <div style="font-size:14px;font-weight:800;color:var(--gl);margin-bottom:12px">${mesLabel(mes)}</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:${sesTop?'12':'0'}px">
+          <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:var(--text)">${m.views}</div><div style="font-size:10px;color:var(--muted)">Visitas</div></div>
+          <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:var(--text)">${m.clicks}</div><div style="font-size:10px;color:var(--muted)">Clicks</div></div>
+          <div style="text-align:center;background:var(--card2);border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:var(--text)">${m.registros}</div><div style="font-size:10px;color:var(--muted)">Formularios</div></div>
+          <div style="text-align:center;background:${conv>0?'rgba(201,168,76,.12)':'var(--card2)'};border:${conv>0?'1px solid rgba(201,168,76,.3)':'none'};border-radius:10px;padding:10px 6px"><div style="font-size:16px;font-weight:800;color:${conv>0?'var(--gl)':'var(--muted)'}">${conv}%</div><div style="font-size:10px;color:var(--muted)">Conversión</div></div>
+        </div>
+        ${sesTop?`<div style="font-size:11px;color:var(--muted)">Sesión más pedida: <strong style="color:${SES_INFO[sesTop[0]]?.col||'var(--text)'}">${SES_INFO[sesTop[0]]?.l||sesTop[0]}</strong> (${sesTop[1]})</div>`:''}
+      </div>`;
+    }).join('')}
+  </div>`;
+}
+
 async function renderMktStats(){
   const el=document.getElementById('mktStats');
   if(!el)return;
@@ -8970,13 +9067,24 @@ async function renderMktStats(){
     const{data}=await _sb.from('regalo_eventos').select('data');
     const all=(data||[]).map(r=>r.data||{});
 
-    // Filtrar por período
+    const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px">
+      ${[['resumen','📊 Resumen'],['mes','📅 Por mes']].map(([t,l])=>`<button onclick="_statsSubTab='${t}';renderMktStats()"
+        style="padding:6px 16px;border-radius:20px;border:1.5px solid ${t===_statsSubTab?'var(--gl)':'var(--border)'};
+        background:${t===_statsSubTab?'rgba(201,168,76,.15)':'none'};
+        color:${t===_statsSubTab?'var(--gl)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer">${l}</button>`).join('')}
+    </div>`;
+
+    if(_statsSubTab==='mes'){
+      el.innerHTML=subTabBar+_renderStatsPorMes(all);
+      return;
+    }
+
+    // ── RESUMEN ──
     const cutoff=new Date();
     cutoff.setDate(cutoff.getDate()-_mktStatsPeriod);
     const cutoffStr=cutoff.toISOString().split('T')[0];
     const evs=all.filter(e=>!e.fecha||e.fecha>=cutoffStr);
 
-    // KPIs base
     const views=evs.filter(e=>e.tipo==='page_view').length;
     const modalOpens=evs.filter(e=>e.tipo==='modal_open').length;
     const registros=evs.filter(e=>e.tipo==='registro').length;
@@ -8984,43 +9092,6 @@ async function renderMktStats(){
     const totalClicks=clickEvs.length;
     const convRate=views>0?Math.round(registros/views*100):0;
 
-    // Labels completos
-    const LABELS={
-      'header_agendar':'Header — Agendá una sesión',
-      'header_agendar_sesion':'Header — Agendá una sesión',
-      'hero_ver_sesiones':'Hero → Ver sesiones',
-      'hero_explorar_preguntas':'Hero → Explorar preguntas',
-      'nav_preguntas':'Nav → Preguntas',
-      'nav_regalos':'Nav → Regalos',
-      'nav_sesiones':'Nav → Sesiones',
-      'nav_clases':'Nav → Clases',
-      'nav_quien_soy':'Nav → Quién Soy',
-      'pregunta_siguiente':'Preguntas → Otra pregunta',
-      'reservar_barras':'Reservar Barras (card)',
-      'reservar_barras_det':'Reservar Barras (detalle)',
-      'reservar_proceso':'Reservar Proceso (card)',
-      'reservar_proceso_det':'Reservar Proceso (detalle)',
-      'reservar_clase':'Reservar Clase (card)',
-      'reservar_clase_det':'Reservar Clase (detalle)',
-      'cta_final':'CTA final — Agendá',
-      'ver_mas_detail-barras':'Ver más — Barras',
-      'ver_mas_detail-proceso':'Ver más — Proceso',
-      'ver_mas_detail-clase':'Ver más — Clase',
-      'modal_elegir_barras':'Modal → eligió Barras',
-      'modal_elegir_proceso_cuerpos':'Modal → eligió Proceso',
-      'modal_elegir_clase_barras':'Modal → eligió Clase',
-      'modal_elegir_no_se':'Modal → Sin definir',
-      'ver_mas_preguntas':'Preguntas → Ver más',
-      'pregunta_siguiente':'Preguntas → Otra pregunta',
-      'cta_quiero_ir_mas_profundo':'CTA — Quiero ir más profundo',
-    };
-    const label=b=>{
-      if(LABELS[b])return LABELS[b];
-      if(b.startsWith('regalo_'))return'🎁 '+b.replace(/^regalo_[^_]+_/,'').replace(/-/g,' ');
-      return b;
-    };
-
-    // Interés por sesión
     const SES_INFO={barras:{l:'Barras de Access',col:'#C17A48'},proceso_cuerpos:{l:'Proceso de Cuerpos',col:'#7B9E87'},clase_barras:{l:'Clase de Barras',col:'#4A7FA5'},no_se:{l:'Sin definir',col:'#9B82D4'}};
     const sesCounts={};
     clickEvs.filter(e=>e.boton?.startsWith('reservar_')).forEach(e=>{
@@ -9035,12 +9106,6 @@ async function renderMktStats(){
     const sesEntries=Object.entries(sesCounts).sort((a,b)=>b[1]-a[1]);
     const sesTot=sesEntries.reduce((s,[,n])=>s+n,0);
 
-    // Clicks por botón
-    const byBtn={};
-    clickEvs.forEach(e=>{byBtn[e.boton]=(byBtn[e.boton]||0)+1;});
-    const sorted=Object.entries(byBtn).sort((a,b)=>b[1]-a[1]);
-
-    // Clicks por día (N días)
     const days=[],byDate={};
     for(let i=_mktStatsPeriod-1;i>=0;i--){
       const d=new Date();d.setDate(d.getDate()-i);
@@ -9054,7 +9119,7 @@ async function renderMktStats(){
     const funnelSteps=[{l:'Visitas',n:views,ico:'👁'},{l:'Abrieron modal',n:modalOpens,ico:'🔔'},{l:'Enviaron formulario',n:registros,ico:'✅'}];
     const funnelMax=Math.max(...funnelSteps.map(s=>s.n),1);
 
-    el.innerHTML=`
+    el.innerHTML=subTabBar+`
       <div style="display:flex;gap:6px;margin-bottom:18px">
         ${[7,14,30].map(p=>`<button onclick="_mktStatsPeriod=${p};renderMktStats()"
           style="padding:5px 16px;border-radius:20px;border:1.5px solid ${p===_mktStatsPeriod?'var(--gl)':'var(--border)'};
@@ -9065,12 +9130,12 @@ async function renderMktStats(){
       <div class="kpi-grid" style="margin-bottom:20px">
         <div class="kpi-card"><div class="kv">${views}</div><div class="kl">Visitas</div></div>
         <div class="kpi-card"><div class="kv">${totalClicks}</div><div class="kl">Clicks totales</div></div>
-        <div class="kpi-card"><div class="kv">${registros}</div><div class="kl">Formularios enviados</div></div>
-        <div class="kpi-card"><div class="kv">${convRate}%</div><div class="kl">Tasa conversión</div></div>
+        <div class="kpi-card"><div class="kv">${registros}</div><div class="kl">Formularios</div></div>
+        <div class="kpi-card"><div class="kv">${convRate}%</div><div class="kl">Conversión</div></div>
       </div>
 
       <div class="card" style="margin-bottom:16px;padding:18px">
-        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🔻 Funnel de conversión</div>
+        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🔻 Funnel</div>
         ${funnelSteps.map((s,i)=>{
           const pct=Math.round(s.n/funnelMax*100);
           const conv=i>0&&funnelSteps[i-1].n>0?Math.round(s.n/funnelSteps[i-1].n*100):null;
@@ -9106,21 +9171,7 @@ async function renderMktStats(){
         }).join('')}
       </div>`:''}
 
-      ${sorted.length?`<div class="card" style="margin-bottom:16px;padding:18px">
-        <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">🖱 Clicks por botón</div>
-        ${sorted.map(([btn,n])=>{
-          const pct=Math.round(n/totalClicks*100);
-          return`<div style="margin-bottom:11px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-              <span style="font-size:12px;color:var(--text)">${label(btn)}</span>
-              <span style="font-size:12px;font-weight:700;color:var(--gl)">${n} <span style="color:var(--muted);font-weight:400;font-size:11px">(${pct}%)</span></span>
-            </div>
-            <div style="height:5px;background:var(--card2);border-radius:4px;overflow:hidden">
-              <div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:4px"></div>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>`:''}
+      ${_renderClicksPorBoton(clickEvs,totalClicks)}
 
       <div class="card" style="padding:18px">
         <div style="font-size:12px;font-weight:700;color:var(--gl);margin-bottom:14px;text-transform:uppercase;letter-spacing:.5px">📆 Clicks por día (${_mktStatsPeriod} días)</div>
