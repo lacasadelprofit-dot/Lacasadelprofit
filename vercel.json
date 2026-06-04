@@ -1,14 +1,15 @@
  {
     "rewrites": [
+      { "source": "/api/:path*", "destination": "/api/:path*" },
       {
         "has": [{ "type": "host", "value": "juancruzconsciencia.lat" }],
         "source": "/(.*)",
-        "destination": "/recursos_jcc.html"
+        "destination": "/2_PORTALES_PUBLICOS/recursos_jcc.html"
       },
       {
         "has": [{ "type": "host", "value": "www.juancruzconsciencia.lat" }],
         "source": "/(.*)",
-        "destination": "/recursos_jcc.html"
+        "destination": "/2_PORTALES_PUBLICOS/recursos_jcc.html"
       },
       {
         "has": [{ "type": "host", "value": "registro.juancruzconsciencia.lat" }],
