@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Generador de Carrusel · La Casa del Profit</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0700;--card:#141008;--card2:#1C1608;
+  --border:rgba(201,168,76,.15);--text:#EDE5C8;--muted:rgba(237,229,200,.42);
+  --gold:#C9A84C;--gl:#E8C96A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);height:100vh;display:flex;flex-direction:column;overflow:hidden;}
+
+/* HEADER */
+.hdr{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.hdr-brand{font-size:13px;font-weight:800;color:var(--gl);}
+.hdr-sub{font-size:11px;color:var(--muted);}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:300px 1fr 300px;flex:1;overflow:hidden;}
+
+/* ── LEFT ── */
+.left{border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden;}
+.left-top{padding:14px;border-bottom:1px solid var(--border);flex-shrink:0;}
+
+.lang-row{display:flex;gap:5px;margin-bottom:10px;}
+.lang-btn{flex:1;padding:5px;background:var(--card2);border:1px solid var(--border);border-radius:7px;
+  color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;text-align:center;transition:all .15s;}
+.lang-btn.active{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gold);}
+
+.chips{display:flex;flex-wrap:wrap;gap:5px;}
+.chip{padding:4px 9px;background:var(--card2);border:1px solid var(--border);border-radius:20px;
+  font-size:11px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.chip.active{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gold);}
+
+.sel-info{margin-top:10px;font-size:11px;color:var(--muted);}
+.sel-info strong{color:var(--gl);}
+
+.q-list{flex:1;overflow-y:auto;padding:6px;}
+.q-item{padding:9px 10px;border-radius:9px;cursor:pointer;border:1px solid transparent;
+  margin-bottom:3px;display:flex;align-items:flex-start;gap:8px;transition:all .15s;}
+.q-item:hover{background:var(--card2);}
+.q-item.selected{background:rgba(201,168,76,.07);border-color:rgba(201,168,76,.28);}
+.q-num{width:18px;height:18px;border-radius:50%;background:var(--gold);color:#000;font-size:9px;
+  font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px;}
+.q-num.empty{background:var(--card2);border:1px solid var(--border);color:var(--muted);}
+.q-txt{font-size:11.5px;color:var(--text);line-height:1.5;}
+.q-badge{font-size:9px;color:var(--muted);margin-top:2px;}
+.q-loading{padding:20px;text-align:center;font-size:12px;color:var(--muted);}
+
+/* ── CENTER ── */
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:20px;overflow:hidden;}
+canvas{border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.7);display:block;}
+
+.slide-nav{display:flex;align-items:center;gap:10px;}
+.nav-btn{background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);
+  padding:6px 14px;cursor:pointer;font-family:inherit;font-size:13px;transition:all .15s;}
+.nav-btn:hover:not(:disabled){border-color:var(--gold);color:var(--gold);}
+.nav-btn:disabled{opacity:.3;cursor:not-allowed;}
+.slide-lbl{font-size:12px;color:var(--muted);min-width:56px;text-align:center;}
+
+.dl-row{display:flex;gap:8px;}
+.btn-dl{padding:7px 15px;border-radius:9px;border:none;font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s;}
+.btn-dl-one{background:rgba(201,168,76,.13);color:var(--gold);border:1px solid rgba(201,168,76,.28);}
+.btn-dl-one:hover{background:rgba(201,168,76,.22);}
+.btn-dl-all{background:var(--gold);color:#000;}
+.btn-dl-all:hover{background:var(--gl);}
+
+/* ── RIGHT (REEL) ── */
+.right{border-left:1px solid var(--border);display:flex;flex-direction:column;padding:16px;gap:10px;overflow:hidden;}
+.reel-hdr{font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;}
+.reel-hint{font-size:11px;color:var(--muted);line-height:1.5;}
+.reel-ta{flex:1;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:12px;
+  font-size:11.5px;line-height:1.85;color:var(--text);white-space:pre-wrap;resize:none;
+  width:100%;outline:none;font-family:'DM Sans',system-ui,sans-serif;overflow-y:auto;}
+.btn-copy{padding:8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;
+  color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;
+  text-align:center;transition:all .15s;flex-shrink:0;}
+.btn-copy:hover{border-color:var(--gold);color:var(--gold);}
+
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--gold);color:#000;
+  font-size:12px;font-weight:700;padding:7px 18px;border-radius:20px;z-index:999;
+  opacity:0;transition:opacity .2s;pointer-events:none;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-brand">✦ Generador de Carrusel · La Casa del Profit</div>
+  <div class="hdr-sub">Seleccioná hasta 4 preguntas · la última slide es siempre CTA</div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT -->
+  <div class="left">
+    <div class="left-top">
+      <div class="lang-row">
+        <button class="lang-btn active" data-lang="es" onclick="setLang('es')">🇦🇷 ES</button>
+        <button class="lang-btn" data-lang="pt" onclick="setLang('pt')">🇧🇷 BR</button>
+        <button class="lang-btn" data-lang="en" onclick="setLang('en')">🇺🇸 EN</button>
+      </div>
+      <div class="chips" id="chips"></div>
+      <div class="sel-info" id="selInfo">Seleccioná preguntas para el carrusel</div>
+    </div>
+    <div class="q-list" id="qList"><div class="q-loading">Cargando preguntas...</div></div>
+  </div>
+
+  <!-- CENTER -->
+  <div class="center">
+    <canvas id="cv"></canvas>
+    <div class="slide-nav">
+      <button class="nav-btn" id="btnPrev" onclick="prevSlide()" disabled>←</button>
+      <span class="slide-lbl" id="slideLbl">—</span>
+      <button class="nav-btn" id="btnNext" onclick="nextSlide()" disabled>→</button>
+    </div>
+    <div class="dl-row">
+      <button class="btn-dl btn-dl-one" onclick="dlCurrent()">↓ Esta slide</button>
+      <button class="btn-dl btn-dl-all" onclick="dlAll()">↓ Todas las slides</button>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="reel-hdr">🎬 Guión Reel</div>
+    <div class="reel-hint">Basado en la primera pregunta seleccionada. Podés editarlo antes de copiar.</div>
+    <textarea class="reel-ta" id="reelTa" placeholder="Seleccioná una pregunta para generar el guión..."></textarea>
+    <button class="btn-copy" onclick="copyScript()">📋 Copiar guión</button>
+  </div>
+
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+const CS=1080, PS=460; // canvas size / preview size
+
+const AREAS=[
+  {v:'Todas',l:'✦ Todas'},{v:'Identidad',l:'🪞 Identidad'},{v:'Dinero',l:'💰 Dinero'},
+  {v:'Cuerpo',l:'🌿 Cuerpo'},{v:'Relaciones',l:'🤝 Relaciones'},{v:'Propósito',l:'🌟 Propósito'},
+  {v:'Consciencia',l:'✨ Consciencia'},{v:'Expansión',l:'🚀 Expansión'},{v:'Integración',l:'🔮 Integración'},
+];
+
+const ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'🤝',Propósito:'🌟',Consciencia:'✨',Expansión:'🚀',Integración:'🔮'};
+
+const REEL={
+  Identidad:  {hook:'Esta pregunta me hizo ver algo que no podía ignorar...',ref:'Tu mente va a buscar una respuesta lógica.\nPero tu consciencia ya sabe.\n¿La estás escuchando?'},
+  Dinero:     {hook:'Esta pregunta cambia la relación con el dinero...',ref:'¿Qué punto de vista estás sosteniendo\nque limita lo que podés recibir?'},
+  Cuerpo:     {hook:'El cuerpo siempre habla. ¿Lo estás escuchando?',ref:'No es una pregunta para responderte.\nEs una invitación a sentir.'},
+  Relaciones: {hook:'Las relaciones son espejos. Esta pregunta te lo muestra...',ref:'¿Qué te está mostrando este espejo\nque todavía no querés ver?'},
+  Propósito:  {hook:'El propósito no se encuentra. Se elige.',ref:'¿Y si ya supieras para qué estás acá?\n¿Qué elegirías diferente hoy?'},
+  Consciencia:{hook:'Esta pregunta abre algo que no se cierra...',ref:'La consciencia no juzga.\nSolo observa y elige.\n¿Desde dónde estás eligiendo?'},
+  Expansión:  {hook:'¿Y si lo que llamás límite fuera una elección?',ref:'La expansión no es un destino.\nEs una elección momento a momento.'},
+  Integración:{hook:'Esta pregunta integra lo que la mente separa...',ref:'¿Qué pasaría si todo lo que sos\npudiera coexistir sin contradicción?'},
+  default:    {hook:'Esta pregunta me cambió algo...',ref:'¿Qué surge cuando te hacés esta pregunta\nsin buscar una respuesta?'},
+};
+
+let allPregs=[], filtered=[], selIds=[], curArea='Todas', lang='es', slide=0;
+
+document.fonts.ready.then(async()=>{
+  renderChips();
+  await loadPregs();
+  drawEmpty();
+});
+
+/* ── LANG ── */
+function setLang(code){
+  lang=code;
+  document.querySelectorAll('.lang-btn').forEach(b=>b.classList.toggle('active',b.dataset.lang===code));
+  renderList(); renderCurrent(); genScript();
+}
+
+/* ── AREAS ── */
+function renderChips(){
+  document.getElementById('chips').innerHTML=AREAS.map(a=>
+    `<div class="chip${a.v===curArea?' active':''}" onclick="setArea('${a.v}')">${a.l}</div>`
+  ).join('');
+}
+function setArea(a){
+  curArea=a; renderChips();
+  filtered=a==='Todas'?[...allPregs]:allPregs.filter(p=>p.matiz===a);
+  renderList();
+}
+
+/* ── LOAD ── */
+async function loadPregs(){
+  const{data,error}=await _sb.from('comunidad_contenido').select('id,data').filter('data->>tipo','eq','pregunta');
+  if(error){document.getElementById('qList').innerHTML='<div class="q-loading">Error al cargar.</div>';return;}
+  allPregs=data.map(r=>({id:r.id,...r.data})).filter(p=>p.activo!==false&&p.texto);
+  filtered=[...allPregs];
+  renderList();
+}
+
+/* ── LIST ── */
+function txt(p){
+  if(lang==='en'&&p.texto_en) return p.texto_en;
+  if(lang==='pt'&&p.texto_pt) return p.texto_pt;
+  return p.texto||'';
+}
+function renderList(){
+  if(!filtered.length){document.getElementById('qList').innerHTML='<div class="q-loading">Sin preguntas en esta área.</div>';return;}
+  document.getElementById('qList').innerHTML=filtered.map(p=>{
+    const idx=selIds.indexOf(p.id), sel=idx>=0;
+    return`<div class="q-item${sel?' selected':''}" onclick="toggle('${p.id}')">
+      <div class="q-num${sel?'':' empty'}">${sel?idx+1:'+'}</div>
+      <div><div class="q-txt">${txt(p)}</div>${p.matiz?`<div class="q-badge">${ICO[p.matiz]||'✦'} ${p.matiz}</div>`:''}</div>
+    </div>`;
+  }).join('');
+  updateInfo();
+}
+function toggle(id){
+  const i=selIds.indexOf(id);
+  if(i>=0){selIds.splice(i,1);}
+  else{if(selIds.length>=4){toast('Máximo 4 preguntas');return;}selIds.push(id);}
+  slide=Math.min(slide,Math.max(0,selIds.length));
+  renderList(); renderCurrent(); genScript(); updateNav();
+}
+function updateInfo(){
+  const n=selIds.length, el=document.getElementById('selInfo');
+  el.innerHTML=n?`<strong>${n}/4</strong> pregunta${n!==1?'s':''} · ${n+1} slides en total`:'Seleccioná preguntas para el carrusel';
+}
+
+/* ── CANVAS ── */
+function getP(idx){return allPregs.find(p=>p.id===selIds[idx]);}
+
+function drawBg(c){
+  c.fillStyle='#080502';c.fillRect(0,0,CS,CS);
+  const g=c.createRadialGradient(CS/2,CS/2,0,CS/2,CS/2,CS*.65);
+  g.addColorStop(0,'rgba(201,168,76,0.07)');g.addColorStop(1,'rgba(0,0,0,0)');
+  c.fillStyle=g;c.fillRect(0,0,CS,CS);
+  c.save();c.translate(CS/2,CS/2);
+  [260,370,470].forEach(r=>{c.beginPath();c.arc(0,0,r,0,Math.PI*2);c.strokeStyle='rgba(201,168,76,0.055)';c.lineWidth=1;c.stroke();});
+  c.restore();
+}
+
+function wrap(c,text,x,y,maxW,lh){
+  const words=text.split(' ');let line='',lines=[];
+  for(const w of words){const t=line?line+' '+w:w;if(c.measureText(t).width>maxW&&line){lines.push(line);line=w;}else line=t;}
+  if(line)lines.push(line);
+  const tot=lines.length*lh;let cy=y-tot/2+lh/2;
+  for(const l of lines){c.fillText(l,x,cy);cy+=lh;}
+  return lines.length;
+}
+
+function drawQuestion(c,p,num){
+  drawBg(c);
+  const t=txt(p), area=p.matiz||'Consciencia', ico=ICO[p.matiz]||'✦';
+  // slide number
+  c.font=`500 28px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.35)';c.textAlign='left';c.fillText(`${num}`,58,72);
+  // area
+  c.font=`700 26px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.75)';c.textAlign='center';
+  c.fillText(`${ico}  ${area.toUpperCase()}`,CS/2,72);
+  // line
+  c.beginPath();c.moveTo(CS/2-50,96);c.lineTo(CS/2+50,96);c.strokeStyle='rgba(201,168,76,0.28)';c.lineWidth=1;c.stroke();
+  // question
+  const fs=t.length>90?46:t.length>60?52:60;
+  c.font=`700 ${fs}px "DM Sans",system-ui`;c.fillStyle='#FFFFFF';c.textAlign='center';
+  wrap(c,t,CS/2,CS/2,CS-130,fs*1.42);
+  // brand
+  c.font=`600 22px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.48)';c.textAlign='center';
+  c.fillText('Juan Cruz Consciencia',CS/2,CS-50);
+  c.font=`400 17px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.28)';
+  c.fillText('juancruzconsciencia.lat',CS/2,CS-26);
+}
+
+function drawCTA(c){
+  drawBg(c);
+  c.font=`800 110px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.12)';c.textAlign='center';c.fillText('✦',CS/2,CS/2-100);
+  c.font=`700 54px "DM Sans",system-ui`;c.fillStyle='#E8C96A';c.textAlign='center';
+  c.fillText('¿Listo/a para',CS/2,CS/2-20);c.fillText('explorar esto?',CS/2,CS/2+52);
+  c.beginPath();c.moveTo(CS/2-70,CS/2+88);c.lineTo(CS/2+70,CS/2+88);c.strokeStyle='rgba(201,168,76,0.35)';c.lineWidth=1;c.stroke();
+  c.font=`800 46px "DM Sans",system-ui`;c.fillStyle='#FFFFFF';c.textAlign='center';c.fillText('Agendá una sesión',CS/2,CS/2+158);
+  c.font=`600 28px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.65)';c.fillText('juancruzconsciencia.lat',CS/2,CS/2+208);
+  c.font=`500 22px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.38)';c.fillText('Juan Cruz Consciencia',CS/2,CS-38);
+}
+
+function drawEmpty(){
+  const cv=document.getElementById('cv');cv.width=PS;cv.height=PS;
+  const c=cv.getContext('2d'),sc=PS/CS;c.scale(sc,sc);
+  c.fillStyle='#080502';c.fillRect(0,0,CS,CS);
+  c.font=`700 38px "DM Sans",system-ui`;c.fillStyle='rgba(201,168,76,0.18)';c.textAlign='center';
+  c.fillText('✦',CS/2,CS/2-24);c.font=`400 28px "DM Sans",system-ui`;
+  c.fillText('Seleccioná preguntas',CS/2,CS/2+30);
+}
+
+function renderSlideAt(idx){
+  const cv=document.getElementById('cv');cv.width=PS;cv.height=PS;
+  const c=cv.getContext('2d'),sc=PS/CS;c.scale(sc,sc);
+  if(!selIds.length){drawEmpty();return;}
+  if(idx>=selIds.length)drawCTA(c);
+  else{const p=getP(idx);if(p)drawQuestion(c,p,idx+1);}
+}
+function renderCurrent(){renderSlideAt(slide);}
+
+function updateNav(){
+  const tot=selIds.length+1;
+  document.getElementById('btnPrev').disabled=slide===0||!selIds.length;
+  document.getElementById('btnNext').disabled=slide>=tot-1||!selIds.length;
+  document.getElementById('slideLbl').textContent=selIds.length?`${slide+1} / ${tot}`:'—';
+}
+function prevSlide(){if(slide>0){slide--;renderCurrent();updateNav();}}
+function nextSlide(){if(slide<selIds.length){slide++;renderCurrent();updateNav();}}
+
+/* ── DOWNLOAD ── */
+function hiRes(idx){
+  const c=document.createElement('canvas');c.width=CS;c.height=CS;
+  const ctx=c.getContext('2d');
+  if(idx>=selIds.length)drawCTA(ctx);
+  else{const p=getP(idx);if(p)drawQuestion(ctx,p,idx+1);}
+  return c;
+}
+function dlCurrent(){
+  if(!selIds.length){toast('Seleccioná al menos una pregunta');return;}
+  const a=document.createElement('a');a.download=`slide_${slide+1}.png`;a.href=hiRes(slide).toDataURL('image/png');a.click();
+}
+async function dlAll(){
+  if(!selIds.length){toast('Seleccioná al menos una pregunta');return;}
+  const tot=selIds.length+1;toast(`Descargando ${tot} slides...`);
+  for(let i=0;i<tot;i++){
+    const a=document.createElement('a');a.download=`slide_${i+1}_de_${tot}.png`;a.href=hiRes(i).toDataURL('image/png');a.click();
+    await new Promise(r=>setTimeout(r,350));
+  }
+}
+
+/* ── REEL SCRIPT ── */
+function genScript(){
+  const ta=document.getElementById('reelTa');
+  if(!selIds.length){ta.value='';return;}
+  const p=allPregs.find(pr=>pr.id===selIds[0]);if(!p)return;
+  const t=txt(p),m=p.matiz||'default',tmpl=REEL[m]||REEL.default;
+  ta.value=`🎬 GUIÓN REEL — 20 segundos\n\n[0-2s] GANCHO\n"${tmpl.hook}"\n\n[2-8s] LA PREGUNTA\n"${t}"\n(pausa 1 segundo)\n\n[8-18s] REFLEXIÓN\n"${tmpl.ref}"\n\n[18-20s] CIERRE\n"Explorá esto conmigo → link en bio"`;
+}
+async function copyScript(){
+  const t=document.getElementById('reelTa').value;if(!t)return;
+  try{await navigator.clipboard.writeText(t);toast('✓ Guión copiado');}
+  catch{toast('Seleccioná el texto y copiá con Ctrl+C');}
+}
+
+/* ── TOAST ── */
+function toast(msg){
+  const el=document.getElementById('toast');el.textContent=msg;el.style.opacity='1';
+  setTimeout(()=>el.style.opacity='0',2500);
+}
+</script>
+</body>
+</html>
