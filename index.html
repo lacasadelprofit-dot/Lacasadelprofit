@@ -1772,6 +1772,22 @@ th{background:rgba(28,26,46,.88)!important;}
    <label>Texto / Contenido *</label>
    <textarea id="cmTexto" style="min-height:130px" placeholder="Escribí aquí la pregunta, reflexión o contenido..."></textarea>
   </div>
+  <div id="cmTraduccionRow" style="display:none;margin-bottom:14px">
+   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+    <label style="margin:0;font-size:11px">Traducciones</label>
+    <button type="button" id="cmTraducirBtn" onclick="autoTraducirCm()" style="font-size:11px;padding:4px 10px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);border-radius:8px;color:var(--gold);cursor:pointer;font-weight:700;font-family:inherit">✦ Auto-traducir</button>
+   </div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+    <div>
+     <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:.4px">🇺🇸 INGLÉS</div>
+     <textarea id="cmTextoEn" style="min-height:70px;width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:var(--card);color:var(--text);font-family:inherit;resize:vertical" placeholder="English..."></textarea>
+    </div>
+    <div>
+     <div style="font-size:10px;color:var(--muted);margin-bottom:4px;font-weight:700;letter-spacing:.4px">🇧🇷 PORTUGUÉS</div>
+     <textarea id="cmTextoPt" style="min-height:70px;width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;background:var(--card);color:var(--text);font-family:inherit;resize:vertical" placeholder="Português..."></textarea>
+    </div>
+   </div>
+  </div>
   <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
    <input type="checkbox" id="cmActivo" checked style="width:16px;height:16px;accent-color:var(--gold)">
    <label for="cmActivo" style="font-size:13px;cursor:pointer">Activo</label>
@@ -9523,22 +9539,41 @@ function _renumPregRows(){
 }
 async function savePregMasiva(){
   const rows=document.querySelectorAll('#pregMasivaBody tr');
-  let count=0;
+  const pregs=[];
   rows.forEach(tr=>{
     const texto=tr.querySelector('.preg-texto').value.trim();
     if(!texto)return;
-    const matiz=tr.querySelector('.preg-matiz')?.value||'';
+    pregs.push({texto, matiz:tr.querySelector('.preg-matiz')?.value||null});
+  });
+  if(!pregs.length){toast('No hay preguntas para guardar','err');return;}
+
+  toast(`🌐 Traduciendo ${pregs.length} pregunta${pregs.length!==1?'s':''}...`);
+  const EM='juanalonso.6a@gmail.com';const enc=encodeURIComponent;
+  for(const p of pregs){
+    try{
+      const [rEn,rPt]=await Promise.all([
+        fetch(`https://api.mymemory.translated.net/get?q=${enc(p.texto)}&langpair=es|en&de=${enc(EM)}`).then(r=>r.json()),
+        fetch(`https://api.mymemory.translated.net/get?q=${enc(p.texto)}&langpair=es|pt&de=${enc(EM)}`).then(r=>r.json())
+      ]);
+      p.texto_en=rEn.responseData?.translatedText||null;
+      p.texto_pt=rPt.responseData?.translatedText||null;
+    }catch(e){p.texto_en=null;p.texto_pt=null;}
+    await new Promise(r=>setTimeout(r,400));
+  }
+
+  pregs.forEach(p=>{
     comunidad.push({
       id:crypto.randomUUID(),
       tipo:'pregunta',
-      texto,
-      matiz:matiz||null,
+      texto:p.texto,
+      texto_en:p.texto_en||null,
+      texto_pt:p.texto_pt||null,
+      matiz:p.matiz||null,
       activo:true,
       fechaCreacion:new Date().toISOString().split('T')[0]
     });
-    count++;
   });
-  if(!count){toast('No hay preguntas para guardar','err');return;}
+
   toast('💾 Guardando...');
   saveLocalCache();
   await _syncSupabase();
@@ -9546,7 +9581,7 @@ async function savePregMasiva(){
   document.getElementById('pregMasivaBody').innerHTML='';
   _pregMasivaInited=false;
   initPregMasiva();
-  toast(`✅ ${count} pregunta${count!==1?'s':''} guardada${count!==1?'s':''}. Ya podés refrescar.`);
+  toast(`✅ ${pregs.length} pregunta${pregs.length!==1?'s':''} guardada${pregs.length!==1?'s':''} con traducciones.`);
 }
 
 function renderComunidad(){
@@ -9796,6 +9831,7 @@ function _updateDiaLabel(i,checked){
 function toggleCmMatiz(){
   const esPregunta=document.getElementById('cmTipo').value==='pregunta';
   document.getElementById('cmMatizRow').style.display=esPregunta?'':'none';
+  document.getElementById('cmTraduccionRow').style.display=esPregunta?'':'none';
 }
 
 function openComunidadModal(id, fechaDefault){
@@ -9805,6 +9841,8 @@ function openComunidadModal(id, fechaDefault){
   document.getElementById('cmTipo').value=c?.tipo||'pregunta';
   document.getElementById('cmFecha').value=c?.fechaProgramada||(fechaDefault||'');
   document.getElementById('cmTexto').value=c?.texto||'';
+  document.getElementById('cmTextoEn').value=c?.texto_en||'';
+  document.getElementById('cmTextoPt').value=c?.texto_pt||'';
   document.getElementById('cmMatiz').value=c?.matiz||'';
   document.getElementById('cmActivo').checked=c?.activo!==false;
   document.getElementById('cmEnviado').checked=c?.enviado||false;
@@ -9815,13 +9853,18 @@ function openComunidadModal(id, fechaDefault){
 function saveComunidad(){
   const texto=document.getElementById('cmTexto').value.trim();
   if(!texto){toast('⚠️ El texto es obligatorio');return;}
+  const tipo=document.getElementById('cmTipo').value;
   const data={
-    tipo:document.getElementById('cmTipo').value,
+    tipo,
     texto,
     matiz:document.getElementById('cmMatiz').value.trim()||null,
     fechaProgramada:document.getElementById('cmFecha').value||null,
     activo:document.getElementById('cmActivo').checked,
     enviado:document.getElementById('cmEnviado').checked,
+    ...(tipo==='pregunta'?{
+      texto_en:document.getElementById('cmTextoEn').value.trim()||null,
+      texto_pt:document.getElementById('cmTextoPt').value.trim()||null,
+    }:{}),
   };
   if(_curComId){
     const idx=comunidad.findIndex(c=>c.id===_curComId);
@@ -9834,6 +9877,26 @@ function saveComunidad(){
   closeModal('moComunidad');
   renderComunidad();
   toast('✅ Contenido guardado');
+}
+
+async function autoTraducirCm(){
+  const texto=document.getElementById('cmTexto').value.trim();
+  if(!texto){toast('⚠️ Primero escribí el texto');return;}
+  const btn=document.getElementById('cmTraducirBtn');
+  const orig=btn.textContent;
+  btn.textContent='⏳ Traduciendo...';btn.disabled=true;
+  try{
+    const EM='juanalonso.6a@gmail.com';
+    const enc=encodeURIComponent;
+    const [rEn,rPt]=await Promise.all([
+      fetch(`https://api.mymemory.translated.net/get?q=${enc(texto)}&langpair=es|en&de=${enc(EM)}`).then(r=>r.json()),
+      fetch(`https://api.mymemory.translated.net/get?q=${enc(texto)}&langpair=es|pt&de=${enc(EM)}`).then(r=>r.json())
+    ]);
+    document.getElementById('cmTextoEn').value=rEn.responseData?.translatedText||'';
+    document.getElementById('cmTextoPt').value=rPt.responseData?.translatedText||'';
+    toast('✅ Traducido automáticamente');
+  }catch(e){toast('Error al traducir','err');}
+  btn.textContent=orig;btn.disabled=false;
 }
 
 async function delComunidad(id){
