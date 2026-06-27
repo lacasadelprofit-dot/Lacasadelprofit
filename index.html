@@ -344,7 +344,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="nl">Comunicación</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
     <div class="ni" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
-    <div class="ni" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
+    <div class="ni" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span><span id="crmBadge" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
     <div class="nl">Inteligencia</div>
     <div class="ni" onclick="nav('profit',this)"><span class="ico">🧠</span><span>Profit IA</span></div>
     <div class="nl">Portales</div>
@@ -374,6 +374,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <!-- DASHBOARD -->
     <div id="sec-dashboard" class="sec active">
      <div id="dPregDia" style="margin-bottom:18px"></div>
+     <div id="dNuevosProspectos" style="margin-bottom:18px"></div>
      <div id="dKPIs" class="kpi-grid"></div>
      <div id="dToday" style="margin-bottom:18px"></div>
      <div id="dWeekView" style="margin-bottom:18px"></div>
@@ -726,24 +727,6 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- CONTENIDO -->
     <div id="sec-contenido" class="sec">
-      <div class="tab-bar" style="margin-bottom:18px">
-        <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
-        <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
-        <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
-        <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
-      </div>
-      <!-- Sub-tab: Resumen -->
-      <div id="contResumen"></div>
-      <!-- Sub-tab: Redes Sociales -->
-      <div id="contRedes" style="display:none"></div>
-      <!-- Sub-tab: Manual de Marca -->
-      <div id="contManual" style="display:none"></div>
-      <!-- Sub-tab: Generador IA -->
-      <div id="contGenerador" style="display:none"></div>
-    </div>
-
-    <!-- MARKETING -->
-    <div id="sec-marketing" class="sec">
 
      <!-- RITMO DE CONTENIDO -->
      <div style="background:linear-gradient(135deg,rgba(201,168,76,.07) 0%,rgba(201,168,76,.03) 100%);border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:18px 20px;margin-bottom:20px;">
@@ -752,49 +735,42 @@ th{background:rgba(28,26,46,.88)!important;}
        <div style="font-size:11px;color:var(--muted);">Estrategia orgánica · Instagram</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;">
-       <!-- LUN -->
        <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px 6px;text-align:center;">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">LUN</div>
         <div style="font-size:18px;margin-bottom:4px;">📱</div>
         <div style="font-size:10px;color:var(--gl);font-weight:600;">Story</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;">Pregunta del día</div>
        </div>
-       <!-- MAR -->
        <div style="background:rgba(91,155,213,.06);border:1px solid rgba(91,155,213,.2);border-radius:10px;padding:10px 6px;text-align:center;">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">MAR</div>
         <div style="font-size:18px;margin-bottom:4px;">🎠</div>
         <div style="font-size:10px;color:#5B9BD5;font-weight:600;">Carrusel</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;">4 preguntas por área</div>
        </div>
-       <!-- MIÉ -->
        <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px 6px;text-align:center;">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">MIÉ</div>
         <div style="font-size:18px;margin-bottom:4px;">📱</div>
         <div style="font-size:10px;color:var(--gl);font-weight:600;">Story</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;">Pregunta del día</div>
        </div>
-       <!-- JUE -->
        <div style="background:rgba(61,170,106,.06);border:1px solid rgba(61,170,106,.2);border-radius:10px;padding:10px 6px;text-align:center;">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">JUE</div>
         <div style="font-size:18px;margin-bottom:4px;">🎬</div>
         <div style="font-size:10px;color:var(--green);font-weight:600;">Reel</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;">Voz en off + guión</div>
        </div>
-       <!-- VIE -->
        <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px 6px;text-align:center;">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">VIE</div>
         <div style="font-size:18px;margin-bottom:4px;">📱</div>
         <div style="font-size:10px;color:var(--gl);font-weight:600;">Story</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;">Pregunta del día</div>
        </div>
-       <!-- SAB -->
        <div style="background:rgba(91,155,213,.06);border:1px solid rgba(91,155,213,.2);border-radius:10px;padding:10px 6px;text-align:center;">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">SÁB</div>
         <div style="font-size:18px;margin-bottom:4px;">🎠</div>
         <div style="font-size:10px;color:#5B9BD5;font-weight:600;">Carrusel</div>
         <div style="font-size:9px;color:var(--muted);margin-top:2px;">4 preguntas por área</div>
        </div>
-       <!-- DOM -->
        <div style="background:rgba(201,168,76,.06);border:1px solid rgba(201,168,76,.15);border-radius:10px;padding:10px 6px;text-align:center;">
         <div style="font-size:10px;font-weight:700;color:var(--muted);margin-bottom:6px;">DOM</div>
         <div style="font-size:18px;margin-bottom:4px;">📱</div>
@@ -818,6 +794,24 @@ th{background:rgba(28,26,46,.88)!important;}
       </div>
      </div>
 
+      <div class="tab-bar" style="margin-bottom:18px">
+        <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
+        <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
+        <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
+        <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
+      </div>
+      <!-- Sub-tab: Resumen -->
+      <div id="contResumen"></div>
+      <!-- Sub-tab: Redes Sociales -->
+      <div id="contRedes" style="display:none"></div>
+      <!-- Sub-tab: Manual de Marca -->
+      <div id="contManual" style="display:none"></div>
+      <!-- Sub-tab: Generador IA -->
+      <div id="contGenerador" style="display:none"></div>
+    </div>
+
+    <!-- MARKETING -->
+    <div id="sec-marketing" class="sec">
      <div id="mktKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
      <div class="tab-bar" style="margin-bottom:18px">
       <button class="tab-btn active" id="mktTabResumen" onclick="setMktTab('resumen')">📊 Resumen</button>
@@ -2831,6 +2825,8 @@ function renderDash(){
     if(el) el.textContent=(count||0).toLocaleString('es-AR');
   });
 
+  renderNuevosProspectos();
+  updateCrmBadge();
   renderVision(tot);
   renderToday(now);
   renderWeekView(now);
@@ -2849,6 +2845,69 @@ function renderDash(){
       <td style="font-size:12px">${s.facilitador}</td>
       <td><span class="bdg ${estCls(s.estado||'Completado')}">${s.estado||'Completado'}</span></td>
     </tr>`).join('');
+}
+
+function _nuevosProspectos(){
+  const visto=localStorage.getItem('jcc_crm_lastSeen')||'1970-01-01T00:00:00Z';
+  return seres.filter(s=>{
+    if(!s.prospecto)return false;
+    const fecha=s.fechaRegistro||s.createdAt||'';
+    return fecha>visto;
+  }).sort((a,b)=>{
+    const fa=a.fechaRegistro||a.createdAt||'';
+    const fb=b.fechaRegistro||b.createdAt||'';
+    return fb.localeCompare(fa);
+  });
+}
+
+function updateCrmBadge(){
+  const n=_nuevosProspectos().length;
+  const el=document.getElementById('crmBadge');
+  if(!el)return;
+  if(n>0){el.textContent=n>9?'9+':n;el.style.display='inline-block';}
+  else el.style.display='none';
+}
+
+function renderNuevosProspectos(){
+  const el=document.getElementById('dNuevosProspectos');if(!el)return;
+  const nuevos=_nuevosProspectos();
+  if(!nuevos.length){el.innerHTML='';return;}
+  const ico={
+    'Barras de Access':'✋','Sesión Profit':'💡','Proceso de Cuerpos':'🌿',
+    'Bioexistencia':'🌌','Registros Akashicos':'📖','Reiki':'✨',
+    'Numerologia':'🔢','Coaching con Caballos':'🐴','Constelaciones':'⭐',
+    'Flores de Bach':'🌸','Viaje Sonoro':'🎵','Otro':'🌱',
+  };
+  function tRel(f){
+    if(!f)return '';
+    const d=Math.floor((Date.now()-new Date(f))/6e4);
+    if(d<60)return `hace ${d}m`;
+    if(d<1440)return `hace ${Math.floor(d/60)}h`;
+    if(d<2880)return 'ayer';
+    return `hace ${Math.floor(d/1440)} días`;
+  }
+  el.innerHTML=`
+  <div style="background:linear-gradient(135deg,rgba(224,85,85,.08),rgba(224,85,85,.03));border:1px solid rgba(224,85,85,.3);border-radius:14px;padding:16px 18px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="background:#E05555;color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:20px;">${nuevos.length}</span>
+        <span style="font-size:13px;font-weight:700;color:#F08080;">Nuevo${nuevos.length!==1?'s':''} prospecto${nuevos.length!==1?'s':''}</span>
+      </div>
+      <button onclick="navCRM()" style="background:rgba(224,85,85,.15);border:1px solid rgba(224,85,85,.3);color:#F08080;font-size:11px;font-weight:700;padding:5px 12px;border-radius:8px;cursor:pointer;font-family:inherit;">Ver en CRM →</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${nuevos.slice(0,5).map(p=>`
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(0,0,0,.2);border-radius:9px;">
+        <span style="font-size:18px;">${ico[p.herrInteres]||'🌱'}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${p.nombre}</div>
+          <div style="font-size:11px;color:var(--muted);">${p.herrInteres||'Sin especificar'}</div>
+        </div>
+        <div style="font-size:10px;color:var(--muted);white-space:nowrap;">${tRel(p.fechaRegistro||p.createdAt)}</div>
+      </div>`).join('')}
+      ${nuevos.length>5?`<div style="font-size:11px;color:var(--muted);text-align:center;padding:4px;">+${nuevos.length-5} más en CRM</div>`:''}
+    </div>
+  </div>`;
 }
 
 function renderVision(tot){
@@ -11557,6 +11616,9 @@ async function kbDelete(id){
   toast('Nota eliminada');
 }
 function renderCRM(){
+  localStorage.setItem('jcc_crm_lastSeen',new Date().toISOString());
+  updateCrmBadge();
+  const el=document.getElementById('dNuevosProspectos');if(el)el.innerHTML='';
   const prosp=getProspectos();
   const total=prosp.length;
   const sinContactar=prosp.filter(p=>!p.etapaProsp||p.etapaProsp==='Nuevo').length;
