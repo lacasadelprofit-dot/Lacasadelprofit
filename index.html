@@ -9867,13 +9867,13 @@ function deduplicarPreguntas(){
   if(!confirm(`¿Eliminar ${idsEliminar.length} pregunta${idsEliminar.length!==1?'s':''} duplicada${idsEliminar.length!==1?'s':''}? Se conserva la primera aparición de cada una.`))return;
   _localChangeTs=Date.now();
   idsEliminar.forEach(id=>{
-    comunidad=comunidad.filter(c=>c.id!==id);
-    delRecord('comunidad',id);
+    const idx=comunidad.findIndex(c=>c.id===id);
+    if(idx!==-1)comunidad[idx].activo=false;
   });
   save();
   renderComunidad();
   _renderComList();
-  toast(`✅ ${idsEliminar.length} duplicada${idsEliminar.length!==1?'s':''} eliminada${idsEliminar.length!==1?'s':''}`);
+  toast(`✅ ${idsEliminar.length} duplicada${idsEliminar.length!==1?'s':''} ocultada${idsEliminar.length!==1?'s':''}`);
 }
 
 function _comCardMini(c){
