@@ -608,6 +608,9 @@ th{background:rgba(28,26,46,.88)!important;}
                </select>
                <button class="btn btn-s btn-sm" onclick="aplicarAreaATodas()">Aplicar</button>
                <button class="btn btn-s btn-sm" onclick="addPregRow()">+ Fila</button>
+               <label style="display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);cursor:pointer">
+                 <input type="checkbox" id="pregSkipTrad"> Sin traducción
+               </label>
                <button class="btn btn-p btn-sm" onclick="savePregMasiva()">💾 Guardar todas</button>
              </div>
            </div>
@@ -9689,18 +9692,21 @@ async function savePregMasiva(){
   });
   if(!pregs.length){toast('No hay preguntas para guardar','err');return;}
 
-  toast(`🌐 Traduciendo ${pregs.length} pregunta${pregs.length!==1?'s':''}...`);
-  const EM='juanalonso.6a@gmail.com';const enc=encodeURIComponent;
-  for(const p of pregs){
-    try{
-      const [rEn,rPt]=await Promise.all([
-        fetch(`https://api.mymemory.translated.net/get?q=${enc(p.texto)}&langpair=es|en&de=${enc(EM)}`).then(r=>r.json()),
-        fetch(`https://api.mymemory.translated.net/get?q=${enc(p.texto)}&langpair=es|pt&de=${enc(EM)}`).then(r=>r.json())
-      ]);
-      p.texto_en=rEn.responseData?.translatedText||null;
-      p.texto_pt=rPt.responseData?.translatedText||null;
-    }catch(e){p.texto_en=null;p.texto_pt=null;}
-    await new Promise(r=>setTimeout(r,400));
+  const skipTrad=document.getElementById('pregSkipTrad')?.checked;
+  if(!skipTrad){
+    toast(`🌐 Traduciendo ${pregs.length} pregunta${pregs.length!==1?'s':''}...`);
+    const EM='juanalonso.6a@gmail.com';const enc=encodeURIComponent;
+    for(const p of pregs){
+      try{
+        const [rEn,rPt]=await Promise.all([
+          fetch(`https://api.mymemory.translated.net/get?q=${enc(p.texto)}&langpair=es|en&de=${enc(EM)}`).then(r=>r.json()),
+          fetch(`https://api.mymemory.translated.net/get?q=${enc(p.texto)}&langpair=es|pt&de=${enc(EM)}`).then(r=>r.json())
+        ]);
+        p.texto_en=rEn.responseData?.translatedText||null;
+        p.texto_pt=rPt.responseData?.translatedText||null;
+      }catch(e){p.texto_en=null;p.texto_pt=null;}
+      await new Promise(r=>setTimeout(r,400));
+    }
   }
 
   pregs.forEach(p=>{
@@ -10332,7 +10338,7 @@ function getManual(){
 }
 async function loadManualFromSupabase(){
   try{
-    const{data,error}=await _sb.from('configuracion').select('id,data').eq('id','brand_manual').single();
+    const{data,error}=await _sb.from('configuracion').select('id,data').eq('id','brand_manual').maybeSingle();
     if(!error&&data?.data){
       localStorage.setItem(LCP_MANUAL_KEY,JSON.stringify(data.data));
     }
