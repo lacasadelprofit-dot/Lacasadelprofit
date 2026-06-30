@@ -9843,7 +9843,10 @@ function _renderComList(){
     if(dupCount>0){
       dupBanner=`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(224,85,85,.1);border:1px solid rgba(224,85,85,.3);border-radius:10px;margin-bottom:4px;gap:10px;flex-wrap:wrap">
         <span style="font-size:12px;color:#F87171">⚠️ Se detectaron <strong>${dupCount}</strong> pregunta${dupCount!==1?'s':''} duplicada${dupCount!==1?'s':''}</span>
-        <button class="btn btn-sm" onclick="deduplicarPreguntas()" style="font-size:11px;background:rgba(224,85,85,.2);color:#F87171;border:1px solid rgba(224,85,85,.4)">🗑 Eliminar duplicadas</button>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-sm" onclick="deduplicarPreguntas()" style="font-size:11px;background:rgba(224,85,85,.2);color:#F87171;border:1px solid rgba(224,85,85,.4)">🗑 Eliminar duplicadas</button>
+          <button class="btn btn-sm" onclick="limpiarSinArea()" style="font-size:11px;background:rgba(224,85,85,.2);color:#F87171;border:1px solid rgba(224,85,85,.4)">🗑 Eliminar sin área</button>
+        </div>
       </div>`;
     }
   }
@@ -9860,6 +9863,18 @@ function _renderComList(){
     ${emptyMsg}
     ${inactivos.length?`<div style="font-size:11px;color:var(--muted);padding:8px 0">${inactivos.length} elemento${inactivos.length!==1?'s':''} inactivo${inactivos.length!==1?'s':''} oculto${inactivos.length!==1?'s':''}</div>`:''}
   </div>`;
+}
+
+function limpiarSinArea(){
+  const sinArea=comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false&&!c.matiz);
+  if(!sinArea.length){toast('No hay preguntas sin área');return;}
+  if(!confirm(`¿Ocultar ${sinArea.length} pregunta${sinArea.length!==1?'s':''} sin área asignada?`))return;
+  _localChangeTs=Date.now();
+  sinArea.forEach(c=>{c.activo=false;});
+  save();
+  renderComunidad();
+  _renderComList();
+  toast(`✅ ${sinArea.length} pregunta${sinArea.length!==1?'s':''} sin área ocultada${sinArea.length!==1?'s':''}`);
 }
 
 function deduplicarPreguntas(){
