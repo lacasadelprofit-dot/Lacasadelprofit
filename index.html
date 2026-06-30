@@ -9733,7 +9733,7 @@ async function savePregMasiva(){
 }
 
 function renderComunidad(){
-  const total=comunidad.length;
+  const total=comunidad.filter(c=>c.activo!==false).length;
 
   // KPIs totales
   document.getElementById('comKPIs').innerHTML=Object.entries(COM_TIPOS).map(([k,t])=>{
@@ -9875,7 +9875,7 @@ async function purgarInactivas(){
   if(error){toast('Error: '+error.message,'err');return;}
   _localChangeTs=Date.now();
   comunidad=comunidad.filter(c=>!(c.tipo==='pregunta'&&c.activo===false));
-  saveLocalCache();
+  save();
   renderComunidad();
   _renderComList();
   toast(`✅ ${ids.length} preguntas eliminadas de Supabase`);
