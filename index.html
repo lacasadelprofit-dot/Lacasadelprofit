@@ -9865,6 +9865,7 @@ function deduplicarPreguntas(){
   });
   if(!idsEliminar.length){toast('No hay duplicadas');return;}
   if(!confirm(`¿Eliminar ${idsEliminar.length} pregunta${idsEliminar.length!==1?'s':''} duplicada${idsEliminar.length!==1?'s':''}? Se conserva la primera aparición de cada una.`))return;
+  _localChangeTs=Date.now();
   idsEliminar.forEach(id=>{
     comunidad=comunidad.filter(c=>c.id!==id);
     delRecord('comunidad',id);
