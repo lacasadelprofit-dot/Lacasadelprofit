@@ -9737,7 +9737,7 @@ function renderComunidad(){
 
   // KPIs totales
   document.getElementById('comKPIs').innerHTML=Object.entries(COM_TIPOS).map(([k,t])=>{
-    const n=comunidad.filter(c=>c.tipo===k).length;
+    const n=comunidad.filter(c=>c.tipo===k&&c.activo!==false).length;
     return`<div class="kc" style="border-top:3px solid ${t.col}"><div class="ki">${t.ico}</div><div class="kl">${t.l}</div><div class="kv" style="color:${t.col}">${n}</div><div class="ks">contenidos cargados</div></div>`;
   }).join('')+`<div class="kc go"><div class="ki">✦</div><div class="kl">Total general</div><div class="kv">${total}</div></div>`;
 
@@ -9846,6 +9846,7 @@ function _renderComList(){
         <div style="display:flex;gap:6px;flex-wrap:wrap">
           <button class="btn btn-sm" onclick="deduplicarPreguntas()" style="font-size:11px;background:rgba(224,85,85,.2);color:#F87171;border:1px solid rgba(224,85,85,.4)">🗑 Eliminar duplicadas</button>
           <button class="btn btn-sm" onclick="limpiarSinArea()" style="font-size:11px;background:rgba(224,85,85,.2);color:#F87171;border:1px solid rgba(224,85,85,.4)">🗑 Eliminar sin área</button>
+          <button class="btn btn-sm" onclick="purgarInactivas()" style="font-size:11px;background:rgba(224,85,85,.2);color:#F87171;border:1px solid rgba(224,85,85,.4)">🗑 Purgar inactivas</button>
         </div>
       </div>`;
     }
@@ -9863,6 +9864,21 @@ function _renderComList(){
     ${emptyMsg}
     ${inactivos.length?`<div style="font-size:11px;color:var(--muted);padding:8px 0">${inactivos.length} elemento${inactivos.length!==1?'s':''} inactivo${inactivos.length!==1?'s':''} oculto${inactivos.length!==1?'s':''}</div>`:''}
   </div>`;
+}
+
+async function purgarInactivas(){
+  const inactivas=comunidad.filter(c=>c.tipo==='pregunta'&&c.activo===false);
+  if(!inactivas.length){toast('No hay preguntas inactivas');return;}
+  if(!confirm(`¿Eliminar permanentemente ${inactivas.length} pregunta${inactivas.length!==1?'s':''} inactivas de Supabase? Esta acción no se puede deshacer.`))return;
+  const ids=inactivas.map(c=>c.id);
+  const {error}=await _sb.from('comunidad_contenido').delete().in('id',ids);
+  if(error){toast('Error: '+error.message,'err');return;}
+  _localChangeTs=Date.now();
+  comunidad=comunidad.filter(c=>!(c.tipo==='pregunta'&&c.activo===false));
+  saveLocalCache();
+  renderComunidad();
+  _renderComList();
+  toast(`✅ ${ids.length} preguntas eliminadas de Supabase`);
 }
 
 function limpiarSinArea(){
