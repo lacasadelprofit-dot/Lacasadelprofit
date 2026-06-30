@@ -9863,11 +9863,24 @@ function _renderComList(){
 }
 
 function deduplicarPreguntas(){
-  const vistos=new Set();
+  const vistos=new Map(); // texto → id del que conservamos
   const idsEliminar=[];
-  comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false).forEach(c=>{
+  const preg=comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false);
+  preg.forEach(c=>{
     const k=(c.texto||'').trim().toLowerCase();
-    if(vistos.has(k))idsEliminar.push(c.id);else vistos.add(k);
+    if(!vistos.has(k)){
+      vistos.set(k,c.id);
+    } else {
+      const existingId=vistos.get(k);
+      const existing=preg.find(p=>p.id===existingId);
+      if(c.matiz&&!existing?.matiz){
+        // la nueva tiene área y la existente no → conservar la nueva
+        idsEliminar.push(existingId);
+        vistos.set(k,c.id);
+      } else {
+        idsEliminar.push(c.id);
+      }
+    }
   });
   if(!idsEliminar.length){toast('No hay duplicadas');return;}
   if(!confirm(`¿Eliminar ${idsEliminar.length} pregunta${idsEliminar.length!==1?'s':''} duplicada${idsEliminar.length!==1?'s':''}? Se conserva la primera aparición de cada una.`))return;
