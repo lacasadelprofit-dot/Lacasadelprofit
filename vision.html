@@ -152,9 +152,33 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .pb{height:4px;background:rgba(20,16,4,.9);border-radius:99px;overflow:hidden;}
 .pf{height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:99px;box-shadow:0 0 6px rgba(201,168,76,.4);}
 
+/* ── MI CAMINO ── */
+.camino-quote{font-size:23px;font-weight:800;color:#fff;line-height:1.4;text-align:center;
+  margin-bottom:28px;text-shadow:0 0 24px rgba(232,201,106,.3);}
+.camino-quote em{font-style:italic;color:var(--gl);}
+.camino-closing{text-align:center;font-size:13px;color:var(--muted);line-height:1.8;margin-top:-6px;margin-bottom:44px;}
+.camino-closing strong{color:var(--gl);font-weight:700;}
+
+/* ── TESTIMONIOS ── */
+.testi-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:44px;}
+.testi-img{border-radius:16px;overflow:hidden;border:1px solid var(--border);}
+.testi-img img{width:100%;height:auto;display:block;}
+@media(min-width:640px){.testi-grid{flex-direction:row;}.testi-img{flex:1;}}
+
+/* ── CTA ── */
+.cta-block{text-align:center;padding:36px 24px;margin-bottom:20px;
+  background:linear-gradient(135deg,rgba(201,168,76,.10),rgba(155,130,212,.06));
+  border:1px solid rgba(201,168,76,.25);border-radius:20px;}
+.cta-block h3{font-size:20px;font-weight:800;color:var(--gl);margin-bottom:10px;text-shadow:0 0 20px rgba(232,201,106,.3);}
+.cta-block p{font-size:13px;color:var(--muted);margin-bottom:22px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.7;}
+.cta-btn{display:inline-block;padding:14px 32px;background:linear-gradient(135deg,var(--gold),var(--gd));
+  border:none;border-radius:12px;color:#050401;font-size:15px;font-weight:800;text-decoration:none;
+  letter-spacing:.3px;transition:opacity .2s;}
+.cta-btn:hover{opacity:.9;}
+
 /* ── HERRAMIENTAS / FACILITADORES ── */
-.herr-list{display:flex;flex-direction:column;gap:12px;margin-bottom:44px;}
-.herr-card{padding:22px 24px;}
+.herr-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:44px;align-items:start;}
+.herr-card{padding:20px 20px;display:flex;flex-direction:column;}
 .herr-head{display:flex;align-items:flex-start;gap:14px;}
 .herr-ico{font-size:28px;line-height:1;flex-shrink:0;}
 .herr-nom{font-size:17px;font-weight:800;color:var(--gl);letter-spacing:.2px;}
@@ -220,7 +244,11 @@ footer a{color:var(--gold);text-decoration:none;font-weight:600;}
 footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
 /* ── RESPONSIVE ── */
+@media(max-width:760px){
+  .herr-list{grid-template-columns:repeat(2,1fr);}
+}
 @media(max-width:640px){
+  .herr-list{grid-template-columns:1fr;}
   .brand-name{font-size:32px;letter-spacing:2px;}
   .kpi-strip{grid-template-columns:1fr;gap:10px;}
   .ml-right{display:none;}
@@ -229,6 +257,8 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
   main{padding:32px 16px 60px;}
   .herr-card{padding:18px 18px;}
   .jcc-callout{padding:18px 20px;flex-direction:column;align-items:flex-start;}
+  .camino-quote{font-size:19px;}
+  .cta-block{padding:26px 18px;}
 }
 </style>
 </head>
@@ -257,7 +287,22 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
   <div id="loading" class="spinner"><div class="spin"></div> Cargando datos en tiempo real...</div>
   <div id="content" style="display:none">
 
-    <div class="sec-title" style="margin-top:8px">📊 El proyecto en números</div>
+    <div class="sec-title" style="margin-top:8px">🌱 Nuestro camino</div>
+    <div class="camino-quote">No vinimos a enseñarte nada.<br>Vinimos a <em>recordarte</em> lo que ya sabés.</div>
+
+    <div class="vision-block">
+      <p>La Casa del Profit nació de la búsqueda de una sola persona — pero nunca fue pensada para quedarse ahí.</p>
+      <p>Hoy es un espacio donde <span class="vh">un equipo de facilitadores sostiene la misma convicción</span>: cada persona tiene dentro suyo el poder de crear una realidad diferente.</p>
+      <p>No es el camino de uno. Es el camino de todos los que eligen acompañarlo — y de cada ser que se anima a atravesarlo.</p>
+    </div>
+
+    <div class="camino-closing">
+      Un espacio sin juicio, donde no hay nada que hacer — solo recibir.<br>
+      Un espacio en el que te permitas ser exactamente lo que sos.<br><br>
+      <strong>Sin expectativas. Solo presencia.</strong>
+    </div>
+
+    <div class="sec-title">📊 El proyecto en números</div>
     <div class="kpi-strip" id="kpiStrip"></div>
 
     <div class="sec-title">🎯 Próximo objetivo</div>
@@ -271,8 +316,21 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
       <p>Cada sesión es un paso. Cada ser que se transforma, transforma su entorno.</p>
     </div>
 
+    <div class="sec-title">💬 Lo que dicen después de una sesión</div>
+    <div class="testi-grid">
+      <div class="testi-img"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.03.36.jpg?v=1776899404" alt="Testimonio" loading="lazy"></div>
+      <div class="testi-img"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.04.11.jpg?v=1776899404" alt="Testimonio" loading="lazy"></div>
+      <div class="testi-img"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsApp_Image_2026-04-22_at_20.13.36.jpg?v=1776899680" alt="Testimonio" loading="lazy"></div>
+    </div>
+
     <div class="sec-title">🔮 Nuestras herramientas</div>
     <div class="herr-list" id="herrList"></div>
+
+    <div class="cta-block gc">
+      <h3>✨ ¿Lista/o para dar el próximo paso?</h3>
+      <p>Elegí una herramienta arriba y agendá directamente con quien la ofrece, o escribinos y te ayudamos a encontrar la sesión indicada para vos.</p>
+      <a class="cta-btn" href="https://wa.me/5491151758653?text=Hola!%20Quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Casa%20del%20Profit.%20✨" target="_blank">Agendá tu sesión →</a>
+    </div>
 
     <div class="jcc-callout gc">
       <p>¿Buscás específicamente <strong>Barras de Access, Proceso de Cuerpos o Clases de Access</strong> con Juan Cruz?</p>
