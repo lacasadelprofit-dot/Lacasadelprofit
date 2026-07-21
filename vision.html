@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>La Casa del Profit — Dimensión de Expansión Espiritual</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
   --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;--gdk:#4A380A;
@@ -151,6 +152,59 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .pb{height:4px;background:rgba(20,16,4,.9);border-radius:99px;overflow:hidden;}
 .pf{height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:99px;box-shadow:0 0 6px rgba(201,168,76,.4);}
 
+/* ── HERRAMIENTAS / FACILITADORES ── */
+.herr-list{display:flex;flex-direction:column;gap:12px;margin-bottom:44px;}
+.herr-card{padding:22px 24px;}
+.herr-head{display:flex;align-items:flex-start;gap:14px;}
+.herr-ico{font-size:28px;line-height:1;flex-shrink:0;}
+.herr-nom{font-size:17px;font-weight:800;color:var(--gl);letter-spacing:.2px;}
+.herr-desc{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:4px;}
+.fac-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--gd);margin:16px 0 10px;}
+.fac-row{display:flex;flex-wrap:wrap;gap:8px;}
+.fac-mini{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:24px;
+  background:rgba(201,168,76,.07);border:1px solid var(--border);cursor:pointer;transition:all .18s;}
+.fac-mini:hover{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.14);}
+.fac-mini-av{width:26px;height:26px;border-radius:50%;background-size:cover;background-position:center;
+  background:linear-gradient(135deg,var(--gold),var(--gd));display:flex;align-items:center;justify-content:center;
+  color:#050401;font-size:10px;font-weight:800;flex-shrink:0;}
+.fac-mini-nom{font-size:12px;font-weight:600;color:var(--text);}
+.jcc-callout{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
+  padding:20px 24px;margin-bottom:44px;background:linear-gradient(135deg,rgba(201,168,76,.09),rgba(155,130,212,.05));
+  border:1px solid rgba(201,168,76,.22);border-radius:18px;}
+.jcc-callout p{font-size:13px;color:var(--text);line-height:1.6;max-width:420px;}
+.jcc-callout strong{color:var(--gl);}
+.jcc-callout a{flex-shrink:0;padding:10px 20px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.45);
+  border-radius:20px;color:var(--gl);font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .2s;}
+.jcc-callout a:hover{background:rgba(201,168,76,.28);}
+
+/* ── FACILITADOR MODAL ── */
+.fmodal-overlay{display:none;position:fixed;inset:0;background:rgba(4,5,2,.82);z-index:900;
+  align-items:center;justify-content:center;padding:20px;}
+.fmodal-overlay.open{display:flex;}
+.fmodal{background:rgba(14,12,10,.94);border:1px solid rgba(232,201,106,.25);border-radius:22px;
+  max-width:420px;width:100%;padding:28px 26px;position:relative;max-height:88vh;overflow-y:auto;
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:0 20px 70px rgba(0,0,0,.7);}
+.fmodal-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.05);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:14px;}
+.fmodal-close:hover{color:var(--gl);border-color:var(--gold);}
+.fmodal-top{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.fmodal-av{width:56px;height:56px;border-radius:50%;background-size:cover;background-position:center;
+  background:linear-gradient(135deg,var(--gold),var(--gd));display:flex;align-items:center;justify-content:center;
+  color:#050401;font-size:19px;font-weight:800;flex-shrink:0;}
+.fmodal-nom{font-size:18px;font-weight:800;color:var(--gl);}
+.fmodal-ses{font-size:12px;color:var(--gold);font-weight:600;margin-top:2px;}
+.fmodal-bio{font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:16px;}
+.fmodal-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+.fmodal-badge{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;
+  background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);}
+.fmodal-precio{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;
+  background:rgba(201,168,76,.14);color:var(--gl);border:1px solid rgba(201,168,76,.3);}
+.fmodal-cta{display:block;width:100%;padding:13px;background:rgba(201,168,76,.16);
+  border:1px solid rgba(201,168,76,.45);border-radius:12px;color:var(--gl);font-size:13.5px;font-weight:700;
+  cursor:pointer;text-decoration:none;text-align:center;transition:all .2s;}
+.fmodal-cta:hover{background:rgba(201,168,76,.28);}
+
 /* ── SPINNER ── */
 .spinner{display:flex;align-items:center;justify-content:center;padding:80px;gap:12px;color:var(--muted);font-size:13px;}
 .spin{width:22px;height:22px;border:2px solid rgba(42,32,4,.8);border-top-color:var(--gold);border-radius:50%;animation:spin .7s linear infinite;}
@@ -173,6 +227,8 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
   .mission{font-size:13px;padding:16px 20px;}
   .vision-block,.next-box{padding:22px 20px;}
   main{padding:32px 16px 60px;}
+  .herr-card{padding:18px 18px;}
+  .jcc-callout{padding:18px 20px;flex-direction:column;align-items:flex-start;}
 }
 </style>
 </head>
@@ -215,11 +271,36 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
       <p>Cada sesión es un paso. Cada ser que se transforma, transforma su entorno.</p>
     </div>
 
+    <div class="sec-title">🔮 Nuestras herramientas</div>
+    <div class="herr-list" id="herrList"></div>
+
+    <div class="jcc-callout gc">
+      <p>¿Buscás específicamente <strong>Barras de Access, Proceso de Cuerpos o Clases de Access</strong> con Juan Cruz?</p>
+      <a href="https://juancruzconsciencia.lat" target="_blank">Conocé Juan Cruz Consciencia →</a>
+    </div>
+
     <div class="sec-title">🗺️ Mapa de objetivos</div>
     <div class="milestone-list" id="milestoneList"></div>
 
   </div>
 </main>
+
+<!-- FACILITADOR MODAL -->
+<div class="fmodal-overlay" id="fmodalOverlay" onclick="cerrarFacModalFuera(event)">
+  <div class="fmodal">
+    <button class="fmodal-close" onclick="cerrarFacModal()">✕</button>
+    <div class="fmodal-top">
+      <div class="fmodal-av" id="fmAv"></div>
+      <div>
+        <div class="fmodal-nom" id="fmNom"></div>
+        <div class="fmodal-ses" id="fmSes"></div>
+      </div>
+    </div>
+    <div class="fmodal-bio" id="fmBio"></div>
+    <div class="fmodal-meta" id="fmMeta"></div>
+    <a class="fmodal-cta" id="fmCta" target="_blank">Agendá por WhatsApp →</a>
+  </div>
+</div>
 
 <footer>
   © La Casa del Profit &nbsp;·&nbsp;
@@ -536,6 +617,106 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
 <!-- ══ DATA FETCH ══ -->
 <script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const WA_NUM='5491151758653';
+let FAC_INDEX={};
+
+function iniciales(nombre){return (nombre||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();}
+
+async function cargarHerramientas(){
+  const list=document.getElementById('herrList');
+  try{
+    const [{data:herrRows,error:herrErr},{data:facRows,error:facErr}]=await Promise.all([
+      _sb.from('herramientas').select('id,data'),
+      _sb.from('facilitadores').select('id,data'),
+    ]);
+    if(facErr)throw facErr;
+
+    const catalogo={};
+    (herrRows||[]).forEach(r=>{const h=r.data||{};if(h.nom)catalogo[h.nom]=h;});
+
+    const facilitadores=(facRows||[])
+      .map(r=>({id:r.id,...r.data}))
+      .filter(f=>f.activo!==false&&f.nombre);
+    facilitadores.forEach(f=>FAC_INDEX[f.id]=f);
+
+    const porSesion={};
+    facilitadores.forEach(f=>{
+      (f.herramientas||[]).forEach(nom=>{
+        (porSesion[nom]=porSesion[nom]||[]).push(f);
+      });
+    });
+
+    const sesiones=Object.keys(porSesion)
+      .map(nom=>({...(catalogo[nom]||{ico:'✨',desc:''}),nom}))
+      .sort((a,b)=>a.nom.localeCompare(b.nom));
+
+    if(!sesiones.length){list.parentElement.querySelector('.sec-title').style.display='none';list.style.display='none';return;}
+
+    list.innerHTML=sesiones.map(s=>{
+      const facs=porSesion[s.nom]||[];
+      const facsHtml=facs.map(f=>{
+        const av=f.foto?`background-image:url('${f.foto}')`:'';
+        return `<div class="fac-mini" onclick="abrirFacModal('${f.id}','${s.nom.replace(/'/g,"\\'")}')">
+          <div class="fac-mini-av" style="${av}">${f.foto?'':iniciales(f.nombre)}</div>
+          <span class="fac-mini-nom">${f.nombre}</span>
+        </div>`;
+      }).join('');
+      return `<div class="herr-card gc">
+        <div class="herr-head">
+          <div class="herr-ico">${s.ico||'✨'}</div>
+          <div>
+            <div class="herr-nom">${s.nom}</div>
+            ${s.desc?`<div class="herr-desc">${s.desc}</div>`:''}
+          </div>
+        </div>
+        <div class="fac-label">¿Quién la ofrece?</div>
+        <div class="fac-row">${facsHtml}</div>
+      </div>`;
+    }).join('');
+  }catch(e){
+    console.error(e);
+    list.innerHTML='';
+  }
+}
+cargarHerramientas();
+
+function abrirFacModal(facId,sesionNombre){
+  const f=FAC_INDEX[facId];
+  if(!f)return;
+  document.getElementById('fmNom').textContent=f.nombre;
+  document.getElementById('fmSes').textContent=sesionNombre;
+  document.getElementById('fmBio').textContent=f.bio||'';
+  document.getElementById('fmBio').style.display=f.bio?'block':'none';
+  const av=document.getElementById('fmAv');
+  if(f.foto){av.style.backgroundImage=`url('${f.foto}')`;av.textContent='';}
+  else{av.style.backgroundImage='';av.textContent=iniciales(f.nombre);}
+
+  const mods=[f.pres?'Presencial':'',f.onl?'Online':''].filter(Boolean).join(' · ');
+  const loc=[f.ciudad,f.zona].filter(Boolean).join(', ');
+  const precio=(f.precios&&f.precios[sesionNombre])||f.precio||0;
+  const metaHtml=[
+    mods?`<span class="fmodal-badge">${mods}</span>`:'',
+    loc?`<span class="fmodal-badge">📍 ${loc}</span>`:'',
+    precio?`<span class="fmodal-precio">$${precio.toLocaleString('es-AR')}</span>`:'',
+  ].filter(Boolean).join('');
+  document.getElementById('fmMeta').innerHTML=metaHtml;
+
+  const msg=encodeURIComponent(`Hola Juan Cruz! Quiero agendar ${sesionNombre} con ${f.nombre}. ✨`);
+  document.getElementById('fmCta').href=`https://wa.me/${WA_NUM}?text=${msg}`;
+
+  document.getElementById('fmodalOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function cerrarFacModal(){
+  document.getElementById('fmodalOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function cerrarFacModalFuera(e){if(e.target===document.getElementById('fmodalOverlay'))cerrarFacModal();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarFacModal();});
+
 const OBJ_LIST=[100,300,500,1000,3000,5000,10000,30000,50000,100000,300000,500000,1000000];
 
 function objLabel(m,i){
