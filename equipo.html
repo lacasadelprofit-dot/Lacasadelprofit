@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Nuestro Equipo — Juan Cruz Consciencia</title>
+<title>Sesiones y Equipo — Juan Cruz Consciencia</title>
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <meta name="theme-color" content="#C17A48">
-<meta property="og:title" content="Nuestro Equipo — Juan Cruz Consciencia">
-<meta property="og:description" content="Conocé a los facilitadores de La Casa del Profit.">
+<meta property="og:title" content="Sesiones y Equipo — Juan Cruz Consciencia">
+<meta property="og:description" content="Todas las sesiones de La Casa del Profit y quién te acompaña en cada una.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -21,7 +21,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 html{scroll-behavior:smooth;}
 body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-h1,h2,.sec-title,.eq-name{font-family:'Cormorant Garamond',Georgia,serif;}
+h1,h2,.ses-nombre{font-family:'Cormorant Garamond',Georgia,serif;}
 
 .site-header{display:flex;align-items:center;justify-content:space-between;padding:16px 24px;
   border-bottom:1px solid var(--border);background:rgba(250,250,248,.96);
@@ -33,49 +33,74 @@ h1,h2,.sec-title,.eq-name{font-family:'Cormorant Garamond',Georgia,serif;}
   background:none;cursor:pointer;white-space:nowrap;}
 .btn-agendar:hover{background:var(--terra);color:#fff;}
 
-.hero{text-align:center;padding:64px 20px 40px;max-width:640px;margin:0 auto;}
+.hero{text-align:center;padding:60px 20px 36px;max-width:640px;margin:0 auto;}
 .hero .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;
   padding:5px 18px;border-radius:20px;background:var(--terra-l);
   border:1px solid rgba(193,122,72,.35);color:var(--terra-d);margin-bottom:20px;letter-spacing:.3px;}
-.hero h1{font-size:34px;font-weight:800;color:var(--text);line-height:1.18;margin-bottom:14px;letter-spacing:-.5px;}
-.hero p{font-size:15px;color:var(--muted);line-height:1.8;max-width:460px;margin:0 auto;}
+.hero h1{font-size:33px;font-weight:800;color:var(--text);line-height:1.18;margin-bottom:14px;letter-spacing:-.5px;}
+.hero p{font-size:15px;color:var(--muted);line-height:1.8;max-width:480px;margin:0 auto;}
 
-.sec{padding:16px 16px 72px;max-width:980px;margin:0 auto;}
-.eq-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:18px;}
+.sec{padding:16px 16px 72px;max-width:760px;margin:0 auto;}
+.ses-list{display:flex;flex-direction:column;gap:16px;}
 
-.eq-card{background:var(--card);border:1px solid var(--border);border-radius:22px;padding:26px 22px;
-  transition:box-shadow .2s,transform .15s;display:flex;flex-direction:column;gap:12px;position:relative;overflow:hidden;}
-.eq-card:hover{box-shadow:0 8px 26px rgba(0,0,0,.08);transform:translateY(-2px);}
-.eq-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;
-  background:linear-gradient(90deg,var(--terra-l),var(--terra),var(--terra-l));}
-.eq-top{display:flex;align-items:center;gap:14px;}
-.eq-avatar{width:56px;height:56px;border-radius:50%;flex-shrink:0;background-size:cover;background-position:center;
-  display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;font-size:18px;
-  background-color:var(--terra);}
-.eq-name{font-size:19px;font-weight:700;color:var(--text);line-height:1.2;}
-.eq-loc{font-size:12px;color:var(--muted);margin-top:2px;}
-.eq-bio{font-size:13px;color:var(--muted);line-height:1.7;flex:1;}
-.eq-chips{display:flex;flex-wrap:wrap;gap:6px;}
-.eq-chip{font-size:10.5px;font-weight:700;padding:4px 10px;border-radius:20px;background:var(--terra-l);
-  color:var(--terra-d);border:1px solid rgba(193,122,72,.2);}
-.eq-badges{display:flex;gap:6px;flex-wrap:wrap;}
-.eq-badge{font-size:10.5px;font-weight:600;padding:4px 10px;border-radius:20px;background:var(--card2);
+/* ── SESSION CARD ── */
+.ses-card{background:var(--card);border:1px solid var(--border);border-radius:22px;
+  overflow:hidden;transition:box-shadow .2s;}
+.ses-card:hover{box-shadow:0 8px 26px rgba(0,0,0,.06);}
+.ses-stripe{height:4px;}
+.ses-body{padding:24px 24px 22px;}
+.ses-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:12px;}
+.ses-ico{font-size:32px;line-height:1;flex-shrink:0;}
+.ses-nombre{font-size:21px;font-weight:700;color:var(--text);letter-spacing:-.2px;line-height:1.2;}
+.ses-desc{font-size:13px;color:var(--muted);line-height:1.7;margin-top:3px;}
+
+.fac-label{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;
+  color:var(--terra-d);margin:16px 0 10px;}
+.fac-row{display:flex;flex-wrap:wrap;gap:8px;}
+.fac-mini{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:24px;
+  background:var(--card2);border:1px solid var(--border);cursor:pointer;transition:all .18s;}
+.fac-mini:hover{border-color:var(--terra);background:var(--terra-l);}
+.fac-mini-av{width:28px;height:28px;border-radius:50%;background-size:cover;background-position:center;
+  background-color:var(--terra);display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:10.5px;font-weight:700;flex-shrink:0;}
+.fac-mini-nom{font-size:12.5px;font-weight:600;color:var(--text);}
+
+.ses-empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.ses-empty .ei{font-size:38px;margin-bottom:12px;}
+
+/* ── FACILITADOR MODAL ── */
+.fmodal-overlay{display:none;position:fixed;inset:0;background:rgba(28,18,0,.45);z-index:900;
+  align-items:center;justify-content:center;padding:20px;}
+.fmodal-overlay.open{display:flex;}
+.fmodal{background:var(--card);border-radius:24px;max-width:420px;width:100%;padding:28px 26px;
+  position:relative;box-shadow:0 20px 60px rgba(0,0,0,.25);max-height:88vh;overflow-y:auto;}
+.fmodal-close{position:absolute;top:16px;right:16px;width:30px;height:30px;border-radius:50%;
+  background:var(--card2);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:14px;}
+.fmodal-close:hover{color:var(--terra-d);border-color:var(--terra);}
+.fmodal-top{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
+.fmodal-av{width:56px;height:56px;border-radius:50%;background-size:cover;background-position:center;
+  background-color:var(--terra);display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:19px;font-weight:700;flex-shrink:0;}
+.fmodal-nom{font-size:19px;font-weight:700;color:var(--text);}
+.fmodal-ses{font-size:12px;color:var(--terra-d);font-weight:600;margin-top:2px;}
+.fmodal-bio{font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:16px;}
+.fmodal-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
+.fmodal-badge{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;background:var(--card2);
   border:1px solid var(--border);color:var(--muted);}
-.eq-cta{margin-top:auto;padding:10px 16px;background:var(--terra);border:none;border-radius:12px;
-  color:#fff;font-size:12.5px;font-weight:800;cursor:pointer;text-decoration:none;text-align:center;
-  transition:background .2s,transform .15s;}
-.eq-cta:hover{background:var(--terra-d);transform:translateY(-1px);}
-
-.eq-empty{text-align:center;padding:60px 20px;color:var(--muted);}
-.eq-empty .ei{font-size:38px;margin-bottom:12px;}
+.fmodal-precio{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;background:var(--terra-l);
+  color:var(--terra-d);border:1px solid rgba(193,122,72,.25);}
+.fmodal-cta{display:block;width:100%;padding:13px;background:var(--terra);border:none;border-radius:12px;
+  color:#fff;font-size:14px;font-weight:800;cursor:pointer;text-decoration:none;text-align:center;
+  transition:background .2s;}
+.fmodal-cta:hover{background:var(--terra-d);}
 
 footer{background:var(--text);padding:32px 24px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:16px;}
 .foot-brand{font-family:'Cormorant Garamond',Georgia,serif;font-size:18px;color:#F5EFE4;letter-spacing:.04em;}
 .foot-copy{font-size:11px;color:rgba(245,239,228,.3);letter-spacing:.06em;}
 
 @media(max-width:480px){
-  .hero h1{font-size:27px;}
-  .eq-grid{grid-template-columns:1fr;}
+  .hero h1{font-size:26px;}
+  .ses-body{padding:20px 18px 18px;}
 }
 </style>
 </head>
@@ -87,13 +112,30 @@ footer{background:var(--text);padding:32px 24px;text-align:center;display:flex;f
 </header>
 
 <div class="hero">
-  <div class="pill">🙋 Nuestro Equipo</div>
-  <h1>Las personas detrás de cada sesión</h1>
-  <p>Facilitadores especializados en distintas herramientas de consciencia, cada uno con su propio camino y forma de acompañar.</p>
+  <div class="pill">🔮 Sesiones y Equipo</div>
+  <h1>Elegí tu sesión, conocé quién te acompaña</h1>
+  <p>Todas las herramientas de consciencia que ofrecemos, con los facilitadores que las llevan adelante.</p>
 </div>
 
 <div class="sec">
-  <div class="eq-grid" id="eqGrid"></div>
+  <div class="ses-list" id="sesList"></div>
+</div>
+
+<!-- FACILITADOR MODAL -->
+<div class="fmodal-overlay" id="fmodalOverlay" onclick="cerrarFacModalFuera(event)">
+  <div class="fmodal">
+    <button class="fmodal-close" onclick="cerrarFacModal()">✕</button>
+    <div class="fmodal-top">
+      <div class="fmodal-av" id="fmAv"></div>
+      <div>
+        <div class="fmodal-nom" id="fmNom"></div>
+        <div class="fmodal-ses" id="fmSes"></div>
+      </div>
+    </div>
+    <div class="fmodal-bio" id="fmBio"></div>
+    <div class="fmodal-meta" id="fmMeta"></div>
+    <a class="fmodal-cta" id="fmCta" target="_blank">Agendá por WhatsApp →</a>
+  </div>
 </div>
 
 <footer>
@@ -122,50 +164,112 @@ const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 const WA_NUM='5491151758653';
+const COLORS=['#C17A48','#9A6B9E','#6B8E9E','#9E8E4A','#8E6B4A','#5F8E6B'];
 
 function iniciales(nombre){return (nombre||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();}
 
+let FAC_INDEX={}; // facId -> facilitador
+
 async function cargarEquipo(){
-  const grid=document.getElementById('eqGrid');
+  const list=document.getElementById('sesList');
   try{
-    const {data,error}=await _sb.from('facilitadores').select('id,data');
-    if(error)throw error;
-    const facs=(data||[])
+    const [{data:herrRows,error:herrErr},{data:facRows,error:facErr}]=await Promise.all([
+      _sb.from('herramientas').select('id,data'),
+      _sb.from('facilitadores').select('id,data'),
+    ]);
+    if(facErr)throw facErr;
+
+    const catalogo={};
+    (herrRows||[]).forEach(r=>{const h=r.data||{};if(h.nom)catalogo[h.nom]=h;});
+
+    const facilitadores=(facRows||[])
       .map(r=>({id:r.id,...r.data}))
-      .filter(f=>f.activo!==false&&f.nombre)
-      .sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
-    if(!facs.length){
-      grid.innerHTML='';
-      grid.parentElement.innerHTML='<div class="eq-empty"><div class="ei">✦</div><p>Muy pronto vas a poder conocer a todo el equipo acá.</p></div>';
+      .filter(f=>f.activo!==false&&f.nombre);
+    facilitadores.forEach(f=>FAC_INDEX[f.id]=f);
+
+    // Agrupar: nombre de sesión → facilitadores que la ofrecen
+    const porSesion={};
+    facilitadores.forEach(f=>{
+      (f.herramientas||[]).forEach(nom=>{
+        (porSesion[nom]=porSesion[nom]||[]).push(f);
+      });
+    });
+
+    const sesiones=Object.keys(porSesion)
+      .map(nom=>({...(catalogo[nom]||{ico:'✨',desc:'',col:''}),nom}))
+      .sort((a,b)=>a.nom.localeCompare(b.nom));
+
+    if(!sesiones.length){
+      list.parentElement.innerHTML='<div class="ses-empty"><div class="ei">✦</div><p>Muy pronto vas a poder ver acá todas las sesiones disponibles.</p></div>';
       return;
     }
-    grid.innerHTML=facs.map(f=>{
-      const loc=[f.ciudad,f.zona].filter(Boolean).join(', ');
-      const mods=[f.pres?'Presencial':'',f.onl?'Online':''].filter(Boolean).join(' · ');
-      const chips=(f.herramientas||[]).slice(0,4).map(h=>`<span class="eq-chip">${h}</span>`).join('');
-      const extra=(f.herramientas||[]).length>4?`<span class="eq-chip">+${f.herramientas.length-4}</span>`:'';
-      const msg=encodeURIComponent(`Hola Juan Cruz! Vi el perfil de ${f.nombre} y me gustaría agendar una sesión. ✨`);
-      const avatarStyle=f.foto?`background-image:url('${f.foto}')`:'';
-      return `<div class="eq-card">
-        <div class="eq-top">
-          <div class="eq-avatar" style="${avatarStyle}">${f.foto?'':iniciales(f.nombre)}</div>
-          <div>
-            <div class="eq-name">${f.nombre}</div>
-            ${loc?`<div class="eq-loc">📍 ${loc}</div>`:''}
+
+    list.innerHTML=sesiones.map((s,i)=>{
+      const col=s.col||COLORS[i%COLORS.length];
+      const facs=porSesion[s.nom]||[];
+      const facsHtml=facs.map(f=>{
+        const av=f.foto?`background-image:url('${f.foto}')`:'';
+        return `<div class="fac-mini" onclick="abrirFacModal('${f.id}','${s.nom.replace(/'/g,"\\'")}')">
+          <div class="fac-mini-av" style="${av}">${f.foto?'':iniciales(f.nombre)}</div>
+          <span class="fac-mini-nom">${f.nombre}</span>
+        </div>`;
+      }).join('');
+      return `<div class="ses-card">
+        <div class="ses-stripe" style="background:${col}"></div>
+        <div class="ses-body">
+          <div class="ses-head">
+            <div class="ses-ico">${s.ico||'✨'}</div>
+            <div>
+              <div class="ses-nombre">${s.nom}</div>
+              ${s.desc?`<div class="ses-desc">${s.desc}</div>`:''}
+            </div>
           </div>
+          <div class="fac-label">¿Quién la ofrece?</div>
+          <div class="fac-row">${facsHtml}</div>
         </div>
-        ${f.bio?`<div class="eq-bio">${f.bio}</div>`:''}
-        ${chips?`<div class="eq-chips">${chips}${extra}</div>`:''}
-        ${mods?`<div class="eq-badges"><span class="eq-badge">${mods}</span></div>`:''}
-        <a class="eq-cta" href="https://wa.me/${WA_NUM}?text=${msg}" target="_blank">Agendá con ${f.nombre.split(' ')[0]} →</a>
       </div>`;
     }).join('');
   }catch(e){
     console.error(e);
-    grid.parentElement.innerHTML='<div class="eq-empty"><div class="ei">⚠️</div><p>No pudimos cargar el equipo. Intentá de nuevo más tarde.</p></div>';
+    list.parentElement.innerHTML='<div class="ses-empty"><div class="ei">⚠️</div><p>No pudimos cargar las sesiones. Intentá de nuevo más tarde.</p></div>';
   }
 }
 cargarEquipo();
+
+/* ── MODAL FACILITADOR ── */
+function abrirFacModal(facId,sesionNombre){
+  const f=FAC_INDEX[facId];
+  if(!f)return;
+  document.getElementById('fmNom').textContent=f.nombre;
+  document.getElementById('fmSes').textContent=sesionNombre;
+  document.getElementById('fmBio').textContent=f.bio||'';
+  document.getElementById('fmBio').style.display=f.bio?'block':'none';
+  const av=document.getElementById('fmAv');
+  if(f.foto){av.style.backgroundImage=`url('${f.foto}')`;av.textContent='';}
+  else{av.style.backgroundImage='';av.textContent=iniciales(f.nombre);}
+
+  const mods=[f.pres?'Presencial':'',f.onl?'Online':''].filter(Boolean).join(' · ');
+  const loc=[f.ciudad,f.zona].filter(Boolean).join(', ');
+  const precio=(f.precios&&f.precios[sesionNombre])||f.precio||0;
+  const metaHtml=[
+    mods?`<span class="fmodal-badge">${mods}</span>`:'',
+    loc?`<span class="fmodal-badge">📍 ${loc}</span>`:'',
+    precio?`<span class="fmodal-precio">$${precio.toLocaleString('es-AR')}</span>`:'',
+  ].filter(Boolean).join('');
+  document.getElementById('fmMeta').innerHTML=metaHtml;
+
+  const msg=encodeURIComponent(`Hola Juan Cruz! Quiero agendar ${sesionNombre} con ${f.nombre}. ✨`);
+  document.getElementById('fmCta').href=`https://wa.me/${WA_NUM}?text=${msg}`;
+
+  document.getElementById('fmodalOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function cerrarFacModal(){
+  document.getElementById('fmodalOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function cerrarFacModalFuera(e){if(e.target===document.getElementById('fmodalOverlay'))cerrarFacModal();}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarFacModal();});
 </script>
 </body>
 </html>
