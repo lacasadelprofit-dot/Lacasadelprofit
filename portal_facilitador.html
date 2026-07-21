@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal Facilitador — La Casa del Profit</title>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="manifest" href="/site.webmanifest">
+<meta name="theme-color" content="#C9A84C">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#06060A;
+  --card:rgba(18,14,30,0.58);
+  --card2:rgba(26,20,44,0.48);
+  --border:rgba(201,168,76,0.20);
+  --gold:#C9A84C;--gl:#E8C96A;--gd:#8B6914;
+  --gold-pale:#F5E4A8;
+  --text:#EDE5C8;--muted:#7A7260;
+  --green:#3DAA6A;--red:#E05555;
+  --blur:blur(20px);
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+
+#globalOverlay{position:fixed;top:0;left:0;width:100%;height:100%;
+  background:radial-gradient(ellipse at 50% 20%,rgba(60,44,8,.35),rgba(4,5,2,.9) 70%);z-index:0;pointer-events:none;}
+
+/* ── LOGIN ── */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;position:relative;z-index:2;}
+.lbox{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid rgba(232,201,106,.30);border-radius:24px;padding:44px 36px;width:420px;max-width:100%;
+  box-shadow:0 0 80px rgba(201,168,76,.15),0 0 24px rgba(201,168,76,.08),0 25px 60px rgba(0,0,0,.7);}
+.llogo{text-align:center;margin-bottom:32px;}
+.llogo .icon{font-size:44px;margin-bottom:10px;}
+.llogo h1{font-size:19px;font-weight:700;color:var(--gl);letter-spacing:1.5px;}
+.llogo p{color:var(--muted);font-size:12px;margin-top:4px;}
+.fg{margin-bottom:16px;}
+.fg label{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+.fg input,.fg select,.fg textarea{width:100%;padding:12px 14px;background:var(--card2);border:1px solid var(--border);
+  border-radius:10px;color:var(--text);font-size:14px;outline:none;transition:border-color .2s;font-family:inherit;}
+.fg input:focus,.fg select:focus,.fg textarea:focus{border-color:var(--gold);}
+.fg textarea{min-height:90px;resize:vertical;}
+.btn-main{width:100%;padding:14px;background:linear-gradient(135deg,var(--gold),var(--gd));border:none;
+  border-radius:10px;color:#050401;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.5px;transition:opacity .2s;}
+.btn-main:hover{opacity:.9;}
+.btn-main:disabled{opacity:.5;cursor:not-allowed;}
+.err-msg{text-align:center;color:var(--red);font-size:12px;margin-top:12px;display:none;}
+.ok-msg{text-align:center;color:var(--green);font-size:12px;margin-top:12px;display:none;}
+.link-sm{display:block;text-align:center;margin-top:16px;font-size:12px;color:var(--muted);text-decoration:none;cursor:pointer;}
+.link-sm:hover{color:var(--gl);}
+
+/* ── LOADER ── */
+#loader{display:none;position:fixed;inset:0;background:rgba(6,6,10,.92);z-index:9999;
+  align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.spinner{width:44px;height:44px;border:3px solid rgba(201,168,76,.2);border-top-color:var(--gold);
+  border-radius:50%;animation:spin .8s linear infinite;}
+#loaderMsg{color:var(--gl);font-size:13px;letter-spacing:1px;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── APP ── */
+#app{display:none;max-width:640px;margin:0 auto;padding:20px 16px 60px;position:relative;z-index:2;}
+.p-header{text-align:center;padding:28px 16px 22px;border-bottom:1px solid var(--border);margin-bottom:24px;}
+.p-avatar{width:84px;height:84px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));
+  display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:700;color:#050401;
+  margin:0 auto 14px;overflow:hidden;background-size:cover;background-position:center;}
+.p-name{font-size:20px;font-weight:700;color:var(--gl);}
+.p-sub{color:var(--muted);font-size:12px;margin-top:6px;}
+.btn-out{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);
+  padding:6px 14px;font-size:12px;cursor:pointer;margin-top:14px;}
+.btn-out:hover{border-color:var(--red);color:var(--red);}
+
+.card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
+  border:1px solid var(--border);border-radius:18px;padding:22px 20px;margin-bottom:16px;
+  box-shadow:0 4px 20px rgba(0,0,0,.35);}
+.card h3{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:16px;display:flex;align-items:center;gap:8px;}
+
+/* foto */
+.foto-row{display:flex;align-items:center;gap:16px;}
+.foto-preview{width:72px;height:72px;border-radius:16px;background:var(--card2);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--muted);flex-shrink:0;
+  background-size:cover;background-position:center;overflow:hidden;}
+.foto-actions label.btn-file{display:inline-block;padding:9px 16px;background:rgba(201,168,76,.14);
+  border:1px solid rgba(201,168,76,.35);border-radius:10px;color:var(--gl);font-size:12px;font-weight:700;
+  cursor:pointer;transition:all .2s;}
+.foto-actions label.btn-file:hover{background:rgba(201,168,76,.24);}
+.foto-hint{font-size:11px;color:var(--muted);margin-top:8px;}
+
+/* herramientas checklist */
+.herr-list{display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:220px;overflow-y:auto;
+  padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;}
+.herr-list label{display:flex;align-items:center;gap:6px;padding:5px 6px;border-radius:6px;cursor:pointer;font-size:12px;}
+.herr-list input{accent-color:var(--gold);width:14px;height:14px;}
+.precios-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto;
+  padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;}
+.precios-list .pr-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.precios-list .pr-row span{font-size:12px;flex:1;}
+.precios-list .pr-row input{width:110px;padding:5px 8px;background:var(--card);border:1px solid var(--border);
+  border-radius:6px;color:var(--text);font-size:12px;text-align:right;}
+
+/* modalidad */
+.chk-row{display:flex;gap:20px;}
+.chk-row label{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;}
+.chk-row input{accent-color:var(--gold);width:15px;height:15px;}
+
+/* disponibilidad */
+.disp-row{display:grid;grid-template-columns:100px auto 1fr 1fr;align-items:center;gap:10px;
+  padding:8px 0;border-bottom:1px solid rgba(255,255,255,.04);}
+.disp-row:last-child{border-bottom:none;}
+.disp-day{font-size:12px;font-weight:600;color:var(--text);}
+.disp-row input[type=time]{width:100%;padding:7px 8px;background:var(--card2);border:1px solid var(--border);
+  border-radius:8px;color:var(--text);font-size:12px;}
+.disp-row input[type=checkbox]{accent-color:var(--gold);width:15px;height:15px;}
+.disp-row.off input[type=time]{opacity:.35;pointer-events:none;}
+
+.btn-save{width:100%;padding:12px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.45);
+  border-radius:12px;color:var(--gl);font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:4px;}
+.btn-save:hover{background:rgba(201,168,76,.26);}
+.saved-tick{font-size:11px;color:var(--green);margin-left:8px;opacity:0;transition:opacity .3s;}
+.saved-tick.show{opacity:1;}
+
+@media(max-width:480px){
+  .lbox{padding:32px 20px;}
+  .herr-list{grid-template-columns:1fr;}
+  .disp-row{grid-template-columns:78px auto 1fr 1fr;gap:6px;}
+}
+</style>
+</head>
+<body>
+
+<div id="globalOverlay"></div>
+
+<div id="loader">
+  <div class="spinner"></div>
+  <p id="loaderMsg">Cargando...</p>
+</div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="lbox">
+    <div class="llogo">
+      <div class="icon">🙋</div>
+      <h1>PORTAL FACILITADOR</h1>
+      <p>La Casa del Profit</p>
+    </div>
+    <div id="loginFields">
+      <div class="fg">
+        <label>Email</label>
+        <input type="email" id="liEmail" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <div class="fg">
+        <label>Contraseña</label>
+        <input type="password" id="liPass" placeholder="••••••••" autocomplete="current-password">
+      </div>
+      <button class="btn-main" id="btnLogin" onclick="doLogin()">Iniciar sesión</button>
+      <a class="link-sm" onclick="showReset()">¿Olvidaste tu contraseña?</a>
+    </div>
+    <div id="resetFields" style="display:none">
+      <div class="fg">
+        <label>Email</label>
+        <input type="email" id="resetEmail" placeholder="tu@email.com" autocomplete="email">
+      </div>
+      <button class="btn-main" id="btnReset" onclick="doReset()">Enviar enlace</button>
+      <a class="link-sm" onclick="showLoginFields()">← Volver a iniciar sesión</a>
+    </div>
+    <p class="err-msg" id="errMsg"></p>
+    <p class="ok-msg" id="okMsg"></p>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="p-header">
+    <div class="p-avatar" id="avLetter">?</div>
+    <div class="p-name" id="pName">—</div>
+    <div class="p-sub">🙋 Tu perfil de facilitador</div>
+    <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
+  </div>
+
+  <div class="card">
+    <h3>📷 Foto de perfil</h3>
+    <div class="foto-row">
+      <div class="foto-preview" id="fotoPreview">?</div>
+      <div class="foto-actions">
+        <label class="btn-file">Subir foto<input type="file" id="fotoInput" accept="image/*" style="display:none" onchange="onFotoChange()"></label>
+        <div class="foto-hint" id="fotoStatus">Se muestra en la página pública del equipo.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>✍️ Bio / Descripción</h3>
+    <div class="fg" style="margin-bottom:0">
+      <textarea id="fBio" placeholder="Contá quién sos y cómo trabajás..."></textarea>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🔮 Herramientas que ofrecés</h3>
+    <div class="herr-list" id="herrList"></div>
+    <div class="fg" style="margin-top:14px;margin-bottom:0">
+      <label>💰 Precio por herramienta (ARS) — dejá en 0 si no aplica</label>
+      <div class="precios-list" id="preciosList"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>📍 Modalidad y ubicación</h3>
+    <div class="chk-row" style="margin-bottom:16px">
+      <label><input type="checkbox" id="fPres"> Presencial</label>
+      <label><input type="checkbox" id="fOnl"> Online</label>
+    </div>
+    <div class="fg" style="margin-bottom:10px"><label>Ciudad</label><input type="text" id="fCiudad" placeholder="Buenos Aires..."></div>
+    <div class="fg" style="margin-bottom:0"><label>Zona / Provincia</label><input type="text" id="fZona" placeholder="CABA, GBA..."></div>
+  </div>
+
+  <div class="card">
+    <h3>🗓️ Disponibilidad semanal</h3>
+    <div id="dispList"></div>
+  </div>
+
+  <button class="btn-save" onclick="guardarPerfil()">💾 Guardar cambios<span class="saved-tick" id="savedTick">✓ Guardado</span></button>
+</div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+const DIAS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+const HERRAMIENTAS=[
+  {ico:'🌀',nom:'Barras de Access'},{ico:'✨',nom:'Sesión Profit'},{ico:'💆',nom:'Proceso de Cuerpos'},
+  {ico:'🌱',nom:'Bioexistencia'},{ico:'📖',nom:'Registros Akashicos'},{ico:'🙌',nom:'Reiki'},
+  {ico:'🌬️',nom:'Limpieza Energética'},{ico:'🔢',nom:'Numerología'},{ico:'🐎',nom:'Coaching con Caballos'},
+  {ico:'⭐',nom:'Constelaciones Familiares'},{ico:'🌸',nom:'Face Lift'},{ico:'🎓',nom:'Clase Barras de Access'},
+  {ico:'🍄',nom:'Ceremonias Hongos'},{ico:'🌺',nom:'Flores de Bach'},{ico:'🎵',nom:'Viaje Sonoro'},
+  {ico:'🧘',nom:'Yoga'},{ico:'🐸',nom:'Bufu Alvarius'},{ico:'🌌',nom:'Sesiones Pleyadianas'},
+];
+
+let curUser=null, curFacId=null, curFac=null;
+
+function showLoader(m='Cargando...'){document.getElementById('loaderMsg').textContent=m;document.getElementById('loader').style.display='flex';}
+function hideLoader(){document.getElementById('loader').style.display='none';}
+function showOnly(id){['loginScreen','app'].forEach(x=>document.getElementById(x).style.display=x===id?(id==='loginScreen'?'flex':'block'):'none');}
+function showErr(m){const e=document.getElementById('errMsg');document.getElementById('okMsg').style.display='none';e.textContent=m;e.style.display='block';}
+function showOk(m){const o=document.getElementById('okMsg');document.getElementById('errMsg').style.display='none';o.textContent=m;o.style.display='block';}
+function showReset(){document.getElementById('loginFields').style.display='none';document.getElementById('resetFields').style.display='block';document.getElementById('errMsg').style.display='none';document.getElementById('okMsg').style.display='none';}
+function showLoginFields(){document.getElementById('loginFields').style.display='block';document.getElementById('resetFields').style.display='none';document.getElementById('errMsg').style.display='none';document.getElementById('okMsg').style.display='none';}
+
+/* ── LOGIN ── */
+async function doLogin(){
+  const email=document.getElementById('liEmail').value.trim();
+  const pass=document.getElementById('liPass').value;
+  if(!email||!pass){showErr('Completá email y contraseña.');return;}
+  const btn=document.getElementById('btnLogin');
+  btn.disabled=true;btn.textContent='Ingresando...';
+  showLoader('Ingresando...');
+  try{
+    const {data,error}=await _sb.auth.signInWithPassword({email,password:pass});
+    if(error){
+      hideLoader();showErr('Email o contraseña incorrectos.');
+      btn.disabled=false;btn.textContent='Iniciar sesión';return;
+    }
+    curUser=data.user;
+    await afterLogin();
+  }catch(e){
+    hideLoader();showErr('Error de conexión. Intentá de nuevo.');
+    btn.disabled=false;btn.textContent='Iniciar sesión';
+  }
+}
+
+async function afterLogin(){
+  showLoader('Cargando tu perfil...');
+  try{
+    const {data:profile,error:pErr}=await _sb.from('profiles').select('rol,facilitador_id').eq('id',curUser.id).single();
+    if(pErr||!profile||profile.rol!=='facilitador'||!profile.facilitador_id){
+      hideLoader();showErr('Tu usuario no tiene un perfil de facilitador asociado. Consultá con el admin.');
+      await _sb.auth.signOut();
+      document.getElementById('btnLogin').disabled=false;document.getElementById('btnLogin').textContent='Iniciar sesión';
+      return;
+    }
+    curFacId=profile.facilitador_id;
+    const {data:facRow,error:fErr}=await _sb.from('facilitadores').select('id,data').eq('id',curFacId).single();
+    if(fErr||!facRow){
+      hideLoader();showErr('No pudimos encontrar tu ficha de facilitador.');
+      document.getElementById('btnLogin').disabled=false;document.getElementById('btnLogin').textContent='Iniciar sesión';
+      return;
+    }
+    curFac=facRow.data||{};
+    hideLoader();
+    showAppScreen();
+  }catch(e){
+    hideLoader();showErr('Error de conexión. Intentá de nuevo.');
+    document.getElementById('btnLogin').disabled=false;document.getElementById('btnLogin').textContent='Iniciar sesión';
+  }
+}
+
+async function doReset(){
+  const email=document.getElementById('resetEmail').value.trim();
+  if(!email){showErr('Ingresá tu email.');return;}
+  const btn=document.getElementById('btnReset');
+  btn.disabled=true;btn.textContent='Enviando...';
+  try{
+    await _sb.auth.resetPasswordForEmail(email,{redirectTo:window.location.origin+'/portal_facilitador.html'});
+    showOk('Si el email está registrado, te enviamos un enlace para restablecer tu contraseña.');
+  }catch(e){
+    showErr('Error de conexión. Intentá de nuevo.');
+  }
+  btn.disabled=false;btn.textContent='Enviar enlace';
+}
+
+async function doLogout(){
+  await _sb.auth.signOut();
+  curUser=null;curFacId=null;curFac=null;
+  showOnly('loginScreen');
+  document.getElementById('liPass').value='';
+  document.getElementById('btnLogin').disabled=false;
+  document.getElementById('btnLogin').textContent='Iniciar sesión';
+}
+document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&document.getElementById('loginScreen').style.display!=='none'){
+  if(document.getElementById('loginFields').style.display!=='none')doLogin();else doReset();
+}});
+
+/* ── APP SCREEN ── */
+function showAppScreen(){
+  showOnly('app');
+  const ini=(curFac.nombre||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+  document.getElementById('pName').textContent=curFac.nombre||'—';
+  const av=document.getElementById('avLetter');
+  const fp=document.getElementById('fotoPreview');
+  if(curFac.foto){
+    av.style.backgroundImage=`url('${curFac.foto}')`;av.textContent='';
+    fp.style.backgroundImage=`url('${curFac.foto}')`;fp.textContent='';
+  }else{
+    av.style.backgroundImage='';av.textContent=ini;
+    fp.style.backgroundImage='';fp.textContent=ini;
+  }
+  document.getElementById('fBio').value=curFac.bio||'';
+  document.getElementById('fPres').checked=curFac.pres!==false;
+  document.getElementById('fOnl').checked=!!curFac.onl;
+  document.getElementById('fCiudad').value=curFac.ciudad||'';
+  document.getElementById('fZona').value=curFac.zona||'';
+  renderHerramientas();
+  renderDisponibilidad();
+}
+
+function renderHerramientas(){
+  const fHerrs=curFac.herramientas||[];
+  document.getElementById('herrList').innerHTML=HERRAMIENTAS.map(h=>`
+    <label><input type="checkbox" value="${h.nom}" ${fHerrs.includes(h.nom)?'checked':''} onchange="renderPrecios()"> ${h.ico} ${h.nom}</label>
+  `).join('');
+  renderPrecios();
+}
+function renderPrecios(){
+  const fPrecios=curFac.precios||{};
+  const checked=[...document.querySelectorAll('#herrList input:checked')].map(c=>c.value);
+  document.getElementById('preciosList').innerHTML=checked.map(nom=>`
+    <div class="pr-row"><span>${nom}</span>
+      <input type="number" min="0" placeholder="$ 0" data-herr="${nom}" value="${fPrecios[nom]||0}">
+    </div>`).join('')||'<div style="font-size:11px;color:var(--muted)">Elegí al menos una herramienta arriba.</div>';
+}
+
+function renderDisponibilidad(){
+  const disp=curFac.disponibilidad||{};
+  document.getElementById('dispList').innerHTML=DIAS.map(dia=>{
+    const d=disp[dia]||{activo:false,desde:'',hasta:''};
+    return `<div class="disp-row ${d.activo?'':'off'}" data-dia="${dia}">
+      <span class="disp-day">${dia}</span>
+      <input type="checkbox" ${d.activo?'checked':''} onchange="toggleDispRow(this)">
+      <input type="time" value="${d.desde||'09:00'}" ${d.activo?'':'disabled'}>
+      <input type="time" value="${d.hasta||'13:00'}" ${d.activo?'':'disabled'}>
+    </div>`;
+  }).join('');
+}
+function toggleDispRow(chk){
+  const row=chk.closest('.disp-row');
+  row.classList.toggle('off',!chk.checked);
+  row.querySelectorAll('input[type=time]').forEach(t=>t.disabled=!chk.checked);
+}
+
+/* ── FOTO ── */
+async function onFotoChange(){
+  const input=document.getElementById('fotoInput');
+  const file=input.files[0];
+  if(!file)return;
+  const statusEl=document.getElementById('fotoStatus');
+  statusEl.textContent='Subiendo...';
+  try{
+    const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+    const path=`${curFacId}/foto.${ext}`;
+    const {error}=await _sb.storage.from('facilitadores').upload(path,file,{upsert:true,cacheControl:'3600'});
+    if(error)throw error;
+    const {data}=_sb.storage.from('facilitadores').getPublicUrl(path);
+    curFac.foto=data.publicUrl+'?t='+Date.now();
+    const ini=(curFac.nombre||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+    document.getElementById('avLetter').style.backgroundImage=`url('${curFac.foto}')`;
+    document.getElementById('avLetter').textContent='';
+    document.getElementById('fotoPreview').style.backgroundImage=`url('${curFac.foto}')`;
+    document.getElementById('fotoPreview').textContent='';
+    statusEl.textContent='Foto actualizada. No olvides guardar los cambios.';
+  }catch(e){
+    console.error(e);
+    statusEl.textContent='No pudimos subir la foto. Intentá de nuevo.';
+  }
+}
+
+/* ── GUARDAR ── */
+async function guardarPerfil(){
+  const herrs=[...document.querySelectorAll('#herrList input:checked')].map(c=>c.value);
+  const precios={};
+  document.querySelectorAll('#preciosList input[type=number]').forEach(inp=>{
+    const val=parseFloat(inp.value)||0;
+    if(val>0)precios[inp.dataset.herr]=val;
+  });
+  const disponibilidad={};
+  document.querySelectorAll('#dispList .disp-row').forEach(row=>{
+    const dia=row.dataset.dia;
+    const chk=row.querySelector('input[type=checkbox]');
+    const times=row.querySelectorAll('input[type=time]');
+    disponibilidad[dia]={activo:chk.checked,desde:times[0].value,hasta:times[1].value};
+  });
+  const nuevoData={
+    ...curFac,
+    bio:document.getElementById('fBio').value,
+    herramientas:herrs,
+    precios,
+    pres:document.getElementById('fPres').checked,
+    onl:document.getElementById('fOnl').checked,
+    ciudad:document.getElementById('fCiudad').value,
+    zona:document.getElementById('fZona').value,
+    disponibilidad,
+  };
+  try{
+    const {error}=await _sb.from('facilitadores').update({data:nuevoData,updated_at:new Date().toISOString()}).eq('id',curFacId);
+    if(error)throw error;
+    curFac=nuevoData;
+    const tick=document.getElementById('savedTick');
+    tick.classList.add('show');
+    setTimeout(()=>tick.classList.remove('show'),2000);
+  }catch(e){
+    console.error(e);
+    alert('No pudimos guardar los cambios. Intentá de nuevo.');
+  }
+}
+
+/* ── SESIÓN PERSISTENTE ── */
+(async function initSession(){
+  const {data:{session}}=await _sb.auth.getSession();
+  if(session){
+    curUser=session.user;
+    await afterLogin();
+  }
+})();
+</script>
+</body>
+</html>
