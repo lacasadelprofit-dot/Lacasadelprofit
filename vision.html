@@ -177,7 +177,11 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .cta-btn:hover{opacity:.9;}
 
 /* ── HERRAMIENTAS / FACILITADORES ── */
-.herr-list{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:44px;align-items:start;}
+.herr-cat{margin-bottom:36px;}
+.herr-cat:last-child{margin-bottom:44px;}
+.herr-cat-title{font-size:13px;font-weight:800;color:var(--gl);letter-spacing:.5px;
+  margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
+.herr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start;}
 .herr-card{padding:20px 20px;display:flex;flex-direction:column;}
 .herr-head{display:flex;align-items:flex-start;gap:14px;}
 .herr-ico{font-size:28px;line-height:1;flex-shrink:0;}
@@ -245,10 +249,10 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
 /* ── RESPONSIVE ── */
 @media(max-width:760px){
-  .herr-list{grid-template-columns:repeat(2,1fr);}
+  .herr-grid{grid-template-columns:repeat(2,1fr);}
 }
 @media(max-width:640px){
-  .herr-list{grid-template-columns:1fr;}
+  .herr-grid{grid-template-columns:1fr;}
   .brand-name{font-size:32px;letter-spacing:2px;}
   .kpi-strip{grid-template-columns:1fr;gap:10px;}
   .ml-right{display:none;}
@@ -713,7 +717,20 @@ async function cargarHerramientas(){
 
     if(!sesiones.length){list.parentElement.querySelector('.sec-title').style.display='none';list.style.display='none';return;}
 
-    list.innerHTML=sesiones.map(s=>{
+    // Agrupar por categoría — "Sin categorizar" siempre al final
+    const SIN_CAT='Sin categorizar';
+    const porCategoria={};
+    sesiones.forEach(s=>{
+      const cat=s.categoria||SIN_CAT;
+      (porCategoria[cat]=porCategoria[cat]||[]).push(s);
+    });
+    const categorias=Object.keys(porCategoria).sort((a,b)=>{
+      if(a===SIN_CAT)return 1;
+      if(b===SIN_CAT)return -1;
+      return a.localeCompare(b);
+    });
+
+    function tarjetaHtml(s){
       const facs=porSesion[s.nom]||[];
       const facsHtml=facs.map(f=>{
         const av=f.foto?`background-image:url('${f.foto}')`:'';
@@ -733,7 +750,13 @@ async function cargarHerramientas(){
         <div class="fac-label">¿Quién la ofrece?</div>
         <div class="fac-row">${facsHtml}</div>
       </div>`;
-    }).join('');
+    }
+
+    list.innerHTML=categorias.map(cat=>`
+      <div class="herr-cat">
+        ${cat!==SIN_CAT?`<div class="herr-cat-title">${cat}</div>`:''}
+        <div class="herr-grid">${porCategoria[cat].map(tarjetaHtml).join('')}</div>
+      </div>`).join('');
   }catch(e){
     console.error(e);
     list.innerHTML='';
