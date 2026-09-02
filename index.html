@@ -498,7 +498,7 @@ th{background:rgba(28,26,46,.88)!important;}
         <div class="filters">
          <input class="si" id="egrSrch" placeholder="🔍 Buscar descripción o proveedor..." oninput="renderFinEgresos()">
          <select class="fi" id="egrCat" onchange="renderFinEgresos()"><option value="">Todas las categorías</option></select>
-         <select class="fi" id="egrMon" onchange="renderFinEgresos()"><option value="">Ambas monedas</option><option value="ARS">ARS</option><option value="USD">USD</option></select>
+         <select class="fi" id="egrMon" onchange="renderFinEgresos()"><option value="">Todas las monedas</option><option value="ARS">ARS</option><option value="USD">USD</option><option value="BRL">BRL</option></select>
         </div>
         <table><thead><tr><th>Fecha</th><th>Categoría</th><th>Descripción</th><th>Proveedor</th><th>Método</th><th>Monto</th><th></th></tr></thead><tbody id="egrBody"></tbody></table>
        </div>
@@ -1321,6 +1321,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <select id="nsMoneda" onchange="updateCurrencyLabels()">
      <option value="ARS">🇦🇷 Pesos Argentinos (ARS)</option>
      <option value="USD">🇺🇸 Dólares (USD)</option>
+     <option value="BRL">🇧🇷 Reales (BRL)</option>
     </select>
    </div>
    <div class="fg"><label id="lbMonto">Precio total (ARS)</label><input type="number" id="nsMonto" placeholder="0" min="0" oninput="calcSaldo()"></div>
@@ -1521,7 +1522,7 @@ th{background:rgba(28,26,46,.88)!important;}
   </div>
   <div class="fg-row">
    <div class="fg"><label>Moneda</label>
-    <select id="ffMoneda"><option value="ARS">ARS $</option><option value="USD">USD U$S</option><option value="EUR">EUR €</option></select>
+    <select id="ffMoneda"><option value="ARS">ARS $</option><option value="USD">USD U$S</option><option value="EUR">EUR €</option><option value="BRL">BRL R$</option></select>
    </div>
    <div class="fg"><label>Monto *</label><input type="number" id="ffMonto" min="0"></div>
   </div>
@@ -1544,11 +1545,11 @@ th{background:rgba(28,26,46,.88)!important;}
   <div class="fg"><label>Descripción *</label><input type="text" id="egDesc" placeholder="ej: Campaña Meta mayo 2026"></div>
   <div class="fg"><label>Proveedor / pagado a</label><input type="text" id="egProv" placeholder="ej: Meta, Vercel, alquiler oficina"></div>
   <div class="fg-row">
-   <div class="fg"><label>Moneda</label><select id="egMon" onchange="onEgrMonedaChange()"><option value="ARS">ARS $</option><option value="USD">USD U$S</option></select></div>
+   <div class="fg"><label>Moneda</label><select id="egMon" onchange="onEgrMonedaChange()"><option value="ARS">ARS $</option><option value="USD">USD U$S</option><option value="BRL">BRL R$</option></select></div>
    <div class="fg"><label>Monto *</label><input type="number" id="egMonto" min="0" step="0.01" oninput="calcEgrARS()"></div>
   </div>
   <div class="fg-row" id="egTCRow" style="display:none">
-   <div class="fg"><label>Tipo de cambio ($ por USD)</label><input type="number" id="egTC" min="0" step="1" placeholder="ej: 1200" oninput="calcEgrARS()"></div>
+   <div class="fg"><label id="egTCLabel">Tipo de cambio ($ por USD)</label><input type="number" id="egTC" min="0" step="1" placeholder="ej: 1200" oninput="calcEgrARS()"></div>
    <div class="fg" style="display:flex;align-items:flex-end">
     <div id="egARSCalc" style="padding:10px 14px;background:var(--card2);border:1px solid var(--border);border-radius:10px;font-size:13px;color:var(--green);font-weight:700;width:100%">= $ —</div>
    </div>
@@ -1707,7 +1708,7 @@ th{background:rgba(28,26,46,.88)!important;}
   <div class="fg-row">
    <div class="fg"><label>💰 Valor</label><input type="number" id="pgPrecio" placeholder="0" min="0"></div>
    <div class="fg"><label>Moneda</label>
-    <select id="pgMoneda"><option value="ARS">🇦🇷 Pesos (ARS)</option><option value="USD">🇺🇸 Dólares (USD)</option></select>
+    <select id="pgMoneda"><option value="ARS">🇦🇷 Pesos (ARS)</option><option value="USD">🇺🇸 Dólares (USD)</option><option value="BRL">🇧🇷 Reales (BRL)</option></select>
    </div>
   </div>
   <div class="fg">
@@ -2157,7 +2158,7 @@ th{background:rgba(28,26,46,.88)!important;}
   <div class="fg-row">
    <div class="fg"><label>Presupuesto inicial</label><input type="number" id="cpPres" placeholder="0" min="0"></div>
    <div class="fg"><label>Moneda</label>
-    <select id="cpMoneda"><option value="ARS">🇦🇷 Pesos (ARS)</option><option value="USD">🇺🇸 Dólares (USD)</option></select>
+    <select id="cpMoneda"><option value="ARS">🇦🇷 Pesos (ARS)</option><option value="USD">🇺🇸 Dólares (USD)</option><option value="BRL">🇧🇷 Reales (BRL)</option></select>
    </div>
   </div>
   <div style="border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--card2);margin-bottom:12px">
@@ -2719,7 +2720,7 @@ function nav(name,el){
 function fd(d){if(!d||d==='None')return '—';try{const[y,m,day]=d.split('-');return `${day}/${m}/${y}`;}catch{return d;}}
 function updateCurrencyLabels(){
   const mon=document.getElementById('nsMoneda')?.value||'ARS';
-  const sym=mon==='USD'?'USD ($)':'ARS ($)';
+  const sym=mon==='USD'?'USD ($)':mon==='BRL'?'BRL (R$)':'ARS ($)';
   const lbM=document.getElementById('lbMonto');
   const lbP=document.getElementById('lbPagado');
   if(lbM)lbM.textContent=`Precio total (${sym})`;
@@ -3877,6 +3878,7 @@ function renderFact(){
   // ── split by currency ──
   const sesARS=sesFilt.filter(s=>(s.moneda||'ARS')==='ARS'&&(s.monto||0)>0);
   const sesUSD=sesFilt.filter(s=>s.moneda==='USD'&&(s.monto||0)>0);
+  const sesBRL=sesFilt.filter(s=>s.moneda==='BRL'&&(s.monto||0)>0);
   const factARS=facturas.filter(f=>(f.moneda||'ARS')==='ARS');
   const factUSD=facturas.filter(f=>f.moneda==='USD');
 
@@ -3887,23 +3889,28 @@ function renderFact(){
   const pagARS=sumSes(sesARS.filter(s=>s.montoPagado>=s.monto),'monto');
   const totUSD=sumSes(sesUSD,'monto');
   const pagUSD=sumSes(sesUSD.filter(s=>s.montoPagado>=s.monto),'monto');
+  const totBRL=sumSes(sesBRL,'monto');
+  const pagBRL=sumSes(sesBRL.filter(s=>s.montoPagado>=s.monto),'monto');
 
   const saldoARS=saldosSes.filter(s=>(s.moneda||'ARS')==='ARS').reduce((a,s)=>a+getSaldo(s),0);
   const saldoUSD=saldosSes.filter(s=>s.moneda==='USD').reduce((a,s)=>a+getSaldo(s),0);
+  const saldoBRL=saldosSes.filter(s=>s.moneda==='BRL').reduce((a,s)=>a+getSaldo(s),0);
 
   const fmtARS=v=>`$${Math.round(v).toLocaleString('es-AR')}`;
   const fmtUSD=v=>`USD ${v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
+  const fmtBRL=v=>`R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
 
   const mesActual=new Date().toISOString().slice(0,7);
   const sesMesARS=sesARS.filter(s=>s.fecha&&s.fecha.startsWith(mesActual));
   const sesMesUSD=sesUSD.filter(s=>s.fecha&&s.fecha.startsWith(mesActual));
+  const sesMesBRL=sesBRL.filter(s=>s.fecha&&s.fecha.startsWith(mesActual));
 
   document.getElementById('invSm').innerHTML=`
     <div style="grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
       <span style="font-size:13px;font-weight:700;color:var(--gl)">${factVistaTotal?'📊 Resumen total del centro':'👤 Mi cuenta — Juan Cruz'}</span>
       <button class="btn btn-s btn-sm" onclick="toggleFactVista()">${factVistaTotal?'Ver solo mi cuenta':'Ver total centro'}</button>
     </div>
-    <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div style="grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
       <!-- ARS Block -->
       <div style="background:var(--card2);border:1px solid #2A3020;border-radius:14px;padding:16px">
         <div style="font-size:11px;font-weight:700;color:#5DD89A;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇦🇷 Pesos Argentinos</div>
@@ -3922,6 +3929,16 @@ function renderFact(){
           <div class="kc bl" style="margin:0"><div class="ki" style="font-size:16px">✅</div><div class="kl">Cobrado USD</div><div class="kv" style="font-size:18px">${fmtUSD(pagUSD)}</div><div class="ks">${totUSD?Math.round(pagUSD/totUSD*100):0}% del total</div></div>
           <div class="kc rd" style="margin:0"><div class="ki" style="font-size:16px">⏳</div><div class="kl">Saldo Pendiente</div><div class="kv" style="font-size:18px;color:var(--or)">${fmtUSD(saldoUSD)}</div></div>
           <div class="kc" style="margin:0;border-top-color:var(--blue)"><div class="ki" style="font-size:16px">📊</div><div class="kl">Sesiones cobradas</div><div class="kv" style="font-size:18px">${sesUSD.length}</div></div>
+        </div>
+      </div>
+      <!-- BRL Block -->
+      <div style="background:var(--card2);border:1px solid #203a20;border-radius:14px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:#5DD86A;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇧🇷 Reales (BRL)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="kc gr" style="margin:0"><div class="ki" style="font-size:16px">💵</div><div class="kl">Total BRL</div><div class="kv" style="font-size:18px">${fmtBRL(totBRL)}</div><div class="ks">Este mes: ${fmtBRL(sumSes(sesMesBRL))}</div></div>
+          <div class="kc go" style="margin:0"><div class="ki" style="font-size:16px">✅</div><div class="kl">Cobrado BRL</div><div class="kv" style="font-size:18px">${fmtBRL(pagBRL)}</div><div class="ks">${totBRL?Math.round(pagBRL/totBRL*100):0}% del total</div></div>
+          <div class="kc rd" style="margin:0"><div class="ki" style="font-size:16px">⏳</div><div class="kl">Saldo Pendiente</div><div class="kv" style="font-size:18px;color:var(--or)">${fmtBRL(saldoBRL)}</div></div>
+          <div class="kc" style="margin:0;border-top-color:#5DD86A"><div class="ki" style="font-size:16px">📊</div><div class="kl">Sesiones cobradas</div><div class="kv" style="font-size:18px">${sesBRL.length}</div></div>
         </div>
       </div>
     </div>`;
@@ -3974,7 +3991,7 @@ function cobrarSaldoFact(sesId){
   const saldo=Math.max(0,(s.monto||0)-(s.montoPagado!=null?s.montoPagado:(s.monto||0)));
   if(!saldo)return;
   const mon=s.moneda||'ARS';
-  const sym=mon==='USD'?'USD ':'$';
+  const sym=mon==='USD'?'USD ':mon==='BRL'?'R$ ':'$';
   if(!confirm(`¿Registrar el cobro del saldo de ${sym}${saldo.toLocaleString('es-AR')} para ${s.ser}?`))return;
   facturas.push({id:nid(facturas),sesId:s.id,fecha:new Date().toISOString().split('T')[0],
     ser:s.ser,servicio:s.sesion,facilitador:s.facilitador,
@@ -7680,9 +7697,12 @@ function saveFact(){
 
 /* ── FINANZAS — tabs Resumen / Ingresos / Egresos / Balance ── */
 function onEgrMonedaChange(){
-  const isUSD=document.getElementById('egMon').value==='USD';
-  document.getElementById('egTCRow').style.display=isUSD?'':'none';
-  if(!isUSD){const el=document.getElementById('egARSCalc');if(el)el.textContent='= $ —';}
+  const mon=document.getElementById('egMon').value;
+  const isForeign=mon==='USD'||mon==='BRL';
+  document.getElementById('egTCRow').style.display=isForeign?'':'none';
+  const lbl=document.getElementById('egTCLabel');
+  if(lbl)lbl.textContent=`Tipo de cambio ($ por ${mon})`;
+  if(!isForeign){const el=document.getElementById('egARSCalc');if(el)el.textContent='= $ —';}
   calcEgrARS();
 }
 function calcEgrARS(){
@@ -7796,12 +7816,13 @@ function saveEgr(){
   const pubLink=document.getElementById('egPubLink')?.value||'';
   const moneda=document.getElementById('egMon').value;
   const tc=parseFloat(document.getElementById('egTC')?.value)||0;
-  const montoARS=moneda==='USD'&&tc>0?Math.round(monto*tc):null;
+  const esExtranjera=moneda==='USD'||moneda==='BRL';
+  const montoARS=esExtranjera&&tc>0?Math.round(monto*tc):null;
   const data={
     fecha, categoria:cat, descripcion:desc,
     proveedor:document.getElementById('egProv').value.trim(),
     monto, moneda,
-    ...(moneda==='USD'&&tc>0?{tcARS:tc,montoARS}:{}),
+    ...(esExtranjera&&tc>0?{tcARS:tc,montoARS}:{}),
     metodoPago:document.getElementById('egMet').value,
     recurrente:document.getElementById('egRec').value==='true',
     notas:document.getElementById('egNota').value,
@@ -7829,18 +7850,22 @@ function delEgr(id){
 function renderFinEgresos(){
   const fmtARS=v=>`$${Math.round(v).toLocaleString('es-AR')}`;
   const fmtUSD=v=>`USD ${v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
+  const fmtBRL=v=>`R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
   const mes=new Date().toISOString().slice(0,7);
   const yr=new Date().toISOString().slice(0,4);
   const eAR=egresos.filter(e=>(e.moneda||'ARS')==='ARS');
   const eUS=egresos.filter(e=>e.moneda==='USD');
+  const eBR=egresos.filter(e=>e.moneda==='BRL');
   const sum=arr=>arr.reduce((a,e)=>a+(parseFloat(e.monto)||0),0);
-  const totAR=sum(eAR), totUS=sum(eUS);
+  const totAR=sum(eAR), totUS=sum(eUS), totBR=sum(eBR);
   const mesAR=sum(eAR.filter(e=>e.fecha&&e.fecha.startsWith(mes)));
   const mesUS=sum(eUS.filter(e=>e.fecha&&e.fecha.startsWith(mes)));
+  const mesBR=sum(eBR.filter(e=>e.fecha&&e.fecha.startsWith(mes)));
   const yrAR=sum(eAR.filter(e=>e.fecha&&e.fecha.startsWith(yr)));
   const yrUS=sum(eUS.filter(e=>e.fecha&&e.fecha.startsWith(yr)));
+  const yrBR=sum(eBR.filter(e=>e.fecha&&e.fecha.startsWith(yr)));
   document.getElementById('egrKPIs').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
       <div style="background:var(--card2);border:1px solid #4A2820;border-radius:14px;padding:16px">
         <div style="font-size:11px;font-weight:700;color:#E05555;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇦🇷 Egresos en Pesos</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
@@ -7855,6 +7880,14 @@ function renderFinEgresos(){
           <div class="kc bl" style="margin:0"><div class="ki" style="font-size:16px">📅</div><div class="kl">Este mes</div><div class="kv" style="font-size:18px">${fmtUSD(mesUS)}</div></div>
           <div class="kc bl" style="margin:0"><div class="ki" style="font-size:16px">📊</div><div class="kl">Este año</div><div class="kv" style="font-size:18px">${fmtUSD(yrUS)}</div></div>
           <div class="kc bl" style="margin:0"><div class="ki" style="font-size:16px">💸</div><div class="kl">Total histórico</div><div class="kv" style="font-size:18px">${fmtUSD(totUS)}</div></div>
+        </div>
+      </div>
+      <div style="background:var(--card2);border:1px solid #203a20;border-radius:14px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:#5DD86A;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇧🇷 Egresos en Reales</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="kc gr" style="margin:0"><div class="ki" style="font-size:16px">📅</div><div class="kl">Este mes</div><div class="kv" style="font-size:18px">${fmtBRL(mesBR)}</div></div>
+          <div class="kc gr" style="margin:0"><div class="ki" style="font-size:16px">📊</div><div class="kl">Este año</div><div class="kv" style="font-size:18px">${fmtBRL(yrBR)}</div></div>
+          <div class="kc gr" style="margin:0"><div class="ki" style="font-size:16px">💸</div><div class="kl">Total histórico</div><div class="kv" style="font-size:18px">${fmtBRL(totBR)}</div></div>
         </div>
       </div>
     </div>`;
@@ -7890,21 +7923,22 @@ function renderFinEgresos(){
 function renderFinBalance(){
   const fmtARS=v=>`$${Math.round(v).toLocaleString('es-AR')}`;
   const fmtUSD=v=>`USD ${v.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
+  const fmtBRL=v=>`R$ ${v.toLocaleString('pt-BR',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
   const now=new Date();
   const months=[];
   for(let i=11;i>=0;i--){
     const d=new Date(now.getFullYear(),now.getMonth()-i,1);
     months.push({key:d.toISOString().slice(0,7),lbl:d.toLocaleDateString('es-AR',{month:'short'}).replace('.','')+' '+String(d.getFullYear()).slice(2)});
   }
-  const mIngAR={},mIngUS={},mEgrAR={},mEgrUS={};
-  months.forEach(m=>{mIngAR[m.key]=0;mIngUS[m.key]=0;mEgrAR[m.key]=0;mEgrUS[m.key]=0;});
+  const mIngAR={},mIngUS={},mIngBR={},mEgrAR={},mEgrUS={},mEgrBR={};
+  months.forEach(m=>{mIngAR[m.key]=0;mIngUS[m.key]=0;mIngBR[m.key]=0;mEgrAR[m.key]=0;mEgrUS[m.key]=0;mEgrBR[m.key]=0;});
   // Ingresos: facturas pagadas + sessions montoPagado
   facturas.forEach(f=>{
     if(!f.fecha||f.estado!=='pagado')return;
     const k=f.fecha.slice(0,7);
     if(mIngAR[k]!==undefined){
       const m=parseFloat(f.monto)||0;
-      if((f.moneda||'ARS')==='ARS')mIngAR[k]+=m; else if(f.moneda==='USD')mIngUS[k]+=m;
+      if((f.moneda||'ARS')==='ARS')mIngAR[k]+=m; else if(f.moneda==='USD')mIngUS[k]+=m; else if(f.moneda==='BRL')mIngBR[k]+=m;
     }
   });
   sessions.forEach(s=>{
@@ -7912,7 +7946,7 @@ function renderFinBalance(){
     const k=s.fecha.slice(0,7);
     if(mIngAR[k]!==undefined){
       const m=parseFloat(s.montoPagado)||0;
-      if((s.moneda||'ARS')==='ARS')mIngAR[k]+=m; else if(s.moneda==='USD')mIngUS[k]+=m;
+      if((s.moneda||'ARS')==='ARS')mIngAR[k]+=m; else if(s.moneda==='USD')mIngUS[k]+=m; else if(s.moneda==='BRL')mIngBR[k]+=m;
     }
   });
   egresos.forEach(e=>{
@@ -7920,19 +7954,19 @@ function renderFinBalance(){
     const k=e.fecha.slice(0,7);
     if(mEgrAR[k]!==undefined){
       const m=parseFloat(e.monto)||0;
-      if((e.moneda||'ARS')==='ARS')mEgrAR[k]+=m; else if(e.moneda==='USD')mEgrUS[k]+=m;
+      if((e.moneda||'ARS')==='ARS')mEgrAR[k]+=m; else if(e.moneda==='USD')mEgrUS[k]+=m; else if(e.moneda==='BRL')mEgrBR[k]+=m;
     }
   });
   const mes=new Date().toISOString().slice(0,7);
   const yr=new Date().toISOString().slice(0,4);
   const sumYr=ar=>{let s=0;Object.keys(ar).forEach(k=>{if(k.startsWith(yr))s+=ar[k];});return s;};
-  const ingMesAR=mIngAR[mes]||0,ingMesUS=mIngUS[mes]||0;
-  const egrMesAR=mEgrAR[mes]||0,egrMesUS=mEgrUS[mes]||0;
-  const ingYrAR=sumYr(mIngAR),ingYrUS=sumYr(mIngUS);
-  const egrYrAR=sumYr(mEgrAR),egrYrUS=sumYr(mEgrUS);
+  const ingMesAR=mIngAR[mes]||0,ingMesUS=mIngUS[mes]||0,ingMesBR=mIngBR[mes]||0;
+  const egrMesAR=mEgrAR[mes]||0,egrMesUS=mEgrUS[mes]||0,egrMesBR=mEgrBR[mes]||0;
+  const ingYrAR=sumYr(mIngAR),ingYrUS=sumYr(mIngUS),ingYrBR=sumYr(mIngBR);
+  const egrYrAR=sumYr(mEgrAR),egrYrUS=sumYr(mEgrUS),egrYrBR=sumYr(mEgrBR);
   const card=(label,val,sub,color)=>`<div class="kc" style="margin:0;border-top-color:${color}"><div class="kl">${label}</div><div class="kv" style="font-size:18px;color:${color}">${val}</div><div class="ks">${sub||''}</div></div>`;
   document.getElementById('balKPIs').innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px">
       <div style="background:var(--card2);border:1px solid #2A3020;border-radius:14px;padding:16px">
         <div style="font-size:11px;font-weight:700;color:#5DD89A;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇦🇷 Balance ARS</div>
         <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
@@ -7947,6 +7981,14 @@ function renderFinBalance(){
           ${card('Ingresos mes',fmtUSD(ingMesUS),`Año: ${fmtUSD(ingYrUS)}`,'#5DD89A')}
           ${card('Egresos mes',fmtUSD(egrMesUS),`Año: ${fmtUSD(egrYrUS)}`,'#E05555')}
           ${card('Neto mes',fmtUSD(ingMesUS-egrMesUS),`Año: ${fmtUSD(ingYrUS-egrYrUS)}`,(ingMesUS-egrMesUS)>=0?'#5DD89A':'#E05555')}
+        </div>
+      </div>
+      <div style="background:var(--card2);border:1px solid #203a20;border-radius:14px;padding:16px">
+        <div style="font-size:11px;font-weight:700;color:#5DD86A;letter-spacing:1px;text-transform:uppercase;margin-bottom:12px">🇧🇷 Balance BRL</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          ${card('Ingresos mes',fmtBRL(ingMesBR),`Año: ${fmtBRL(ingYrBR)}`,'#5DD89A')}
+          ${card('Egresos mes',fmtBRL(egrMesBR),`Año: ${fmtBRL(egrYrBR)}`,'#E05555')}
+          ${card('Neto mes',fmtBRL(ingMesBR-egrMesBR),`Año: ${fmtBRL(ingYrBR-egrYrBR)}`,(ingMesBR-egrMesBR)>=0?'#5DD89A':'#E05555')}
         </div>
       </div>
     </div>`;
@@ -8034,7 +8076,7 @@ function renderProg(){
       return `<span style="font-size:10px;background:${col}22;border:1px solid ${col}44;border-radius:8px;padding:2px 7px">${h.ico||''} ${q}× ${nom.split(' ').slice(0,3).join(' ')}</span>`;
     }).join('');
     // Precio
-    const precioStr=p.precio?`${p.moneda==='USD'?'USD':'$'}${p.precio.toLocaleString(p.moneda==='USD'?'en-US':'es-AR')}`:null;
+    const precioStr=p.precio?`${p.moneda==='USD'?'USD':p.moneda==='BRL'?'R$':'$'}${p.precio.toLocaleString(p.moneda==='USD'?'en-US':p.moneda==='BRL'?'pt-BR':'es-AR')}`:null;
     // Duración
     const durLine=[p.meses?`${p.meses} mes${p.meses!==1?'es':''}`:'', p.semanas_dur?`${p.semanas_dur} semanas`:((p.semanas||[]).length?`${(p.semanas||[]).length} semanas`:'')].filter(Boolean).join(' · ');
     // Inscripciones activas
@@ -11542,6 +11584,7 @@ function renderMkt(){
   // Gastado real = suma de pagos registrados en todas las campañas
   const gastadoARS=campañas.filter(c=>(c.moneda||'ARS')==='ARS').reduce((a,c)=>a+(c.gastadoTotal||c.presupuesto||0),0);
   const gastadoUSD=campañas.filter(c=>c.moneda==='USD').reduce((a,c)=>a+(c.gastadoTotal||c.presupuesto||0),0);
+  const gastadoBRL=campañas.filter(c=>c.moneda==='BRL').reduce((a,c)=>a+(c.gastadoTotal||c.presupuesto||0),0);
   // Totales de KPIs de todas las campañas
   const totalConvInic=campañas.reduce((a,c)=>a+(c.conversaciones||0),0);
   const totalAlcance=campañas.reduce((a,c)=>a+(c.alcance||0),0);
@@ -11553,7 +11596,7 @@ function renderMkt(){
     <div class="kc go"><div class="ki">📢</div><div class="kl">Campañas</div><div class="kv">${totalCamp}</div><div class="ks">${activas} activas</div></div>
     <div class="kc tl"><div class="ki">💬</div><div class="kl">Conv. iniciadas</div><div class="kv">${totalConvInic.toLocaleString('es-AR')}</div><div class="ks">CPL ARS: ${cplARS?'$'+cplARS.toLocaleString('es-AR'):'—'}</div></div>
     <div class="kc bl"><div class="ki">👁</div><div class="kl">Alcance</div><div class="kv">${totalAlcance.toLocaleString('es-AR')}</div><div class="ks">Impresiones: ${totalImp.toLocaleString('es-AR')}</div></div>
-    <div class="kc or"><div class="ki">📊</div><div class="kl">CTR promedio</div><div class="kv">${avgCtr}%</div><div class="ks">${gastadoARS?'$'+Math.round(gastadoARS).toLocaleString('es-AR'):''} ${gastadoUSD?'USD '+gastadoUSD.toLocaleString('en-US',{maximumFractionDigits:0}):''} invertido</div></div>
+    <div class="kc or"><div class="ki">📊</div><div class="kl">CTR promedio</div><div class="kv">${avgCtr}%</div><div class="ks">${gastadoARS?'$'+Math.round(gastadoARS).toLocaleString('es-AR'):''} ${gastadoUSD?'USD '+gastadoUSD.toLocaleString('en-US',{maximumFractionDigits:0}):''} ${gastadoBRL?'R$ '+gastadoBRL.toLocaleString('pt-BR',{maximumFractionDigits:0}):''} invertido</div></div>
     <div class="kc tl"><div class="ki">🌱</div><div class="kl">Prospectos</div><div class="kv">${totalProsp}</div><div class="ks">Sin sesión aún</div></div>
     <div class="kc gr"><div class="ki">✨</div><div class="kl">Convertidos</div><div class="kv">${totalConv}</div><div class="ks">${metaLeadCount} de Meta automáticos</div></div>`;
   setMktTab('resumen');
@@ -11575,7 +11618,7 @@ function renderMktPub(){
     const rate=prosp.length?Math.round(conv.length/prosp.length*100):0;
     const gastadoReal=c.gastadoTotal||(c.pagos&&c.pagos.length?c.pagos.reduce((a,p)=>a+(p.monto||0),0):0)||c.presupuesto||0;
     const moneda=c.moneda||'ARS';
-    const fmtMoney=v=>moneda==='USD'?'USD '+parseFloat(v).toLocaleString('en-US',{maximumFractionDigits:0}):'$'+Math.round(v).toLocaleString('es-AR');
+    const fmtMoney=v=>moneda==='USD'?'USD '+parseFloat(v).toLocaleString('en-US',{maximumFractionDigits:0}):moneda==='BRL'?'R$ '+parseFloat(v).toLocaleString('pt-BR',{maximumFractionDigits:0}):'$'+Math.round(v).toLocaleString('es-AR');
     const cpLead=prosp.length&&gastadoReal?Math.round(gastadoReal/prosp.length):0;
     const cpConv=conv.length&&gastadoReal?Math.round(gastadoReal/conv.length):0;
     const cpConvInic=c.conversaciones&&gastadoReal?Math.round(gastadoReal/c.conversaciones):0;
