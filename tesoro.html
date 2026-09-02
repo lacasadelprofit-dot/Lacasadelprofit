@@ -95,20 +95,6 @@ h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;}
 .foot-link:hover{color:var(--terra-d);}
 
 .loading{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;}
-
-/* GESTIÓN */
-#gestion{display:none;}
-.gest-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
-.gest-item:last-child{border-bottom:none;}
-.gest-info{flex:1;font-size:12.5px;line-height:1.4;}
-.gest-info b{display:block;font-size:13px;}
-.gest-actions{display:flex;gap:6px;}
-.btn-sm{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);
-  color:var(--text);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
-.btn-sm:hover{border-color:var(--terra);color:var(--terra-d);}
-.btn-sm.danger:hover{border-color:#A83C3C;color:#A83C3C;}
-select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;
-  font-family:inherit;font-size:14px;color:var(--text);background:var(--card);outline:none;}
 </style>
 </head>
 <body>
@@ -268,99 +254,7 @@ async function renderTablero(){
       ${ganadoresHtml}
     </div>
 
-    <a class="foot-link" href="#" onclick="toggleGestion();return false;">⚙ Gestionar premios</a>`;
-
-  buildGestionShell();
-}
-
-/* ================= GESTIÓN (admin) ================= */
-function toggleGestion(){
-  const g=document.getElementById('gestion');
-  g.style.display=g.style.display==='none'?'block':'none';
-  if(g.style.display==='block')g.scrollIntoView({behavior:'smooth'});
-}
-
-function buildGestionShell(){
-  const div=document.createElement('div');
-  div.id='gestion';
-  div.className='wrap';
-  div.style.paddingTop='0';
-  div.style.display='none';
-  div.innerHTML=`
-    <div class="card" id="gestLogin">
-      <div class="sec-title">Gestionar premios (solo admin)</div>
-      <div class="fg"><label>Email</label><input type="email" id="gEmail"></div>
-      <div class="fg"><label>Contraseña</label><input type="password" id="gPass"></div>
-      <button class="btn btn-terra" onclick="gestLogin()">Ingresar</button>
-      <div id="gestErr" class="msg-err" style="display:none;margin-top:10px"></div>
-    </div>
-    <div class="card" id="gestPanel" style="display:none">
-      <div class="sec-title">Nuevo premio</div>
-      <div class="fg"><label>Código del sticker (para la URL del QR)</label><input type="text" id="nId" placeholder="ej: barras-01"></div>
-      <div class="fg"><label>Pregunta</label><input type="text" id="nPregunta" placeholder="¿Qué estarías eligiendo si...?"></div>
-      <div class="fg"><label>Premio</label><input type="text" id="nPremio" placeholder="Sesión de Barras de Access"></div>
-      <div class="fg"><label>Categoría</label>
-        <select id="nCategoria">
-          <option value="">Sin categoría</option>
-          <option>Identidad</option><option>Dinero</option><option>Cuerpo</option>
-          <option>Relaciones</option><option>Propósito</option><option>Consciencia</option>
-        </select>
-      </div>
-      <button class="btn btn-terra" onclick="crearPremio()">+ Agregar premio</button>
-      <div class="sec-title" style="margin-top:20px">Premios cargados</div>
-      <div id="gestList"></div>
-    </div>`;
-  document.getElementById('app').appendChild(div);
-}
-
-async function gestLogin(){
-  const email=document.getElementById('gEmail').value.trim();
-  const pass=document.getElementById('gPass').value;
-  const errEl=document.getElementById('gestErr');
-  errEl.style.display='none';
-  const {error}=await _sb.auth.signInWithPassword({email,password:pass});
-  if(error){ errEl.textContent='Email o contraseña incorrectos'; errEl.style.display='block'; return; }
-  document.getElementById('gestLogin').style.display='none';
-  document.getElementById('gestPanel').style.display='block';
-  loadGestList();
-}
-
-async function loadGestList(){
-  const {data:premios}=await _sb.from('tesoro_premios').select('*').order('created_at',{ascending:true});
-  const list=premios||[];
-  const el=document.getElementById('gestList');
-  el.innerHTML=list.length? list.map(p=>{
-    const d=p.data||{};
-    return `<div class="gest-item">
-      <div class="gest-info"><b>${esc(d.premio)}</b>${esc(d.pregunta)} · código: ${esc(p.id)} · ${d.reclamado?'reclamado por @'+esc(d.ganador_instagram):'disponible'}</div>
-      <div class="gest-actions">
-        <button class="btn-sm danger" onclick="borrarPremio('${esc(p.id)}')">Borrar</button>
-      </div>
-    </div>`;
-  }).join('') : '<div style="color:var(--muted);font-size:13px">Todavía no cargaste premios.</div>';
-}
-
-async function crearPremio(){
-  const id=document.getElementById('nId').value.trim();
-  const pregunta=document.getElementById('nPregunta').value.trim();
-  const premio=document.getElementById('nPremio').value.trim();
-  const categoria=document.getElementById('nCategoria').value;
-  if(!id||!pregunta||!premio){ alert('Completá código, pregunta y premio'); return; }
-  const {error}=await _sb.from('tesoro_premios').insert({
-    id, data:{pregunta,premio,categoria,activo:true,reclamado:false}
-  });
-  if(error){ alert('Error: '+error.message+' (¿ese código ya existe?)'); return; }
-  document.getElementById('nId').value='';
-  document.getElementById('nPregunta').value='';
-  document.getElementById('nPremio').value='';
-  document.getElementById('nCategoria').value='';
-  loadGestList();
-}
-
-async function borrarPremio(id){
-  if(!confirm('¿Borrar este premio?'))return;
-  await _sb.from('tesoro_premios').delete().eq('id',id);
-  loadGestList();
+  `;
 }
 </script>
 </body>
