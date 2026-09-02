@@ -9735,7 +9735,7 @@ function _renderTesoroStickersTab(){
           <div style="font-size:13px;font-weight:700;color:var(--text)">${d.reclamado?'🎉 '+_tzEsc(d.premio_ganado||'—'):'🎡 Premio sorpresa'}${d.edicion?` <span style="font-weight:400;color:var(--muted);font-size:11px">· ${_tzEsc(d.edicion)}</span>`:''}</div>
           <div style="font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.pregunta||''}</div>
           <div style="font-size:11px;color:${d.reclamado?'var(--gold)':'#5DD89A'};margin-top:2px">
-            ${d.reclamado?'Reclamado por @'+(d.ganador_instagram||'?'):'✓ Disponible'} · código: ${p.id}${(d.lat!=null)?' · 📍 ubicado':' · ⚠️ sin ubicación'}
+            ${d.reclamado?'Reclamado por <a href="https://instagram.com/'+_tzEsc(d.ganador_instagram||'')+'" target="_blank" style="color:inherit;text-decoration:underline">@'+_tzEsc(d.ganador_instagram||'?')+'</a>':'✓ Disponible'} · código: ${p.id}${(d.lat!=null)?' · 📍 ubicado':' · ⚠️ sin ubicación'}
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
@@ -9776,7 +9776,12 @@ function _renderTesoroRuletaTab(){
         <div style="font-size:20px;flex-shrink:0">🎡</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--text)">${_tzEsc(d.nombre)}</div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Peso: ${peso} · ~${prob}% de probabilidad${d.activo===false?' · inactivo':''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">~${prob}% de probabilidad${d.activo===false?' · inactivo':''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <label style="font-size:10px;color:var(--muted)">Peso</label>
+          <input type="number" min="1" step="1" value="${peso}" style="width:56px;padding:5px 6px;font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);text-align:center"
+            onchange="actualizarPesoRuleta('${r.id}',this.value)">
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
           <button class="btn btn-s btn-sm" onclick="toggleRuletaPremio('${r.id}',${d.activo===false})">${d.activo===false?'Activar':'Desactivar'}</button>
@@ -9804,6 +9809,17 @@ async function toggleRuletaPremio(id,activar){
   const {error}=await _sb.from('tesoro_ruleta').update({data:{...r.data,activo:activar}}).eq('id',id);
   if(error){toast('⚠️ Error: '+error.message);return;}
   renderMktTesoro();
+}
+
+async function actualizarPesoRuleta(id,valor){
+  const r=_tesoroRuleta.find(x=>x.id===id);
+  if(!r)return;
+  const peso=Math.max(1,parseInt(valor)||1);
+  const {error}=await _sb.from('tesoro_ruleta').update({data:{...r.data,peso}}).eq('id',id);
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  r.data={...r.data,peso};
+  toast('✓ Peso actualizado');
+  _renderTesoroTab();
 }
 
 async function borrarRuletaPremio(id){

@@ -31,6 +31,9 @@ h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;}
 .hdr h1{font-size:34px;font-weight:600;color:var(--text);line-height:1.15;}
 .hdr h1 span{color:var(--terra);}
 .hdr p{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.5;}
+.edicion-badge{display:inline-flex;align-items:center;gap:5px;margin-top:14px;padding:6px 14px;
+  border-radius:20px;background:var(--terra);color:#fff;font-size:12.5px;font-weight:600;}
+.edicion-badge b{font-weight:800;}
 
 /* CARD base */
 .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:16px;}
@@ -317,6 +320,7 @@ async function renderTablero(){
   const list=premios||[];
   const disponibles=list.filter(p=>!p.data?.reclamado);
   const ganados=list.filter(p=>p.data?.reclamado).sort((a,b)=>new Date(b.data.ganador_fecha||0)-new Date(a.data.ganador_fecha||0));
+  const edicionActual=[...list].reverse().find(p=>p.data?.edicion)?.data?.edicion;
 
   const gridHtml=list.length? list.map(p=>{
     const d=p.data||{};
@@ -338,6 +342,7 @@ async function renderTablero(){
       <div class="kicker">🎁 Búsqueda del Tesoro</div>
       <h1>Preguntas que <span>abren</span> premios</h1>
       <p>Encontrá los stickers, subí la pregunta a tu historia mencionando a @juancruzconsciencia, y reclamá tu premio antes que nadie.</p>
+      ${edicionActual?`<div class="edicion-badge">📍 Edición activa ahora en <b>${esc(edicionActual)}</b></div>`:''}
     </div>
 
     <div class="card counter">
@@ -377,7 +382,7 @@ function _initTesoroMap(ganados){
   const ico=p=>CAT_ICO[p.data.categoria]||'✦';
   const markers=puntos.map(p=>{
     const m=L.marker([p.data.lat,p.data.lng]).addTo(map);
-    m.bindPopup(`<b>${ico(p)} ${esc(p.data.premio_ganado||'Premio')}</b><br>Encontrado por @${esc(p.data.ganador_instagram)}`);
+    m.bindPopup(`<b>${ico(p)} ${esc(p.data.premio_ganado||'Premio')}</b><br>Encontrado por ${igLink(p.data.ganador_instagram)}`);
     return m;
   });
   if(markers.length===1){
