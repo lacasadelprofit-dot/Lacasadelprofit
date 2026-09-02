@@ -560,6 +560,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn active" id="herrTab_experimental" onclick="setHerrTab('Sesión experimental')">✨ Sesión experimental</button>
       <button class="tab-btn"        id="herrTab_clase"        onclick="setHerrTab('Clase')">📚 Clase</button>
       <button class="tab-btn"        id="herrTab_facs"         onclick="setHerrTab('facs')">🙋 Facilitadores</button>
+      <button class="tab-btn" style="margin-left:auto;border-color:rgba(201,168,76,.3);color:var(--gold)" onclick="repararTipoHerramientas()" title="Asigna la categoría correcta a herramientas viejas que quedaron sin tipo">🔧 Reparar categorías</button>
      </div>
      <div id="herrFacsContent" style="display:none"></div>
      <div id="herGrid" class="her-grid"></div>
@@ -4682,6 +4683,26 @@ function renderPracticas(){
         :`<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Sin herramientas en este pilar.<br><button class="btn btn-p btn-sm" style="margin-top:12px" onclick="_herrTab='Herramienta práctica';openModal('herr')">+ Agregar</button></div>`
       :`<div class="her-grid">${lista.map((h,i)=>_pracCard(h,i,lista)).join('')}</div>`);
 }
+/* Repara herramientas viejas que quedaron sin campo "tipo" (por eso no aparecían
+   en ninguna pestaña de Herramientas, aunque existían y se usaban en sesiones reales).
+   Solo toca las que hoy no tienen tipo asignado — no pisa nada ya categorizado a mano. */
+const HERR_TIPO_CLASE=['Clase Barras de Access','Formación Numerología','Formación Registros Akashicos','Clase el Fundamento','Clase Dinero','Introducción a la Consciencia'];
+const HERR_TIPO_SESION=['Barras de Access','Proceso de Cuerpos','Registros Akashicos','Sesión Profit','Sesiones Hongos','Ceremonias Hongos',
+  'Coaching con Caballos','Bioexistencia','Constelaciones','Vibrando en Manada','Sesiones Pleyadianas','Numerología','Reiki','Face Lift',
+  'Sesión Entidades','Borra de Café','Limpieza Energética','Yoga','Proceso Dinero','Flores de Bach','Viaje Sonoro','Bufu Alvarius'];
+function repararTipoHerramientas(){
+  let n=0;
+  herramientas.forEach(h=>{
+    if(h.tipo)return; // ya categorizada, no se toca
+    if(HERR_TIPO_CLASE.includes(h.nom)){h.tipo='Clase';n++;}
+    else if(HERR_TIPO_SESION.includes(h.nom)){h.tipo='Sesión experimental';n++;}
+  });
+  if(!n){toast('No había nada para reparar — todo ya está categorizado');return;}
+  save();
+  renderHerr();
+  toast(`✓ ${n} herramienta${n!==1?'s':''} recategorizada${n!==1?'s':''}`);
+}
+
 function renderHerr(){
   const filtradas=herramientas.filter(h=>(h.tipo||'')=== _herrTab)
     .slice().sort((a,b)=>(a.orden??999)-(b.orden??999));
