@@ -435,7 +435,7 @@ th{background:rgba(28,26,46,.88)!important;}
         <select class="fi" id="sesPV" onchange="renderSes()"><option value="">Todas las sesiones</option><option value="1">Solo 1° Vez</option></select>
        </div>
        <table>
-        <thead><tr><th>Fecha / Hora</th><th>Ser</th><th>Herramienta</th><th>1°Vez</th><th>Facilitador</th><th>Provincia</th><th>Modalidad</th><th>Estado</th><th>Obs.</th><th></th></tr></thead>
+        <thead><tr><th>Fecha / Hora</th><th>Ser</th><th>Herramienta</th><th>1°Vez</th><th>Facilitador</th><th>País</th><th>Provincia</th><th>Modalidad</th><th>Estado</th><th>Obs.</th><th></th></tr></thead>
         <tbody id="sesBody"></tbody>
        </table>
        <div style="padding:10px 16px;border-top:1px solid #1E1C10;display:flex;justify-content:space-between;align-items:center;">
@@ -3318,14 +3318,16 @@ function renderSesJC(){
   const chg=lmesSes.length>0?Math.round((mesSes.length-lmesSes.length)/lmesSes.length*100):0;
   const pvTot=jcSes.filter(s=>s.primeraVez).length;
   const pvMes=mesSes.filter(s=>s.primeraVez).length;
+  const paisesBarras=[...new Set(jcSes.filter(s=>s.sesion==='Barras de Access'&&s.pais).map(s=>s.pais))];
 
-  // KPIs: Total | Este año | Este mes | Primera vez
+  // KPIs: Total | Este año | Este mes | Primera vez | Países con Barras
   const kpiEl=document.getElementById('jcKPIs');
   if(kpiEl)kpiEl.innerHTML=`
     <div class="kc go"><div class="ki">🧘</div><div class="kl">Total Sesiones JC</div><div class="kv">${jcSes.length}</div><div class="ks">histórico acumulado</div></div>
     <div class="kc bl"><div class="ki">📅</div><div class="kl">Este Año</div><div class="kv">${yrSes.length}</div><div class="ks">en ${yr}</div></div>
     <div class="kc gr"><div class="ki">📆</div><div class="kl">Este Mes</div><div class="kv">${mesSes.length}</div><div class="kch ${chg>=0?'up':'dn'}">${chg>=0?'↑':'↓'} ${Math.abs(chg)}% vs anterior</div></div>
-    <div class="kc or"><div class="ki">⭐</div><div class="kl">Primera Vez</div><div class="kv">${pvTot}</div><div class="ks">${pvMes} este mes</div></div>`;
+    <div class="kc or"><div class="ki">⭐</div><div class="kl">Primera Vez</div><div class="kv">${pvTot}</div><div class="ks">${pvMes} este mes</div></div>
+    <div class="kc pu"><div class="ki">🌍</div><div class="kl">Países con Barras</div><div class="kv">${paisesBarras.length}</div><div class="ks">${paisesBarras.join(', ')||'Sin datos'}</div></div>`;
 
   // Layout
   const bodyEl=document.getElementById('jcBody');
@@ -3338,6 +3340,9 @@ function renderSesJC(){
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📅 Días del mes actual</h3><div style="height:180px"><canvas id="chJcMes"></canvas></div></div>
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:180px"><canvas id="chJcAcum"></canvas></div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+      <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌱 Acumulado por año</h3><div style="height:180px"><canvas id="chJcAcumAnual"></canvas></div></div>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px">
       <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌐 Presencial vs Online</h3><div style="height:180px"><canvas id="chJcMod"></canvas></div></div>
@@ -3401,6 +3406,12 @@ function renderSesJC(){
     const acumLabels=meses.map(m=>m.slice(5)+'/'+m.slice(2,4));
     if(charts.jcAcum)charts.jcAcum.destroy();
     charts.jcAcum=new Chart(document.getElementById('chJcAcum'),{type:'line',data:{labels:acumLabels,datasets:[{label:'Total acumulado',data:acumData,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,.1)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9A84C'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+    // Chart: acumulado por año (una barra/punto por año, total corrido)
+    let accY=0;
+    const acumAnualData=yrs.map(y=>{accY+=jcSes.filter(s=>new Date(s.fecha).getFullYear()===y).length;return accY;});
+    if(charts.jcAcumAnual)charts.jcAcumAnual.destroy();
+    charts.jcAcumAnual=new Chart(document.getElementById('chJcAcumAnual'),{type:'bar',data:{labels:yrs.map(String),datasets:[{label:'Total acumulado',data:acumAnualData,backgroundColor:'rgba(201,168,76,.55)',borderColor:'#C9A84C',borderRadius:5,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} sesiones acumuladas`}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
   }
 
   // Chart: Presencial vs Online (donut)
@@ -3570,6 +3581,9 @@ function renderSes(){
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📊 Acumulativo histórico</h3><div style="height:220px"><canvas id="chResAcum"></canvas></div></div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Top herramientas</h3>${topHerr||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
       </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌱 Acumulado por año (todas las sesiones)</h3><div style="height:180px"><canvas id="chResAcumAnual"></canvas></div></div>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:180px"><canvas id="chResAnual"></canvas></div></div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🙋 Por facilitador</h3>${topFac||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
@@ -3628,6 +3642,12 @@ function renderSes(){
       if(charts.resAcum)charts.resAcum.destroy();
       charts.resAcum=new Chart(document.getElementById('chResAcum'),{type:'line',data:{labels:mesesAcum.map(m=>m.slice(5)+'/'+m.slice(2,4)),datasets:[{data:acumData2,borderColor:'#C9A84C',backgroundColor:'rgba(201,168,76,.1)',tension:.4,fill:true,pointRadius:3,pointBackgroundColor:'#C9A84C'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260',font:{size:9}},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
     }
+
+    // Chart: acumulado por año — todas las sesiones, todas las herramientas, todos los facilitadores
+    let accY2=0;
+    const acumAnualData2=yrs2.map(y=>{accY2+=compSes.filter(s=>new Date(s.fecha).getFullYear()===y).length;return accY2;});
+    if(charts.resAcumAnual)charts.resAcumAnual.destroy();
+    charts.resAcumAnual=new Chart(document.getElementById('chResAcumAnual'),{type:'bar',data:{labels:yrs2.map(String),datasets:[{label:'Total acumulado',data:acumAnualData2,backgroundColor:'rgba(201,168,76,.55)',borderColor:'#C9A84C',borderRadius:5,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} sesiones acumuladas`}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
 
     // Chart: Presencial vs Online
     const pr2=compSes.filter(s=>s.modalidad==='Presencial').length;
@@ -3716,6 +3736,7 @@ function renderSes(){
       <td><span class="bdg ${bc(s.sesion)}">${s.sesion}</span></td>
       <td>${s.primeraVez?'<span class="bdg b-or">⭐ 1°Vez</span>':'—'}</td>
       <td style="font-size:12px">${s.facilitador}</td>
+      <td style="font-size:12px;color:var(--muted)">${s.pais||'—'}</td>
       <td style="font-size:12px;color:var(--muted)">${s.provincia||'—'}</td>
       <td><span class="bdg ${s.modalidad==='Online'?'b-bl':'b-go'}">${s.modalidad||'—'}</span></td>
       <td><span class="bdg ${estCls(s.estado||'Completado')}">${s.estado||'Completado'}</span>${s.intakeCompletado?'<div style="margin-top:3px"><span class="bdg b-pu" style="font-size:9px">💫 Integrado</span></div>':''}</td>
@@ -3729,7 +3750,7 @@ function renderSes(){
         <button class="btn btn-s btn-sm" onclick="openModal('ses','${s.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delSes('${s.id}')">🗑</button>
       </td>
-    </tr>`).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:24px">Sin resultados</td></tr>';
+    </tr>`).join('')||'<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:24px">Sin resultados</td></tr>';
   const pages=Math.ceil(tot/PPG);
   document.getElementById('sesPag').innerHTML=Array.from({length:pages},(_,i)=>`<button class="btn ${i===sesPage?'btn-p':'btn-s'} btn-sm" onclick="sesPage=${i};renderSes()">${i+1}</button>`).join('');
 }
