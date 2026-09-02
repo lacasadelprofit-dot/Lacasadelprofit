@@ -1302,9 +1302,11 @@ th{background:rgba(28,26,46,.88)!important;}
    </select>
   </div>
   <div class="fg-row">
-   <div class="fg"><label>País</label><input type="text" id="nsPais" value="Argentina"></div>
-   <div class="fg"><label>Provincia / Estado</label><input type="text" id="nsProv" value="Buenos Aires"></div>
+   <div class="fg"><label>País</label><select id="nsPais" onchange="onNsPaisChange()"></select></div>
+   <div class="fg"><label>Provincia / Estado</label><input type="text" id="nsProv" list="dlProv" oninput="onNsProvChange()"></div>
   </div>
+  <div class="fg"><label>Ciudad</label><input type="text" id="nsCiudad" list="dlCiudad"><datalist id="dlCiudad"></datalist></div>
+  <datalist id="dlProv"></datalist>
   <div class="fg-check">
    <input type="checkbox" id="nsPV">
    <label for="nsPV">⭐ Es la primera vez de esta sesión para el ser</label>
@@ -4703,6 +4705,51 @@ function moveHerr(id, dir){
   save();if(tipoActivo==='Herramienta práctica')renderPracticas();else renderHerr();
 }
 
+/* PAÍSES (para el selector de sesión) — ~195 países del mundo */
+const PAISES=[
+'Afganistán','Albania','Alemania','Andorra','Angola','Antigua y Barbuda','Arabia Saudita','Argelia','Argentina',
+'Armenia','Australia','Austria','Azerbaiyán','Bahamas','Baréin','Bangladés','Barbados','Bélgica','Belice','Benín',
+'Bielorrusia','Birmania (Myanmar)','Bolivia','Bosnia y Herzegovina','Botsuana','Brasil','Brunéi','Bulgaria',
+'Burkina Faso','Burundi','Bután','Cabo Verde','Camboya','Camerún','Canadá','Catar','Chad','Chile','China','Chipre',
+'Ciudad del Vaticano','Colombia','Comoras','Congo','Corea del Norte','Corea del Sur','Costa de Marfil','Costa Rica',
+'Croacia','Cuba','Dinamarca','Dominica','Ecuador','Egipto','El Salvador','Emiratos Árabes Unidos','Eritrea',
+'Eslovaquia','Eslovenia','España','Estados Unidos','Estonia','Esuatini','Etiopía','Fiyi','Filipinas','Finlandia',
+'Francia','Gabón','Gambia','Georgia','Ghana','Granada','Grecia','Guatemala','Guinea','Guinea-Bisáu',
+'Guinea Ecuatorial','Guyana','Haití','Honduras','Hungría','India','Indonesia','Irak','Irán','Irlanda','Islandia',
+'Islas Marshall','Islas Salomón','Israel','Italia','Jamaica','Japón','Jordania','Kazajistán','Kenia','Kirguistán',
+'Kiribati','Kosovo','Kuwait','Laos','Lesoto','Letonia','Líbano','Liberia','Libia','Liechtenstein','Lituania',
+'Luxemburgo','Macedonia del Norte','Madagascar','Malasia','Malaui','Maldivas','Malí','Malta','Marruecos',
+'Mauricio','Mauritania','México','Micronesia','Moldavia','Mónaco','Mongolia','Montenegro','Mozambique','Namibia',
+'Nauru','Nepal','Nicaragua','Níger','Nigeria','Noruega','Nueva Zelanda','Omán','Países Bajos','Pakistán','Palaos',
+'Panamá','Papúa Nueva Guinea','Paraguay','Perú','Polonia','Portugal','Reino Unido','República Centroafricana',
+'República Checa','República del Congo','República Democrática del Congo','República Dominicana','Ruanda',
+'Rumania','Rusia','Samoa','San Cristóbal y Nieves','San Marino','San Vicente y las Granadinas','Santa Lucía',
+'Santo Tomé y Príncipe','Senegal','Serbia','Seychelles','Sierra Leona','Singapur','Siria','Somalia','Sri Lanka',
+'Sudáfrica','Sudán','Sudán del Sur','Suecia','Suiza','Surinam','Tailandia','Tanzania','Tayikistán','Timor Oriental',
+'Togo','Tonga','Trinidad y Tobago','Túnez','Turkmenistán','Turquía','Tuvalu','Ucrania','Uganda','Uruguay',
+'Uzbekistán','Vanuatu','Venezuela','Vietnam','Yemen','Yibuti','Zambia','Zimbabue']
+  .sort((a,b)=>a.localeCompare(b,'es'));
+
+/* Provincia/Ciudad: autocompletado propio, en cascada según lo ya cargado en sessions */
+function onNsPaisChange(){
+  _refreshProvDL();
+  onNsProvChange();
+}
+function onNsProvChange(){
+  _refreshCiudadDL();
+}
+function _refreshProvDL(){
+  const pais=document.getElementById('nsPais').value;
+  const provs=[...new Set(sessions.filter(s=>s.pais===pais&&s.provincia).map(s=>s.provincia))].sort((a,b)=>a.localeCompare(b,'es'));
+  document.getElementById('dlProv').innerHTML=provs.map(p=>`<option value="${p}">`).join('');
+}
+function _refreshCiudadDL(){
+  const pais=document.getElementById('nsPais').value;
+  const prov=document.getElementById('nsProv').value;
+  const ciudades=[...new Set(sessions.filter(s=>s.pais===pais&&s.provincia===prov&&s.ciudad).map(s=>s.ciudad))].sort((a,b)=>a.localeCompare(b,'es'));
+  document.getElementById('dlCiudad').innerHTML=ciudades.map(c=>`<option value="${c}">`).join('');
+}
+
 /* MODALS */
 function openModal(type,id,extra){
   const _id=id!=null?String(id):null; // normalise to string always
@@ -4711,6 +4758,7 @@ function openModal(type,id,extra){
     const ses=_id?sessions.find(x=>String(x.id)===_id):null;
     document.getElementById('moSesTitle').textContent=ses?'✏️ Editar Sesión':'✨ Nueva Sesión';
     document.getElementById('nsId').value=id||'';
+    document.getElementById('nsPais').innerHTML=PAISES.map(p=>`<option>${p}</option>`).join('');
     if(ses){
       document.getElementById('nsFecha').value=ses.fecha;
       document.getElementById('nsHora').value=ses.hora||'';
@@ -4721,6 +4769,8 @@ function openModal(type,id,extra){
       document.getElementById('nsMod').value=ses.modalidad||'Presencial';
       document.getElementById('nsPais').value=ses.pais||'Argentina';
       document.getElementById('nsProv').value=ses.provincia||'Buenos Aires';
+      document.getElementById('nsCiudad').value=ses.ciudad||'';
+      _refreshProvDL();_refreshCiudadDL();
       document.getElementById('nsPV').checked=ses.primeraVez||false;
       document.getElementById('nsObs').value=ses.observacion||'';
       // Herramientas de la biblioteca usadas en esta sesión
@@ -4742,6 +4792,8 @@ function openModal(type,id,extra){
       document.getElementById('nsPV').checked=false;
       document.getElementById('nsPais').value='Argentina';
       document.getElementById('nsProv').value='Buenos Aires';
+      document.getElementById('nsCiudad').value='';
+      _refreshProvDL();_refreshCiudadDL();
       document.getElementById('nsMoneda').value='ARS';
       document.getElementById('nsMonto').value='';
       document.getElementById('nsPagado').value='';
@@ -7452,6 +7504,7 @@ function saveSes(){
     herramientasUsadas:[...document.querySelectorAll('#nsHerramientasUsadas input:checked')].map(c=>c.value),
     pais:document.getElementById('nsPais').value,
     provincia:document.getElementById('nsProv').value,
+    ciudad:document.getElementById('nsCiudad').value,
     modalidad:document.getElementById('nsMod').value,
     primeraVez:document.getElementById('nsPV').checked,
     estado:document.getElementById('nsEst').value,
