@@ -10110,6 +10110,7 @@ function copiarLinkTesoro(url){
    contenido que solo edita el admin, y así el portal del ser la puede leer
    con anon key sin depender de que el admin tenga todo cargado en memoria. */
 let _biblioteca=[];
+let _bibSeresSel=[]; // seres puntuales elegidos para el material que se está cargando
 const BIB_TIPO_ICO={Audio:'🎧',PDF:'📄',Libro:'📖',Video:'🎬',Link:'🔗'};
 
 async function renderBiblioteca(){
@@ -10119,6 +10120,7 @@ async function renderBiblioteca(){
   const {data,error}=await _sb.from('biblioteca').select('*').order('created_at',{ascending:true});
   if(error)console.warn('biblioteca:',error);
   _biblioteca=data||[];
+  _bibSeresSel=[];
   _renderBibKPIs();
   _renderBibBody();
 }
@@ -10127,18 +10129,20 @@ function _renderBibKPIs(){
   const kpiEl=document.getElementById('bibKPIs');
   if(!kpiEl)return;
   const activos=_biblioteca.filter(b=>b.data?.activo!==false);
-  const generales=activos.filter(b=>!b.data?.programa).length;
-  const porPrograma=activos.length-generales;
+  const generales=activos.filter(b=>!b.data?.programa&&!b.data?.seres?.length).length;
+  const porPrograma=activos.filter(b=>b.data?.programa).length;
+  const porSer=activos.filter(b=>b.data?.seres?.length).length;
   kpiEl.innerHTML=`
     <div class="kc go"><div class="ki">📖</div><div class="kl">Material cargado</div><div class="kv">${_biblioteca.length}</div></div>
     <div class="kc gr"><div class="ki">🌐</div><div class="kl">General (todos los seres)</div><div class="kv">${generales}</div></div>
-    <div class="kc pu"><div class="ki">📚</div><div class="kl">Ligado a un programa</div><div class="kv">${porPrograma}</div></div>`;
+    <div class="kc pu"><div class="ki">📚</div><div class="kl">Ligado a un programa</div><div class="kv">${porPrograma}</div></div>
+    <div class="kc or"><div class="ki">👤</div><div class="kl">Para seres puntuales</div><div class="kv">${porSer}</div></div>`;
 }
 
 function _renderBibBody(){
   const el=document.getElementById('bibBody');
   if(!el)return;
-  const progOptions=programas.map(p=>`<option>${p.nombre}</option>`).join('');
+  const progOptions=programas.map(p=>`<option value="${p.id}">${p.nombre}</option>`).join('');
   el.innerHTML=`
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px">
       <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo material</div>
@@ -10161,6 +10165,15 @@ function _renderBibBody(){
         <div class="fg" style="margin:0"><label>Programa (opcional)</label>
           <select id="bibPrograma"><option value="">General — todos los seres</option>${progOptions}</select></div>
       </div>
+      <div class="fg" style="margin:0 0 12px">
+        <label>Seres específicos (opcional — además del programa, o en vez de)</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="text" id="bibSerInput" list="dlBibSer" placeholder="Escribí el nombre del ser..." style="flex:1">
+          <datalist id="dlBibSer">${seres.map(s=>`<option value="${s.nombre}">`).join('')}</datalist>
+          <button type="button" class="btn btn-s btn-sm" onclick="agregarBibSer()">+ Agregar</button>
+        </div>
+        <div id="bibSeresPills" style="display:flex;flex-wrap:wrap;gap:6px">${_bibSeresPillsHtml()}</div>
+      </div>
       <button class="btn btn-p btn-sm" id="bibSubmitBtn" onclick="crearBiblioteca()">+ Agregar material</button>
     </div>
 
@@ -10173,7 +10186,7 @@ function _renderBibBody(){
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--text)">${_tzEsc(d.nombre)}</div>
           ${d.descripcion?`<div style="font-size:11.5px;color:var(--muted);margin-top:2px">${_tzEsc(d.descripcion)}</div>`:''}
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">${d.programa?'📚 '+_tzEsc(d.programa):'🌐 General'}${d.activo===false?' · inactivo':''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${(!d.programa&&!d.seres?.length)?'🌐 General':[d.programa?'📚 '+_tzEsc(programas.find(p=>p.id===d.programa)?.nombre||'Programa eliminado'):'',d.seres?.length?'👤 '+d.seres.length+' ser'+(d.seres.length!==1?'es':'')+' puntual'+(d.seres.length!==1?'es':''):''].filter(Boolean).join(' · ')}${d.activo===false?' · inactivo':''}</div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
           <button class="btn btn-s btn-sm" onclick="toggleBiblioteca('${b.id}',${d.activo===false})">${d.activo===false?'Activar':'Desactivar'}</button>
@@ -10182,6 +10195,27 @@ function _renderBibBody(){
       </div>`;
     }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía no cargaste material.</div>`}
   `;
+}
+
+function _bibSeresPillsHtml(){
+  if(!_bibSeresSel.length)return '<span style="font-size:11px;color:var(--muted)">Sin seres puntuales agregados</span>';
+  return _bibSeresSel.map(s=>`<span class="bdg b-go" style="display:inline-flex;align-items:center;gap:5px">${_tzEsc(s.nombre)}
+    <span style="cursor:pointer;font-weight:800" onclick="quitarBibSer('${s.id}')">✕</span></span>`).join('');
+}
+function agregarBibSer(){
+  const inp=document.getElementById('bibSerInput');
+  const nombre=inp.value.trim();
+  if(!nombre)return;
+  const ser=seres.find(s=>s.nombre===nombre);
+  if(!ser){toast('⚠️ No encontré ningún ser con ese nombre exacto');return;}
+  if(_bibSeresSel.some(s=>s.id===ser.id)){inp.value='';return;}
+  _bibSeresSel.push({id:ser.id,nombre:ser.nombre});
+  inp.value='';
+  document.getElementById('bibSeresPills').innerHTML=_bibSeresPillsHtml();
+}
+function quitarBibSer(id){
+  _bibSeresSel=_bibSeresSel.filter(s=>s.id!==id);
+  document.getElementById('bibSeresPills').innerHTML=_bibSeresPillsHtml();
 }
 
 async function crearBiblioteca(){
@@ -10205,7 +10239,8 @@ async function crearBiblioteca(){
     url=pub.publicUrl;
   }
   btn.textContent='+ Agregar material';
-  const {error}=await _sb.from('biblioteca').insert({id,data:{nombre,tipo,descripcion,url,programa,activo:true}});
+  const seresIds=_bibSeresSel.map(s=>s.id);
+  const {error}=await _sb.from('biblioteca').insert({id,data:{nombre,tipo,descripcion,url,programa,seres:seresIds,activo:true}});
   btn.disabled=false;
   if(error){toast('⚠️ Error: '+error.message);return;}
   toast('✓ Material agregado');

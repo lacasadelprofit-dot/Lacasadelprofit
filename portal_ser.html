@@ -224,6 +224,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .regalo-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;}
 .btn-regalo-dl{width:100%;padding:11px;background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.45);border-radius:12px;color:var(--gl);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;transition:all .2s;}
 .btn-regalo-dl:hover{background:rgba(201,168,76,.28);}
+.bib-nota-wrap{margin-top:12px;text-align:left;}
+.bib-nota-lbl{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
+.bib-nota-ta{width:100%;min-height:60px;padding:9px 11px;background:rgba(255,255,255,.05);border:1px solid rgba(232,201,106,.2);
+  border-radius:10px;color:var(--text);font-size:12.5px;line-height:1.6;outline:none;resize:vertical;font-family:inherit;}
+.bib-nota-ta:focus{border-color:rgba(232,201,106,.6);}
+.bib-nota-status{display:block;font-size:10px;color:var(--gl);margin-top:4px;min-height:12px;}
 .agenda-overlay.open{display:block;}
 .agenda-modal{max-width:600px;margin:0 auto;background:rgba(14,12,26,0.82);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
@@ -733,10 +739,20 @@ async function openBiblioteca(){
   if(grid.dataset.loaded==='1')return;
   grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">📖</div><p>Cargando material...</p></div>';
   try{
-    const {data,error}=await _sb.from('biblioteca').select('id,data');
-    const misProgramas=[curSer?.programa].filter(Boolean);
+    const today=new Date().toISOString().split('T')[0];
+    const [bibRes,inscRes,progRes,notasRes]=await Promise.all([
+      _sb.from('biblioteca').select('id,data'),
+      curSer?.id?_sb.from('inscripciones').select('id,data').filter('data->>serId','eq',curSer.id):Promise.resolve({data:[]}),
+      _sb.from('programas').select('id,data'),
+      curSer?.id?_sb.from('biblioteca_notas').select('id,data').filter('data->>serId','eq',curSer.id):Promise.resolve({data:[]})
+    ]);
+    const inscActivas=(inscRes.data||[]).map(r=>r.data||{}).filter(i=>!i.fechaFin||i.fechaFin>=today);
+    const misProgramaIds=new Set(inscActivas.map(i=>i.programaId));
+    const progMap={};(progRes.data||[]).forEach(r=>{progMap[r.id]=(r.data||{}).nombre||'Programa';});
+    const notasMap={};(notasRes.data||[]).forEach(r=>{notasMap[(r.data||{}).materialId]=(r.data||{}).nota||'';});
+    const data=bibRes.data,error=bibRes.error;
     const lista=(error||!data?.length)?[]:data.map(r=>({id:r.id,...r.data}))
-      .filter(r=>r.activo!==false&&(!r.programa||misProgramas.includes(r.programa)));
+      .filter(r=>r.activo!==false&&(!r.programa&&!r.seres?.length||misProgramaIds.has(r.programa)||r.seres?.includes(curSer?.id)));
     if(!lista.length){
       grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">✦</div><p>Todavía no hay material cargado para vos.</p></div>';
       return;
@@ -747,10 +763,16 @@ async function openBiblioteca(){
           <span class="regalo-ico">${BIB_TIPO_ICO[r.tipo]||'📚'}</span>
           <div class="regalo-nombre">${r.nombre||'Material'}</div>
           ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
-          ${r.programa?`<div class="regalo-desc" style="opacity:.7">📚 ${r.programa}</div>`:''}
+          ${r.programa?`<div class="regalo-desc" style="opacity:.7">📚 ${progMap[r.programa]||'Programa'}</div>`:''}
           ${r.url
             ?`<a class="btn-regalo-dl" href="${r.url}" target="_blank">${r.tipo==='Link'?'🔗 Ver':'⬇️ Descargar'}</a>`
             :`<div class="btn-regalo-dl" style="opacity:.45;cursor:not-allowed">Próximamente</div>`}
+          <div class="bib-nota-wrap">
+            <label class="bib-nota-lbl">📝 Mi nota</label>
+            <textarea class="bib-nota-ta" id="nota-${r.id}" placeholder="Escribí lo que quieras recordar de esto..."
+              onblur="guardarNotaBiblioteca('${r.id}')">${notasMap[r.id]||''}</textarea>
+            <span class="bib-nota-status" id="notaStatus-${r.id}"></span>
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -764,6 +786,20 @@ function closeBiblioteca(){
   document.body.style.overflow='';
 }
 function closeBibliotecaOutside(e){if(e.target===document.getElementById('bibliotecaOverlay'))closeBiblioteca();}
+
+async function guardarNotaBiblioteca(materialId){
+  if(!curSer?.id)return;
+  const ta=document.getElementById('nota-'+materialId);
+  const statusEl=document.getElementById('notaStatus-'+materialId);
+  const nota=ta.value;
+  const id=materialId+'_'+curSer.id;
+  if(statusEl)statusEl.textContent='Guardando...';
+  const {error}=await _sb.from('biblioteca_notas').upsert({
+    id, data:{materialId,serId:curSer.id,nota,actualizada:new Date().toISOString()}
+  });
+  if(statusEl)statusEl.textContent=error?'⚠️ No se pudo guardar':'✓ Guardada';
+  if(!error)setTimeout(()=>{if(statusEl)statusEl.textContent='';},2000);
+}
 
 /* ── DATA ── */
 async function loadHerramientas(){
