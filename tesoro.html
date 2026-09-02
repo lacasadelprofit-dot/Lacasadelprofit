@@ -9,6 +9,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
@@ -48,6 +50,20 @@ h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;}
 .sticker-instr{font-size:13px;color:var(--muted);line-height:1.6;background:var(--card2);
   border-radius:12px;padding:14px;margin-bottom:18px;text-align:left;}
 .sticker-instr b{color:var(--text);}
+
+/* RULETA */
+.wheel-outer{position:relative;width:220px;height:220px;margin:6px auto 20px;}
+.wheel-pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);font-size:22px;
+  color:var(--terra-d);z-index:2;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.2));}
+.wheel{width:100%;height:100%;border-radius:50%;position:relative;border:4px solid #fff;
+  box-shadow:0 4px 24px rgba(193,122,72,.35),0 0 0 1px var(--border);
+  transform:rotate(0deg);transition:transform 4s cubic-bezier(.17,.67,.1,1);}
+.wheel-label{position:absolute;top:50%;left:50%;width:90px;margin-left:-45px;text-align:center;
+  font-size:9.5px;font-weight:700;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.35);
+  line-height:1.15;transform-origin:center;pointer-events:none;}
+.wheel-center{position:absolute;top:50%;left:50%;width:26px;height:26px;margin:-13px;
+  border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.wheel-spin-hint{text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px;}
 
 .fg{margin-bottom:12px;text-align:left;}
 .fg label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;}
@@ -91,6 +107,9 @@ h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;}
 .sec-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;
   letter-spacing:.5px;margin-bottom:12px;}
 
+#tesoroMap{height:280px;border-radius:12px;overflow:hidden;}
+.leaflet-popup-content{font-family:'DM Sans',system-ui,sans-serif;}
+
 .foot-link{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:24px;text-decoration:none;}
 .foot-link:hover{color:var(--terra-d);}
 
@@ -118,12 +137,59 @@ function track(tipo,extra={}){
   try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'tesoro',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}}).then();}catch(e){}
 }
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function igLink(handle){
+  const h=esc(handle||'');
+  if(!h)return '@?';
+  return `<a href="https://instagram.com/${h}" target="_blank" rel="noopener" style="color:inherit;font-weight:700;text-decoration:underline">@${h}</a>`;
+}
 
 /* ================= INIT ================= */
 (async function init(){
   if(stickerId){ await renderSticker(stickerId); }
   else{ await renderTablero(); }
 })();
+
+/* ================= RULETA ================= */
+const WHEEL_COLORS=['#C17A48','#9A5C30','#D9A86C','#B8895A','#E8C08A','#A9683E'];
+
+function pickWeighted(pool){
+  const total=pool.reduce((s,r)=>s+(Number(r.data.peso)||1),0);
+  let r=Math.random()*total;
+  for(const item of pool){
+    r-=Number(item.data.peso)||1;
+    if(r<=0)return item;
+  }
+  return pool[pool.length-1];
+}
+
+function buildWheelHTML(pool){
+  const n=pool.length;
+  const slice=360/n;
+  const gradient=pool.map((r,i)=>`${WHEEL_COLORS[i%WHEEL_COLORS.length]} ${i*slice}deg ${(i+1)*slice}deg`).join(',');
+  const labels=pool.map((r,i)=>{
+    const mid=i*slice+slice/2;
+    return `<div class="wheel-label" style="transform:rotate(${mid}deg) translateY(-78px) rotate(${-mid}deg)">${esc(r.data.nombre)}</div>`;
+  }).join('');
+  return `<div class="wheel-outer">
+    <div class="wheel-pointer">▼</div>
+    <div class="wheel" id="tesoroWheel" style="background:conic-gradient(${gradient})">
+      ${labels}
+      <div class="wheel-center"></div>
+    </div>
+  </div>`;
+}
+
+function spinWheelTo(pool,winnerId){
+  const wheelEl=document.getElementById('tesoroWheel');
+  if(!wheelEl)return;
+  const idx=pool.findIndex(r=>r.id===winnerId);
+  const n=pool.length;
+  const slice=360/n;
+  const target=5*360 + (360-(idx*slice+slice/2));
+  wheelEl.style.transform='rotate(0deg)';
+  void wheelEl.offsetHeight; // fuerza reflow para que el navegador registre el estado inicial antes de animar
+  wheelEl.style.transform=`rotate(${target}deg)`;
+}
 
 /* ================= STICKER VIEW ================= */
 async function renderSticker(id){
@@ -148,11 +214,26 @@ async function renderSticker(id){
       <div class="card sticker-card">
         <div class="sticker-ico">${ico}</div>
         <div class="sticker-pregunta">${esc(d.pregunta)}</div>
-        <div class="msg-err">Ya fue reclamado por <b>@${esc(d.ganador_instagram||'alguien')}</b>. ¡Pero quedan más premios esperando!</div>
+        <div class="msg-err">Ya fue reclamado por ${igLink(d.ganador_instagram)}, que ganó <b>${esc(d.premio_ganado||'un premio')}</b>. ¡Pero quedan más stickers esperando!</div>
       </div>
       <a class="foot-link" href="tesoro.html">← Ver qué premios quedan disponibles</a>`;
     return;
   }
+
+  const {data:ruletaData}=await _sb.from('tesoro_ruleta').select('*').order('created_at',{ascending:true});
+  const pool=(ruletaData||[]).filter(r=>r.data?.activo!==false);
+
+  if(!pool.length){
+    app.innerHTML=`
+      <div class="hdr"><div class="kicker">🎁 Búsqueda del Tesoro</div><h1>Encontraste <span>una pregunta</span></h1></div>
+      <div class="card sticker-card">
+        <div class="sticker-ico">${ico}</div>
+        <div class="sticker-pregunta">${esc(d.pregunta)}</div>
+        <div class="msg-err">Los premios todavía se están cargando. Volvé a intentar en un rato. 🌱</div>
+      </div>`;
+    return;
+  }
+
   app.innerHTML=`
     <div class="hdr">
       <div class="kicker">🎁 Búsqueda del Tesoro</div>
@@ -161,19 +242,19 @@ async function renderSticker(id){
     <div class="card sticker-card">
       <div class="sticker-ico">${ico}</div>
       <div class="sticker-pregunta">${esc(d.pregunta)}</div>
-      <div class="sticker-premio">🎁 ${esc(d.premio)}</div>
+      <div class="sticker-premio">🎡 Premio sorpresa</div>
       <div class="sticker-instr">
         <b>Cómo reclamarlo:</b><br>
         1. Subí esta pregunta a tu historia de Instagram.<br>
         2. Mencioná a <b>@juancruzconsciencia</b>.<br>
-        3. Completá tu usuario abajo y tocá "Reclamar mi premio" — el primero que reclama, gana.
+        3. Completá tu usuario abajo y girá la ruleta — el primero que reclama, gana.
       </div>
       <div id="claimZone">
         <div class="fg">
           <label>Tu usuario de Instagram</label>
           <input type="text" id="igUser" placeholder="@tuusuario">
         </div>
-        <button class="btn btn-terra" id="btnClaim" onclick="reclamar('${esc(id)}')">🎁 Reclamar mi premio</button>
+        <button class="btn btn-terra" id="btnClaim" onclick="reclamar('${esc(id)}')">🎡 Girar y reclamar</button>
       </div>
     </div>
     <a class="foot-link" href="tesoro.html">Ver todos los premios del tesoro →</a>`;
@@ -184,10 +265,18 @@ async function reclamar(id){
   const btn=document.getElementById('btnClaim');
   let handle=inp.value.trim().replace(/^@/,'');
   if(!handle){ inp.style.borderColor='#A83C3C'; inp.focus(); return; }
-  btn.disabled=true; btn.textContent='Reclamando...';
+  btn.disabled=true; btn.textContent='Girando...';
+
+  const {data:ruletaData}=await _sb.from('tesoro_ruleta').select('*').order('created_at',{ascending:true});
+  const pool=(ruletaData||[]).filter(r=>r.data?.activo!==false);
+  if(!pool.length){
+    document.getElementById('claimZone').innerHTML='<div class="msg-err">Los premios todavía se están cargando. Volvé a intentar en un rato.</div>';
+    return;
+  }
+  const winner=pickWeighted(pool);
 
   const {data:current}=await _sb.from('tesoro_premios').select('*').eq('id',id).single();
-  const newData={...(current?.data||{}),reclamado:true,ganador_instagram:handle,ganador_fecha:new Date().toISOString()};
+  const newData={...(current?.data||{}),reclamado:true,ganador_instagram:handle,ganador_fecha:new Date().toISOString(),premio_ganado:winner.data.nombre};
 
   const {data,error}=await _sb.from('tesoro_premios')
     .update({data:newData}).eq('id',id)
@@ -195,7 +284,7 @@ async function reclamar(id){
     .select();
 
   if(error){
-    btn.disabled=false; btn.textContent='🎁 Reclamar mi premio';
+    btn.disabled=false; btn.textContent='🎡 Girar y reclamar';
     document.getElementById('claimZone').innerHTML='<div class="msg-err">Hubo un error, intentá de nuevo en un momento.</div>';
     return;
   }
@@ -203,11 +292,22 @@ async function reclamar(id){
     document.getElementById('claimZone').innerHTML='<div class="msg-err">¡Justo se te adelantaron! 😅 Este premio ya fue reclamado. Mirá qué otros quedan.</div><a class="foot-link" href="tesoro.html">Ver premios disponibles →</a>';
     return;
   }
-  track('reclamo',{sticker:id,instagram:handle});
-  const waMsg=encodeURIComponent(`Hola! Reclamé el premio "${current.data.premio}" en la Búsqueda del Tesoro 🎁 (usuario IG: @${handle})`);
+  track('reclamo',{sticker:id,instagram:handle,premio:winner.data.nombre});
+
   document.getElementById('claimZone').innerHTML=`
-    <div class="msg-ok">🎉 ¡Listo, <b>@${esc(handle)}</b>! Ganaste <b>${esc(current.data.premio)}</b>.<br>Escribinos por WhatsApp para coordinar tu sesión.</div>
-    <a class="btn btn-terra" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="https://wa.me/${WA_NUM}?text=${waMsg}" target="_blank">Coordinar por WhatsApp →</a>`;
+    <div class="wheel-spin-hint" id="wheelHint">Girando la ruleta...</div>
+    ${buildWheelHTML(pool)}
+    <div id="wheelResult"></div>`;
+  spinWheelTo(pool, winner.id);
+
+  setTimeout(()=>{
+    const hint=document.getElementById('wheelHint');
+    if(hint)hint.remove();
+    const waMsg=encodeURIComponent(`Hola! Gané "${winner.data.nombre}" en la Búsqueda del Tesoro 🎁 (usuario IG: @${handle})`);
+    document.getElementById('wheelResult').innerHTML=`
+      <div class="msg-ok">🎉 ¡Listo, ${igLink(handle)}! Ganaste <b>${esc(winner.data.nombre)}</b>.<br>Escribinos por WhatsApp para coordinar.</div>
+      <a class="btn btn-terra" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="https://wa.me/${WA_NUM}?text=${waMsg}" target="_blank">Coordinar por WhatsApp →</a>`;
+  }, 4200);
 }
 
 /* ================= TABLERO ================= */
@@ -222,15 +322,15 @@ async function renderTablero(){
     const d=p.data||{};
     const ico=CAT_ICO[d.categoria]||'✦';
     return `<div class="g-item ${d.reclamado?'done':''}">
-      <div class="g-top"><span class="g-ico">${ico}</span><span class="g-nombre">${esc(d.premio)}</span></div>
-      <span class="g-estado ${d.reclamado?'gan':'disp'}">${d.reclamado?'Reclamado por @'+esc(d.ganador_instagram):'Disponible'}</span>
+      <div class="g-top"><span class="g-ico">${ico}</span><span class="g-nombre">${d.reclamado?esc(d.premio_ganado||'Premio'):'🎡 Premio sorpresa'}</span></div>
+      <span class="g-estado ${d.reclamado?'gan':'disp'}">${d.reclamado?'Reclamado por '+igLink(d.ganador_instagram):'Disponible'}</span>
     </div>`;
   }).join('') : `<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Todavía no hay premios cargados.</div>`;
 
   const ganadoresHtml=ganados.length? ganados.slice(0,8).map(p=>`
     <div class="gan-row">
-      <span class="gan-user">@${esc(p.data.ganador_instagram)}</span>
-      <span class="gan-premio">${esc(p.data.premio)}</span>
+      <span class="gan-user">${igLink(p.data.ganador_instagram)}</span>
+      <span class="gan-premio">${esc(p.data.premio_ganado||'Premio')}</span>
     </div>`).join('') : `<div style="color:var(--muted);font-size:13px">Todavía nadie reclamó un premio. ¡Podés ser el primero!</div>`;
 
   app.innerHTML=`
@@ -250,11 +350,41 @@ async function renderTablero(){
     </div>
 
     <div class="card">
+      <div class="sec-title">🗺️ Dónde encontraron los premios</div>
+      ${ganados.some(p=>p.data.lat!=null)
+        ? `<div id="tesoroMap"></div>`
+        : `<div style="color:var(--muted);font-size:13px">Todavía no aparece ningún punto en el mapa. ¡Encontrá el primer premio!</div>`}
+    </div>
+
+    <div class="card">
       <div class="sec-title">Últimos en ganar</div>
       ${ganadoresHtml}
     </div>
 
   `;
+
+  if(ganados.some(p=>p.data.lat!=null)) setTimeout(()=>_initTesoroMap(ganados), 0);
+}
+
+function _initTesoroMap(ganados){
+  const mapEl=document.getElementById('tesoroMap');
+  if(!mapEl||typeof L==='undefined')return;
+  const puntos=ganados.filter(p=>p.data.lat!=null&&p.data.lng!=null);
+  const map=L.map('tesoroMap',{scrollWheelZoom:false});
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,attribution:'© OpenStreetMap'
+  }).addTo(map);
+  const ico=p=>CAT_ICO[p.data.categoria]||'✦';
+  const markers=puntos.map(p=>{
+    const m=L.marker([p.data.lat,p.data.lng]).addTo(map);
+    m.bindPopup(`<b>${ico(p)} ${esc(p.data.premio_ganado||'Premio')}</b><br>Encontrado por @${esc(p.data.ganador_instagram)}`);
+    return m;
+  });
+  if(markers.length===1){
+    map.setView([puntos[0].data.lat,puntos[0].data.lng],14);
+  }else{
+    map.fitBounds(L.featureGroup(markers).getBounds().pad(.2));
+  }
 }
 </script>
 </body>

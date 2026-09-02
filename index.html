@@ -15,6 +15,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --bg:#06060A;--sidebar:#0E0D14;--card:#141320;--card2:#1C1A2E;--border:#2A2840;
@@ -9638,35 +9640,66 @@ async function renderMktRegalos(){
    en memoria y "revivirían" premios ya ganados. Por eso cada acción acá pega
    directo a Supabase y se refresca al toque, sin pasar por el estado global. */
 let _tesoroPremios=[];
+let _tesoroRuleta=[];
+let _tesoroSubTab='stickers';
+let _tzMap=null, _tzMarker=null, _tzLat=null, _tzLng=null;
 const TESORO_CAT_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 const TESORO_URL_BASE='https://juancruzconsciencia.lat/tesoro.html?id=';
+const TESORO_MAP_DEFAULT=[-22.7469,-41.8817]; // Búzios, Brasil
+function _tzEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
 async function renderMktTesoro(){
   const el=document.getElementById('mktTesoro');
   if(!el)return;
-  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando premios...</div>';
-  const {data,error}=await _sb.from('tesoro_premios').select('*').order('created_at',{ascending:true});
-  if(error){console.warn('tesoro_premios:',error);}
-  _tesoroPremios=data||[];
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando...</div>';
+  const [pr,ru]=await Promise.all([
+    _sb.from('tesoro_premios').select('*').order('created_at',{ascending:true}),
+    _sb.from('tesoro_ruleta').select('*').order('created_at',{ascending:true})
+  ]);
+  if(pr.error)console.warn('tesoro_premios:',pr.error);
+  if(ru.error)console.warn('tesoro_ruleta:',ru.error);
+  _tesoroPremios=pr.data||[];
+  _tesoroRuleta=ru.data||[];
+  _tzLat=null;_tzLng=null;
+  _renderTesoroTab();
+}
+
+function setTesoroSubTab(t){
+  _tesoroSubTab=t;
   _renderTesoroTab();
 }
 
 function _renderTesoroTab(){
   const el=document.getElementById('mktTesoro');
   if(!el)return;
+  const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px">
+    <button class="tab-btn ${_tesoroSubTab==='stickers'?'active':''}" onclick="setTesoroSubTab('stickers')">📍 Stickers</button>
+    <button class="tab-btn ${_tesoroSubTab==='ruleta'?'active':''}" onclick="setTesoroSubTab('ruleta')">🎡 Ruleta de premios</button>
+  </div>`;
+  el.innerHTML = subTabBar + (_tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab() : _renderTesoroStickersTab());
+  if(_tesoroSubTab==='stickers') setTimeout(_tzInitMap, 0);
+}
+
+function _renderTesoroStickersTab(){
   const list=_tesoroPremios;
   const disponibles=list.filter(p=>!p.data?.reclamado).length;
   const reclamados=list.length-disponibles;
 
-  el.innerHTML=`
+  return `
     <div class="kpi-grid" style="margin-bottom:18px">
-      <div class="kc go"><div class="ki">🗺️</div><div class="kl">Premios cargados</div><div class="kv">${list.length}</div></div>
+      <div class="kc go"><div class="ki">🗺️</div><div class="kl">Stickers cargados</div><div class="kv">${list.length}</div></div>
       <div class="kc gr"><div class="ki">✅</div><div class="kl">Disponibles</div><div class="kv">${disponibles}</div></div>
       <div class="kc or"><div class="ki">🎉</div><div class="kl">Reclamados</div><div class="kv">${reclamados}</div></div>
     </div>
 
+    ${!_tesoroRuleta.filter(r=>r.data?.activo!==false).length?`<div style="background:rgba(216,90,48,.1);border:1px solid rgba(216,90,48,.3);border-radius:10px;padding:10px 14px;margin-bottom:18px;font-size:12.5px;color:#E88A6A">⚠️ Todavía no cargaste premios en la <a href="#" onclick="setTesoroSubTab('ruleta');return false" style="color:inherit;text-decoration:underline">🎡 Ruleta de premios</a> — sin eso, nadie va a poder ganar nada al reclamar un sticker.</div>`:''}
+
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px">
-      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo premio</div>
+      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo sticker</div>
+      <div class="fg" style="margin:0 0 10px"><label>Edición / Ciudad</label>
+        <input type="text" id="tzEdicion" list="tzEdicionesDL" placeholder="ej: Búzios 2026" value="${_tzEsc(localStorage.getItem('tesoro_ultima_edicion')||'')}">
+        <datalist id="tzEdicionesDL">${[...new Set(_tesoroPremios.map(p=>p.data?.edicion).filter(Boolean))].map(e=>`<option value="${_tzEsc(e)}">`).join('')}</datalist>
+      </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div class="fg" style="margin:0"><label>Código del sticker (va en el QR)</label>
           <input type="text" id="tzId" placeholder="ej: barras-01"></div>
@@ -9676,14 +9709,22 @@ function _renderTesoroTab(){
             ${Object.keys(TESORO_CAT_ICO).map(c=>`<option>${c}</option>`).join('')}
           </select></div>
       </div>
-      <div class="fg" style="margin:0 0 10px"><label>Pregunta</label>
+      <div class="fg" style="margin:0 0 12px"><label>Pregunta</label>
         <input type="text" id="tzPregunta" placeholder="¿Qué estarías eligiendo si no tuvieras miedo?"></div>
-      <div class="fg" style="margin:0 0 12px"><label>Premio</label>
-        <input type="text" id="tzPremio" placeholder="Sesión de Barras de Access"></div>
-      <button class="btn btn-p btn-sm" onclick="crearTesoroPremio()">+ Agregar premio</button>
+
+      <div class="fg" style="margin:0 0 8px">
+        <label>📍 Ubicación del sticker (tocá el mapa donde lo pegaste)</label>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <span id="tzLocLbl" style="font-size:11.5px;color:var(--muted)">Sin marcar todavía</span>
+          <button type="button" class="btn btn-s btn-sm" onclick="tzUsarMiUbicacion()">📍 Usar mi ubicación actual</button>
+        </div>
+        <div id="tzMap" style="height:220px;border-radius:10px;overflow:hidden;border:1px solid var(--border)"></div>
+      </div>
+
+      <button class="btn btn-p btn-sm" onclick="crearTesoroPremio()">+ Agregar sticker</button>
     </div>
 
-    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Premios (${list.length})</div>
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Stickers (${list.length})</div>
     ${list.length? list.map(p=>{
       const d=p.data||{};
       const ico=TESORO_CAT_ICO[d.categoria]||'✦';
@@ -9691,10 +9732,10 @@ function _renderTesoroTab(){
       return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px">
         <div style="font-size:20px;flex-shrink:0">${ico}</div>
         <div style="flex:1;min-width:0">
-          <div style="font-size:13px;font-weight:700;color:var(--text)">${d.premio||'—'}</div>
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${d.reclamado?'🎉 '+_tzEsc(d.premio_ganado||'—'):'🎡 Premio sorpresa'}${d.edicion?` <span style="font-weight:400;color:var(--muted);font-size:11px">· ${_tzEsc(d.edicion)}</span>`:''}</div>
           <div style="font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.pregunta||''}</div>
           <div style="font-size:11px;color:${d.reclamado?'var(--gold)':'#5DD89A'};margin-top:2px">
-            ${d.reclamado?'🎉 Reclamado por @'+(d.ganador_instagram||'?'):'✓ Disponible'} · código: ${p.id}
+            ${d.reclamado?'Reclamado por @'+(d.ganador_instagram||'?'):'✓ Disponible'} · código: ${p.id}${(d.lat!=null)?' · 📍 ubicado':' · ⚠️ sin ubicación'}
           </div>
         </div>
         <div style="display:flex;gap:6px;flex-shrink:0">
@@ -9702,21 +9743,126 @@ function _renderTesoroTab(){
           <button class="btn btn-s btn-sm" onclick="borrarTesoroPremio('${p.id}')" title="Borrar">🗑</button>
         </div>
       </div>`;
-    }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía no cargaste premios.</div>`}
+    }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía no cargaste stickers.</div>`}
   `;
+}
+
+function _renderTesoroRuletaTab(){
+  const list=_tesoroRuleta;
+  const pesoTotal=list.filter(r=>r.data?.activo!==false).reduce((s,r)=>s+(Number(r.data?.peso)||1),0);
+  return `
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:18px">
+      Este es el pool de premios que se sortea cuando alguien reclama <b style="color:var(--text)">cualquier</b> sticker.
+      El <b style="color:var(--text)">peso</b> define qué tan probable es cada premio (más alto = más común). No hace falta que sumen 100.
+    </div>
+
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo premio de la ruleta</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="fg" style="margin:0"><label>Nombre del premio</label>
+          <input type="text" id="trNombre" placeholder="ej: 25% OFF en tu próxima sesión"></div>
+        <div class="fg" style="margin:0"><label>Peso (probabilidad)</label>
+          <input type="number" id="trPeso" value="1" min="1" step="1"></div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="crearRuletaPremio()">+ Agregar a la ruleta</button>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Premios en la ruleta (${list.length})</div>
+    ${list.length? list.map(r=>{
+      const d=r.data||{};
+      const peso=Number(d.peso)||1;
+      const prob=pesoTotal? Math.round(peso/pesoTotal*100) : 0;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px;${d.activo===false?'opacity:.5':''}">
+        <div style="font-size:20px;flex-shrink:0">🎡</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${_tzEsc(d.nombre)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Peso: ${peso} · ~${prob}% de probabilidad${d.activo===false?' · inactivo':''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-s btn-sm" onclick="toggleRuletaPremio('${r.id}',${d.activo===false})">${d.activo===false?'Activar':'Desactivar'}</button>
+          <button class="btn btn-s btn-sm" onclick="borrarRuletaPremio('${r.id}')" title="Borrar">🗑</button>
+        </div>
+      </div>`;
+    }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía no cargaste premios en la ruleta.</div>`}
+  `;
+}
+
+async function crearRuletaPremio(){
+  const nombre=document.getElementById('trNombre').value.trim();
+  const peso=Math.max(1,parseInt(document.getElementById('trPeso').value)||1);
+  if(!nombre){toast('⚠️ Escribí el nombre del premio');return;}
+  const id=nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'-'+Date.now().toString(36);
+  const {error}=await _sb.from('tesoro_ruleta').insert({id, data:{nombre,peso,activo:true}});
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  toast('✓ Premio agregado a la ruleta');
+  renderMktTesoro();
+}
+
+async function toggleRuletaPremio(id,activar){
+  const r=_tesoroRuleta.find(x=>x.id===id);
+  if(!r)return;
+  const {error}=await _sb.from('tesoro_ruleta').update({data:{...r.data,activo:activar}}).eq('id',id);
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  renderMktTesoro();
+}
+
+async function borrarRuletaPremio(id){
+  if(!confirm('¿Borrar este premio de la ruleta?'))return;
+  const {error}=await _sb.from('tesoro_ruleta').delete().eq('id',id);
+  if(error){toast('⚠️ Error al borrar: '+error.message);return;}
+  renderMktTesoro();
+}
+
+function _tzInitMap(){
+  const mapEl=document.getElementById('tzMap');
+  if(!mapEl||typeof L==='undefined')return;
+  if(_tzMap){_tzMap.remove();_tzMap=null;_tzMarker=null;}
+  _tzMap=L.map('tzMap').setView(TESORO_MAP_DEFAULT,13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,attribution:'© OpenStreetMap'
+  }).addTo(_tzMap);
+  // Marca en el mapa los premios ya cargados que tienen ubicación, de referencia.
+  _tesoroPremios.forEach(p=>{
+    const d=p.data||{};
+    if(d.lat==null||d.lng==null)return;
+    L.circleMarker([d.lat,d.lng],{radius:6,color:'#C9A84C',weight:2,fillOpacity:.5})
+      .addTo(_tzMap).bindTooltip(d.reclamado?(d.premio_ganado||p.id):p.id);
+  });
+  _tzMap.on('click', e=>{
+    _tzSetPunto(e.latlng.lat, e.latlng.lng);
+  });
+}
+
+function _tzSetPunto(lat,lng){
+  _tzLat=lat; _tzLng=lng;
+  if(_tzMarker)_tzMap.removeLayer(_tzMarker);
+  _tzMarker=L.marker([lat,lng]).addTo(_tzMap);
+  _tzMap.setView([lat,lng], Math.max(_tzMap.getZoom(),14));
+  const lbl=document.getElementById('tzLocLbl');
+  if(lbl)lbl.textContent=`📍 ${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+}
+
+function tzUsarMiUbicacion(){
+  if(!navigator.geolocation){toast('⚠️ Tu navegador no soporta geolocalización');return;}
+  toast('📍 Buscando tu ubicación...');
+  navigator.geolocation.getCurrentPosition(
+    pos=>_tzSetPunto(pos.coords.latitude,pos.coords.longitude),
+    err=>toast('⚠️ No pude obtener tu ubicación: '+err.message)
+  );
 }
 
 async function crearTesoroPremio(){
   const id=document.getElementById('tzId').value.trim();
   const pregunta=document.getElementById('tzPregunta').value.trim();
-  const premio=document.getElementById('tzPremio').value.trim();
   const categoria=document.getElementById('tzCategoria').value;
-  if(!id||!pregunta||!premio){toast('⚠️ Completá código, pregunta y premio');return;}
-  const {error}=await _sb.from('tesoro_premios').insert({
-    id, data:{pregunta,premio,categoria,activo:true,reclamado:false}
-  });
+  const edicion=document.getElementById('tzEdicion').value.trim();
+  if(!id||!pregunta){toast('⚠️ Completá el código y la pregunta');return;}
+  const data={pregunta,categoria,edicion,activo:true,reclamado:false};
+  if(_tzLat!=null&&_tzLng!=null){data.lat=_tzLat;data.lng=_tzLng;}
+  const {error}=await _sb.from('tesoro_premios').insert({id, data});
   if(error){toast('⚠️ Error: '+error.message+(error.message.includes('duplicate')?' (ese código ya existe)':''));return;}
-  toast('✓ Premio agregado');
+  if(edicion)localStorage.setItem('tesoro_ultima_edicion',edicion);
+  toast('✓ Sticker agregado'+(data.lat==null?' (sin ubicación — lo podés borrar y recargar con el pin puesto)':''));
   renderMktTesoro();
 }
 
