@@ -1359,16 +1359,17 @@ th{background:rgba(28,26,46,.88)!important;}
   <div class="fg"><label>Nombre y Apellido *</label><input type="text" id="srNom"></div>
   <div class="fg-row">
    <div class="fg"><label>Nacimiento</label><input type="date" id="srNac"></div>
-   <div class="fg"><label>Nacionalidad</label><input type="text" id="srNacion" value="Argentina"></div>
+   <div class="fg"><label>Nacionalidad</label><select id="srNacion"></select></div>
   </div>
   <div class="fg-row">
-   <div class="fg"><label>País donde vive</label><input type="text" id="srPais" placeholder="Argentina, México..."></div>
-   <div class="fg"><label>Provincia / Estado</label><input type="text" id="srProv"></div>
+   <div class="fg"><label>País donde vive</label><select id="srPais" onchange="onSrPaisChange()"></select></div>
+   <div class="fg"><label>Provincia / Estado</label><input type="text" id="srProv" list="dlSrProv" oninput="onSrProvChange()"></div>
   </div>
   <div class="fg-row">
-   <div class="fg"><label>Ciudad</label><input type="text" id="srCiudad" placeholder="Buenos Aires, Córdoba..."></div>
+   <div class="fg"><label>Ciudad</label><input type="text" id="srCiudad" list="dlSrCiudad"></div>
    <div class="fg"><label>Zona</label><input type="text" id="srZona" placeholder="GBA Norte, Centro..."></div>
   </div>
+  <datalist id="dlSrProv"></datalist><datalist id="dlSrCiudad"></datalist>
   <div class="fg-row">
    <div class="fg"><label>Celular</label><input type="text" id="srCel" placeholder="+54..."></div>
    <div class="fg"><label>Email</label><input type="email" id="srEmail" placeholder="email@ejemplo.com"></div>
@@ -4750,6 +4751,26 @@ function _refreshCiudadDL(){
   document.getElementById('dlCiudad').innerHTML=ciudades.map(c=>`<option value="${c}">`).join('');
 }
 
+/* Mismo patrón para el formulario de Seres */
+function onSrPaisChange(){
+  _refreshSrProvDL();
+  onSrProvChange();
+}
+function onSrProvChange(){
+  _refreshSrCiudadDL();
+}
+function _refreshSrProvDL(){
+  const pais=document.getElementById('srPais').value;
+  const provs=[...new Set(seres.filter(s=>s.pais===pais&&s.provincia).map(s=>s.provincia))].sort((a,b)=>a.localeCompare(b,'es'));
+  document.getElementById('dlSrProv').innerHTML=provs.map(p=>`<option value="${p}">`).join('');
+}
+function _refreshSrCiudadDL(){
+  const pais=document.getElementById('srPais').value;
+  const prov=document.getElementById('srProv').value;
+  const ciudades=[...new Set(seres.filter(s=>s.pais===pais&&s.provincia===prov&&s.ciudad).map(s=>s.ciudad))].sort((a,b)=>a.localeCompare(b,'es'));
+  document.getElementById('dlSrCiudad').innerHTML=ciudades.map(c=>`<option value="${c}">`).join('');
+}
+
 /* MODALS */
 function openModal(type,id,extra){
   const _id=id!=null?String(id):null; // normalise to string always
@@ -4835,10 +4856,13 @@ function openModal(type,id,extra){
     document.getElementById('srId').value=_id||'';
     document.getElementById('srNom').value=s?s.nombre:'';
     document.getElementById('srNac').value=s?(s.nacimiento&&s.nacimiento!=='None'?s.nacimiento:''):'';
+    document.getElementById('srNacion').innerHTML=PAISES.map(p=>`<option>${p}</option>`).join('');
     document.getElementById('srNacion').value=s?s.nacionalidad:'Argentina';
-    document.getElementById('srPais').value=s?(s.pais||''):'';
+    document.getElementById('srPais').innerHTML=PAISES.map(p=>`<option>${p}</option>`).join('');
+    document.getElementById('srPais').value=s&&s.pais?s.pais:'Argentina';
     document.getElementById('srProv').value=s?(s.provincia&&s.provincia!=='None'?s.provincia:''):'';
     document.getElementById('srCiudad').value=s?(s.ciudad||''):'';
+    _refreshSrProvDL();_refreshSrCiudadDL();
     document.getElementById('srCel').value=s?(s.celular&&s.celular!=='None'?s.celular:''):'';
     document.getElementById('srEmail').value=s?(s.email&&s.email!=='None'?s.email:''):'';
     document.getElementById('srInsta').value=s?(s.instagram||''):'';
