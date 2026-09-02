@@ -824,6 +824,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
+      <button class="tab-btn" id="mktTabTesoro" onclick="setMktTab('tesoro')">🗺️ Búsqueda del Tesoro</button>
       <button class="tab-btn" onclick="navCRM()" style="border-color:rgba(201,168,76,.3);color:var(--gold)">👥 Ir a CRM →</button>
      </div>
      <div id="mktResumen"></div>
@@ -833,6 +834,7 @@ th{background:rgba(28,26,46,.88)!important;}
      <div id="mktMeta" style="display:none"></div>
      <div id="mktRegalos" style="display:none"></div>
      <div id="mktStats" style="display:none"></div>
+     <div id="mktTesoro" style="display:none"></div>
     </div>
 
     <!-- CRM -->
@@ -8127,7 +8129,7 @@ function doImport(){
 let mktTab='resumen';
 function setMktTab(t){
   mktTab=t;
-  ['resumen','pub','conv','ret','meta','regalos','stats'].forEach(x=>{
+  ['resumen','pub','conv','ret','meta','regalos','stats','tesoro'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
@@ -8139,6 +8141,7 @@ function setMktTab(t){
   else if(t==='ret')renderMktRet();
   else if(t==='regalos')renderMktRegalos();
   else if(t==='stats')renderMktStats();
+  else if(t==='tesoro')renderMktTesoro();
   else if(t==='contenido')renderMktContenido();
   else renderMetaTab();
 }
@@ -9625,6 +9628,107 @@ async function renderMktRegalos(){
     _rgEvs=(data||[]).map(r=>r.data||{});
   }catch(e){console.warn('regalo_eventos:',e);}
   _renderRgTab();
+}
+
+/* ── BÚSQUEDA DEL TESORO (stickers Access + premios) ──
+   Tabla propia (tesoro_premios), fuera del array global sync (save()/_syncSupabase)
+   a propósito: los "seres" reclaman premios en tiempo real desde tesoro.html con
+   updates directos vía anon key. Si esto entrara al sync masivo del admin, un
+   save() disparado por cualquier otra edición sobreescribiría con el estado viejo
+   en memoria y "revivirían" premios ya ganados. Por eso cada acción acá pega
+   directo a Supabase y se refresca al toque, sin pasar por el estado global. */
+let _tesoroPremios=[];
+const TESORO_CAT_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
+const TESORO_URL_BASE='https://juancruzconsciencia.lat/tesoro.html?id=';
+
+async function renderMktTesoro(){
+  const el=document.getElementById('mktTesoro');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando premios...</div>';
+  const {data,error}=await _sb.from('tesoro_premios').select('*').order('created_at',{ascending:true});
+  if(error){console.warn('tesoro_premios:',error);}
+  _tesoroPremios=data||[];
+  _renderTesoroTab();
+}
+
+function _renderTesoroTab(){
+  const el=document.getElementById('mktTesoro');
+  if(!el)return;
+  const list=_tesoroPremios;
+  const disponibles=list.filter(p=>!p.data?.reclamado).length;
+  const reclamados=list.length-disponibles;
+
+  el.innerHTML=`
+    <div class="kpi-grid" style="margin-bottom:18px">
+      <div class="kc go"><div class="ki">🗺️</div><div class="kl">Premios cargados</div><div class="kv">${list.length}</div></div>
+      <div class="kc gr"><div class="ki">✅</div><div class="kl">Disponibles</div><div class="kv">${disponibles}</div></div>
+      <div class="kc or"><div class="ki">🎉</div><div class="kl">Reclamados</div><div class="kv">${reclamados}</div></div>
+    </div>
+
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo premio</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="fg" style="margin:0"><label>Código del sticker (va en el QR)</label>
+          <input type="text" id="tzId" placeholder="ej: barras-01"></div>
+        <div class="fg" style="margin:0"><label>Categoría</label>
+          <select id="tzCategoria">
+            <option value="">Sin categoría</option>
+            ${Object.keys(TESORO_CAT_ICO).map(c=>`<option>${c}</option>`).join('')}
+          </select></div>
+      </div>
+      <div class="fg" style="margin:0 0 10px"><label>Pregunta</label>
+        <input type="text" id="tzPregunta" placeholder="¿Qué estarías eligiendo si no tuvieras miedo?"></div>
+      <div class="fg" style="margin:0 0 12px"><label>Premio</label>
+        <input type="text" id="tzPremio" placeholder="Sesión de Barras de Access"></div>
+      <button class="btn btn-p btn-sm" onclick="crearTesoroPremio()">+ Agregar premio</button>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Premios (${list.length})</div>
+    ${list.length? list.map(p=>{
+      const d=p.data||{};
+      const ico=TESORO_CAT_ICO[d.categoria]||'✦';
+      const url=TESORO_URL_BASE+encodeURIComponent(p.id);
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px">
+        <div style="font-size:20px;flex-shrink:0">${ico}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${d.premio||'—'}</div>
+          <div style="font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${d.pregunta||''}</div>
+          <div style="font-size:11px;color:${d.reclamado?'var(--gold)':'#5DD89A'};margin-top:2px">
+            ${d.reclamado?'🎉 Reclamado por @'+(d.ganador_instagram||'?'):'✓ Disponible'} · código: ${p.id}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-s btn-sm" onclick="copiarLinkTesoro('${url}')" title="Copiar link para el QR">🔗 Copiar link</button>
+          <button class="btn btn-s btn-sm" onclick="borrarTesoroPremio('${p.id}')" title="Borrar">🗑</button>
+        </div>
+      </div>`;
+    }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía no cargaste premios.</div>`}
+  `;
+}
+
+async function crearTesoroPremio(){
+  const id=document.getElementById('tzId').value.trim();
+  const pregunta=document.getElementById('tzPregunta').value.trim();
+  const premio=document.getElementById('tzPremio').value.trim();
+  const categoria=document.getElementById('tzCategoria').value;
+  if(!id||!pregunta||!premio){toast('⚠️ Completá código, pregunta y premio');return;}
+  const {error}=await _sb.from('tesoro_premios').insert({
+    id, data:{pregunta,premio,categoria,activo:true,reclamado:false}
+  });
+  if(error){toast('⚠️ Error: '+error.message+(error.message.includes('duplicate')?' (ese código ya existe)':''));return;}
+  toast('✓ Premio agregado');
+  renderMktTesoro();
+}
+
+async function borrarTesoroPremio(id){
+  if(!confirm('¿Borrar este premio del tesoro?'))return;
+  const {error}=await _sb.from('tesoro_premios').delete().eq('id',id);
+  if(error){toast('⚠️ Error al borrar: '+error.message);return;}
+  renderMktTesoro();
+}
+
+function copiarLinkTesoro(url){
+  navigator.clipboard.writeText(url).then(()=>toast('🔗 Link copiado — pegalo en tu generador de QR'));
 }
 
 function setRgTab(t){
