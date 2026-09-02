@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Búsqueda del Tesoro · Juan Cruz Consciencia</title>
+<meta name="theme-color" content="#C17A48">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
+  --terra:#C17A48;--terra-d:#9A5C30;--terra-l:#F0E4D6;
+  --text:#1C1200;--muted:#7A6E60;--green:#4C8B5A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+h1,h2,h3{font-family:'Cormorant Garamond',Georgia,serif;}
+.wrap{max-width:640px;margin:0 auto;padding:28px 20px 60px;}
+
+/* HEADER */
+.hdr{text-align:center;margin-bottom:28px;}
+.hdr .kicker{display:inline-block;padding:5px 16px;border-radius:20px;background:var(--terra-l);
+  border:1px solid rgba(193,122,72,.35);color:var(--terra-d);font-size:12px;font-weight:700;
+  letter-spacing:.4px;margin-bottom:14px;}
+.hdr h1{font-size:34px;font-weight:600;color:var(--text);line-height:1.15;}
+.hdr h1 span{color:var(--terra);}
+.hdr p{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.5;}
+
+/* CARD base */
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:22px;margin-bottom:16px;}
+
+/* COUNTER */
+.counter{display:flex;align-items:center;justify-content:center;gap:10px;text-align:center;
+  background:linear-gradient(135deg,#FBF0E6 0%,#F5E8D4 60%,var(--terra-l) 100%);}
+.counter .n{font-family:'Cormorant Garamond',serif;font-size:40px;font-weight:600;color:var(--terra-d);line-height:1;}
+.counter .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-top:4px;}
+
+/* STICKER VIEW */
+.sticker-card{text-align:center;}
+.sticker-ico{font-size:38px;margin-bottom:10px;}
+.sticker-pregunta{font-size:26px;font-weight:500;line-height:1.35;color:var(--text);margin:6px 0 16px;}
+.sticker-premio{display:inline-block;padding:6px 16px;border-radius:20px;background:var(--terra-l);
+  color:var(--terra-d);font-size:13px;font-weight:700;margin-bottom:18px;}
+.sticker-instr{font-size:13px;color:var(--muted);line-height:1.6;background:var(--card2);
+  border-radius:12px;padding:14px;margin-bottom:18px;text-align:left;}
+.sticker-instr b{color:var(--text);}
+
+.fg{margin-bottom:12px;text-align:left;}
+.fg label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;}
+.fg input{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;
+  font-family:inherit;font-size:14px;color:var(--text);background:var(--card);outline:none;transition:border .15s;}
+.fg input:focus{border-color:var(--terra);}
+
+.btn{width:100%;padding:14px;border:none;border-radius:12px;font-family:inherit;font-size:15px;
+  font-weight:700;cursor:pointer;transition:all .15s;}
+.btn-terra{background:var(--terra);color:#fff;}
+.btn-terra:hover:not(:disabled){background:var(--terra-d);}
+.btn-terra:disabled{opacity:.5;cursor:not-allowed;}
+.btn-ghost{background:var(--card2);color:var(--text);border:1px solid var(--border);margin-top:10px;}
+.btn-ghost:hover{border-color:var(--terra);color:var(--terra-d);}
+
+.msg-ok{background:rgba(76,139,90,.1);border:1px solid rgba(76,139,90,.3);color:var(--green);
+  border-radius:12px;padding:16px;font-size:14px;line-height:1.6;text-align:center;}
+.msg-err{background:rgba(193,72,72,.08);border:1px solid rgba(193,72,72,.3);color:#A83C3C;
+  border-radius:12px;padding:16px;font-size:14px;line-height:1.5;text-align:center;}
+
+/* GRID (tablero) */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+@media(max-width:480px){.grid{grid-template-columns:1fr;}}
+.g-item{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;
+  display:flex;flex-direction:column;gap:6px;}
+.g-item.done{opacity:.55;}
+.g-top{display:flex;align-items:center;gap:8px;}
+.g-ico{font-size:20px;}
+.g-nombre{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
+.g-estado{font-size:11px;font-weight:700;padding:2px 9px;border-radius:20px;display:inline-block;width:fit-content;}
+.g-estado.disp{background:rgba(193,122,72,.12);color:var(--terra-d);}
+.g-estado.gan{background:var(--card2);color:var(--muted);}
+
+/* GANADORES */
+.gan-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;
+  border-bottom:1px solid var(--border);font-size:13px;}
+.gan-row:last-child{border-bottom:none;}
+.gan-user{font-weight:700;color:var(--terra-d);}
+.gan-premio{color:var(--muted);font-size:12px;}
+
+.sec-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.5px;margin-bottom:12px;}
+
+.foot-link{display:block;text-align:center;font-size:12px;color:var(--muted);margin-top:24px;text-decoration:none;}
+.foot-link:hover{color:var(--terra-d);}
+
+.loading{text-align:center;padding:60px 20px;color:var(--muted);font-size:14px;}
+
+/* GESTIÓN */
+#gestion{display:none;}
+.gest-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);}
+.gest-item:last-child{border-bottom:none;}
+.gest-info{flex:1;font-size:12.5px;line-height:1.4;}
+.gest-info b{display:block;font-size:13px;}
+.gest-actions{display:flex;gap:6px;}
+.btn-sm{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:var(--card2);
+  color:var(--text);font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;}
+.btn-sm:hover{border-color:var(--terra);color:var(--terra-d);}
+.btn-sm.danger:hover{border-color:#A83C3C;color:#A83C3C;}
+select{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:10px;
+  font-family:inherit;font-size:14px;color:var(--text);background:var(--card);outline:none;}
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <div class="loading">Cargando...</div>
+</div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const WA_NUM='5491151758653';
+const CAT_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
+
+const params=new URLSearchParams(location.search);
+const stickerId=params.get('id');
+const app=document.getElementById('app');
+
+function track(tipo,extra={}){
+  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'tesoro',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}}).then();}catch(e){}
+}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ================= INIT ================= */
+(async function init(){
+  if(stickerId){ await renderSticker(stickerId); }
+  else{ await renderTablero(); }
+})();
+
+/* ================= STICKER VIEW ================= */
+async function renderSticker(id){
+  track('page_view_sticker',{sticker:id});
+  const {data:p,error}=await _sb.from('tesoro_premios').select('*').eq('id',id).single();
+  if(error||!p){
+    app.innerHTML=`
+      <div class="wrap">
+        <div class="card msg-err">Este premio no existe o ya no está disponible. 🌱</div>
+        <a class="foot-link" href="tesoro.html">← Ver todos los premios</a>
+      </div>`;
+    return;
+  }
+  const d=p.data||{};
+  const ico=CAT_ICO[d.categoria]||'✦';
+  if(d.reclamado){
+    app.innerHTML=`
+      <div class="hdr">
+        <div class="kicker">🎁 Búsqueda del Tesoro</div>
+        <h1>Este premio ya <span>voló</span></h1>
+      </div>
+      <div class="card sticker-card">
+        <div class="sticker-ico">${ico}</div>
+        <div class="sticker-pregunta">${esc(d.pregunta)}</div>
+        <div class="msg-err">Ya fue reclamado por <b>@${esc(d.ganador_instagram||'alguien')}</b>. ¡Pero quedan más premios esperando!</div>
+      </div>
+      <a class="foot-link" href="tesoro.html">← Ver qué premios quedan disponibles</a>`;
+    return;
+  }
+  app.innerHTML=`
+    <div class="hdr">
+      <div class="kicker">🎁 Búsqueda del Tesoro</div>
+      <h1>Encontraste <span>una pregunta</span></h1>
+    </div>
+    <div class="card sticker-card">
+      <div class="sticker-ico">${ico}</div>
+      <div class="sticker-pregunta">${esc(d.pregunta)}</div>
+      <div class="sticker-premio">🎁 ${esc(d.premio)}</div>
+      <div class="sticker-instr">
+        <b>Cómo reclamarlo:</b><br>
+        1. Subí esta pregunta a tu historia de Instagram.<br>
+        2. Mencioná a <b>@juancruzconsciencia</b>.<br>
+        3. Completá tu usuario abajo y tocá "Reclamar mi premio" — el primero que reclama, gana.
+      </div>
+      <div id="claimZone">
+        <div class="fg">
+          <label>Tu usuario de Instagram</label>
+          <input type="text" id="igUser" placeholder="@tuusuario">
+        </div>
+        <button class="btn btn-terra" id="btnClaim" onclick="reclamar('${esc(id)}')">🎁 Reclamar mi premio</button>
+      </div>
+    </div>
+    <a class="foot-link" href="tesoro.html">Ver todos los premios del tesoro →</a>`;
+}
+
+async function reclamar(id){
+  const inp=document.getElementById('igUser');
+  const btn=document.getElementById('btnClaim');
+  let handle=inp.value.trim().replace(/^@/,'');
+  if(!handle){ inp.style.borderColor='#A83C3C'; inp.focus(); return; }
+  btn.disabled=true; btn.textContent='Reclamando...';
+
+  const {data:current}=await _sb.from('tesoro_premios').select('*').eq('id',id).single();
+  const newData={...(current?.data||{}),reclamado:true,ganador_instagram:handle,ganador_fecha:new Date().toISOString()};
+
+  const {data,error}=await _sb.from('tesoro_premios')
+    .update({data:newData}).eq('id',id)
+    .filter('data->>reclamado','eq','false')
+    .select();
+
+  if(error){
+    btn.disabled=false; btn.textContent='🎁 Reclamar mi premio';
+    document.getElementById('claimZone').innerHTML='<div class="msg-err">Hubo un error, intentá de nuevo en un momento.</div>';
+    return;
+  }
+  if(!data||data.length===0){
+    document.getElementById('claimZone').innerHTML='<div class="msg-err">¡Justo se te adelantaron! 😅 Este premio ya fue reclamado. Mirá qué otros quedan.</div><a class="foot-link" href="tesoro.html">Ver premios disponibles →</a>';
+    return;
+  }
+  track('reclamo',{sticker:id,instagram:handle});
+  const waMsg=encodeURIComponent(`Hola! Reclamé el premio "${current.data.premio}" en la Búsqueda del Tesoro 🎁 (usuario IG: @${handle})`);
+  document.getElementById('claimZone').innerHTML=`
+    <div class="msg-ok">🎉 ¡Listo, <b>@${esc(handle)}</b>! Ganaste <b>${esc(current.data.premio)}</b>.<br>Escribinos por WhatsApp para coordinar tu sesión.</div>
+    <a class="btn btn-terra" style="display:block;text-align:center;text-decoration:none;margin-top:12px" href="https://wa.me/${WA_NUM}?text=${waMsg}" target="_blank">Coordinar por WhatsApp →</a>`;
+}
+
+/* ================= TABLERO ================= */
+async function renderTablero(){
+  track('page_view_tablero');
+  const {data:premios}=await _sb.from('tesoro_premios').select('*').order('created_at',{ascending:true});
+  const list=premios||[];
+  const disponibles=list.filter(p=>!p.data?.reclamado);
+  const ganados=list.filter(p=>p.data?.reclamado).sort((a,b)=>new Date(b.data.ganador_fecha||0)-new Date(a.data.ganador_fecha||0));
+
+  const gridHtml=list.length? list.map(p=>{
+    const d=p.data||{};
+    const ico=CAT_ICO[d.categoria]||'✦';
+    return `<div class="g-item ${d.reclamado?'done':''}">
+      <div class="g-top"><span class="g-ico">${ico}</span><span class="g-nombre">${esc(d.premio)}</span></div>
+      <span class="g-estado ${d.reclamado?'gan':'disp'}">${d.reclamado?'Reclamado por @'+esc(d.ganador_instagram):'Disponible'}</span>
+    </div>`;
+  }).join('') : `<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:13px;padding:20px 0">Todavía no hay premios cargados.</div>`;
+
+  const ganadoresHtml=ganados.length? ganados.slice(0,8).map(p=>`
+    <div class="gan-row">
+      <span class="gan-user">@${esc(p.data.ganador_instagram)}</span>
+      <span class="gan-premio">${esc(p.data.premio)}</span>
+    </div>`).join('') : `<div style="color:var(--muted);font-size:13px">Todavía nadie reclamó un premio. ¡Podés ser el primero!</div>`;
+
+  app.innerHTML=`
+    <div class="hdr">
+      <div class="kicker">🎁 Búsqueda del Tesoro</div>
+      <h1>Preguntas que <span>abren</span> premios</h1>
+      <p>Encontrá los stickers, subí la pregunta a tu historia mencionando a @juancruzconsciencia, y reclamá tu premio antes que nadie.</p>
+    </div>
+
+    <div class="card counter">
+      <div><div class="n">${disponibles.length}</div><div class="lbl">de ${list.length} premios disponibles</div></div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">Premios</div>
+      <div class="grid">${gridHtml}</div>
+    </div>
+
+    <div class="card">
+      <div class="sec-title">Últimos en ganar</div>
+      ${ganadoresHtml}
+    </div>
+
+    <a class="foot-link" href="#" onclick="toggleGestion();return false;">⚙ Gestionar premios</a>`;
+
+  buildGestionShell();
+}
+
+/* ================= GESTIÓN (admin) ================= */
+function toggleGestion(){
+  const g=document.getElementById('gestion');
+  g.style.display=g.style.display==='none'?'block':'none';
+  if(g.style.display==='block')g.scrollIntoView({behavior:'smooth'});
+}
+
+function buildGestionShell(){
+  const div=document.createElement('div');
+  div.id='gestion';
+  div.className='wrap';
+  div.style.paddingTop='0';
+  div.style.display='none';
+  div.innerHTML=`
+    <div class="card" id="gestLogin">
+      <div class="sec-title">Gestionar premios (solo admin)</div>
+      <div class="fg"><label>Email</label><input type="email" id="gEmail"></div>
+      <div class="fg"><label>Contraseña</label><input type="password" id="gPass"></div>
+      <button class="btn btn-terra" onclick="gestLogin()">Ingresar</button>
+      <div id="gestErr" class="msg-err" style="display:none;margin-top:10px"></div>
+    </div>
+    <div class="card" id="gestPanel" style="display:none">
+      <div class="sec-title">Nuevo premio</div>
+      <div class="fg"><label>Código del sticker (para la URL del QR)</label><input type="text" id="nId" placeholder="ej: barras-01"></div>
+      <div class="fg"><label>Pregunta</label><input type="text" id="nPregunta" placeholder="¿Qué estarías eligiendo si...?"></div>
+      <div class="fg"><label>Premio</label><input type="text" id="nPremio" placeholder="Sesión de Barras de Access"></div>
+      <div class="fg"><label>Categoría</label>
+        <select id="nCategoria">
+          <option value="">Sin categoría</option>
+          <option>Identidad</option><option>Dinero</option><option>Cuerpo</option>
+          <option>Relaciones</option><option>Propósito</option><option>Consciencia</option>
+        </select>
+      </div>
+      <button class="btn btn-terra" onclick="crearPremio()">+ Agregar premio</button>
+      <div class="sec-title" style="margin-top:20px">Premios cargados</div>
+      <div id="gestList"></div>
+    </div>`;
+  document.getElementById('app').appendChild(div);
+}
+
+async function gestLogin(){
+  const email=document.getElementById('gEmail').value.trim();
+  const pass=document.getElementById('gPass').value;
+  const errEl=document.getElementById('gestErr');
+  errEl.style.display='none';
+  const {error}=await _sb.auth.signInWithPassword({email,password:pass});
+  if(error){ errEl.textContent='Email o contraseña incorrectos'; errEl.style.display='block'; return; }
+  document.getElementById('gestLogin').style.display='none';
+  document.getElementById('gestPanel').style.display='block';
+  loadGestList();
+}
+
+async function loadGestList(){
+  const {data:premios}=await _sb.from('tesoro_premios').select('*').order('created_at',{ascending:true});
+  const list=premios||[];
+  const el=document.getElementById('gestList');
+  el.innerHTML=list.length? list.map(p=>{
+    const d=p.data||{};
+    return `<div class="gest-item">
+      <div class="gest-info"><b>${esc(d.premio)}</b>${esc(d.pregunta)} · código: ${esc(p.id)} · ${d.reclamado?'reclamado por @'+esc(d.ganador_instagram):'disponible'}</div>
+      <div class="gest-actions">
+        <button class="btn-sm danger" onclick="borrarPremio('${esc(p.id)}')">Borrar</button>
+      </div>
+    </div>`;
+  }).join('') : '<div style="color:var(--muted);font-size:13px">Todavía no cargaste premios.</div>';
+}
+
+async function crearPremio(){
+  const id=document.getElementById('nId').value.trim();
+  const pregunta=document.getElementById('nPregunta').value.trim();
+  const premio=document.getElementById('nPremio').value.trim();
+  const categoria=document.getElementById('nCategoria').value;
+  if(!id||!pregunta||!premio){ alert('Completá código, pregunta y premio'); return; }
+  const {error}=await _sb.from('tesoro_premios').insert({
+    id, data:{pregunta,premio,categoria,activo:true,reclamado:false}
+  });
+  if(error){ alert('Error: '+error.message+' (¿ese código ya existe?)'); return; }
+  document.getElementById('nId').value='';
+  document.getElementById('nPregunta').value='';
+  document.getElementById('nPremio').value='';
+  document.getElementById('nCategoria').value='';
+  loadGestList();
+}
+
+async function borrarPremio(id){
+  if(!confirm('¿Borrar este premio?'))return;
+  await _sb.from('tesoro_premios').delete().eq('id',id);
+  loadGestList();
+}
+</script>
+</body>
+</html>
