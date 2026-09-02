@@ -41,7 +41,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 #loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px;
   position:relative;z-index:2;}
 .lbox{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid rgba(232,201,106,.30);border-radius:24px;padding:44px 36px;width:420px;max-width:100%;
+  border:1px solid rgba(201,168,76,.30);border-radius:24px;padding:44px 36px;width:420px;max-width:100%;
   box-shadow:0 0 80px rgba(201,168,76,.15),0 0 24px rgba(201,168,76,.08),0 25px 60px rgba(0,0,0,.7);}
 .llogo{text-align:center;margin-bottom:32px;}
 .llogo .icon{font-size:48px;margin-bottom:10px;}
@@ -73,7 +73,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .p-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));
   display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#050401;margin:0 auto 14px;}
 .p-name{font-size:20px;font-weight:700;color:var(--gl);}
-.p-sub{color:var(--muted);font-size:13px;margin-top:10px;line-height:1.7;max-width:420px;margin-left:auto;margin-right:auto;font-style:italic;}
+.p-sub{color:#B0A68C;font-size:13px;margin-top:10px;line-height:1.7;max-width:420px;margin-left:auto;margin-right:auto;font-style:italic;}
 .btn-out{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);
   padding:6px 14px;font-size:12px;cursor:pointer;margin-top:12px;}
 .btn-out:hover{border-color:var(--red);color:var(--red);}
@@ -93,7 +93,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .ses-card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   border:1px solid var(--border);border-radius:16px;overflow:hidden;
   box-shadow:0 4px 20px rgba(0,0,0,.35);transition:border-color .2s,box-shadow .2s;}
-.ses-card:hover{border-color:rgba(232,201,106,.35);box-shadow:0 6px 28px rgba(201,168,76,.12);}
+.ses-card:hover{border-color:rgba(201,168,76,.35);box-shadow:0 6px 28px rgba(201,168,76,.12);}
 .ses-main{display:grid;grid-template-columns:48px 1fr auto;gap:12px;align-items:center;padding:16px;}
 .ses-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
 .ses-tipo{font-size:14px;font-weight:600;color:var(--text);}
@@ -109,7 +109,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
 /* ── PRÓXIMA SESIÓN ── */
 .prox-card{background:var(--card);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid rgba(232,201,106,.38);border-radius:18px;
+  border:1px solid rgba(201,168,76,.38);border-radius:18px;
   padding:18px;margin-bottom:20px;position:relative;overflow:hidden;
   box-shadow:0 0 40px rgba(201,168,76,.14),0 8px 28px rgba(0,0,0,.5);}
 .prox-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;
@@ -165,7 +165,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   color:var(--text);font-size:13px;line-height:1.7;outline:none;resize:vertical;min-height:90px;
   font-family:inherit;transition:border-color .2s;}
 .intake-card input[type=text]{min-height:unset;resize:none;}
-.intake-card textarea:focus,.intake-card input[type=text]:focus{border-color:rgba(232,201,106,.6);}
+.intake-card textarea:focus,.intake-card input[type=text]:focus{border-color:rgba(201,168,76,.6);}
 .intake-card textarea::placeholder,.intake-card input[type=text]::placeholder{color:rgba(120,110,90,.7);}
 .intake-q{font-size:14px;font-weight:600;color:var(--text);margin-bottom:12px;line-height:1.4;}
 .intake-q .qnum{color:var(--gold);font-weight:800;margin-right:6px;}
@@ -191,11 +191,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:20px;}
 
 /* ── AGENDA BUTTON ── */
-.btn-agenda{width:100%;padding:13px;background:rgba(201,168,76,.16);
-  border:1px solid rgba(201,168,76,.45);border-radius:14px;color:var(--gl);font-size:14px;font-weight:700;cursor:pointer;
-  margin-bottom:0;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:all .2s;backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
-.btn-agenda:hover{background:rgba(201,168,76,.26);border-color:rgba(201,168,76,.7);}
+.btn-agenda{width:100%;padding:16px;background:linear-gradient(135deg,var(--gold),var(--gd));
+  border:none;border-radius:14px;color:#050401;font-size:15px;font-weight:800;cursor:pointer;
+  margin-bottom:10px;letter-spacing:.3px;display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 4px 20px rgba(201,168,76,.35);transition:all .2s;}
+.btn-agenda:hover{opacity:.92;box-shadow:0 4px 26px rgba(201,168,76,.5);}
 
 /* ── SECONDARY ACTION BUTTONS ── */
 .sec-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px;}
@@ -206,6 +206,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .btn-sec-wapp{background:rgba(37,211,102,.12);color:#4ADE80;border:1px solid rgba(37,211,102,.28);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
 .btn-sec-vision{background:rgba(155,130,212,.12);color:var(--purple);border:1px solid rgba(155,130,212,.28);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
 .btn-sec-regalos{background:rgba(245,228,168,.10);color:var(--gold-pale);border:1px solid rgba(245,228,168,.28);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
+.btn-sec-biblioteca{background:rgba(91,155,213,.12);color:var(--blue);border:1px solid rgba(91,155,213,.28);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
 
 /* ── AGENDA MODAL ── */
 .agenda-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.88);z-index:9000;
@@ -214,7 +215,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 /* ── REGALOS OVERLAY ── */
 .regalos-overlay{display:none;position:fixed;inset:0;background:rgba(6,6,10,.88);z-index:9000;overflow-y:auto;padding:20px 16px 40px;}
 .regalos-overlay.open{display:block;}
-.regalos-modal{max-width:600px;margin:0 auto;background:rgba(14,12,26,0.82);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(232,201,106,.25);border-radius:24px;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.8);}
+.regalos-modal{max-width:600px;margin:0 auto;background:rgba(14,12,26,0.82);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:1px solid rgba(201,168,76,.25);border-radius:24px;overflow:hidden;box-shadow:0 0 80px rgba(0,0,0,.8);}
 .regalo-card{background:rgba(22,18,38,0.55);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:12px;}
 .regalo-card::before{content:'';display:block;height:2px;background:linear-gradient(90deg,transparent,var(--gold-pale),var(--gl),var(--gold-pale),transparent);}
 .regalo-body{padding:18px 18px 14px;}
@@ -226,7 +227,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .agenda-overlay.open{display:block;}
 .agenda-modal{max-width:600px;margin:0 auto;background:rgba(14,12,26,0.82);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
-  border:1px solid rgba(232,201,106,.25);border-radius:24px;overflow:hidden;
+  border:1px solid rgba(201,168,76,.25);border-radius:24px;overflow:hidden;
   box-shadow:0 0 80px rgba(0,0,0,.8),0 0 30px rgba(201,168,76,.08);}
 .agenda-top{padding:24px 24px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
 .agenda-top h2{font-size:17px;font-weight:700;color:var(--gl);}
@@ -239,7 +240,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   border:1px solid rgba(201,168,76,.18);border-radius:14px;
   padding:16px 14px;display:flex;flex-direction:column;align-items:flex-start;gap:6px;
   transition:border-color .15s,box-shadow .15s;}
-.tool-card:hover{border-color:rgba(232,201,106,.45);box-shadow:0 4px 20px rgba(201,168,76,.1);}
+.tool-card:hover{border-color:rgba(201,168,76,.45);box-shadow:0 4px 20px rgba(201,168,76,.1);}
 .tool-ico{font-size:26px;line-height:1;}
 .tool-name{font-size:13px;font-weight:700;color:var(--text);line-height:1.3;}
 .tool-desc{font-size:11px;color:var(--muted);line-height:1.55;margin-top:2px;}
@@ -256,6 +257,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .ses-icon{width:40px;height:40px;font-size:18px;}
   .intake-card{padding:18px 14px;}
   .tools-grid{grid-template-columns:1fr 1fr;}
+  .sec-btns-row{grid-template-columns:1fr 1fr!important;}
 }
 </style>
 </head>
@@ -296,7 +298,21 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   </div>
   <div class="stats-row" id="statsRow"></div>
   <div id="proximaBox"></div>
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:24px">
+  <button class="btn-agenda" onclick="openAgenda()">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0">
+      <rect x="1.5" y="3.5" width="15" height="13" rx="2" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="1.5" y1="7.5" x2="16.5" y2="7.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+      <line x1="5.5" y1="1.5" x2="5.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="12.5" y1="1.5" x2="12.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="5.5" cy="11" r="1" fill="currentColor"/>
+      <circle cx="9" cy="11" r="1" fill="currentColor"/>
+      <circle cx="12.5" cy="11" r="1" fill="currentColor"/>
+      <circle cx="5.5" cy="14.5" r="1" fill="currentColor"/>
+      <circle cx="9" cy="14.5" r="1" fill="currentColor"/>
+    </svg>
+    Agenda tu sesión
+  </button>
+  <div class="sec-btns-row" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:24px">
     <button class="btn-sec btn-sec-regalos" onclick="openRegalos()">
       <svg width="17" height="17" viewBox="0 0 18 18" fill="none" style="flex-shrink:0">
         <rect x="2" y="7" width="14" height="10" rx="1.5" stroke="currentColor" stroke-width="1.2"/>
@@ -307,19 +323,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       </svg>
       Regalos
     </button>
-    <button class="btn-agenda" onclick="openAgenda()" style="margin-bottom:0">
+    <button class="btn-sec btn-sec-biblioteca" onclick="openBiblioteca()">
       <svg width="17" height="17" viewBox="0 0 18 18" fill="none" style="flex-shrink:0">
-        <rect x="1.5" y="3.5" width="15" height="13" rx="2" stroke="currentColor" stroke-width="1.2"/>
-        <line x1="1.5" y1="7.5" x2="16.5" y2="7.5" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
-        <line x1="5.5" y1="1.5" x2="5.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="12.5" y1="1.5" x2="12.5" y2="5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        <circle cx="5.5" cy="11" r="1" fill="currentColor"/>
-        <circle cx="9" cy="11" r="1" fill="currentColor"/>
-        <circle cx="12.5" cy="11" r="1" fill="currentColor"/>
-        <circle cx="5.5" cy="14.5" r="1" fill="currentColor"/>
-        <circle cx="9" cy="14.5" r="1" fill="currentColor"/>
+        <path d="M2 3.5C2 3.5 5 2.5 9 4V15.5C5 14 2 15 2 15V3.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+        <path d="M16 3.5C16 3.5 13 2.5 9 4V15.5C13 14 16 15 16 15V3.5Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
       </svg>
-      Agenda tu sesión
+      Biblioteca
     </button>
     <a class="btn-sec btn-sec-wapp" href="https://chat.whatsapp.com/LAvSA8ma3F9JsV7QFZU7tH?mode=gi_t" target="_blank">
       <svg width="18" height="14" viewBox="0 0 22 16" fill="none" style="flex-shrink:0"><circle cx="7.5" cy="8" r="6" stroke="currentColor" stroke-width="1.1"/><circle cx="14.5" cy="8" r="6" stroke="currentColor" stroke-width="1.1"/></svg>
@@ -361,6 +370,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <button class="btn-close-agenda" onclick="closeRegalos()">✕ Cerrar</button>
     </div>
     <div id="regalosGrid" style="padding:16px"></div>
+  </div>
+</div>
+
+<div class="regalos-overlay" id="bibliotecaOverlay" onclick="closeBibliotecaOutside(event)">
+  <div class="regalos-modal">
+    <div class="agenda-top">
+      <div>
+        <h2>📖 Mi Biblioteca</h2>
+        <p>Material para acompañar tu proceso</p>
+      </div>
+      <button class="btn-close-agenda" onclick="closeBiblioteca()">✕ Cerrar</button>
+    </div>
+    <div id="bibliotecaGrid" style="padding:16px"></div>
   </div>
 </div>
 
@@ -531,15 +553,15 @@ async function loadPreguntaDia(){
     const p=pregs[Math.abs(h)%pregs.length];
     el.innerHTML=`
       <div style="background:rgba(10,8,20,.38);
-        border:1px solid rgba(232,201,106,.22);border-radius:20px;padding:22px 20px;
+        border:1px solid rgba(201,168,76,.22);border-radius:20px;padding:22px 20px;
         position:relative;overflow:hidden">
         <div style="position:absolute;top:-20px;right:-10px;font-size:100px;opacity:.06;
           color:var(--gl);line-height:1;pointer-events:none">✦</div>
         <div style="font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;
-          color:rgba(232,201,106,.65);margin-bottom:14px">✦ Tu pregunta de hoy</div>
+          color:rgba(201,168,76,.65);margin-bottom:14px">✦ Tu pregunta de hoy</div>
         <div style="font-size:18px;font-weight:700;color:#EDE5C8;line-height:1.55;
           font-style:italic">${p.texto}</div>
-        ${p.matiz?`<div style="margin-top:12px;font-size:11px;color:rgba(232,201,106,.5);
+        ${p.matiz?`<div style="margin-top:12px;font-size:11px;color:rgba(201,168,76,.5);
           font-weight:600">${p.matiz}</div>`:''}
       </div>`;
   }catch(e){document.getElementById('preguntaDiaBox').innerHTML='';}
@@ -701,6 +723,47 @@ function closeRegalos(){
   document.body.style.overflow='';
 }
 function closeRegalosOutside(e){if(e.target===document.getElementById('regalosOverlay'))closeRegalos();}
+
+/* ── BIBLIOTECA ── */
+const BIB_TIPO_ICO={Audio:'🎧',PDF:'📄',Libro:'📖',Video:'🎬',Link:'🔗'};
+async function openBiblioteca(){
+  document.getElementById('bibliotecaOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  const grid=document.getElementById('bibliotecaGrid');
+  if(grid.dataset.loaded==='1')return;
+  grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">📖</div><p>Cargando material...</p></div>';
+  try{
+    const {data,error}=await _sb.from('biblioteca').select('id,data');
+    const misProgramas=[curSer?.programa].filter(Boolean);
+    const lista=(error||!data?.length)?[]:data.map(r=>({id:r.id,...r.data}))
+      .filter(r=>r.activo!==false&&(!r.programa||misProgramas.includes(r.programa)));
+    if(!lista.length){
+      grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">✦</div><p>Todavía no hay material cargado para vos.</p></div>';
+      return;
+    }
+    grid.innerHTML=lista.map(r=>{
+      return`<div class="regalo-card">
+        <div class="regalo-body">
+          <span class="regalo-ico">${BIB_TIPO_ICO[r.tipo]||'📚'}</span>
+          <div class="regalo-nombre">${r.nombre||'Material'}</div>
+          ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
+          ${r.programa?`<div class="regalo-desc" style="opacity:.7">📚 ${r.programa}</div>`:''}
+          ${r.url
+            ?`<a class="btn-regalo-dl" href="${r.url}" target="_blank">${r.tipo==='Link'?'🔗 Ver':'⬇️ Descargar'}</a>`
+            :`<div class="btn-regalo-dl" style="opacity:.45;cursor:not-allowed">Próximamente</div>`}
+        </div>
+      </div>`;
+    }).join('');
+    grid.dataset.loaded='1';
+  }catch(e){
+    grid.innerHTML='<div style="text-align:center;padding:32px;color:var(--muted)">Error al cargar. Intentá de nuevo.</div>';
+  }
+}
+function closeBiblioteca(){
+  document.getElementById('bibliotecaOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function closeBibliotecaOutside(e){if(e.target===document.getElementById('bibliotecaOverlay'))closeBiblioteca();}
 
 /* ── DATA ── */
 async function loadHerramientas(){
@@ -983,7 +1046,7 @@ function renderIntakeForm(){
       <div class="star-row" id="starRow">
         ${[1,2,3,4,5].map(n=>`<span class="star-btn${(s.intakeEstrellas||0)>=n?' active':''}" onclick="setStars(${n})">★</span>`).join('')}
       </div>
-      <div id="starLabel" style="font-size:12px;color:rgba(232,201,106,.6);margin-top:6px;min-height:18px">${['','Necesito más tiempo','Fue interesante','Buena experiencia','Muy transformadora','¡Increíble, gracias!'][s.intakeEstrellas||0]||''}</div>
+      <div id="starLabel" style="font-size:12px;color:rgba(201,168,76,.6);margin-top:6px;min-height:18px">${['','Necesito más tiempo','Fue interesante','Buena experiencia','Muy transformadora','¡Increíble, gracias!'][s.intakeEstrellas||0]||''}</div>
     </div>
     <div class="intake-card">
       <div class="intake-q"><span class="qnum">6.</span>¿Recomendarías esta experiencia?</div>

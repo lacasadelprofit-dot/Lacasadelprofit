@@ -342,6 +342,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('herramientas',this)"><span class="ico">🔮</span><span>Sesiones / Facilitadores</span></div>
     <div class="ni" onclick="nav('practicas',this)"><span class="ico">🌿</span><span>Herramientas</span></div>
     <div class="ni" onclick="nav('programas',this)"><span class="ico">📚</span><span>Programas</span></div>
+    <div class="ni" onclick="nav('biblioteca',this)"><span class="ico">📖</span><span>Biblioteca</span></div>
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
@@ -704,6 +705,12 @@ th{background:rgba(28,26,46,.88)!important;}
        <div id="progComunicacionView"></div>
       </div>
      </div>
+    </div>
+
+    <!-- BIBLIOTECA -->
+    <div id="sec-biblioteca" class="sec">
+     <div id="bibKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
+     <div id="bibBody"></div>
     </div>
 
     <!-- JOURNEY ADMIN -->
@@ -2416,7 +2423,7 @@ async function _silentReload(){
     // re-renderizar sección activa sin interrumpir al usuario
     const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
       facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
-      herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,
+      herramientas:renderHerr,programas:renderProg,biblioteca:renderBiblioteca,journey:renderJourneyAdmin,
       marketing:renderMkt,crm:renderCRM,profit:renderProfit,contenido:renderContenido};
     if(fn[curSec])fn[curSec]();
     // Indicador visual sutil
@@ -2439,7 +2446,7 @@ async function reloadData(){
     // Re-renderizar la sección activa
     const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
       facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
-      herramientas:renderHerr,programas:renderProg,journey:renderJourneyAdmin,
+      herramientas:renderHerr,programas:renderProg,biblioteca:renderBiblioteca,journey:renderJourneyAdmin,
       marketing:renderMkt,crm:renderCRM,profit:renderProfit,contenido:renderContenido};
     if(fn[curSec])fn[curSec]();
     toast('✅ Datos actualizados');
@@ -2683,7 +2690,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   sesiones:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -2712,7 +2719,7 @@ function nav(name,el){
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
-  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
+  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
   if(fn[name])fn[name]();
   closeSidebar(); // auto-close on mobile after navigating
 }
@@ -10095,6 +10102,129 @@ async function borrarTesoroPremio(id){
 
 function copiarLinkTesoro(url){
   navigator.clipboard.writeText(url).then(()=>toast('🔗 Link copiado — pegalo en tu generador de QR'));
+}
+
+/* ── BIBLIOTECA (material para seres y programas) ──
+   Igual que Búsqueda del Tesoro: tabla propia, fuera del array global sync,
+   porque no tiene ninguna necesidad de pasar por save()/_syncSupabase — es
+   contenido que solo edita el admin, y así el portal del ser la puede leer
+   con anon key sin depender de que el admin tenga todo cargado en memoria. */
+let _biblioteca=[];
+const BIB_TIPO_ICO={Audio:'🎧',PDF:'📄',Libro:'📖',Video:'🎬',Link:'🔗'};
+
+async function renderBiblioteca(){
+  const el=document.getElementById('bibBody');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando...</div>';
+  const {data,error}=await _sb.from('biblioteca').select('*').order('created_at',{ascending:true});
+  if(error)console.warn('biblioteca:',error);
+  _biblioteca=data||[];
+  _renderBibKPIs();
+  _renderBibBody();
+}
+
+function _renderBibKPIs(){
+  const kpiEl=document.getElementById('bibKPIs');
+  if(!kpiEl)return;
+  const activos=_biblioteca.filter(b=>b.data?.activo!==false);
+  const generales=activos.filter(b=>!b.data?.programa).length;
+  const porPrograma=activos.length-generales;
+  kpiEl.innerHTML=`
+    <div class="kc go"><div class="ki">📖</div><div class="kl">Material cargado</div><div class="kv">${_biblioteca.length}</div></div>
+    <div class="kc gr"><div class="ki">🌐</div><div class="kl">General (todos los seres)</div><div class="kv">${generales}</div></div>
+    <div class="kc pu"><div class="ki">📚</div><div class="kl">Ligado a un programa</div><div class="kv">${porPrograma}</div></div>`;
+}
+
+function _renderBibBody(){
+  const el=document.getElementById('bibBody');
+  if(!el)return;
+  const progOptions=programas.map(p=>`<option>${p.nombre}</option>`).join('');
+  el.innerHTML=`
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo material</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
+        <div class="fg" style="margin:0"><label>Nombre</label>
+          <input type="text" id="bibNombre" placeholder="ej: Meditación guiada — Barras de Access"></div>
+        <div class="fg" style="margin:0"><label>Tipo</label>
+          <select id="bibTipo">${Object.keys(BIB_TIPO_ICO).map(t=>`<option>${t}</option>`).join('')}</select></div>
+      </div>
+      <div class="fg" style="margin:0 0 10px"><label>Descripción (opcional)</label>
+        <input type="text" id="bibDesc" placeholder="Una línea contando de qué se trata"></div>
+      <div class="fg" style="margin:0 0 10px">
+        <label>Archivo desde tu computadora</label>
+        <input type="file" id="bibArchivo" accept="audio/*,video/*,application/pdf,.pdf,.mp3,.mp4,.wav">
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">O, si preferís, pegá un link externo (YouTube, Spotify, Drive, etc.) en vez de subir un archivo:</div>
+      </div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="fg" style="margin:0"><label>Link externo (opcional si subiste archivo)</label>
+          <input type="text" id="bibUrl" placeholder="https://..."></div>
+        <div class="fg" style="margin:0"><label>Programa (opcional)</label>
+          <select id="bibPrograma"><option value="">General — todos los seres</option>${progOptions}</select></div>
+      </div>
+      <button class="btn btn-p btn-sm" id="bibSubmitBtn" onclick="crearBiblioteca()">+ Agregar material</button>
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Material (${_biblioteca.length})</div>
+    ${_biblioteca.length? _biblioteca.map(b=>{
+      const d=b.data||{};
+      const ico=BIB_TIPO_ICO[d.tipo]||'📚';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px;${d.activo===false?'opacity:.5':''}">
+        <div style="font-size:20px;flex-shrink:0">${ico}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${_tzEsc(d.nombre)}</div>
+          ${d.descripcion?`<div style="font-size:11.5px;color:var(--muted);margin-top:2px">${_tzEsc(d.descripcion)}</div>`:''}
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${d.programa?'📚 '+_tzEsc(d.programa):'🌐 General'}${d.activo===false?' · inactivo':''}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-s btn-sm" onclick="toggleBiblioteca('${b.id}',${d.activo===false})">${d.activo===false?'Activar':'Desactivar'}</button>
+          <button class="btn btn-s btn-sm" onclick="borrarBiblioteca('${b.id}')" title="Borrar">🗑</button>
+        </div>
+      </div>`;
+    }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía no cargaste material.</div>`}
+  `;
+}
+
+async function crearBiblioteca(){
+  const nombre=document.getElementById('bibNombre').value.trim();
+  const tipo=document.getElementById('bibTipo').value;
+  const descripcion=document.getElementById('bibDesc').value.trim();
+  const archivo=document.getElementById('bibArchivo').files[0];
+  let url=document.getElementById('bibUrl').value.trim();
+  const programa=document.getElementById('bibPrograma').value;
+  if(!nombre||(!url&&!archivo)){toast('⚠️ Completá el nombre, y subí un archivo o pegá un link');return;}
+  const id='bib-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+  const btn=document.getElementById('bibSubmitBtn');
+  btn.disabled=true;
+  if(archivo){
+    btn.textContent='Subiendo archivo...';
+    const ext=archivo.name.includes('.')?archivo.name.split('.').pop():'bin';
+    const path=`${id}.${ext}`;
+    const {error:upErr}=await _sb.storage.from('biblioteca').upload(path,archivo,{upsert:true,cacheControl:'3600'});
+    if(upErr){toast('⚠️ Error al subir el archivo: '+upErr.message);btn.disabled=false;btn.textContent='+ Agregar material';return;}
+    const {data:pub}=_sb.storage.from('biblioteca').getPublicUrl(path);
+    url=pub.publicUrl;
+  }
+  btn.textContent='+ Agregar material';
+  const {error}=await _sb.from('biblioteca').insert({id,data:{nombre,tipo,descripcion,url,programa,activo:true}});
+  btn.disabled=false;
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  toast('✓ Material agregado');
+  renderBiblioteca();
+}
+
+async function toggleBiblioteca(id,activar){
+  const b=_biblioteca.find(x=>x.id===id);
+  if(!b)return;
+  const {error}=await _sb.from('biblioteca').update({data:{...b.data,activo:activar}}).eq('id',id);
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  renderBiblioteca();
+}
+
+async function borrarBiblioteca(id){
+  if(!confirm('¿Borrar este material de la biblioteca?'))return;
+  const {error}=await _sb.from('biblioteca').delete().eq('id',id);
+  if(error){toast('⚠️ Error al borrar: '+error.message);return;}
+  renderBiblioteca();
 }
 
 function setRgTab(t){
