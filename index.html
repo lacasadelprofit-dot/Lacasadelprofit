@@ -9675,9 +9675,51 @@ function _renderTesoroTab(){
   const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px">
     <button class="tab-btn ${_tesoroSubTab==='stickers'?'active':''}" onclick="setTesoroSubTab('stickers')">📍 Stickers</button>
     <button class="tab-btn ${_tesoroSubTab==='ruleta'?'active':''}" onclick="setTesoroSubTab('ruleta')">🎡 Ruleta de premios</button>
+    <button class="tab-btn ${_tesoroSubTab==='historial'?'active':''}" onclick="setTesoroSubTab('historial')">🏆 Historial</button>
   </div>`;
-  el.innerHTML = subTabBar + (_tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab() : _renderTesoroStickersTab());
+  const body = _tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab()
+    : _tesoroSubTab==='historial' ? _renderTesoroHistorialTab()
+    : _renderTesoroStickersTab();
+  el.innerHTML = subTabBar + body;
   if(_tesoroSubTab==='stickers') setTimeout(_tzInitMap, 0);
+}
+
+function _renderTesoroHistorialTab(){
+  const ganados=_tesoroPremios.filter(p=>p.data?.reclamado)
+    .slice().sort((a,b)=>new Date(b.data.ganador_fecha||0)-new Date(a.data.ganador_fecha||0));
+
+  if(!ganados.length){
+    return `<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Todavía no hay ningún sticker reclamado.</div>`;
+  }
+
+  // Agrupar por edición para que quede como registro/storytelling por viaje
+  const grupos={};
+  ganados.forEach(p=>{
+    const ed=p.data.edicion||'Sin edición';
+    (grupos[ed]=grupos[ed]||[]).push(p);
+  });
+
+  return `
+    <div class="kpi-grid" style="margin-bottom:18px">
+      <div class="kc go"><div class="ki">🏆</div><div class="kl">Total reclamados</div><div class="kv">${ganados.length}</div></div>
+    </div>
+    ${Object.entries(grupos).map(([ed,items])=>`
+      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">${_tzEsc(ed)} (${items.length})</div>
+      ${items.map(p=>{
+        const d=p.data;
+        const ico=TESORO_CAT_ICO[d.categoria]||'✦';
+        const fecha=d.ganador_fecha?new Date(d.ganador_fecha).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+        return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px">
+          <div style="font-size:20px;flex-shrink:0">${ico}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:700;color:var(--text)">🎉 ${_tzEsc(d.premio_ganado||'—')}</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:2px">Ganó <a href="https://instagram.com/${_tzEsc(d.ganador_instagram||'')}" target="_blank" style="color:var(--gold);text-decoration:underline">@${_tzEsc(d.ganador_instagram||'?')}</a> · ${fecha}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px">código: ${p.id}${d.pregunta?' · '+_tzEsc(d.pregunta):''}</div>
+          </div>
+        </div>`;
+      }).join('')}
+    `).join('')}
+  `;
 }
 
 function _renderTesoroStickersTab(){
