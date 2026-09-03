@@ -9856,12 +9856,15 @@ function _renderTesoroTab(){
     <button class="tab-btn ${_tesoroSubTab==='stickers'?'active':''}" onclick="setTesoroSubTab('stickers')">📍 Stickers</button>
     <button class="tab-btn ${_tesoroSubTab==='ruleta'?'active':''}" onclick="setTesoroSubTab('ruleta')">🎡 Ruleta de premios</button>
     <button class="tab-btn ${_tesoroSubTab==='historial'?'active':''}" onclick="setTesoroSubTab('historial')">🏆 Historial</button>
+    <button class="tab-btn ${_tesoroSubTab==='mapa'?'active':''}" onclick="setTesoroSubTab('mapa')">🗺️ Mapa</button>
   </div>`;
   const body = _tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab()
     : _tesoroSubTab==='historial' ? _renderTesoroHistorialTab()
+    : _tesoroSubTab==='mapa' ? _renderTesoroMapaTab()
     : _renderTesoroStickersTab();
   el.innerHTML = subTabBar + body;
   if(_tesoroSubTab==='stickers') setTimeout(_tzInitMap, 0);
+  if(_tesoroSubTab==='mapa') setTimeout(_tzInitMapaGeneral, 0);
 }
 
 function _renderTesoroHistorialTab(){
@@ -9900,6 +9903,59 @@ function _renderTesoroHistorialTab(){
       }).join('')}
     `).join('')}
   `;
+}
+
+function _renderTesoroMapaTab(){
+  const conUbicacion=_tesoroPremios.filter(p=>p.data?.lat!=null&&p.data?.lng!=null);
+  const encontrados=conUbicacion.filter(p=>p.data.reclamado).length;
+  if(!_tesoroPremios.length){
+    return `<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Todavía no cargaste ningún sticker.</div>`;
+  }
+  return `
+    <div class="kpi-grid" style="margin-bottom:18px">
+      <div class="kc go"><div class="ki">📍</div><div class="kl">Con ubicación</div><div class="kv">${conUbicacion.length}</div></div>
+      <div class="kc or"><div class="ki">🎉</div><div class="kl">Encontrados</div><div class="kv">${encontrados}</div></div>
+      <div class="kc pu"><div class="ki">⏳</div><div class="kl">Sin encontrar todavía</div><div class="kv">${conUbicacion.length-encontrados}</div></div>
+    </div>
+    ${!conUbicacion.length?`<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Ninguno de tus stickers tiene ubicación cargada todavía.</div>`
+      :`<div style="display:flex;gap:14px;align-items:center;margin-bottom:12px;font-size:11.5px;color:var(--muted)">
+          <span style="display:inline-flex;align-items:center;gap:5px"><span style="width:14px;height:14px;border-radius:50%;background:var(--gold);display:inline-block"></span>Encontrado</span>
+          <span style="display:inline-flex;align-items:center;gap:5px"><span style="width:9px;height:9px;border-radius:50%;background:rgba(201,168,76,.35);border:1px solid rgba(201,168,76,.5);display:inline-block"></span>Sin encontrar</span>
+        </div>
+        <div id="tzMapaGeneral" style="height:420px;border-radius:12px;overflow:hidden;border:1px solid var(--border)"></div>`}
+  `;
+}
+
+let _tzMapaGeneral=null;
+function _tzInitMapaGeneral(){
+  const mapEl=document.getElementById('tzMapaGeneral');
+  if(!mapEl||typeof L==='undefined')return;
+  if(_tzMapaGeneral){_tzMapaGeneral.remove();_tzMapaGeneral=null;}
+  const conUbicacion=_tesoroPremios.filter(p=>p.data?.lat!=null&&p.data?.lng!=null);
+  if(!conUbicacion.length)return;
+  _tzMapaGeneral=L.map('tzMapaGeneral').setView(TESORO_MAP_DEFAULT,13);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom:19,attribution:'© OpenStreetMap'
+  }).addTo(_tzMapaGeneral);
+  const markers=[];
+  conUbicacion.forEach(p=>{
+    const d=p.data;
+    const encontrado=!!d.reclamado;
+    const m=L.circleMarker([d.lat,d.lng],{
+      radius:encontrado?11:6,
+      color:encontrado?'#8B6914':'rgba(201,168,76,.6)',
+      weight:encontrado?2:1,
+      fillColor:encontrado?'#C9A84C':'rgba(201,168,76,.35)',
+      fillOpacity:encontrado?0.9:0.4
+    }).addTo(_tzMapaGeneral);
+    const ico=TESORO_CAT_ICO[d.categoria]||'✦';
+    m.bindTooltip(encontrado
+      ? `${ico} ${_tzEsc(d.premio_ganado||'Encontrado')} — @${_tzEsc(d.ganador_instagram||'?')}`
+      : `${ico} ${p.id} (sin encontrar)`);
+    markers.push(m);
+  });
+  if(markers.length>1)_tzMapaGeneral.fitBounds(L.featureGroup(markers).getBounds().pad(.2));
+  else if(markers.length===1)_tzMapaGeneral.setView([conUbicacion[0].data.lat,conUbicacion[0].data.lng],14);
 }
 
 function _renderTesoroStickersTab(){
