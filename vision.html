@@ -222,16 +222,28 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
   color:#050401;font-size:19px;font-weight:800;flex-shrink:0;}
 .fmodal-nom{font-size:18px;font-weight:800;color:var(--gl);}
 .fmodal-ses{font-size:12px;color:var(--gold);font-weight:600;margin-top:2px;}
+.fmodal-insta{flex-shrink:0;width:34px;height:34px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;color:var(--muted);border:1px solid var(--border);transition:all .2s;}
+.fmodal-insta:hover{color:var(--gl);border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.08);}
 .fmodal-bio{font-size:13px;color:var(--muted);line-height:1.75;margin-bottom:16px;}
 .fmodal-meta{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;}
 .fmodal-badge{font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;
   background:rgba(255,255,255,.04);border:1px solid var(--border);color:var(--muted);}
-.fmodal-precio{font-size:11px;font-weight:700;padding:4px 12px;border-radius:20px;
-  background:rgba(201,168,76,.14);color:var(--gl);border:1px solid rgba(201,168,76,.3);}
-.fmodal-cta{display:block;width:100%;padding:13px;background:rgba(201,168,76,.16);
-  border:1px solid rgba(201,168,76,.45);border-radius:12px;color:var(--gl);font-size:13.5px;font-weight:700;
+.fmodal-cta{display:block;width:100%;padding:12px;background:none;
+  border:1px solid var(--border);border-radius:12px;color:var(--muted);font-size:12.5px;font-weight:600;
   cursor:pointer;text-decoration:none;text-align:center;transition:all .2s;}
-.fmodal-cta:hover{background:rgba(201,168,76,.28);}
+.fmodal-cta:hover{border-color:rgba(201,168,76,.4);color:var(--gl);}
+
+.fmodal-ses-title{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+  color:var(--gd);margin-bottom:10px;}
+.fmodal-ses-list{display:flex;flex-direction:column;gap:7px;margin-bottom:18px;}
+.fmodal-ses-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;
+  background:rgba(255,255,255,.03);border:1px solid var(--border);text-decoration:none;transition:all .18s;}
+.fmodal-ses-row:hover{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.06);}
+.fmodal-ses-row.active{border-color:rgba(201,168,76,.45);background:rgba(201,168,76,.09);}
+.fmodal-ses-ico{font-size:16px;flex-shrink:0;}
+.fmodal-ses-nom{font-size:12.5px;font-weight:600;color:var(--text);flex:1;}
+.fmodal-ses-precio{font-size:11.5px;font-weight:700;color:var(--gl);flex-shrink:0;}
 
 /* ── SPINNER ── */
 .spinner{display:flex;align-items:center;justify-content:center;padding:80px;gap:12px;color:var(--muted);font-size:13px;}
@@ -333,12 +345,12 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
     <div class="cta-block gc">
       <h3>✨ ¿Lista/o para dar el próximo paso?</h3>
       <p>Elegí una herramienta arriba y agendá directamente con quien la ofrece, o escribinos y te ayudamos a encontrar la sesión indicada para vos.</p>
-      <a class="cta-btn" href="https://wa.me/5491151758653?text=Hola!%20Quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Casa%20del%20Profit.%20✨" target="_blank">Agendá tu sesión →</a>
+      <a class="cta-btn" href="https://wa.me/5491151758653?text=Hola!%20Quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Casa%20del%20Profit.%20✨" target="_blank" onclick="track('click_cta_principal')">Agendá tu sesión →</a>
     </div>
 
     <div class="jcc-callout gc">
       <p>¿Buscás específicamente <strong>Barras de Access, Proceso de Cuerpos o Clases de Access</strong> con Juan Cruz?</p>
-      <a href="https://juancruzconsciencia.lat" target="_blank">Conocé Juan Cruz Consciencia →</a>
+      <a href="https://juancruzconsciencia.lat" target="_blank" onclick="track('click_jcc_callout')">Conocé Juan Cruz Consciencia →</a>
     </div>
 
     <div class="sec-title">🗺️ Mapa de objetivos</div>
@@ -353,14 +365,21 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
     <button class="fmodal-close" onclick="cerrarFacModal()">✕</button>
     <div class="fmodal-top">
       <div class="fmodal-av" id="fmAv"></div>
-      <div>
+      <div style="flex:1">
         <div class="fmodal-nom" id="fmNom"></div>
         <div class="fmodal-ses" id="fmSes"></div>
       </div>
+      <a id="fmInsta" class="fmodal-insta" href="#" target="_blank" aria-label="Instagram" style="display:none">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/>
+        </svg>
+      </a>
     </div>
-    <div class="fmodal-bio" id="fmBio"></div>
     <div class="fmodal-meta" id="fmMeta"></div>
-    <a class="fmodal-cta" id="fmCta" target="_blank">Agendá por WhatsApp →</a>
+    <div class="fmodal-bio" id="fmBio"></div>
+    <div class="fmodal-ses-title">Sesiones que ofrece</div>
+    <div class="fmodal-ses-list" id="fmSesiones"></div>
+    <a class="fmodal-cta" id="fmCta" target="_blank">¿No es lo que buscabas? Escribinos →</a>
   </div>
 </div>
 
@@ -683,7 +702,13 @@ const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 const WA_NUM='5491151758653';
+
+function track(tipo,extra={}){
+  try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'vision_lcp',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}}).then();}catch(e){}
+}
+window.addEventListener('load',()=>track('page_view'));
 let FAC_INDEX={};
+let CATALOGO_INDEX={};
 
 function iniciales(nombre){return (nombre||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();}
 
@@ -696,7 +721,7 @@ async function cargarHerramientas(){
     ]);
     if(facErr)throw facErr;
 
-    const catalogo={};
+    const catalogo=CATALOGO_INDEX;
     (herrRows||[]).forEach(r=>{const h=r.data||{};if(h.nom)catalogo[h.nom]=h;});
 
     const facilitadores=(facRows||[])
@@ -764,29 +789,61 @@ async function cargarHerramientas(){
 }
 cargarHerramientas();
 
+function waLink(sesionNombre,facNombre){
+  const msg=encodeURIComponent(`Hola Juan Cruz! Quiero agendar ${sesionNombre} con ${facNombre}. ✨`);
+  return `https://wa.me/${WA_NUM}?text=${msg}`;
+}
+function instaUrl(raw){
+  if(!raw)return null;
+  const v=raw.trim();
+  if(/^https?:\/\//i.test(v))return v;
+  return `https://instagram.com/${v.replace(/^@/,'')}`;
+}
+
 function abrirFacModal(facId,sesionNombre){
   const f=FAC_INDEX[facId];
   if(!f)return;
+  track('click_facilitador',{facilitador:f.nombre,sesion:sesionNombre});
   document.getElementById('fmNom').textContent=f.nombre;
-  document.getElementById('fmSes').textContent=sesionNombre;
+  document.getElementById('fmSes').textContent='🙋 Facilitador';
   document.getElementById('fmBio').textContent=f.bio||'';
   document.getElementById('fmBio').style.display=f.bio?'block':'none';
   const av=document.getElementById('fmAv');
   if(f.foto){av.style.backgroundImage=`url('${f.foto}')`;av.textContent='';}
   else{av.style.backgroundImage='';av.textContent=iniciales(f.nombre);}
 
+  const igUrl=instaUrl(f.instagram);
+  const igEl=document.getElementById('fmInsta');
+  if(igUrl){igEl.href=igUrl;igEl.style.display='flex';igEl.onclick=()=>track('click_instagram_facilitador',{facilitador:f.nombre});}
+  else{igEl.style.display='none';igEl.onclick=null;}
+
   const mods=[f.pres?'Presencial':'',f.onl?'Online':''].filter(Boolean).join(' · ');
   const loc=[f.ciudad,f.zona].filter(Boolean).join(', ');
-  const precio=(f.precios&&f.precios[sesionNombre])||f.precio||0;
   const metaHtml=[
     mods?`<span class="fmodal-badge">${mods}</span>`:'',
     loc?`<span class="fmodal-badge">📍 ${loc}</span>`:'',
-    precio?`<span class="fmodal-precio">$${precio.toLocaleString('es-AR')}</span>`:'',
   ].filter(Boolean).join('');
   document.getElementById('fmMeta').innerHTML=metaHtml;
 
-  const msg=encodeURIComponent(`Hola Juan Cruz! Quiero agendar ${sesionNombre} con ${f.nombre}. ✨`);
-  document.getElementById('fmCta').href=`https://wa.me/${WA_NUM}?text=${msg}`;
+  // Todas las sesiones que ofrece este facilitador, con la que abrió el modal destacada
+  const nombresSesiones=[...(f.herramientas||[])].sort((a,b)=>{
+    if(a===sesionNombre)return -1;
+    if(b===sesionNombre)return 1;
+    return a.localeCompare(b);
+  });
+  document.getElementById('fmSesiones').innerHTML=nombresSesiones.map(nom=>{
+    const cat=CATALOGO_INDEX[nom]||{};
+    const precio=(f.precios&&f.precios[nom])||f.precio||0;
+    return `<a class="fmodal-ses-row ${nom===sesionNombre?'active':''}" href="${waLink(nom,f.nombre)}" target="_blank"
+      onclick="track('click_agendar_wa',{facilitador:'${f.nombre.replace(/'/g,"\\'")}',sesion:'${nom.replace(/'/g,"\\'")}'})">
+      <span class="fmodal-ses-ico">${cat.ico||'✨'}</span>
+      <span class="fmodal-ses-nom">${nom}</span>
+      ${precio?`<span class="fmodal-ses-precio">$${precio.toLocaleString('es-AR')}</span>`:''}
+    </a>`;
+  }).join('')||'<div style="font-size:12px;color:var(--muted)">Todavía no cargó sus sesiones.</div>';
+
+  document.getElementById('fmCta').href=waLink('una sesión',f.nombre);
+  document.getElementById('fmCta').onclick=()=>track('click_agendar_generico',{facilitador:f.nombre});
 
   document.getElementById('fmodalOverlay').classList.add('open');
   document.body.style.overflow='hidden';
