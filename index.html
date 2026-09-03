@@ -343,6 +343,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('practicas',this)"><span class="ico">🌿</span><span>Herramientas</span></div>
     <div class="ni" onclick="nav('programas',this)"><span class="ico">📚</span><span>Programas</span></div>
     <div class="ni" onclick="nav('biblioteca',this)"><span class="ico">📖</span><span>Biblioteca</span></div>
+    <div class="ni" onclick="nav('fidelidad',this)"><span class="ico">🎡</span><span>Ruleta Fidelidad</span></div>
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
@@ -711,6 +712,16 @@ th{background:rgba(28,26,46,.88)!important;}
     <div id="sec-biblioteca" class="sec">
      <div id="bibKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
      <div id="bibBody"></div>
+    </div>
+
+    <!-- RULETA FIDELIDAD -->
+    <div id="sec-fidelidad" class="sec">
+     <div style="display:flex;gap:6px;margin-bottom:18px">
+      <button class="tab-btn active" id="fidTabPool" onclick="setFidTab('pool')">🎡 Premios</button>
+      <button class="tab-btn" id="fidTabGiros" onclick="setFidTab('giros')">🏆 Giros realizados</button>
+     </div>
+     <div id="fidKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
+     <div id="fidBody"></div>
     </div>
 
     <!-- JOURNEY ADMIN -->
@@ -2423,7 +2434,7 @@ async function _silentReload(){
     // re-renderizar sección activa sin interrumpir al usuario
     const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
       facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
-      herramientas:renderHerr,programas:renderProg,biblioteca:renderBiblioteca,journey:renderJourneyAdmin,
+      herramientas:renderHerr,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,
       marketing:renderMkt,crm:renderCRM,profit:renderProfit,contenido:renderContenido};
     if(fn[curSec])fn[curSec]();
     // Indicador visual sutil
@@ -2446,7 +2457,7 @@ async function reloadData(){
     // Re-renderizar la sección activa
     const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,
       facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,
-      herramientas:renderHerr,programas:renderProg,biblioteca:renderBiblioteca,journey:renderJourneyAdmin,
+      herramientas:renderHerr,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,
       marketing:renderMkt,crm:renderCRM,profit:renderProfit,contenido:renderContenido};
     if(fn[curSec])fn[curSec]();
     toast('✅ Datos actualizados');
@@ -2690,7 +2701,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   sesiones:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -2719,7 +2730,7 @@ function nav(name,el){
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
-  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
+  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
   if(fn[name])fn[name]();
   closeSidebar(); // auto-close on mobile after navigating
 }
@@ -10260,6 +10271,148 @@ async function borrarBiblioteca(id){
   const {error}=await _sb.from('biblioteca').delete().eq('id',id);
   if(error){toast('⚠️ Error al borrar: '+error.message);return;}
   renderBiblioteca();
+}
+
+/* ── RULETA FIDELIDAD (premio por hito de sesiones) ──
+   Igual patrón que Biblioteca/Búsqueda del Tesoro: tabla propia, fuera
+   del array global sync. El pool de premios es independiente del de
+   Búsqueda del Tesoro a propósito — ver comentario en 19_ruleta_fidelidad.sql. */
+let _fidPremios=[], _fidGiros=[];
+let _fidTab='pool';
+
+async function renderFidelidad(){
+  const el=document.getElementById('fidBody');
+  if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando...</div>';
+  const [pr,gi]=await Promise.all([
+    _sb.from('ruleta_fidelidad').select('*').order('created_at',{ascending:true}),
+    _sb.from('ruleta_fidelidad_giros').select('*').order('created_at',{ascending:false})
+  ]);
+  if(pr.error)console.warn('ruleta_fidelidad:',pr.error);
+  if(gi.error)console.warn('ruleta_fidelidad_giros:',gi.error);
+  _fidPremios=pr.data||[];
+  _fidGiros=gi.data||[];
+  _renderFidKPIs();
+  _renderFidBody();
+}
+
+function setFidTab(t){
+  _fidTab=t;
+  document.getElementById('fidTabPool').classList.toggle('active',t==='pool');
+  document.getElementById('fidTabGiros').classList.toggle('active',t==='giros');
+  _renderFidBody();
+}
+
+function _renderFidKPIs(){
+  const kpiEl=document.getElementById('fidKPIs');
+  if(!kpiEl)return;
+  const activos=_fidPremios.filter(p=>p.data?.activo!==false).length;
+  kpiEl.innerHTML=`
+    <div class="kc go"><div class="ki">🎡</div><div class="kl">Premios en el pool</div><div class="kv">${_fidPremios.length}</div></div>
+    <div class="kc gr"><div class="ki">✅</div><div class="kl">Activos</div><div class="kv">${activos}</div></div>
+    <div class="kc pu"><div class="ki">🏆</div><div class="kl">Giros reclamados</div><div class="kv">${_fidGiros.length}</div></div>`;
+}
+
+function _renderFidBody(){
+  const el=document.getElementById('fidBody');
+  if(!el)return;
+  el.innerHTML = _fidTab==='giros' ? _renderFidGirosTab() : _renderFidPoolTab();
+}
+
+function _renderFidPoolTab(){
+  const list=_fidPremios;
+  const pesoTotal=list.filter(p=>p.data?.activo!==false).reduce((s,p)=>s+(Number(p.data?.peso)||1),0);
+  return `
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:18px">
+      Premios que se sortean cuando un ser llega a un múltiplo de 5 sesiones completadas (5, 10, 15...).
+      Pool separado del de Búsqueda del Tesoro. El <b style="color:var(--text)">peso</b> define qué tan probable es cada premio.
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo premio</div>
+      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px">
+        <div class="fg" style="margin:0"><label>Nombre del premio</label>
+          <input type="text" id="fidNombre" placeholder="ej: 20% OFF en tu próxima sesión"></div>
+        <div class="fg" style="margin:0"><label>Peso (probabilidad)</label>
+          <input type="number" id="fidPeso" value="1" min="1" step="1"></div>
+      </div>
+      <button class="btn btn-p btn-sm" onclick="crearFidPremio()">+ Agregar al pool</button>
+    </div>
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Premios (${list.length})</div>
+    ${list.length? list.map(p=>{
+      const d=p.data||{};
+      const peso=Number(d.peso)||1;
+      const prob=pesoTotal? Math.round(peso/pesoTotal*100) : 0;
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px;${d.activo===false?'opacity:.5':''}">
+        <div style="font-size:20px;flex-shrink:0">🎡</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:13px;font-weight:700;color:var(--text)">${_tzEsc(d.nombre)}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">~${prob}% de probabilidad${d.activo===false?' · inactivo':''}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
+          <label style="font-size:10px;color:var(--muted)">Peso</label>
+          <input type="number" min="1" step="1" value="${peso}" style="width:56px;padding:5px 6px;font-size:12px;background:var(--card);border:1px solid var(--border);border-radius:7px;color:var(--text);text-align:center"
+            onchange="actualizarPesoFid('${p.id}',this.value)">
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0">
+          <button class="btn btn-s btn-sm" onclick="toggleFidPremio('${p.id}',${d.activo===false})">${d.activo===false?'Activar':'Desactivar'}</button>
+          <button class="btn btn-s btn-sm" onclick="borrarFidPremio('${p.id}')" title="Borrar">🗑</button>
+        </div>
+      </div>`;
+    }).join('') : `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía no cargaste premios en el pool.</div>`}
+  `;
+}
+
+function _renderFidGirosTab(){
+  if(!_fidGiros.length)return `<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Todavía nadie giró la ruleta de fidelidad.</div>`;
+  return _fidGiros.map(g=>{
+    const d=g.data||{};
+    const fecha=d.fecha?new Date(d.fecha).toLocaleString('es-AR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}):'—';
+    return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px">
+      <div style="font-size:20px;flex-shrink:0">🏆</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;font-weight:700;color:var(--text)">${_tzEsc(d.serNombre||'Ser')} · hito de ${d.hito} sesiones</div>
+        <div style="font-size:11.5px;color:var(--gold);margin-top:2px">🎉 ${_tzEsc(d.premioGanado||'—')}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">${fecha}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function crearFidPremio(){
+  const nombre=document.getElementById('fidNombre').value.trim();
+  const peso=Math.max(1,parseInt(document.getElementById('fidPeso').value)||1);
+  if(!nombre){toast('⚠️ Escribí el nombre del premio');return;}
+  const id=nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'')+'-'+Date.now().toString(36);
+  const {error}=await _sb.from('ruleta_fidelidad').insert({id, data:{nombre,peso,activo:true}});
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  toast('✓ Premio agregado al pool de fidelidad');
+  renderFidelidad();
+}
+
+async function actualizarPesoFid(id,valor){
+  const p=_fidPremios.find(x=>x.id===id);
+  if(!p)return;
+  const peso=Math.max(1,parseInt(valor)||1);
+  const {error}=await _sb.from('ruleta_fidelidad').update({data:{...p.data,peso}}).eq('id',id);
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  p.data={...p.data,peso};
+  toast('✓ Peso actualizado');
+  _renderFidBody();
+}
+
+async function toggleFidPremio(id,activar){
+  const p=_fidPremios.find(x=>x.id===id);
+  if(!p)return;
+  const {error}=await _sb.from('ruleta_fidelidad').update({data:{...p.data,activo:activar}}).eq('id',id);
+  if(error){toast('⚠️ Error: '+error.message);return;}
+  renderFidelidad();
+}
+
+async function borrarFidPremio(id){
+  if(!confirm('¿Borrar este premio del pool de fidelidad?'))return;
+  const {error}=await _sb.from('ruleta_fidelidad').delete().eq('id',id);
+  if(error){toast('⚠️ Error al borrar: '+error.message);return;}
+  renderFidelidad();
 }
 
 function setRgTab(t){

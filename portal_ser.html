@@ -230,6 +230,25 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   border-radius:10px;color:var(--text);font-size:12.5px;line-height:1.6;outline:none;resize:vertical;font-family:inherit;}
 .bib-nota-ta:focus{border-color:rgba(232,201,106,.6);}
 .bib-nota-status{display:block;font-size:10px;color:var(--gl);margin-top:4px;min-height:12px;}
+
+/* ── RULETA FIDELIDAD ── */
+.fid-banner{background:linear-gradient(135deg,rgba(201,168,76,.18),rgba(139,105,20,.18));
+  border:1px solid rgba(232,201,106,.4);border-radius:16px;padding:18px 20px;margin-bottom:20px;
+  text-align:center;box-shadow:0 4px 20px rgba(201,168,76,.15);}
+.fid-banner h3{font-size:16px;color:var(--gl);margin-bottom:6px;}
+.fid-banner p{font-size:12.5px;color:var(--muted);margin-bottom:12px;line-height:1.5;}
+.wheel-outer{position:relative;width:220px;height:220px;margin:6px auto 20px;}
+.wheel-pointer{position:absolute;top:-4px;left:50%;transform:translateX(-50%);font-size:22px;
+  color:var(--gl);z-index:2;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5));}
+.wheel{width:100%;height:100%;border-radius:50%;position:relative;border:4px solid var(--gd);
+  box-shadow:0 4px 24px rgba(201,168,76,.35),0 0 0 1px var(--border);
+  transform:rotate(0deg);transition:transform 4s cubic-bezier(.17,.67,.1,1);}
+.wheel-label{position:absolute;top:50%;left:50%;width:72px;margin-left:-36px;text-align:center;
+  font-size:9.5px;font-weight:700;color:#050401;text-shadow:0 1px 1px rgba(255,255,255,.25);
+  line-height:1.15;transform-origin:center top;pointer-events:none;}
+.wheel-center{position:absolute;top:50%;left:50%;width:26px;height:26px;margin:-13px;
+  border-radius:50%;background:var(--gd);border:2px solid var(--gl);box-shadow:0 1px 4px rgba(0,0,0,.4);}
+.wheel-spin-hint{text-align:center;font-size:12px;color:var(--muted);margin-bottom:14px;}
 .agenda-overlay.open{display:block;}
 .agenda-modal{max-width:600px;margin:0 auto;background:rgba(14,12,26,0.82);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
@@ -303,6 +322,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     <button class="btn-out" onclick="doLogout()">Cerrar sesión</button>
   </div>
   <div class="stats-row" id="statsRow"></div>
+  <div id="fidBannerBox"></div>
   <div id="proximaBox"></div>
   <button class="btn-agenda" onclick="openAgenda()">
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" style="flex-shrink:0">
@@ -389,6 +409,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       <button class="btn-close-agenda" onclick="closeBiblioteca()">✕ Cerrar</button>
     </div>
     <div id="bibliotecaGrid" style="padding:16px"></div>
+  </div>
+</div>
+
+<div class="regalos-overlay" id="fidOverlay">
+  <div class="regalos-modal">
+    <div class="agenda-top">
+      <div>
+        <h2>🎡 Ruleta de Fidelidad</h2>
+        <p>¡Llegaste a un nuevo hito!</p>
+      </div>
+      <button class="btn-close-agenda" onclick="closeFidRuleta()">✕ Cerrar</button>
+    </div>
+    <div id="fidGrid" style="padding:24px 16px;text-align:center"></div>
   </div>
 </div>
 
@@ -801,6 +834,118 @@ async function guardarNotaBiblioteca(materialId){
   if(!error)setTimeout(()=>{if(statusEl)statusEl.textContent='';},2000);
 }
 
+/* ── RULETA DE FIDELIDAD (premio cada 5 sesiones completadas) ── */
+const FID_WHEEL_COLORS=['#C9A84C','#8B6914','#E8C96A','#4A3008','#D4863A','#9B7028'];
+let _fidHitoActual=null, _fidPool=[];
+
+function pickWeighted(pool){
+  const total=pool.reduce((s,r)=>s+(Number(r.data.peso)||1),0);
+  let r=Math.random()*total;
+  for(const item of pool){
+    r-=Number(item.data.peso)||1;
+    if(r<=0)return item;
+  }
+  return pool[pool.length-1];
+}
+function buildWheelHTML(pool){
+  const n=pool.length;
+  const slice=360/n;
+  const gradient=pool.map((r,i)=>`${FID_WHEEL_COLORS[i%FID_WHEEL_COLORS.length]} ${i*slice}deg ${(i+1)*slice}deg`).join(',');
+  const labels=pool.map((r,i)=>{
+    const mid=i*slice+slice/2;
+    return `<div class="wheel-label" style="transform:rotate(${mid}deg) translateY(-72px) rotate(${-mid}deg)">${r.data.nombre}</div>`;
+  }).join('');
+  return `<div class="wheel-outer">
+    <div class="wheel-pointer">▼</div>
+    <div class="wheel" id="fidWheel" style="background:conic-gradient(${gradient})">
+      ${labels}
+      <div class="wheel-center"></div>
+    </div>
+  </div>`;
+}
+function spinWheelTo(pool,winnerId,wheelElId){
+  const wheelEl=document.getElementById(wheelElId);
+  if(!wheelEl)return;
+  const idx=pool.findIndex(r=>r.id===winnerId);
+  const n=pool.length;
+  const slice=360/n;
+  const target=5*360 + (360-(idx*slice+slice/2));
+  wheelEl.style.transform='rotate(0deg)';
+  void wheelEl.offsetHeight;
+  wheelEl.style.transform=`rotate(${target}deg)`;
+}
+
+async function checkRuletaFidelidad(){
+  if(!curSer?.id)return;
+  const comp=allSessions.filter(s=>s.estado==='Completado'||!s.estado).length;
+  const hito=Math.floor(comp/5)*5;
+  const box=document.getElementById('fidBannerBox');
+  if(!box)return;
+  if(hito<5){box.innerHTML='';return;}
+  const giroId=curSer.id+'_'+hito;
+  const {data:giroExistente}=await _sb.from('ruleta_fidelidad_giros').select('id').eq('id',giroId).maybeSingle();
+  if(giroExistente){box.innerHTML='';return;}
+  box.innerHTML=`
+    <div class="fid-banner">
+      <h3>🎉 ¡Llegaste a ${hito} sesiones!</h3>
+      <p>Tenés un giro de la ruleta de fidelidad esperándote.</p>
+      <button class="btn-agenda" style="margin:0" onclick="openFidRuleta(${hito})">🎡 Girar la ruleta</button>
+    </div>`;
+}
+
+async function openFidRuleta(hito){
+  _fidHitoActual=hito;
+  document.getElementById('fidOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+  const grid=document.getElementById('fidGrid');
+  grid.innerHTML='<div style="color:var(--muted);font-size:13px">Cargando...</div>';
+  const {data,error}=await _sb.from('ruleta_fidelidad').select('id,data');
+  _fidPool=(data||[]).filter(r=>r.data?.activo!==false);
+  if(error||!_fidPool.length){
+    grid.innerHTML='<div style="color:var(--muted);font-size:13px">Los premios todavía se están cargando. Volvé a intentar en un rato.</div>';
+    return;
+  }
+  grid.innerHTML=`
+    <p style="color:var(--muted);font-size:12.5px;margin-bottom:6px">Hito de ${hito} sesiones</p>
+    ${buildWheelHTML(_fidPool)}
+    <button class="btn-agenda" style="margin:0" onclick="girarRuletaFidelidad()">🎡 Girar</button>`;
+}
+
+async function girarRuletaFidelidad(){
+  if(!_fidPool.length||!curSer?.id||_fidHitoActual==null)return;
+  const winner=pickWeighted(_fidPool);
+  const giroId=curSer.id+'_'+_fidHitoActual;
+  const {error}=await _sb.from('ruleta_fidelidad_giros').insert({
+    id:giroId,
+    data:{serId:curSer.id,serNombre:curSer.nombre||'',hito:_fidHitoActual,premioGanado:winner.data.nombre,fecha:new Date().toISOString()}
+  });
+  if(error){
+    document.getElementById('fidGrid').innerHTML='<div class="msg-err" style="color:#E05555;font-size:13px">Este premio ya fue reclamado antes desde otro dispositivo.</div>';
+    document.getElementById('fidBannerBox').innerHTML='';
+    return;
+  }
+  document.getElementById('fidBannerBox').innerHTML='';
+  const grid=document.getElementById('fidGrid');
+  grid.innerHTML=`
+    <div class="wheel-spin-hint" id="fidSpinHint">Girando...</div>
+    ${buildWheelHTML(_fidPool)}
+    <div id="fidResult"></div>`;
+  spinWheelTo(_fidPool,winner.id,'fidWheel');
+  setTimeout(()=>{
+    const hint=document.getElementById('fidSpinHint');
+    if(hint)hint.remove();
+    const waMsg=encodeURIComponent(`Hola! Gané "${winner.data.nombre}" en la Ruleta de Fidelidad 🎡 (llegué a ${_fidHitoActual} sesiones)`);
+    document.getElementById('fidResult').innerHTML=`
+      <p style="color:var(--gl);font-weight:700;font-size:15px;margin-top:16px">🎉 ¡Ganaste ${winner.data.nombre}!</p>
+      <a class="btn-agenda" style="margin-top:12px;text-decoration:none;display:flex" href="https://wa.me/${WA_NUM}?text=${waMsg}" target="_blank">Coordinar por WhatsApp →</a>`;
+  },4200);
+}
+
+function closeFidRuleta(){
+  document.getElementById('fidOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+
 /* ── DATA ── */
 async function loadHerramientas(){
   try{
@@ -842,6 +987,7 @@ function showAppScreen(){
   renderProximaSesion();
   renderFilters();
   renderSessions();
+  checkRuletaFidelidad();
 }
 
 function daysUntil(fechaStr){
