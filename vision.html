@@ -156,14 +156,8 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .camino-quote{font-size:23px;font-weight:800;color:#fff;line-height:1.4;text-align:center;
   margin-bottom:28px;text-shadow:0 0 24px rgba(232,201,106,.3);}
 .camino-quote em{font-style:italic;color:var(--gl);}
-.camino-closing{text-align:center;font-size:13px;color:var(--muted);line-height:1.8;margin-top:-6px;margin-bottom:44px;}
+.camino-closing{text-align:center;font-size:13px;color:#B8AD94;line-height:1.8;margin-top:-6px;margin-bottom:44px;}
 .camino-closing strong{color:var(--gl);font-weight:700;}
-
-/* ── TESTIMONIOS ── */
-.testi-grid{display:flex;flex-direction:column;gap:12px;margin-bottom:44px;}
-.testi-img{border-radius:16px;overflow:hidden;border:1px solid var(--border);}
-.testi-img img{width:100%;height:auto;display:block;}
-@media(min-width:640px){.testi-grid{flex-direction:row;}.testi-img{flex:1;}}
 
 /* ── CTA ── */
 .cta-block{text-align:center;padding:36px 24px;margin-bottom:20px;
@@ -173,8 +167,10 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .cta-block p{font-size:13px;color:var(--muted);margin-bottom:22px;max-width:420px;margin-left:auto;margin-right:auto;line-height:1.7;}
 .cta-btn{display:inline-block;padding:14px 32px;background:linear-gradient(135deg,var(--gold),var(--gd));
   border:none;border-radius:12px;color:#050401;font-size:15px;font-weight:800;text-decoration:none;
-  letter-spacing:.3px;transition:opacity .2s;}
+  letter-spacing:.3px;transition:opacity .2s;cursor:pointer;font-family:inherit;}
 .cta-btn:hover{opacity:.9;}
+.cta-btn-sec{display:block;margin-top:14px;font-size:12.5px;color:var(--muted);text-decoration:underline;}
+.cta-btn-sec:hover{color:var(--gl);}
 
 /* ── HERRAMIENTAS / FACILITADORES ── */
 .herr-cat{margin-bottom:36px;}
@@ -197,15 +193,6 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
   background:linear-gradient(135deg,var(--gold),var(--gd));display:flex;align-items:center;justify-content:center;
   color:#050401;font-size:10px;font-weight:800;flex-shrink:0;}
 .fac-mini-nom{font-size:12px;font-weight:600;color:var(--text);}
-.jcc-callout{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;
-  padding:20px 24px;margin-bottom:44px;background:linear-gradient(135deg,rgba(201,168,76,.09),rgba(155,130,212,.05));
-  border:1px solid rgba(201,168,76,.22);border-radius:18px;}
-.jcc-callout p{font-size:13px;color:var(--text);line-height:1.6;max-width:420px;}
-.jcc-callout strong{color:var(--gl);}
-.jcc-callout a{flex-shrink:0;padding:10px 20px;background:rgba(201,168,76,.16);border:1px solid rgba(201,168,76,.45);
-  border-radius:20px;color:var(--gl);font-size:12.5px;font-weight:700;text-decoration:none;white-space:nowrap;transition:all .2s;}
-.jcc-callout a:hover{background:rgba(201,168,76,.28);}
-
 /* ── FACILITADOR MODAL ── */
 .fmodal-overlay{display:none;position:fixed;inset:0;background:rgba(4,5,2,.82);z-index:900;
   align-items:center;justify-content:center;padding:20px;}
@@ -332,26 +319,15 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
       <p>Cada sesión es un paso. Cada ser que se transforma, transforma su entorno.</p>
     </div>
 
-    <div class="sec-title">💬 Lo que dicen después de una sesión</div>
-    <div class="testi-grid">
-      <div class="testi-img"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.03.36.jpg?v=1776899404" alt="Testimonio" loading="lazy"></div>
-      <div class="testi-img"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsAppImage2026-04-22at20.04.11.jpg?v=1776899404" alt="Testimonio" loading="lazy"></div>
-      <div class="testi-img"><img src="https://cdn.shopify.com/s/files/1/0806/4863/4591/files/WhatsApp_Image_2026-04-22_at_20.13.36.jpg?v=1776899680" alt="Testimonio" loading="lazy"></div>
-    </div>
-
-    <div class="sec-title">🔮 Nuestras herramientas</div>
-    <div class="herr-list" id="herrList"></div>
-
     <div class="cta-block gc">
       <h3>✨ ¿Lista/o para dar el próximo paso?</h3>
-      <p>Elegí una herramienta arriba y agendá directamente con quien la ofrece, o escribinos y te ayudamos a encontrar la sesión indicada para vos.</p>
-      <a class="cta-btn" href="https://wa.me/5491151758653?text=Hola!%20Quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Casa%20del%20Profit.%20✨" target="_blank" onclick="track('click_cta_principal')">Agendá tu sesión →</a>
+      <p>Tocá el botón y elegí la herramienta que más resuena con vos — te va a llevar directo a agendar con quien la ofrece.</p>
+      <button class="cta-btn" onclick="mostrarHerramientasCta()">Agendá tu sesión →</button>
+      <a class="cta-btn-sec" href="https://wa.me/5491151758653?text=Hola!%20Quiero%20agendar%20una%20sesi%C3%B3n%20en%20La%20Casa%20del%20Profit.%20✨" target="_blank" onclick="track('click_cta_principal')">o escribinos directo →</a>
     </div>
 
-    <div class="jcc-callout gc">
-      <p>¿Buscás específicamente <strong>Barras de Access, Proceso de Cuerpos o Clases de Access</strong> con Juan Cruz?</p>
-      <a href="https://juancruzconsciencia.lat" target="_blank" onclick="track('click_jcc_callout')">Conocé Juan Cruz Consciencia →</a>
-    </div>
+    <div class="sec-title" id="herrSecTitle" style="display:none">🔮 Nuestras herramientas</div>
+    <div class="herr-list" id="herrList" style="display:none"></div>
 
     <div class="sec-title">🗺️ Mapa de objetivos</div>
     <div class="milestone-list" id="milestoneList"></div>
@@ -702,6 +678,13 @@ const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 const WA_NUM='5491151758653';
+
+function mostrarHerramientasCta(){
+  track('click_cta_principal');
+  document.getElementById('herrSecTitle').style.display='';
+  document.getElementById('herrList').style.display='';
+  document.getElementById('herrSecTitle').scrollIntoView({behavior:'smooth',block:'start'});
+}
 
 function track(tipo,extra={}){
   try{_sb.from('regalo_eventos').insert({data:{tipo,pagina:'vision_lcp',fecha:new Date().toISOString().split('T')[0],mes:new Date().toISOString().slice(0,7),ts:new Date().toISOString(),...extra}}).then();}catch(e){}
