@@ -10224,7 +10224,7 @@ function _renderBibBody(){
       <div class="fg" style="margin:0 0 10px">
         <label>Archivo desde tu computadora</label>
         <input type="file" id="bibArchivo" accept="audio/*,video/*,application/pdf,.pdf,.mp3,.mp4,.wav">
-        <div style="font-size:11px;color:var(--muted);margin-top:4px">O, si preferís, pegá un link externo (YouTube, Spotify, Drive, etc.) en vez de subir un archivo:</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Máximo 50MB. Para <b>videos</b> o audios largos: mejor subilo a YouTube (podés dejarlo "no listado") y pegá ese link abajo, en vez de subir el archivo acá.</div>
       </div>
       <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:12px">
         <div class="fg" style="margin:0"><label>Link externo (opcional si subiste archivo)</label>
@@ -10293,6 +10293,10 @@ async function crearBiblioteca(){
   let url=document.getElementById('bibUrl').value.trim();
   const programa=document.getElementById('bibPrograma').value;
   if(!nombre||(!url&&!archivo)){toast('⚠️ Completá el nombre, y subí un archivo o pegá un link');return;}
+  if(archivo&&archivo.size>50*1024*1024){
+    toast('⚠️ El archivo pesa '+(archivo.size/1024/1024).toFixed(0)+'MB — el máximo es 50MB. Para videos, subilo a YouTube (podés dejarlo "no listado") y pegá ese link acá en vez del archivo.');
+    return;
+  }
   const id='bib-'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
   const btn=document.getElementById('bibSubmitBtn');
   btn.disabled=true;
