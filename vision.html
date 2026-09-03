@@ -177,12 +177,18 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .herr-cat:last-child{margin-bottom:44px;}
 .herr-cat-title{font-size:13px;font-weight:800;color:var(--gl);letter-spacing:.5px;
   margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border);}
-.herr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;align-items:start;}
+.herr-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;align-items:stretch;}
 .herr-card{padding:20px 20px;display:flex;flex-direction:column;}
 .herr-head{display:flex;align-items:flex-start;gap:14px;}
 .herr-ico{font-size:28px;line-height:1;flex-shrink:0;}
 .herr-nom{font-size:17px;font-weight:800;color:var(--gl);letter-spacing:.2px;}
 .herr-desc{font-size:12.5px;color:var(--muted);line-height:1.7;margin-top:4px;}
+.herr-card-compact{align-items:center;text-align:center;padding:22px 12px;cursor:pointer;transition:all .18s;justify-content:center;}
+.herr-card-compact:hover{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.06);}
+.herr-ico-big{font-size:32px;margin-bottom:10px;}
+.herr-card-compact .herr-nom{font-size:13.5px;line-height:1.3;margin-bottom:12px;}
+.herr-vermas{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.3px;}
+.hmodal-ico{font-size:26px;}
 .fac-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
   color:var(--gd);margin:16px 0 10px;}
 .fac-row{display:flex;flex-wrap:wrap;gap:8px;}
@@ -247,11 +253,7 @@ footer a{color:var(--gold);text-decoration:none;font-weight:600;}
 footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
 /* ── RESPONSIVE ── */
-@media(max-width:760px){
-  .herr-grid{grid-template-columns:repeat(2,1fr);}
-}
 @media(max-width:640px){
-  .herr-grid{grid-template-columns:1fr;}
   .brand-name{font-size:32px;letter-spacing:2px;}
   .kpi-strip{grid-template-columns:1fr;gap:10px;}
   .ml-right{display:none;}
@@ -356,6 +358,22 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
     <div class="fmodal-ses-title">Sesiones que ofrece</div>
     <div class="fmodal-ses-list" id="fmSesiones"></div>
     <a class="fmodal-cta" id="fmCta" target="_blank">¿No es lo que buscabas? Escribinos →</a>
+  </div>
+</div>
+
+<!-- HERRAMIENTA MODAL -->
+<div class="fmodal-overlay" id="herrModalOverlay" onclick="cerrarHerrModalFuera(event)">
+  <div class="fmodal">
+    <button class="fmodal-close" onclick="cerrarHerrModal()">✕</button>
+    <div class="fmodal-top">
+      <div class="fmodal-av hmodal-ico" id="hmIco"></div>
+      <div style="flex:1">
+        <div class="fmodal-nom" id="hmNom"></div>
+      </div>
+    </div>
+    <div class="fmodal-bio" id="hmDesc"></div>
+    <div class="fmodal-ses-title">¿Quién la ofrece?</div>
+    <div class="fac-row" id="hmFacs" style="margin-bottom:6px"></div>
   </div>
 </div>
 
@@ -692,6 +710,7 @@ function track(tipo,extra={}){
 window.addEventListener('load',()=>track('page_view'));
 let FAC_INDEX={};
 let CATALOGO_INDEX={};
+let PORSESION_INDEX={};
 
 function iniciales(nombre){return (nombre||'?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();}
 
@@ -718,9 +737,11 @@ async function cargarHerramientas(){
         (porSesion[nom]=porSesion[nom]||[]).push(f);
       });
     });
+    PORSESION_INDEX=porSesion;
 
     const sesiones=Object.keys(porSesion)
-      .map(nom=>({...(catalogo[nom]||{ico:'✨',desc:''}),nom}))
+      .filter(nom=>catalogo[nom]&&catalogo[nom].disponiblePortal===true)
+      .map(nom=>({...catalogo[nom],nom}))
       .sort((a,b)=>a.nom.localeCompare(b.nom));
 
     if(!sesiones.length){list.parentElement.querySelector('.sec-title').style.display='none';list.style.display='none';return;}
@@ -739,24 +760,10 @@ async function cargarHerramientas(){
     });
 
     function tarjetaHtml(s){
-      const facs=porSesion[s.nom]||[];
-      const facsHtml=facs.map(f=>{
-        const av=f.foto?`background-image:url('${f.foto}')`:'';
-        return `<div class="fac-mini" onclick="abrirFacModal('${f.id}','${s.nom.replace(/'/g,"\\'")}')">
-          <div class="fac-mini-av" style="${av}">${f.foto?'':iniciales(f.nombre)}</div>
-          <span class="fac-mini-nom">${f.nombre}</span>
-        </div>`;
-      }).join('');
-      return `<div class="herr-card gc">
-        <div class="herr-head">
-          <div class="herr-ico">${s.ico||'✨'}</div>
-          <div>
-            <div class="herr-nom">${s.nom}</div>
-            ${s.desc?`<div class="herr-desc">${s.desc}</div>`:''}
-          </div>
-        </div>
-        <div class="fac-label">¿Quién la ofrece?</div>
-        <div class="fac-row">${facsHtml}</div>
+      return `<div class="herr-card gc herr-card-compact" onclick="abrirHerrModal('${s.nom.replace(/'/g,"\\'")}')">
+        <div class="herr-ico-big">${s.ico||'✨'}</div>
+        <div class="herr-nom">${s.nom}</div>
+        <div class="herr-vermas">Ver más →</div>
       </div>`;
     }
 
@@ -836,7 +843,33 @@ function cerrarFacModal(){
   document.body.style.overflow='';
 }
 function cerrarFacModalFuera(e){if(e.target===document.getElementById('fmodalOverlay'))cerrarFacModal();}
-document.addEventListener('keydown',e=>{if(e.key==='Escape')cerrarFacModal();});
+
+function abrirHerrModal(nom){
+  const cat=CATALOGO_INDEX[nom]||{};
+  const facs=PORSESION_INDEX[nom]||[];
+  track('click_ver_mas_herramienta',{herramienta:nom});
+  document.getElementById('hmIco').textContent=cat.ico||'✨';
+  document.getElementById('hmNom').textContent=nom;
+  const descEl=document.getElementById('hmDesc');
+  descEl.textContent=cat.desc||'';
+  descEl.style.display=cat.desc?'block':'none';
+  document.getElementById('hmFacs').innerHTML=facs.map(f=>{
+    const av=f.foto?`background-image:url('${f.foto}')`:'';
+    return `<div class="fac-mini" onclick="cerrarHerrModal();abrirFacModal('${f.id}','${nom.replace(/'/g,"\\'")}')">
+      <div class="fac-mini-av" style="${av}">${f.foto?'':iniciales(f.nombre)}</div>
+      <span class="fac-mini-nom">${f.nombre}</span>
+    </div>`;
+  }).join('')||'<div style="font-size:12px;color:var(--muted)">Todavía no hay facilitador asignado.</div>';
+  document.getElementById('herrModalOverlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+function cerrarHerrModal(){
+  document.getElementById('herrModalOverlay').classList.remove('open');
+  document.body.style.overflow='';
+}
+function cerrarHerrModalFuera(e){if(e.target===document.getElementById('herrModalOverlay'))cerrarHerrModal();}
+
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarFacModal();cerrarHerrModal();}});
 
 const OBJ_LIST=[100,300,500,1000,3000,5000,10000,30000,50000,100000,300000,500000,1000000];
 
