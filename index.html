@@ -2637,8 +2637,9 @@ async function _syncSupabase(){
 // Elimina un registro directamente de Supabase (el upsert no borra nunca)
 async function delRecord(table,id){
   try{
-    const{error}=await _sb.from(table).delete().eq('id',String(id));
+    const{data,error}=await _sb.from(table).delete().eq('id',String(id)).select('id');
     if(error){console.error('delRecord',table,id,error.message);return false;}
+    if(!data?.length){console.error('delRecord',table,id,'0 filas borradas — probablemente bloqueado por RLS');toast('⚠️ No se borró en la base de datos (revisá permisos). Puede reaparecer.');return false;}
     return true;
   }catch(e){console.error('delRecord',e);return false;}
 }
@@ -5005,7 +5006,7 @@ function openModal(type,id,extra){
     // Build herramientas checklist
     const fHerrs=f?(f.herramientas||[]):[];
     const fPrecios=f?(f.precios||{}):{}; // {nomHerr: precio}
-    document.getElementById('fHerrList').innerHTML=HERR.map(h=>`
+    document.getElementById('fHerrList').innerHTML=herramientas.map(h=>`
       <label style="display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;cursor:pointer;font-size:12px;${fHerrs.includes(h.nom)?'background:rgba(201,168,76,.1);':''}">
         <input type="checkbox" value="${h.nom}" ${fHerrs.includes(h.nom)?'checked':''} style="accent-color:var(--gold);width:14px;height:14px" onchange="updateFPreciosList()">
         <span>${h.ico}</span> <span>${h.nom}</span>
