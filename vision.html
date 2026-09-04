@@ -186,7 +186,9 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .herr-card-compact{align-items:center;text-align:center;padding:22px 12px;cursor:pointer;transition:all .18s;justify-content:center;}
 .herr-card-compact:hover{border-color:rgba(201,168,76,.4);background:rgba(201,168,76,.06);}
 .herr-ico-big{font-size:32px;margin-bottom:10px;}
-.herr-card-compact .herr-nom{font-size:13.5px;line-height:1.3;margin-bottom:12px;}
+.herr-card-compact .herr-nom{font-size:13.5px;line-height:1.3;margin-bottom:6px;}
+.herr-desc-mini{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:10px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .herr-vermas{font-size:11px;font-weight:700;color:var(--gold);letter-spacing:.3px;}
 .hmodal-ico{font-size:26px;}
 .fac-label{font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
@@ -372,6 +374,7 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
       </div>
     </div>
     <div class="fmodal-bio" id="hmDesc"></div>
+    <div class="fmodal-meta" id="hmBadges"></div>
     <div class="fmodal-ses-title">¿Quién la ofrece?</div>
     <div class="fac-row" id="hmFacs" style="margin-bottom:6px"></div>
   </div>
@@ -760,9 +763,11 @@ async function cargarHerramientas(){
     });
 
     function tarjetaHtml(s){
+      const descMini=s.descCorta||s.desc;
       return `<div class="herr-card gc herr-card-compact" onclick="abrirHerrModal('${s.nom.replace(/'/g,"\\'")}')">
         <div class="herr-ico-big">${s.ico||'✨'}</div>
         <div class="herr-nom">${s.nom}</div>
+        ${descMini?`<div class="herr-desc-mini">${descMini}</div>`:''}
         <div class="herr-vermas">Ver más →</div>
       </div>`;
     }
@@ -844,6 +849,14 @@ function cerrarFacModal(){
 }
 function cerrarFacModalFuera(e){if(e.target===document.getElementById('fmodalOverlay'))cerrarFacModal();}
 
+function fmtDuracion(min){
+  min=parseInt(min,10);
+  if(!min)return '';
+  if(min<60)return `${min} min`;
+  const h=Math.floor(min/60),r=min%60;
+  return r?`${h}h ${r}min`:(h===1?'1 hora':`${h} horas`);
+}
+
 function abrirHerrModal(nom){
   const cat=CATALOGO_INDEX[nom]||{};
   const facs=PORSESION_INDEX[nom]||[];
@@ -853,6 +866,20 @@ function abrirHerrModal(nom){
   const descEl=document.getElementById('hmDesc');
   descEl.textContent=cat.desc||'';
   descEl.style.display=cat.desc?'block':'none';
+
+  const dur=fmtDuracion(cat.duracion);
+  let pres,onl;
+  if(cat.modalidad==='presencial'){pres=true;onl=false;}
+  else if(cat.modalidad==='online'){pres=false;onl=true;}
+  else if(cat.modalidad==='ambas'){pres=true;onl=true;}
+  else{pres=facs.some(f=>f.pres);onl=facs.some(f=>f.onl);}
+  const badges=[
+    dur?`<span class="fmodal-badge">⏱ ${dur}</span>`:'',
+    pres?`<span class="fmodal-badge">📍 Presencial</span>`:'',
+    onl?`<span class="fmodal-badge">💻 Online</span>`:'',
+  ].filter(Boolean).join('');
+  document.getElementById('hmBadges').innerHTML=badges;
+
   document.getElementById('hmFacs').innerHTML=facs.map(f=>{
     const av=f.foto?`background-image:url('${f.foto}')`:'';
     return `<div class="fac-mini" onclick="cerrarHerrModal();abrirFacModal('${f.id}','${nom.replace(/'/g,"\\'")}')">
