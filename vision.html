@@ -357,6 +357,10 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
     </div>
     <div class="fmodal-meta" id="fmMeta"></div>
     <div class="fmodal-bio" id="fmBio"></div>
+    <div id="fmMetodRow" style="display:none;margin-bottom:16px">
+      <div class="fmodal-ses-title">Cómo trabaja</div>
+      <div class="fmodal-bio" id="fmMetod" style="margin-bottom:0"></div>
+    </div>
     <div class="fmodal-ses-title">Sesiones que ofrece</div>
     <div class="fmodal-ses-list" id="fmSesiones"></div>
     <a class="fmodal-cta" id="fmCta" target="_blank">¿No es lo que buscabas? Escribinos →</a>
@@ -784,6 +788,15 @@ async function cargarHerramientas(){
 }
 cargarHerramientas();
 
+function fmtPrecios(precios,nom){
+  const raw=precios&&precios[nom];
+  const p=(raw&&typeof raw==='object')?raw:(raw?{ARS:raw}:{});
+  const parts=[];
+  if(p.ARS)parts.push('$'+p.ARS.toLocaleString('es-AR'));
+  if(p.USD)parts.push('US$'+p.USD.toLocaleString('es-AR'));
+  if(p.BRL)parts.push('R$'+p.BRL.toLocaleString('es-AR'));
+  return parts.join(' · ');
+}
 function waLink(sesionNombre,facNombre){
   const msg=encodeURIComponent(`Hola Juan Cruz! Quiero agendar ${sesionNombre} con ${facNombre}. ✨`);
   return `https://wa.me/${WA_NUM}?text=${msg}`;
@@ -803,6 +816,8 @@ function abrirFacModal(facId,sesionNombre){
   document.getElementById('fmSes').textContent='🙋 Facilitador';
   document.getElementById('fmBio').textContent=f.bio||'';
   document.getElementById('fmBio').style.display=f.bio?'block':'none';
+  document.getElementById('fmMetod').textContent=f.metodologia||'';
+  document.getElementById('fmMetodRow').style.display=f.metodologia?'block':'none';
   const av=document.getElementById('fmAv');
   if(f.foto){av.style.backgroundImage=`url('${f.foto}')`;av.textContent='';}
   else{av.style.backgroundImage='';av.textContent=iniciales(f.nombre);}
@@ -828,12 +843,12 @@ function abrirFacModal(facId,sesionNombre){
   });
   document.getElementById('fmSesiones').innerHTML=nombresSesiones.map(nom=>{
     const cat=CATALOGO_INDEX[nom]||{};
-    const precio=(f.precios&&f.precios[nom])||f.precio||0;
+    const precioTxt=fmtPrecios(f.precios,nom)||(f.precio?'$'+f.precio.toLocaleString('es-AR'):'');
     return `<a class="fmodal-ses-row ${nom===sesionNombre?'active':''}" href="${waLink(nom,f.nombre)}" target="_blank"
       onclick="track('click_agendar_wa',{facilitador:'${f.nombre.replace(/'/g,"\\'")}',sesion:'${nom.replace(/'/g,"\\'")}'})">
       <span class="fmodal-ses-ico">${cat.ico||'✨'}</span>
       <span class="fmodal-ses-nom">${nom}</span>
-      ${precio?`<span class="fmodal-ses-precio">$${precio.toLocaleString('es-AR')}</span>`:''}
+      ${precioTxt?`<span class="fmodal-ses-precio">${precioTxt}</span>`:''}
     </a>`;
   }).join('')||'<div style="font-size:12px;color:var(--muted)">Todavía no cargó sus sesiones.</div>';
 

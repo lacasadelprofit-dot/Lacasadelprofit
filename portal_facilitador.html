@@ -192,8 +192,19 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 
   <div class="card">
     <h3>✍️ Bio / Descripción</h3>
-    <div class="fg" style="margin-bottom:0">
+    <div class="fg">
       <textarea id="fBio" placeholder="Contá quién sos y cómo trabajás..."></textarea>
+    </div>
+    <div class="fg" style="margin-bottom:0">
+      <label>📸 Instagram (opcional)</label>
+      <input type="text" id="fInsta" placeholder="@tuusuario">
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>🧭 Metodología de trabajo</h3>
+    <div class="fg" style="margin-bottom:0">
+      <textarea id="fMetodologia" placeholder="Contá cómo es una sesión con vos: qué proceso seguís, cómo trabajás, qué puede esperar la persona antes, durante y después..."></textarea>
     </div>
   </div>
 
@@ -230,14 +241,16 @@ const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
 const DIAS=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-const HERRAMIENTAS=[
-  {ico:'🌀',nom:'Barras de Access'},{ico:'✨',nom:'Sesión Profit'},{ico:'💆',nom:'Proceso de Cuerpos'},
-  {ico:'🌱',nom:'Bioexistencia'},{ico:'📖',nom:'Registros Akashicos'},{ico:'🙌',nom:'Reiki'},
-  {ico:'🌬️',nom:'Limpieza Energética'},{ico:'🔢',nom:'Numerología'},{ico:'🐎',nom:'Coaching con Caballos'},
-  {ico:'⭐',nom:'Constelaciones Familiares'},{ico:'🌸',nom:'Face Lift'},{ico:'🎓',nom:'Clase Barras de Access'},
-  {ico:'🍄',nom:'Ceremonias Hongos'},{ico:'🌺',nom:'Flores de Bach'},{ico:'🎵',nom:'Viaje Sonoro'},
-  {ico:'🧘',nom:'Yoga'},{ico:'🐸',nom:'Bufu Alvarius'},{ico:'🌌',nom:'Sesiones Pleyadianas'},
-];
+let TODAS_HERRAMIENTAS=[];
+async function loadHerramientasCatalogo(){
+  try{
+    const {data,error}=await _sb.from('herramientas').select('id,data');
+    if(error)throw error;
+    TODAS_HERRAMIENTAS=(data||[]).map(r=>({id:r.id,...r.data}))
+      .filter(h=>h.tipo==='Sesión experimental'||h.tipo==='Clase')
+      .sort((a,b)=>(a.nom||'').localeCompare(b.nom||''));
+  }catch(e){console.warn('No se pudo cargar el catálogo de herramientas',e);}
+}
 
 let curUser=null, curFacId=null, curFac=null;
 
@@ -289,6 +302,7 @@ async function afterLogin(){
       return;
     }
     curFac=facRow.data||{};
+    await loadHerramientasCatalogo();
     hideLoader();
     showAppScreen();
   }catch(e){
@@ -338,6 +352,8 @@ function showAppScreen(){
     fp.style.backgroundImage='';fp.textContent=ini;
   }
   document.getElementById('fBio').value=curFac.bio||'';
+  document.getElementById('fMetodologia').value=curFac.metodologia||'';
+  document.getElementById('fInsta').value=curFac.instagram||'';
   document.getElementById('fPres').checked=curFac.pres!==false;
   document.getElementById('fOnl').checked=!!curFac.onl;
   document.getElementById('fCiudad').value=curFac.ciudad||'';
@@ -348,18 +364,28 @@ function showAppScreen(){
 
 function renderHerramientas(){
   const fHerrs=curFac.herramientas||[];
-  document.getElementById('herrList').innerHTML=HERRAMIENTAS.map(h=>`
-    <label><input type="checkbox" value="${h.nom}" ${fHerrs.includes(h.nom)?'checked':''} onchange="renderPrecios()"> ${h.ico} ${h.nom}</label>
-  `).join('');
+  document.getElementById('herrList').innerHTML=TODAS_HERRAMIENTAS.map(h=>`
+    <label><input type="checkbox" value="${h.nom}" ${fHerrs.includes(h.nom)?'checked':''} onchange="renderPrecios()"> ${h.ico||'✨'} ${h.nom}</label>
+  `).join('')||'<div style="font-size:11px;color:var(--muted)">No hay herramientas cargadas todavía — consultá con el admin.</div>';
   renderPrecios();
+}
+function precioObj(v){
+  return (v&&typeof v==='object'&&!Array.isArray(v))?v:{ARS:v||0,USD:0,BRL:0};
 }
 function renderPrecios(){
   const fPrecios=curFac.precios||{};
   const checked=[...document.querySelectorAll('#herrList input:checked')].map(c=>c.value);
-  document.getElementById('preciosList').innerHTML=checked.map(nom=>`
-    <div class="pr-row"><span>${nom}</span>
-      <input type="number" min="0" placeholder="$ 0" data-herr="${nom}" value="${fPrecios[nom]||0}">
-    </div>`).join('')||'<div style="font-size:11px;color:var(--muted)">Elegí al menos una herramienta arriba.</div>';
+  document.getElementById('preciosList').innerHTML=checked.map(nom=>{
+    const p=precioObj(fPrecios[nom]);
+    return `<div class="pr-row" style="flex-direction:column;align-items:stretch;gap:4px">
+      <span style="font-weight:600">${nom}</span>
+      <div style="display:flex;gap:6px">
+        <input type="number" min="0" placeholder="ARS $" data-herr="${nom}" data-mon="ARS" value="${p.ARS||''}" style="width:auto;flex:1">
+        <input type="number" min="0" placeholder="US$" data-herr="${nom}" data-mon="USD" value="${p.USD||''}" style="width:auto;flex:1">
+        <input type="number" min="0" placeholder="R$" data-herr="${nom}" data-mon="BRL" value="${p.BRL||''}" style="width:auto;flex:1">
+      </div>
+    </div>`;
+  }).join('')||'<div style="font-size:11px;color:var(--muted)">Elegí al menos una herramienta arriba.</div>';
 }
 
 function renderDisponibilidad(){
@@ -412,7 +438,10 @@ async function guardarPerfil(){
   const precios={};
   document.querySelectorAll('#preciosList input[type=number]').forEach(inp=>{
     const val=parseFloat(inp.value)||0;
-    if(val>0)precios[inp.dataset.herr]=val;
+    if(val>0){
+      precios[inp.dataset.herr]=precios[inp.dataset.herr]||{};
+      precios[inp.dataset.herr][inp.dataset.mon]=val;
+    }
   });
   const disponibilidad={};
   document.querySelectorAll('#dispList .disp-row').forEach(row=>{
@@ -424,6 +453,8 @@ async function guardarPerfil(){
   const nuevoData={
     ...curFac,
     bio:document.getElementById('fBio').value,
+    metodologia:document.getElementById('fMetodologia').value,
+    instagram:document.getElementById('fInsta').value.trim(),
     herramientas:herrs,
     precios,
     pres:document.getElementById('fPres').checked,

@@ -5038,12 +5038,20 @@ function openModal(type,id,extra){
     // Build per-herramienta price list (only checked ones)
     function updateFPreciosList(){
       const checked=[...document.querySelectorAll('#fHerrList input:checked')].map(c=>c.value);
-      document.getElementById('fPreciosList').innerHTML=checked.map(nom=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
-          <span style="font-size:12px;flex:1">${nom}</span>
-          <input type="number" placeholder="$ 0" min="0" data-herr="${nom}" value="${fPrecios[nom]||0}"
-            style="width:110px;padding:4px 8px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:12px;text-align:right">
-        </div>`).join('');
+      document.getElementById('fPreciosList').innerHTML=checked.map(nom=>{
+        const p=precioObj(fPrecios[nom]);
+        return `<div style="display:flex;flex-direction:column;gap:4px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.04)">
+          <span style="font-size:12px;font-weight:600">${nom}</span>
+          <div style="display:flex;gap:6px">
+            <input type="number" placeholder="ARS $" min="0" data-herr="${nom}" data-mon="ARS" value="${p.ARS||''}"
+              style="flex:1;min-width:0;padding:4px 6px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;text-align:right">
+            <input type="number" placeholder="US$" min="0" data-herr="${nom}" data-mon="USD" value="${p.USD||''}"
+              style="flex:1;min-width:0;padding:4px 6px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;text-align:right">
+            <input type="number" placeholder="R$" min="0" data-herr="${nom}" data-mon="BRL" value="${p.BRL||''}"
+              style="flex:1;min-width:0;padding:4px 6px;background:var(--card);border:1px solid var(--border);border-radius:6px;color:var(--text);font-size:11px;text-align:right">
+          </div>
+        </div>`;
+      }).join('');
     }
     updateFPreciosList();
     window.updateFPreciosList=updateFPreciosList;
@@ -5235,6 +5243,11 @@ document.querySelectorAll('.mo').forEach(m=>m.addEventListener('click',e=>{if(e.
 
 /* HERRAMIENTAS - CRUD */
 function delHerr(id){if(confirm('¿Eliminar esta herramienta?')){herramientas=herramientas.filter(h=>h.id!==id);delRecord('herramientas',id);save();renderHerr();}}
+/* Normaliza precios[nom]: acepta el formato viejo (un número = ARS) y el
+   nuevo ({ARS,USD,BRL}), para no romper datos ya cargados. */
+function precioObj(v){
+  return (v&&typeof v==='object'&&!Array.isArray(v))?v:{ARS:v||0,USD:0,BRL:0};
+}
 function fmtDuracionAdmin(min){
   min=parseInt(min,10);
   if(!min)return '';
@@ -7803,11 +7816,14 @@ function saveFac(){
   if(!nom){alert('El nombre es obligatorio');return;}
   const herrs=[...document.querySelectorAll('#fHerrList input[type=checkbox]:checked')].map(c=>c.value);
   const oldNomFac=eid?facs.find(x=>String(x.id)===String(eid))?.nombre:null;
-  // Collect per-herramienta prices
+  // Collect per-herramienta prices (hasta 3 monedas por herramienta)
   const precios={};
   document.querySelectorAll('#fPreciosList input[type=number]').forEach(inp=>{
     const val=parseFloat(inp.value)||0;
-    if(val>0)precios[inp.dataset.herr]=val;
+    if(val>0){
+      precios[inp.dataset.herr]=precios[inp.dataset.herr]||{};
+      precios[inp.dataset.herr][inp.dataset.mon]=val;
+    }
   });
   const fData={nombre:nom,herramientas:herrs,precios,precio:parseFloat(document.getElementById('fPrecio').value)||0,email:document.getElementById('fEmail').value,cel:document.getElementById('fCel').value,instagram:document.getElementById('fInsta').value.trim(),nacimiento:document.getElementById('fNac').value||'',pais:document.getElementById('fPais').value,zona:document.getElementById('fZona').value,ciudad:document.getElementById('fCiudad').value,direccion:document.getElementById('fDireccion').value,pres:document.getElementById('fPres').checked,onl:document.getElementById('fOnl').checked,bio:document.getElementById('fBio').value,activo:document.getElementById('fActivo').checked};
   renombrarFacilitadorEnHerramientas(oldNomFac,nom);
