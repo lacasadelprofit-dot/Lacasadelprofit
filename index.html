@@ -5270,14 +5270,56 @@ function updateHPreview(){
     ...modBadges.map(b=>`<span style="${bs}">${b}</span>`),
   ].filter(Boolean).join('')||'<span style="font-size:10.5px;color:#8A8270;font-style:italic">Sin datos de modalidad/duración todavía</span>';
 }
+/* Mantiene sincronizados los dos lados de la relación herramienta↔facilitador
+   (h.facs y f.herramientas), que se editan desde pantallas distintas. */
+function syncHerramientaFacilitadores(herrNom,facNombresSel){
+  facs.forEach(f=>{
+    const debeEstar=facNombresSel.includes(f.nombre);
+    const yaEsta=(f.herramientas||[]).includes(herrNom);
+    if(debeEstar&&!yaEsta)f.herramientas=[...(f.herramientas||[]),herrNom];
+    else if(!debeEstar&&yaEsta)f.herramientas=f.herramientas.filter(n=>n!==herrNom);
+  });
+}
+function syncFacilitadorHerramientas(facNom,herrNombresSel){
+  herramientas.forEach(h=>{
+    const debeEstar=herrNombresSel.includes(h.nom);
+    const yaEsta=(h.facs||[]).includes(facNom);
+    if(debeEstar&&!yaEsta)h.facs=[...(h.facs||[]),facNom];
+    else if(!debeEstar&&yaEsta)h.facs=h.facs.filter(n=>n!==facNom);
+  });
+}
+/* Si renombrás una herramienta o un facilitador, actualiza las referencias
+   por nombre que quedan del lado "de enfrente" (arrays y precios), para que
+   no queden colgadas del nombre viejo. */
+function renombrarHerramientaEnFacilitadores(oldNom,newNom){
+  if(!oldNom||oldNom===newNom)return;
+  facs.forEach(f=>{
+    if((f.herramientas||[]).includes(oldNom))f.herramientas=f.herramientas.map(n=>n===oldNom?newNom:n);
+    if(f.precios&&Object.prototype.hasOwnProperty.call(f.precios,oldNom)){
+      f.precios[newNom]=f.precios[oldNom];
+      delete f.precios[oldNom];
+    }
+  });
+}
+function renombrarFacilitadorEnHerramientas(oldNom,newNom){
+  if(!oldNom||oldNom===newNom)return;
+  herramientas.forEach(h=>{
+    if((h.facs||[]).includes(oldNom))h.facs=h.facs.map(n=>n===oldNom?newNom:n);
+  });
+}
 function saveHerr(){
   const eid=document.getElementById('hId').value;
   const nom=document.getElementById('hNom').value.trim();
   if(!nom){alert('El nombre es obligatorio');return;}
   const selFacs=[...document.querySelectorAll('#hFacList input:checked')].map(c=>c.value);
+  const oldNom=eid?herramientas.find(x=>x.id===eid)?.nom:null;
   const tipoActual=eid?(herramientas.find(x=>x.id===eid)?.tipo||_herrTab):_herrTab;
   const esPrac=tipoActual==='Herramienta práctica';
   const hData={nom,ico:!esPrac?document.getElementById('hIco').value||'🔮':undefined,desc:document.getElementById('hDesc').value,descCorta:document.getElementById('hDescCorta').value.trim(),modalidad:document.getElementById('hModalidad').value,categoria:document.getElementById('hCategoria').value.trim(),col:document.getElementById('hCol').value,facs:selFacs,disponiblePortal:document.getElementById('hDisponible').checked,tipo:tipoActual,duracion:document.getElementById('hDuracion').value,cuando:document.getElementById('hCuando').value,contexto:document.getElementById('hContexto').value,aplicacion:document.getElementById('hAplicacion')?.value||'',instrucciones:document.getElementById('hInstrucciones').value,...(esPrac?{pilar:document.getElementById('hPilar').value}:{})};
+  if(!esPrac){
+    renombrarHerramientaEnFacilitadores(oldNom,nom);
+    syncHerramientaFacilitadores(nom,selFacs);
+  }
   if(eid){
     const h=herramientas.find(x=>x.id===eid);
     if(h)Object.assign(h,hData);
@@ -7760,6 +7802,7 @@ function saveFac(){
   const nom=document.getElementById('fNom').value.trim();
   if(!nom){alert('El nombre es obligatorio');return;}
   const herrs=[...document.querySelectorAll('#fHerrList input[type=checkbox]:checked')].map(c=>c.value);
+  const oldNomFac=eid?facs.find(x=>String(x.id)===String(eid))?.nombre:null;
   // Collect per-herramienta prices
   const precios={};
   document.querySelectorAll('#fPreciosList input[type=number]').forEach(inp=>{
@@ -7767,6 +7810,8 @@ function saveFac(){
     if(val>0)precios[inp.dataset.herr]=val;
   });
   const fData={nombre:nom,herramientas:herrs,precios,precio:parseFloat(document.getElementById('fPrecio').value)||0,email:document.getElementById('fEmail').value,cel:document.getElementById('fCel').value,instagram:document.getElementById('fInsta').value.trim(),nacimiento:document.getElementById('fNac').value||'',pais:document.getElementById('fPais').value,zona:document.getElementById('fZona').value,ciudad:document.getElementById('fCiudad').value,direccion:document.getElementById('fDireccion').value,pres:document.getElementById('fPres').checked,onl:document.getElementById('fOnl').checked,bio:document.getElementById('fBio').value,activo:document.getElementById('fActivo').checked};
+  renombrarFacilitadorEnHerramientas(oldNomFac,nom);
+  syncFacilitadorHerramientas(nom,herrs);
   if(eid){
     const f=facs.find(x=>String(x.id)===String(eid));
     if(f)Object.assign(f,fData);
