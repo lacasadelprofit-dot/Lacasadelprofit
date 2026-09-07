@@ -227,6 +227,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .regalo-desc{font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:14px;}
 .btn-regalo-dl{width:100%;padding:11px;background:rgba(201,168,76,.18);border:1px solid rgba(201,168,76,.45);border-radius:12px;color:var(--gl);font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;text-decoration:none;transition:all .2s;}
 .btn-regalo-dl:hover{background:rgba(201,168,76,.28);}
+.bib-audio{width:100%;margin-bottom:10px;color-scheme:dark;border-radius:10px;}
 .bib-nota-wrap{margin-top:12px;text-align:left;}
 .bib-nota-lbl{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px;}
 .bib-nota-ta{width:100%;min-height:60px;padding:9px 11px;background:rgba(255,255,255,.05);border:1px solid rgba(232,201,106,.2);
@@ -625,7 +626,7 @@ const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 
 let curSer=null, allSessions=[], curFilter='todas', intakeSesActual=null;
-let radios={}, herramientasPortal=[];
+let radios={}, herramientasPortal=[], herramientasPortalOk=false;
 
 /* ── UTILS ── */
 function showLoader(m='Cargando...'){document.getElementById('loaderMsg').textContent=m;document.getElementById('loader').style.display='flex';}
@@ -701,8 +702,8 @@ const HERRAMIENTAS=[
 
 function openAgenda(){
   const nombre=curSer?.nombre||'';
-  const lista=herramientasPortal.length?herramientasPortal:HERRAMIENTAS;
-  document.getElementById('toolsGrid').innerHTML=lista.map(h=>{
+  const lista=herramientasPortalOk?herramientasPortal:HERRAMIENTAS;
+  document.getElementById('toolsGrid').innerHTML=lista.length?lista.map(h=>{
     const nom=h.nom||h.nombre||'Sesión';
     const ico=h.ico||'✨';
     const desc=h.desc||'';
@@ -713,7 +714,7 @@ function openAgenda(){
       ${desc?`<div class="tool-desc">${desc}</div>`:''}
       <a class="btn-agendar" href="https://wa.me/${WA_NUM}?text=${msg}" target="_blank">Agendar →</a>
     </div>`;
-  }).join('');
+  }).join(''):'<div style="text-align:center;padding:40px;color:var(--muted)">Muy pronto vas a poder elegir tu sesión acá.</div>';
   document.getElementById('agendaOverlay').classList.add('open');
   document.body.style.overflow='hidden';
 }
@@ -801,6 +802,7 @@ async function openBiblioteca(){
           <div class="regalo-nombre">${r.nombre||'Material'}</div>
           ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
           ${r.programa?`<div class="regalo-desc" style="opacity:.7">📚 ${progMap[r.programa]||'Programa'}</div>`:''}
+          ${r.url&&r.tipo==='Audio'?`<audio class="bib-audio" controls preload="none" src="${r.url}"></audio>`:''}
           ${r.url
             ?`<a class="btn-regalo-dl" href="${r.url}" target="_blank">${r.tipo==='Link'?'🔗 Ver':'⬇️ Descargar'}</a>`
             :`<div class="btn-regalo-dl" style="opacity:.45;cursor:not-allowed">Próximamente</div>`}
@@ -953,19 +955,18 @@ function closeFidRuleta(){
 /* ── DATA ── */
 async function loadHerramientas(){
   try{
-    const {data}=await _sb.from('herramientas').select('id,data');
-    if(data&&data.length){
-      const todas=(data||[]).map(r=>({id:r.id,...r.data})).map(h=>{
-        // Si no tiene desc, buscar en fallback por nombre
-        if(!h.desc){
-          const fb=HERRAMIENTAS.find(x=>x.nom===h.nom||x.nom===(h.nombre||''));
-          if(fb)h.desc=fb.desc;
-        }
-        return h;
-      });
-      const marcadas=todas.filter(h=>h.disponiblePortal===true);
-      herramientasPortal=marcadas.length?marcadas:todas;
-    }
+    const {data,error}=await _sb.from('herramientas').select('id,data');
+    if(error)throw error;
+    const todas=(data||[]).map(r=>({id:r.id,...r.data})).map(h=>{
+      // Si no tiene desc, buscar en fallback por nombre
+      if(!h.desc){
+        const fb=HERRAMIENTAS.find(x=>x.nom===h.nom||x.nom===(h.nombre||''));
+        if(fb)h.desc=fb.desc;
+      }
+      return h;
+    });
+    herramientasPortal=todas.filter(h=>h.disponiblePortal===true);
+    herramientasPortalOk=true;
   }catch(e){console.warn('herramientas fallback',e);}
 }
 
