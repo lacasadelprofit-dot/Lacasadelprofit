@@ -17,5 +17,8 @@
       "destination": "/registro_jcc.html"
     },
     { "source": "/(.*)", "destination": "/$1" }
+  ],
+  "crons": [
+    { "path": "/api/backup-diario", "schedule": "0 9 * * *" }
   ]
 }
