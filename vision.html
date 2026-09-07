@@ -61,6 +61,7 @@ header{
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);
   box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(232,201,106,.1);
 }
+.gap-lg{margin-top:48px;}
 
 /* ── MAIN ── */
 main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
@@ -256,10 +257,13 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
 /* ── RESPONSIVE ── */
 @media(max-width:640px){
+  header{padding:48px 20px 36px;}
   .brand-name{font-size:32px;letter-spacing:2px;}
+  .brand-dim{margin-bottom:24px;}
   .kpi-strip{grid-template-columns:1fr;gap:10px;}
   .ml-right{display:none;}
   .mission{font-size:13px;padding:16px 20px;}
+  .gap-lg{margin-top:28px;}
   .vision-block,.next-box{padding:22px 20px;}
   main{padding:32px 16px 60px;}
   .herr-card{padding:18px 18px;}
@@ -291,12 +295,12 @@ footer a:hover{color:var(--gl);text-shadow:0 0 12px rgba(232,201,106,.5);}
 
     <div class="camino-quote" style="margin-top:8px">No vinimos a enseñarte nada.<br>Vinimos a <em>recordarte</em> lo que ya sabés.</div>
 
-    <div class="mission" style="margin-top:48px">
+    <div class="mission gap-lg">
       CONTRIBUIR CON 1.000.000 DE HERRAMIENTAS DE CONSCIENCIA EXPERIENCIALES<br>
       PARA QUE LOS SERES VIVAN EN <strong>AMOR, UNIDAD, SABIDURÍA Y PODER</strong>
     </div>
 
-    <div class="sec-title" style="margin-top:48px">Nuestro origen</div>
+    <div class="sec-title gap-lg">Nuestro origen</div>
     <div class="vision-block">
       <p>La Casa del Profit nació de la búsqueda de un grupo de personas — pero nunca fue pensada para quedarse ahí.</p>
       <p>Hoy es un espacio donde <span class="vh">un equipo de facilitadores sostiene la misma convicción</span>: cada persona tiene dentro suyo el poder de crear una realidad diferente.</p>
