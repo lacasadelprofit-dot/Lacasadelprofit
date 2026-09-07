@@ -73,14 +73,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .p-avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--gd));
   display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#050401;margin:0 auto 14px;}
 .p-name{font-size:20px;font-weight:700;color:var(--gl);}
-.p-sub{color:#B0A68C;font-size:13px;margin-top:10px;line-height:1.7;max-width:420px;margin-left:auto;margin-right:auto;font-style:italic;}
-.p-mission{display:none;width:fit-content;align-items:center;justify-content:center;gap:6px;margin:14px auto 0;padding:6px 16px;
+.p-sub{color:#B0A68C;font-size:14.5px;margin-top:10px;line-height:1.6;max-width:420px;margin-left:auto;margin-right:auto;font-style:italic;}
+.p-sub div+div{margin-top:6px;}
+.p-mission{display:none;width:fit-content;align-items:center;justify-content:center;gap:6px;margin:12px auto 0;padding:6px 16px;
   border-radius:20px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);
-  color:var(--gl);font-size:11.5px;font-weight:600;text-align:center;max-width:90%;}
-.btn-out{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);
-  padding:6px 14px;font-size:12px;cursor:pointer;margin-top:12px;}
-.btn-out-bottom{display:none;width:100%;background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);
-  padding:12px;font-size:13px;cursor:pointer;margin:28px 0 8px;}
+  color:var(--gl);font-size:12.5px;font-weight:600;text-align:center;max-width:90%;}
+.btn-out{display:none;}
+.btn-out-bottom{display:block;width:100%;max-width:420px;background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);
+  padding:12px;font-size:13px;cursor:pointer;margin:28px auto 8px;}
 .btn-out:hover{border-color:var(--red);color:var(--red);}
 .sec-title{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
@@ -292,8 +292,6 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .intake-card{padding:18px 14px;}
   .tools-grid{grid-template-columns:1fr 1fr;}
   .sec-btns-row{grid-template-columns:1fr 1fr!important;}
-  .btn-out{display:none;}
-  .btn-out-bottom{display:block;}
 }
 </style>
 </head>
@@ -1087,7 +1085,7 @@ function renderHeader(){
   if(curSer.programa){
     pSubEl.textContent='🌟 '+curSer.programa;
   }else{
-    pSubEl.innerHTML='<div>Este espacio es para vos, para que puedas integrar lo vivido, ponerle palabras y dejar que tu energía se exprese.</div><div style="margin-top:8px">Todo lo que compartas será recibido con gratitud y presencia.</div>';
+    pSubEl.innerHTML='<div>Este espacio es para vos, para que puedas integrar lo vivido, ponerle palabras y dejar que tu energía se exprese.</div><div>Todo lo que compartas será recibido con gratitud y presencia.</div>';
   }
   loadMisionColectiva();
 }
