@@ -1479,6 +1479,22 @@ th{background:rgba(28,26,46,.88)!important;}
     <button type="button" class="btn btn-s btn-sm" style="margin-left:auto" onclick="copiarFacId()">📋 Copiar ID (para dar acceso al portal)</button>
    </div>
   </div>
+  <div class="fg" id="fAccesoField" style="display:none;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px">
+   <label>🔐 Acceso al Portal del Facilitador <span id="fAccesoEstado" style="font-weight:400;font-size:11px;color:var(--muted)"></span></label>
+   <div id="fAccesoCrear">
+    <div style="font-size:11px;color:var(--muted);margin:4px 0 8px">Creále su login para que pueda entrar a cargar su foto, bio, precios y disponibilidad.</div>
+    <div class="fg-row">
+     <div class="fg" style="margin-bottom:8px"><input type="email" id="fAccesoEmail" placeholder="Email del facilitador"></div>
+     <div class="fg" style="margin-bottom:8px"><input type="text" id="fAccesoPass" placeholder="Contraseña (mín. 6 caracteres)"></div>
+    </div>
+    <button type="button" class="btn btn-p btn-sm" onclick="crearAccesoFac(this)">🔐 Crear acceso</button>
+    <a onclick="document.getElementById('fAccesoManual').style.display='flex';this.style.display='none'" style="display:block;margin-top:10px;font-size:11px;color:var(--muted);cursor:pointer;text-decoration:underline">¿Ya le creaste el login vos mismo en Supabase? Vincularlo a mano →</a>
+    <div id="fAccesoManual" style="display:none;gap:8px;margin-top:8px">
+     <input type="text" id="fAuthUuid" placeholder="UUID del usuario ya creado en Supabase Auth" style="flex:1">
+     <button type="button" class="btn btn-s btn-sm" onclick="vincularAccesoFac()">Vincular</button>
+    </div>
+   </div>
+  </div>
   <div class="fg">
    <label>Herramientas que ofrece</label>
    <div id="fHerrList" style="display:grid;grid-template-columns:1fr 1fr;gap:4px;max-height:200px;overflow-y:auto;padding:10px;background:var(--card2);border:1px solid var(--border);border-radius:10px;margin-top:4px"></div>
@@ -2542,6 +2558,11 @@ async function loadData(silent=false){
       _sb.from('metricas_redes').select('id,data').then(r=>r.error?{data:[]}:r,()=>({data:[]})),
       _sb.from('contenido_redes').select('id,data').then(r=>r.error?{data:[]}:r,()=>({data:[]})),
     ]);
+    // Si alguna tabla crítica falló (error de red, RLS, etc.) no seguir:
+    // data?.length también da falsy en ese caso, y confundirlo con "tabla
+    // vacía" hacía que más abajo se subieran datos de ejemplo pisando los reales.
+    const criticos=[['seres',sr],['sessions',ss],['facilitadores',ff],['facturas',fc],['herramientas',hh],['programas',pp],['campañas',cc],['inscripciones',ii]].filter(([,r])=>r.error);
+    if(criticos.length) throw new Error('Error cargando ['+criticos.map(([t])=>t).join(', ')+']: '+criticos[0][1].error.message);
     seres        = sr.data?.length  ? _unwrap(sr.data)  : SR;
     sessions     = ss.data?.length  ? _unwrap(ss.data)  : SD;
     facs         = ff.data?.length  ? _unwrap(ff.data)  : FACS_DEF;
@@ -2557,12 +2578,11 @@ async function loadData(silent=false){
     sintesis     = si.data?.length  ? _unwrap(si.data).sort((a,b)=>new Date(b.fecha||0)-new Date(a.fecha||0)) : [];
     metricasRedes= mr.data?.length  ? _unwrap(mr.data).sort((a,b)=>(b.mes||'').localeCompare(a.mes||'')) : [];
     contenidoRedes= cr.data?.length ? _unwrap(cr.data).sort((a,b)=>(b.fecha||b.createdAt||'').localeCompare(a.fecha||a.createdAt||'')) : [];
-    // First-time seed (populate from embedded defaults)
-    if(!sr.data?.length && SR.length)           await _sb.from('seres').upsert(_wrap(SR));
-    if(!ss.data?.length && SD.length)           await _sb.from('sessions').upsert(_wrap(SD));
-    if(!ff.data?.length && FACS_DEF.length)     await _sb.from('facilitadores').upsert(_wrap(FACS_DEF));
-    if(!hh.data?.length && HERR.length)         await _sb.from('herramientas').upsert(_wrap(HERR));
-    if(!pp.data?.length && PROG_DEFAULT.length) await _sb.from('programas').upsert(_wrap(PROG_DEFAULT));
+    // NOTA: acá antes había un "seed automático" que subía SR/SD/etc a Supabase
+    // apenas la tabla volvía vacía (aunque fuera por un error momentáneo tipo el
+    // 42P17 de esta semana), pisando datos reales en silencio. Se sacó porque
+    // ya no es "primera vez" en un sistema en producción — si hace falta poblar
+    // una base realmente nueva, se hace a mano una sola vez.
     // ✅ Guardar copia local para uso offline
     saveLocalCache();
     updateOfflineUI();
@@ -5076,6 +5096,28 @@ function openModal(type,id,extra){
     document.getElementById('fDispSummary').textContent=dispDias.length
       ?'🗓️ '+dispDias.map(([dia,d])=>`${dia.substring(0,3)} ${d.desde}-${d.hasta}`).join(' · ')
       :'Sin disponibilidad cargada todavía.';
+    const accesoField=document.getElementById('fAccesoField');
+    accesoField.style.display=_id?'':'none';
+    document.getElementById('fAuthUuid').value='';
+    document.getElementById('fAccesoEmail').value=f?(f.email||''):'';
+    document.getElementById('fAccesoPass').value='';
+    document.getElementById('fAccesoManual').style.display='none';
+    document.getElementById('fAccesoCrear').style.display='';
+    document.getElementById('fAccesoEstado').textContent='';
+    if(_id){
+      _sb.from('profiles').select('id').eq('facilitador_id',_id).maybeSingle().then(({data:prof})=>{
+        if(document.getElementById('fId').value!==_id)return; // se cerró/cambió el modal mientras tanto
+        if(prof){
+          document.getElementById('fAuthUuid').value=prof.id;
+          document.getElementById('fAccesoEstado').textContent='✓ Ya tiene acceso creado';
+          document.getElementById('fAccesoEstado').style.color='var(--green,#3DAA6A)';
+          document.getElementById('fAccesoCrear').style.display='none';
+        }else{
+          document.getElementById('fAccesoEstado').textContent='Sin acceso al portal todavía';
+          document.getElementById('fAccesoEstado').style.color='var(--muted)';
+        }
+      });
+    }
     document.getElementById('moFac').classList.add('open');
   } else if(type==='herr'){
     const h=_id?herramientas.find(x=>String(x.id)===_id):null;
@@ -7838,6 +7880,52 @@ function saveFac(){
   }
   save();closeModal('moFac');
   if(curSec==='facilitadores')renderFacs();
+}
+async function crearAccesoFac(btn){
+  const facId=document.getElementById('fId').value;
+  const email=document.getElementById('fAccesoEmail').value.trim();
+  const pass=document.getElementById('fAccesoPass').value;
+  if(!facId){alert('Guardá el facilitador primero para poder crear su acceso.');return;}
+  if(!email||!pass){alert('Completá el email y la contraseña.');return;}
+  if(pass.length<6){alert('La contraseña debe tener al menos 6 caracteres.');return;}
+  if(btn){btn.disabled=true;btn.textContent='Creando...';}
+  try{
+    const{data:{session}}=await _sb.auth.getSession();
+    if(!session){alert('Tu sesión expiró — recargá la página y volvé a loguearte.');return;}
+    const resp=await fetch('/api/crear-facilitador',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+session.access_token},
+      body:JSON.stringify({email,password:pass,facilitadorId:facId})
+    });
+    const json=await resp.json();
+    if(!json.ok)throw new Error(json.error||'Error desconocido');
+    document.getElementById('fAuthUuid').value=json.id;
+    document.getElementById('fAccesoEstado').textContent='✓ Acceso creado';
+    document.getElementById('fAccesoEstado').style.color='var(--green,#3DAA6A)';
+    document.getElementById('fAccesoCrear').style.display='none';
+    toast('✓ Acceso creado — ya puede entrar a su portal con ese email y esa contraseña');
+  }catch(e){
+    console.error('crearAccesoFac',e);
+    alert('No se pudo crear el acceso: '+e.message);
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent='🔐 Crear acceso';}
+  }
+}
+async function vincularAccesoFac(){
+  const facId=document.getElementById('fId').value;
+  const uuid=document.getElementById('fAuthUuid').value.trim();
+  if(!facId){alert('Guardá el facilitador primero para poder vincular su acceso.');return;}
+  if(!uuid){alert('Pegá el UUID del usuario de Supabase Auth (Authentication → Users).');return;}
+  try{
+    const{error}=await _sb.from('profiles').upsert({id:uuid,rol:'facilitador',facilitador_id:facId});
+    if(error)throw error;
+    document.getElementById('fAccesoEstado').textContent='✓ Vinculado';
+    document.getElementById('fAccesoEstado').style.color='var(--green,#3DAA6A)';
+    toast('✓ Acceso vinculado — ya puede entrar a su portal');
+  }catch(e){
+    console.error('vincularAccesoFac',e);
+    alert('No se pudo vincular: '+(e.message||'revisá que el UUID sea correcto.'));
+  }
 }
 function copiarFacId(){
   const id=document.getElementById('fId').value;
