@@ -79,6 +79,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   color:var(--gl);font-size:11.5px;font-weight:600;text-align:center;max-width:90%;}
 .btn-out{background:none;border:1px solid var(--border);border-radius:8px;color:var(--muted);
   padding:6px 14px;font-size:12px;cursor:pointer;margin-top:12px;}
+.btn-out-bottom{display:none;width:100%;background:none;border:1px solid var(--border);border-radius:10px;color:var(--muted);
+  padding:12px;font-size:13px;cursor:pointer;margin:28px 0 8px;}
 .btn-out:hover{border-color:var(--red);color:var(--red);}
 .sec-title{font-size:14px;font-weight:700;color:var(--gl);margin-bottom:12px;display:flex;align-items:center;gap:8px;}
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px;}
@@ -290,6 +292,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .intake-card{padding:18px 14px;}
   .tools-grid{grid-template-columns:1fr 1fr;}
   .sec-btns-row{grid-template-columns:1fr 1fr!important;}
+  .btn-out{display:none;}
+  .btn-out-bottom{display:block;}
 }
 </style>
 </head>
@@ -386,6 +390,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="sec-title">✨ Mis Sesiones</div>
   <div class="filter-row" id="filterRow"></div>
   <div class="ses-list" id="sesList"></div>
+  <button class="btn-out-bottom" onclick="doLogout()">Cerrar sesión</button>
 </div>
 
 <!-- AGENDA MODAL -->
@@ -1078,7 +1083,12 @@ function renderHeader(){
   const n=curSer.nombre||'Ser';
   document.getElementById('pName').textContent=n;
   document.getElementById('avLetter').textContent=n.charAt(0).toUpperCase();
-  document.getElementById('pSub').textContent=curSer.programa?'🌟 '+curSer.programa:'Este espacio es para vos, para que puedas integrar lo vivido, ponerle palabras y dejar que tu energía se exprese. Todo lo que compartas será recibido con gratitud y presencia.';
+  const pSubEl=document.getElementById('pSub');
+  if(curSer.programa){
+    pSubEl.textContent='🌟 '+curSer.programa;
+  }else{
+    pSubEl.innerHTML='<div>Este espacio es para vos, para que puedas integrar lo vivido, ponerle palabras y dejar que tu energía se exprese.</div><div style="margin-top:8px">Todo lo que compartas será recibido con gratitud y presencia.</div>';
+  }
   loadMisionColectiva();
 }
 
