@@ -145,6 +145,11 @@ main{max-width:870px;margin:0 auto;padding:48px 20px 88px;}
 .ml-pct{font-size:12px;font-weight:700;color:var(--gl);margin-bottom:6px;}
 .pb{height:4px;background:rgba(20,16,4,.9);border-radius:99px;overflow:hidden;}
 .pf{height:100%;background:linear-gradient(90deg,var(--gold),var(--gl));border-radius:99px;box-shadow:0 0 6px rgba(201,168,76,.4);}
+.horizonte-block{padding:18px 22px;margin:4px 0;background:rgba(8,9,4,.5);border:1px solid rgba(42,40,20,.4);border-radius:14px;}
+.horizonte-title{font-size:11px;font-weight:700;color:var(--gd);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px;}
+.horizonte-text{font-size:12.5px;line-height:1.8;color:var(--muted);}
+.ml-item.horizonte-final{justify-content:center;border-color:rgba(201,168,76,.35);background:rgba(16,12,2,.85);padding:26px 20px;}
+.ml-title-final{font-size:17px;font-weight:800;color:var(--gl);margin-bottom:6px;text-shadow:0 0 20px rgba(232,201,106,.3);}
 
 /* ── MI CAMINO ── */
 .camino-quote{font-size:23px;font-weight:800;color:#fff;line-height:1.4;text-align:center;
@@ -912,9 +917,18 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'){cerrarFacModal();ce
 
 const OBJ_LIST=[100,300,500,1000,3000,5000,10000,30000,50000,100000,300000,500000,1000000];
 
-function objLabel(m,i){
-  if(m===1000000)return 'Objetivo 13 — 🎉 1.000.000';
-  return `Objetivo ${i+1}`;
+const HITO_NOMBRADO=[100,300,500,1000,3000];
+const HITO_LABELS={
+  100:'Empezamos a sostenerlo',
+  300:'Ya no lo sostenemos solos',
+  500:'Se sostiene entre todos',
+  1000:'Mil manos sosteniendo esto',
+  3000:'Sigue creciendo lo que sostenemos'
+};
+function objLabel(m){
+  if(m===1000000)return 'El deseo que sostenemos';
+  if(HITO_LABELS[m])return HITO_LABELS[m];
+  return 'El horizonte';
 }
 function fd(s){
   if(!s)return '—';
@@ -971,7 +985,7 @@ async function init(){
     const faltan=nextMilestone-totSes;
     document.getElementById('nextBox').innerHTML=`
       <h3>Próximo</h3>
-      <div class="obj-name">${objLabel(nextMilestone,nextIdx)} — ${nextMilestone.toLocaleString('es-AR')} sesiones</div>
+      <div class="obj-name">${objLabel(nextMilestone)} — ${nextMilestone.toLocaleString('es-AR')} sesiones</div>
       <div class="obj-sub">${fmtN(totSes)} completadas &nbsp;·&nbsp; Faltan <strong style="color:var(--gl)">${faltan.toLocaleString('es-AR')}</strong> sesiones</div>
       <div class="next-pct">${pct}% completado</div>
       <div class="big-bar"><div class="big-fill" style="width:${pct}%"></div></div>
@@ -980,22 +994,22 @@ async function init(){
     document.getElementById('nextBox').innerHTML=`<div class="obj-name" style="text-align:center">🎉 ¡1.000.000 alcanzado! Misión cumplida.</div>`;
   }
 
-  /* Mapa de objetivos */
+  /* Mapa de pasos */
   let foundNext=false,html='';
-  OBJ_LIST.forEach((m,i)=>{
+  HITO_NOMBRADO.forEach(m=>{
     const done=totSes>=m;
     const isNext=!done&&!foundNext;
     if(isNext)foundNext=true;
     const cls=done?'done':isNext?'next':'fut';
-    const icon=done?'✓':isNext?'→':String(i+1);
+    const icon=done?'✓':isNext?'→':'';
     const pct=done?100:Math.min(99,parseFloat((totSes/m*100).toFixed(1)));
     const dateStr=milestoneDates[String(m)]||null;
     html+=`<div class="ml-item ${cls}">
       <div class="ml-dot ${cls}">${icon}</div>
       <div class="ml-info">
-        <div class="ml-title ${cls}">${objLabel(m,i)} &mdash; ${m.toLocaleString('es-AR')} sesiones</div>
-        <div class="ml-sub">${done?'✅ Alcanzado':isNext?`🔥 En progreso — faltan ${(m-totSes).toLocaleString('es-AR')}`:`⌛ Faltan ${(m-totSes).toLocaleString('es-AR')} sesiones`}</div>
-        ${done&&dateStr?`<div class="ml-date">📅 Alcanzado el ${fd(dateStr)}</div>`:''}
+        <div class="ml-title ${cls}">${objLabel(m)}</div>
+        <div class="ml-sub">${done?`Alcanzado — ${m.toLocaleString('es-AR')} sesiones`:isNext?`En camino — van ${totSes.toLocaleString('es-AR')} de ${m.toLocaleString('es-AR')}`:`${m.toLocaleString('es-AR')} sesiones`}</div>
+        ${done&&dateStr?`<div class="ml-date">Alcanzado el ${fd(dateStr)}</div>`:''}
       </div>
       <div class="ml-right">
         <div class="ml-pct">${pct}%</div>
@@ -1003,6 +1017,20 @@ async function init(){
       </div>
     </div>`;
   });
+
+  const horizonte=OBJ_LIST.filter(m=>!HITO_NOMBRADO.includes(m)&&m!==1000000);
+  html+=`<div class="horizonte-block">
+    <div class="horizonte-title">El horizonte</div>
+    <p class="horizonte-text">Más allá de acá el camino sigue creciendo — ${horizonte.map(m=>m.toLocaleString('es-AR')).join(' · ')} — cada número, más gente sosteniendo lo mismo.</p>
+  </div>`;
+
+  html+=`<div class="ml-item horizonte-final">
+    <div class="ml-info" style="text-align:center">
+      <div class="ml-title-final">El deseo que sostenemos</div>
+      <div class="ml-sub">1.000.000 de herramientas de consciencia experienciales</div>
+    </div>
+  </div>`;
+
   document.getElementById('milestoneList').innerHTML=html;
 
   document.getElementById('loading').style.display='none';
