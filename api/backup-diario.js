@@ -20,11 +20,14 @@ const RETENCION_DIAS = 30;
 const TABLAS = [
   'seres','sessions','facilitadores','facturas','herramientas','programas',
   'campanas','inscripciones','egresos','regalos','comunidad_contenido',
-  'onboardings','sintesis','metricas_redes','contenido_redes','profiles',
+  'onboardings','metricas_redes','contenido_redes','profiles',
   'biblioteca','biblioteca_notas','configuracion','conocimiento',
   'regalo_eventos','ruleta_fidelidad','ruleta_fidelidad_giros',
   'tesoro_premios','tesoro_ruleta'
 ];
+// profiles no sigue el patrón id+data (jsonb) del resto de las tablas —
+// tiene columnas propias (rol, facilitador_id, updated_at), así que se lee entera con "*".
+const SELECT_POR_TABLA = { profiles: '*' };
 
 function supaRequest(method, path, body) {
   return new Promise((resolve, reject) => {
@@ -64,7 +67,8 @@ async function exportarTodo() {
   const errores = [];
   for (const tabla of TABLAS) {
     try {
-      const rows = await supaRequest('GET', `/rest/v1/${tabla}?select=id,data`);
+      const select = SELECT_POR_TABLA[tabla] || 'id,data';
+      const rows = await supaRequest('GET', `/rest/v1/${tabla}?select=${select}`);
       resultado[tabla] = Array.isArray(rows) ? rows : [];
     } catch (e) {
       errores.push(`${tabla}: ${e.message}`);
