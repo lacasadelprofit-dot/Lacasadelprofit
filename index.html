@@ -2395,6 +2395,29 @@ function loadLocalCache(){
   }catch(e){return false;}
 }
 
+/* ── Configuración compartida entre dispositivos (tabla configuracion) ──
+   Metas, seguidores y puntos de partida vivían solo en el localStorage de
+   cada dispositivo. Ahora localStorage queda como caché y la nube manda. */
+const CFG_KEYS={lcp_goals_by_month:'cfg_goals_by_month',lcp_followers:'cfg_followers',lcp_start_points:'cfg_start_points'};
+function cfgPush(lsKey){
+  try{
+    const data=JSON.parse(localStorage.getItem(lsKey)||'{}');
+    _sb.from('configuracion').upsert({id:CFG_KEYS[lsKey],data,updated_at:new Date().toISOString()})
+      .then(({error})=>{if(error){console.error('cfgPush ['+lsKey+']:',error.message);toast('⚠️ No se pudo guardar en la nube — quedó solo en este dispositivo');}});
+  }catch(e){console.warn('cfgPush:',e);}
+}
+async function cfgPull(){
+  try{
+    const{data,error}=await _sb.from('configuracion').select('id,data').in('id',Object.values(CFG_KEYS));
+    if(error)throw error; // con error no se sube nada: no confundir "falló" con "no existe"
+    const nube=Object.fromEntries((data||[]).map(r=>[r.id,r.data]));
+    for(const [lsKey,id] of Object.entries(CFG_KEYS)){
+      if(nube[id])localStorage.setItem(lsKey,JSON.stringify(nube[id]));
+      else if(localStorage.getItem(lsKey))cfgPush(lsKey); // primera vez: sube lo que tenía este dispositivo
+    }
+  }catch(e){console.warn('cfgPull:',e.message||e);}
+}
+
 function getPendingQueue(){
   try{return JSON.parse(localStorage.getItem(LCP_QUEUE)||'[]');}catch{return[];}
 }
@@ -2583,6 +2606,7 @@ async function loadData(silent=false){
     // 42P17 de esta semana), pisando datos reales en silencio. Se sacó porque
     // ya no es "primera vez" en un sistema en producción — si hace falta poblar
     // una base realmente nueva, se hace a mano una sola vez.
+    await cfgPull();
     // ✅ Guardar copia local para uso offline
     saveLocalCache();
     updateOfflineUI();
@@ -8899,7 +8923,7 @@ function getMonthGoals(mes){
   try{const all=JSON.parse(localStorage.getItem('lcp_goals_by_month')||'{}');return all[mes]||{};}catch{return{};}
 }
 function saveMonthGoals(mes,goals){
-  try{const all=JSON.parse(localStorage.getItem('lcp_goals_by_month')||'{}');all[mes]=goals;localStorage.setItem('lcp_goals_by_month',JSON.stringify(all));}catch{}
+  try{const all=JSON.parse(localStorage.getItem('lcp_goals_by_month')||'{}');all[mes]=goals;localStorage.setItem('lcp_goals_by_month',JSON.stringify(all));cfgPush('lcp_goals_by_month');}catch{}
 }
 // Compat: getContGoals() retorna metas del mes actual
 function getContGoals(){return getMonthGoals(new Date().toISOString().slice(0,7));}
@@ -11888,14 +11912,14 @@ function getAllFollowers(){
   try{return JSON.parse(localStorage.getItem('lcp_followers')||'{}');}catch{return{};}
 }
 function saveFollower(mes,plat,val){
-  try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');if(!all[mes])all[mes]={};all[mes][plat]=parseInt(val)||0;localStorage.setItem('lcp_followers',JSON.stringify(all));renderContResumen();}catch{}
+  try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');if(!all[mes])all[mes]={};all[mes][plat]=parseInt(val)||0;localStorage.setItem('lcp_followers',JSON.stringify(all));cfgPush('lcp_followers');renderContResumen();}catch{}
 }
 /* ── Punto de partida por plataforma ── */
 function getStartPoints(){
   try{return JSON.parse(localStorage.getItem('lcp_start_points')||'{}');}catch{return{};}
 }
 function saveStartPoint(plat,fecha,seg){
-  try{const s=getStartPoints();s[plat]={fecha,seg:parseInt(seg)||0};localStorage.setItem('lcp_start_points',JSON.stringify(s));renderContResumen();}catch{}
+  try{const s=getStartPoints();s[plat]={fecha,seg:parseInt(seg)||0};localStorage.setItem('lcp_start_points',JSON.stringify(s));cfgPush('lcp_start_points');renderContResumen();}catch{}
 }
 function editStartPoint(plat,label){
   const s=getStartPoints();const cur=s[plat]||{};
