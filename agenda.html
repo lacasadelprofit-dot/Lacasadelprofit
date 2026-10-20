@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Agenda de Turnos — La Casa del Profit</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#06060A;--card:#141320;--card2:#1C1A2E;--border:#2A2840;
+  --gold:#C9A84C;--gl:#E8C96A;--gdk:#4A380A;
+  --text:#EDE5C8;--muted:#7A7260;
+  --green:#3DAA6A;--red:#E05555;--blue:#5B9BD5;--or:#D4863A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;}
+.wrap{max-width:980px;margin:0 auto;padding:24px 16px 60px;}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:22px;flex-wrap:wrap;}
+h1{font-size:22px;color:var(--gl);font-weight:800;}
+h1 small{display:block;font-size:12px;color:var(--muted);font-weight:500;margin-top:2px;}
+h2{font-size:15px;color:var(--gold);font-weight:800;margin-bottom:12px;}
+a{color:var(--gl);}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;}
+.tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;}
+.tab{padding:9px 16px;border-radius:20px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-weight:700;font-family:inherit;font-size:13px;}
+.tab.on{background:var(--gold);border-color:var(--gold);color:#1a1200;}
+.btn{padding:8px 14px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);cursor:pointer;font-family:inherit;font-size:12px;font-weight:700;white-space:nowrap;}
+.btn:hover{border-color:var(--gold);}
+.btn-p{background:var(--gold);border-color:var(--gold);color:#1a1200;}
+.btn-ok{border-color:var(--green);color:var(--green);}
+.btn-x{border-color:rgba(224,85,85,.5);color:var(--red);}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px;}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;}
+.kpi b{display:block;font-size:24px;color:var(--gl);}
+.kpi span{font-size:11px;color:var(--muted);}
+.dia{margin-bottom:16px;}
+.dia-h{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+.dia-h.hoy{color:var(--gl);}
+.row{display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border:1px solid var(--border);border-radius:12px;margin-bottom:8px;flex-wrap:wrap;}
+.row .hora{font-size:16px;font-weight:800;color:var(--gl);width:54px;}
+.row .info{flex:1;min-width:180px;}
+.row .info .n{font-weight:800;}
+.row .info .s{font-size:12px;color:var(--muted);margin-top:2px;}
+.row .acc{display:flex;gap:6px;flex-wrap:wrap;}
+.row.libre{background:none;border-style:dashed;color:var(--muted);}
+.badge{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:20px;margin-left:6px;vertical-align:1px;}
+.b-pend{background:rgba(212,134,58,.15);color:var(--or);}
+.b-ok{background:rgba(61,170,106,.15);color:var(--green);}
+.b-blq{background:rgba(122,114,96,.2);color:var(--muted);}
+.b-ins{background:rgba(91,155,213,.15);color:var(--blue);}
+.form{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;}
+.form label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--muted);font-weight:700;}
+input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:var(--card2);color:var(--text);font-family:inherit;font-size:13px;}
+.vacio{color:var(--muted);padding:12px 0;}
+.det{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.5;white-space:pre-wrap;}
+#login{max-width:340px;margin:12vh auto;display:flex;flex-direction:column;gap:10px;}
+#login h1{text-align:center;margin-bottom:8px;}
+#loginErr{color:var(--red);font-size:12px;text-align:center;min-height:16px;}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--gold);padding:10px 18px;border-radius:10px;display:none;z-index:9;}
+@media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr);}.row .acc{width:100%;}}
+</style>
+</head>
+<body>
+
+<div id="login" style="display:none">
+  <h1>📅 Agenda de Turnos</h1>
+  <input id="liEmail" type="email" placeholder="Email">
+  <input id="liPass" type="password" placeholder="Contraseña">
+  <button class="btn btn-p" onclick="doLogin()">Entrar</button>
+  <div id="loginErr"></div>
+</div>
+
+<div id="app" class="wrap" style="display:none">
+  <header>
+    <h1>📅 Agenda de Turnos<small>juancruzconsciencia.lat · Posada Luz y Brillo, Búzios · Lun a Vie 09:00 / 10:30 / 19:00</small></h1>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="cargar()">↻ Actualizar</button>
+      <a class="btn" href="index.html" style="text-decoration:none">← Admin</a>
+    </div>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="tabs">
+    <button class="tab on" data-tab="proximos" onclick="setTab('proximos')">Próximos turnos</button>
+    <button class="tab" data-tab="bloqueos" onclick="setTab('bloqueos')">Bloquear horarios</button>
+    <button class="tab" data-tab="clase" onclick="setTab('clase')">Clase de Barras</button>
+    <button class="tab" data-tab="historial" onclick="setTab('historial')">Historial</button>
+  </div>
+
+  <div id="tab-proximos"></div>
+
+  <div id="tab-bloqueos" style="display:none">
+    <div class="card">
+      <h2>Bloquear un horario o un día entero</h2>
+      <p class="det" style="margin:0 0 12px">Vacaciones, feriados, un compromiso. Lo bloqueado deja de aparecer en la web. Para liberarlo, tocá "Desbloquear".</p>
+      <div class="form">
+        <label>Fecha<input type="date" id="bFecha"></label>
+        <label>Horario<select id="bHora"><option value="todo">Todo el día</option><option>09:00</option><option>10:30</option><option>19:00</option></select></label>
+        <label style="flex:1;min-width:160px">Motivo (solo lo ves vos)<input id="bMotivo" placeholder="Ej: viaje"></label>
+        <button class="btn btn-p" onclick="bloquear()">Bloquear</button>
+      </div>
+    </div>
+    <div id="listaBloqueos"></div>
+  </div>
+
+  <div id="tab-clase" style="display:none">
+    <div class="card">
+      <h2>Nueva fecha de clase</h2>
+      <p class="det" style="margin:0 0 12px">Apenas la cargás, aparece en la web para que la gente se anote. Sin cupo máximo. Si no hay ninguna fecha activa, la web muestra el formulario de siempre.</p>
+      <div class="form">
+        <label>Fecha<input type="date" id="cFecha"></label>
+        <label>Hora de inicio<input type="time" id="cHora" value="10:00"></label>
+        <label style="flex:1;min-width:200px">Lugar<input id="cLugar" value="Posada Luz y Brillo · Búzios"></label>
+        <button class="btn btn-p" onclick="crearClase()">Agregar fecha</button>
+      </div>
+    </div>
+    <div id="listaClases"></div>
+  </div>
+
+  <div id="tab-historial" style="display:none"></div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
+const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+const HORAS=['09:00','10:30','19:00'];
+const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
+const SENIA={barras:'R$ 100 / USD 30',proceso_cuerpos:'R$ 150 / USD 35'};
+let turnos=[], clases=[], _tab='proximos';
+
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const hoyBR=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
+const sumarDias=(iso,n)=>{const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
+const fmt=(iso,o={weekday:'long',day:'numeric',month:'long'})=>new Date(iso+'T12:00:00Z').toLocaleDateString('es-AR',{timeZone:'UTC',...o});
+function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600);}
+function waLink(cel,txt){return `https://wa.me/${esc(cel)}${txt?'?text='+encodeURIComponent(txt):''}`;}
+
+/* ── AUTH (misma sesión que el admin) ── */
+async function doLogin(){
+  const {error}=await _sb.auth.signInWithPassword({email:liEmail.value.trim(),password:liPass.value});
+  if(error){loginErr.textContent='Email o contraseña incorrectos';return;}
+  iniciar();
+}
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&login.style.display!=='none')doLogin();});
+async function iniciar(){
+  login.style.display='none';app.style.display='block';
+  document.getElementById('bFecha').value=hoyBR();
+  await cargar();
+}
+(async()=>{
+  const {data:{session}}=await _sb.auth.getSession();
+  if(session)iniciar();else login.style.display='flex';
+})();
+
+/* ── DATOS ── */
+async function cargar(){
+  const desde=sumarDias(hoyBR(),-60);
+  const [t,c]=await Promise.all([
+    _sb.from('turnos').select('*').gte('fecha',desde).order('fecha').order('hora'),
+    _sb.from('clase_fechas').select('*').order('fecha')
+  ]);
+  if(t.error||c.error){
+    const e=t.error||c.error;console.warn(e);
+    document.getElementById('tab-proximos').innerHTML=`<div class="card">⚠️ No se pudo cargar la agenda: ${esc(e.message)}<div class="det">Si dice que la tabla no existe, falta correr <b>4_BASE_DE_DATOS/29_agenda_turnos.sql</b> en Supabase.</div></div>`;
+    return;
+  }
+  turnos=t.data||[];clases=c.data||[];
+  render();
+}
+async function setEstado(id,estado,msgOk){
+  const {error}=await _sb.from('turnos').update({estado}).eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  toast(msgOk);cargar();
+}
+function confirmarSenia(id){setEstado(id,'confirmado','✓ Seña registrada, turno confirmado');}
+function cancelar(id){if(confirm('¿Cancelar este turno? El horario vuelve a quedar libre en la web.'))setEstado(id,'cancelado','Turno cancelado · horario liberado');}
+function desbloquear(id){setEstado(id,'cancelado','Horario desbloqueado');}
+
+async function bloquear(){
+  const fecha=bFecha.value,hora=bHora.value;
+  if(!fecha){toast('Elegí una fecha');return;}
+  const {error}=await _sb.from('turnos').insert({id:crypto.randomUUID(),fecha,hora,servicio:'bloqueo',estado:'bloqueado',data:{motivo:bMotivo.value.trim()}});
+  if(error){toast(error.code==='23505'?'Ese horario ya está ocupado o bloqueado':'Error: '+error.message);return;}
+  bMotivo.value='';toast('Bloqueado');cargar();
+}
+async function crearClase(){
+  const fecha=cFecha.value,hora=cHora.value||'10:00',lugar=cLugar.value.trim()||'Posada Luz y Brillo · Búzios';
+  if(!fecha){toast('Elegí una fecha');return;}
+  const {error}=await _sb.from('clase_fechas').insert({id:crypto.randomUUID(),fecha,hora,lugar,activo:true});
+  if(error){toast('Error: '+error.message);return;}
+  toast('Fecha agregada · ya aparece en la web');cargar();
+}
+async function toggleClase(id,activo){
+  const {error}=await _sb.from('clase_fechas').update({activo}).eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  toast(activo?'Fecha visible en la web':'Fecha oculta de la web');cargar();
+}
+
+/* ── RENDER ── */
+function setTab(t){
+  _tab=t;
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
+  ['proximos','bloqueos','clase','historial'].forEach(k=>document.getElementById('tab-'+k).style.display=k===t?'':'none');
+}
+function badge(e){
+  return {pendiente_senia:'<span class="badge b-pend">Falta seña</span>',confirmado:'<span class="badge b-ok">Confirmado</span>',
+    bloqueado:'<span class="badge b-blq">Bloqueado</span>',inscripto:'<span class="badge b-ins">Inscripto</span>',
+    cancelado:'<span class="badge b-blq">Cancelado</span>'}[e]||'';
+}
+function filaTurno(t,conAcciones=true){
+  const d=t.data||{};
+  const detalle=[d.mensaje&&('💬 '+d.mensaje),d.patron&&('🔁 '+d.patron),d.sintomas?.length&&('🌀 '+d.sintomas.join(', '))].filter(Boolean).join('\n');
+  const fechaTxt=fmt(t.fecha);
+  const msgRecordatorio=`¡Hola ${d.nombre||''}! Te escribo por tu turno de ${(SERV[t.servicio]||'').replace(/^\S+ /,'')} el ${fechaTxt} a las ${t.hora} en Posada Luz y Brillo, Búzios.`;
+  let acc='';
+  if(conAcciones){
+    if(t.estado==='pendiente_senia')acc+=`<button class="btn btn-ok" onclick="confirmarSenia('${t.id}')">✓ Seña recibida</button>`;
+    if(d.celular)acc+=`<a class="btn" style="text-decoration:none" target="_blank" href="${waLink(d.celular,msgRecordatorio)}">WhatsApp</a>`;
+    acc+=`<button class="btn btn-x" onclick="cancelar('${t.id}')">Cancelar</button>`;
+  }
+  return `<div class="row">
+    <div class="hora">${esc(t.hora)}</div>
+    <div class="info">
+      <div class="n">${esc(d.nombre||'—')}${badge(t.estado)}</div>
+      <div class="s">${SERV[t.servicio]||esc(t.servicio)}${SENIA[t.servicio]&&t.estado==='pendiente_senia'?' · seña '+SENIA[t.servicio]:''}${d.celular?' · +'+esc(d.celular):''}</div>
+      ${detalle?`<div class="det">${esc(detalle)}</div>`:''}
+    </div>
+    <div class="acc">${acc}</div>
+  </div>`;
+}
+function render(){
+  const hoy=hoyBR();
+  const act=turnos.filter(t=>t.estado!=='cancelado');
+  const futuros=act.filter(t=>t.fecha>=hoy&&t.servicio!=='clase_barras');
+  const sesiones=futuros.filter(t=>t.servicio!=='bloqueo');
+  // Turnos libres esta semana (lun-vie de la semana en curso, desde hoy)
+  const dow=new Date(hoy+'T12:00:00Z').getUTCDay();
+  const lunes=sumarDias(hoy,dow===0?1:dow===6?2:1-dow);
+  let libresSemana=0;
+  for(let i=0;i<5;i++){
+    const f=sumarDias(lunes,i);if(f<hoy)continue;
+    if(act.some(t=>t.fecha===f&&t.hora==='todo'))continue;
+    HORAS.forEach(h=>{if(!act.some(t=>t.fecha===f&&t.hora===h))libresSemana++;});
+  }
+  document.getElementById('kpis').innerHTML=`
+    <div class="kpi"><b>${sesiones.length}</b><span>Turnos próximos</span></div>
+    <div class="kpi"><b>${sesiones.filter(t=>t.estado==='pendiente_senia').length}</b><span>Esperando seña</span></div>
+    <div class="kpi"><b>${libresSemana}</b><span>Libres ${dow===0||dow===6?'la próxima semana':'esta semana'}</span></div>
+    <div class="kpi"><b>${act.filter(t=>t.servicio==='clase_barras'&&t.fecha>=hoy).length}</b><span>Inscriptos a clases</span></div>`;
+
+  // Próximos: 21 días, mostrando huecos libres
+  let html='';
+  for(let i=0;i<21;i++){
+    const f=sumarDias(hoy,i);
+    const wd=new Date(f+'T12:00:00Z').getUTCDay();
+    const delDia=act.filter(t=>t.fecha===f&&t.servicio!=='clase_barras');
+    if((wd===0||wd===6)&&!delDia.length)continue;
+    const diaEntero=delDia.find(t=>t.hora==='todo');
+    html+=`<div class="dia"><div class="dia-h${i===0?' hoy':''}">${i===0?'Hoy · ':''}${fmt(f)}</div>`;
+    if(diaEntero){
+      html+=`<div class="row libre">⛔ Día bloqueado${diaEntero.data?.motivo?' · '+esc(diaEntero.data.motivo):''} <button class="btn" style="margin-left:auto" onclick="desbloquear('${diaEntero.id}')">Desbloquear</button></div>`;
+      // Turnos que ya estaban reservados antes del bloqueo: siguen visibles para avisarle a la persona
+      html+=delDia.filter(t=>t.servicio!=='bloqueo').map(t=>filaTurno(t)).join('');
+    }
+    else HORAS.forEach(h=>{
+      const t=delDia.find(x=>x.hora===h);
+      if(!t)html+=`<div class="row libre"><div class="hora" style="color:var(--muted)">${h}</div>Libre</div>`;
+      else if(t.servicio==='bloqueo')html+=`<div class="row libre"><div class="hora" style="color:var(--muted)">${h}</div>⛔ Bloqueado${t.data?.motivo?' · '+esc(t.data.motivo):''}<button class="btn" style="margin-left:auto" onclick="desbloquear('${t.id}')">Desbloquear</button></div>`;
+      else html+=filaTurno(t);
+    });
+    html+='</div>';
+  }
+  document.getElementById('tab-proximos').innerHTML=html;
+
+  // Bloqueos vigentes
+  const bl=futuros.filter(t=>t.servicio==='bloqueo');
+  document.getElementById('listaBloqueos').innerHTML=`<div class="card"><h2>Bloqueos vigentes</h2>${bl.length?bl.map(t=>
+    `<div class="row"><div class="info"><div class="n">${fmt(t.fecha)} · ${t.hora==='todo'?'Todo el día':esc(t.hora)}</div>${t.data?.motivo?`<div class="s">${esc(t.data.motivo)}</div>`:''}</div><div class="acc"><button class="btn" onclick="desbloquear('${t.id}')">Desbloquear</button></div></div>`
+  ).join(''):'<div class="vacio">No hay nada bloqueado.</div>'}</div>`;
+
+  // Clases
+  document.getElementById('listaClases').innerHTML=clases.length?clases.slice().reverse().map(c=>{
+    const ins=act.filter(t=>t.servicio==='clase_barras'&&t.data?.claseId===c.id);
+    const pasada=c.fecha<hoy;
+    return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+      <h2 style="margin:0">${fmt(c.fecha)} · ${esc(c.hora)}${pasada?' <span class="badge b-blq">Pasada</span>':c.activo?' <span class="badge b-ok">Visible en la web</span>':' <span class="badge b-blq">Oculta</span>'}</h2>
+      ${pasada?'':`<button class="btn" onclick="toggleClase('${c.id}',${!c.activo})">${c.activo?'Ocultar de la web':'Mostrar en la web'}</button>`}</div>
+      <div class="det" style="margin:0 0 10px">📍 ${esc(c.lugar)} · ${ins.length} inscripto${ins.length===1?'':'s'}</div>
+      ${ins.map(t=>filaTurno(t)).join('')||'<div class="vacio">Todavía nadie se anotó.</div>'}</div>`;
+  }).join(''):'<div class="card vacio">No hay fechas de clase cargadas.</div>';
+
+  // Historial: últimos 60 días
+  const pas=turnos.filter(t=>t.fecha<hoy&&t.servicio!=='bloqueo').reverse();
+  document.getElementById('tab-historial').innerHTML=`<div class="card"><h2>Últimos 60 días</h2>${pas.length?pas.map(t=>
+    `<div class="dia-h" style="margin:10px 0 6px">${fmt(t.fecha)}</div>`+filaTurno(t,false)).join(''):'<div class="vacio">Sin turnos pasados todavía.</div>'}</div>`;
+}
+</script>
+</body>
+</html>
