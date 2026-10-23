@@ -724,9 +724,9 @@ async function doLogin(){
   btn.disabled=true;btn.textContent='Buscando...';
   showLoader('Buscando tu perfil...');
   try{
-    const {data,error}=await _sb.from('seres').select('id,data');
+    // La base solo devuelve el ser con ese email (no la lista completa) — ver 33_portal_ser_funciones.sql
+    const {data:found,error}=await _sb.rpc('portal_ser_login',{p_email:email});
     if(error)throw error;
-    const found=data?.find(r=>(r.data?.email||'').toLowerCase().trim()===email);
     if(!found){
       hideLoader();
       errEl.textContent='No encontramos ese email. Verificá que sea el mismo que le diste a Juan Cruz.';
@@ -1123,12 +1123,11 @@ async function loadHerramientas(){
 async function loadSessions(){
   showLoader('Cargando tus sesiones...');
   try{
-    const {data,error}=await _sb.from('sessions').select('id,data');
+    // Solo las sesiones de este ser, filtradas en la base
+    const {data,error}=await _sb.rpc('portal_ser_sesiones',{p_email:curSer.email||''});
     if(error)throw error;
-    const nombre=(curSer.nombre||'').toLowerCase().trim();
     allSessions=(data||[])
       .map(r=>({id:r.id,...r.data}))
-      .filter(s=>(s.ser||'').toLowerCase().trim()===nombre)
       .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   }catch(e){console.error(e);}
   hideLoader();
@@ -1510,11 +1509,11 @@ async function submitIntake(){
 
   // Save directly to Supabase
   try{
-    const {error}=await _sb.from('sessions').update({
-      data:intakeSesActual,
-      updated_at:new Date().toISOString()
-    }).eq('id',intakeSesActual.id);
-    if(error)console.warn('intake save error:',error.message);
+    // La base solo acepta los campos intake* y solo en sesiones de este ser
+    const {data:ok,error}=await _sb.rpc('portal_ser_guardar_intake',{
+      p_email:curSer.email||'',p_ses_id:String(intakeSesActual.id),p_intake:intakeData
+    });
+    if(error||!ok)console.warn('intake save error:',error?.message||'sesión no encontrada');
   }catch(e){console.warn('intake save error:',e.message);}
 
   hideLoader();

@@ -3852,6 +3852,7 @@ function renderSes(){
       <td style="white-space:nowrap">
         ${(s.monto||0)>0?`<div style="font-size:12px;font-weight:700;color:var(--gl)">$${(s.montoPagado||s.monto||0).toLocaleString('es-AR')}</div>${(s.saldoPendiente||0)>0?`<div style="font-size:10px;color:var(--or)">💸 Saldo $${s.saldoPendiente.toLocaleString('es-AR')}</div>`:''}`:'' }
         ${(s.saldoPendiente||0)>0?`<button class="btn btn-sm" style="background:rgba(212,134,58,.2);border:1px solid var(--or);color:var(--or);margin-top:3px" title="Cobrar saldo pendiente" onclick="cobrarSaldo('${s.id}')">💵 Cobrar saldo</button>`:`<button class="btn btn-s btn-sm" title="Crear factura" onclick="createFactFromSes('${s.id}')">💰</button>`}
+        ${(s.estado||'Completado')==='Completado'?`<button class="btn btn-s btn-sm" style="${s.resenaPedida?'opacity:.45':''}" title="${s.resenaPedida?'Reseña ya pedida el '+fd(s.resenaPedida)+' — volver a enviar':'Pedir reseña por WhatsApp'}" onclick="waResena('${s.id}')">⭐</button>`:''}
         <button class="btn btn-s btn-sm" onclick="openModal('ses','${s.id}')">✏️</button>
         <button class="btn btn-s btn-sm" onclick="delSes('${s.id}')">🗑</button>
       </td>
@@ -4326,6 +4327,24 @@ function waLink(cel, nombre){
   }
   const msg=encodeURIComponent('Hola '+(nombre||'').split(' ')[0]+'! 🌟');
   return `https://wa.me/${n}?text=${msg}`;
+}
+/* ── Pedir reseña de Google por WhatsApp después de una sesión ── */
+const RESENA_GOOGLE_URL='https://g.page/r/CQ49CL7ZcGG1EAI/review';
+function waResena(sesId){
+  const s=sessions.find(x=>String(x.id)===String(sesId));if(!s)return;
+  const ser=seres.find(x=>(x.nombre||'').toLowerCase().trim()===(s.ser||'').toLowerCase().trim());
+  let n=(ser?.celular||'').replace(/\D/g,'');
+  if(!n){toast('⚠️ '+(s.ser||'Este ser')+' no tiene celular cargado');return;}
+  // Celulares de Brasil (55...) van tal cual; el resto sigue la lógica argentina de waLink
+  if(!(n.startsWith('55')&&n.length>=12))n=waLink(n,'').replace('https://wa.me/','').split('?')[0];
+  const nom=(s.ser||'').split(' ')[0];
+  const hoy=s.fecha===new Date().toISOString().split('T')[0];
+  const msg=`Hola ${nom}! ✦ Gracias por la sesión de ${s.sesion||'hoy'}${hoy?' de hoy':''}, fue un placer acompañarte.\n\n`+
+    `Si te nace, contá tu experiencia acá: te lleva un minuto y ayuda a que más seres encuentren este espacio 🙏\n${RESENA_GOOGLE_URL}\n\n`+
+    `Y en tu portal podés integrar lo vivido y encontrar material para seguir:\n${location.origin}/portal_ser.html`;
+  window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`,'_blank');
+  s.resenaPedida=new Date().toISOString().split('T')[0];
+  save();renderSes();
 }
 function convertProsp(id){const s=seres.find(x=>x.id===id);if(s&&confirm(`¿Convertir a ${s.nombre} en Ser atendido?`)){s.prospecto=false;save();renderSeres();toast('¡'+s.nombre.split(' ')[0]+' ahora es un Ser ✨');}}
 let _showSerTab='resumen';
