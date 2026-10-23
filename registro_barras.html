@@ -190,6 +190,14 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <script>
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+/* ── PROSPECTOS: se guardan vía función (el público no puede leer la tabla seres) ── */
+async function guardarProspecto(sb,celular,nombre,campos,regalo,agendado){
+  const {error}=await sb.rpc('guardar_prospecto',{p_celular:celular,p_nombre:nombre,p_campos:campos||{},
+    p_regalo:regalo||null,p_agendado:!!agendado});
+  if(!error)return true;
+  if(error.code!=='PGRST202')throw error;
+  return false; // la función todavía no existe en Supabase → método anterior
+}
 
 function nid(){return String(Date.now()+Math.floor(Math.random()*1000));}
 
@@ -255,6 +263,12 @@ async function enviarRegistro(){
       body:JSON.stringify(ser)
     });
     let ok=fnResp.ok;
+    if(!ok){
+      const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+      ok=await guardarProspecto(sb,ser.celular,ser.nombre,{email:ser.email,pais:ser.pais,ciudad:ser.ciudad,origen:ser.origen,fuente:ser.origen,interes:ser.interes,
+        herramientaInteres:ser.herramientaInteres,mensajeRegistro:ser.mensajeRegistro,canalProsp:ser.canalProsp,
+        sintomas:ser.sintomas,momento:ser.momento,momentoOtro:ser.momentoOtro}).catch(e=>{console.warn(e);return true;});
+    }
     if(!ok){
       const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
       const {error}=await sb.from('seres').insert({id:ser.id,data:ser,updated_at:new Date().toISOString()});

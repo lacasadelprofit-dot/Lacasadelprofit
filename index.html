@@ -3869,7 +3869,7 @@ function renderSes(){
   const pages=Math.ceil(tot/PPG);
   document.getElementById('sesPag').innerHTML=Array.from({length:pages},(_,i)=>`<button class="btn ${i===sesPage?'btn-p':'btn-s'} btn-sm" onclick="sesPage=${i};renderSes()">${i+1}</button>`).join('');
 }
-function delSes(id){if(confirm('¿Eliminar esta sesión?')){sessions=sessions.filter(s=>String(s.id)!==String(id));delRecord('sessions',id);save();renderSes();}}
+function delSes(id){if(confirm('¿Eliminar esta sesión?')){sessions=sessions.filter(s=>String(s.id)!==String(id));delRecord('sessions',id);syncTurnoWeb({id},true);save();renderSes();}}
 function cobrarSaldo(id){
   const s=sessions.find(x=>String(x.id)===String(id));
   if(!s)return;
@@ -7843,12 +7843,13 @@ function saveSes(){
     montoPagado:parseFloat(document.getElementById('nsPagado').value)||parseFloat(document.getElementById('nsMonto').value)||0};
   if(eid){
     const ses=sessions.find(x=>String(x.id)===String(eid));
-    if(ses)Object.assign(ses,sesData);
+    if(ses){Object.assign(ses,sesData);syncTurnoWeb(ses);}
     toast('Sesión actualizada ✨');
   } else {
     const ns={id:nid(sessions),...sesData};
     ns.saldoPendiente=Math.max(0,(ns.monto||0)-(ns.montoPagado||0));
     sessions.unshift(ns);
+    syncTurnoWeb(ns);
     const exSer=seres.find(s=>s.nombre===ser);
     if(!exSer){
       seres.push({id:nid(seres),nombre:ser,nacimiento:'',nacionalidad:'Argentina',provincia:ns.provincia,celular:'',email:'',zona:'',origen:'',prospecto:false,review:''});
@@ -7870,6 +7871,25 @@ function saveSes(){
   save();closeModal('moSes');
   document.getElementById('nsSer').value='';document.getElementById('nsObs').value='';document.getElementById('nsMonto').value='';document.getElementById('nsPagado').value='';document.getElementById('nsHora').value='';document.getElementById('nsPrograma').value='';document.getElementById('nsId').value='';
   if(curSec==='sesiones')renderSes();else if(curSec==='calendario')renderCal();else renderDash();
+}
+// Ocupa en la agenda de la web (tabla turnos) los horarios que pisa una sesión de Juan Cruz.
+// Mismos horarios que AGENDA.horas de la landing y HORAS de agenda.html.
+const AGENDA_HORAS=['08:00','09:20','10:40'];
+async function syncTurnoWeb(ses,borrar){
+  try{
+    await _sb.from('turnos').delete().eq('estado','bloqueado').eq('data->>sesId',String(ses.id));
+    if(borrar||!ses.hora||!ses.fecha||ses.estado==='Cancelado')return;
+    if(ses.facilitador&&!/juan cruz/i.test(ses.facilitador))return;
+    const dow=new Date(ses.fecha+'T12:00').getDay();
+    if(dow<1||dow>5||ses.fecha<new Date().toLocaleDateString('sv'))return;
+    const min=h=>{const[a,b]=h.split(':').map(Number);return a*60+b;};
+    const ini=min(ses.hora);
+    for(const hora of AGENDA_HORAS.filter(h=>min(h)<ini+60&&ini<min(h)+60)){
+      const {error}=await _sb.from('turnos').insert({id:crypto.randomUUID(),fecha:ses.fecha,hora,servicio:'bloqueo',estado:'bloqueado',
+        data:{motivo:`Sesión cargada en el admin: ${ses.ser} · ${ses.sesion}`,origen:'admin_sesion',sesId:String(ses.id)}});
+      if(error&&error.code!=='23505')console.warn('turno web',error); // 23505 = ese horario ya estaba ocupado
+    }
+  }catch(e){console.warn('syncTurnoWeb',e);}
 }
 function toggleProspFields(){
   const chk=document.getElementById('srProsp').checked;
