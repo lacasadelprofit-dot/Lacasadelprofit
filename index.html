@@ -1209,6 +1209,15 @@ th{background:rgba(28,26,46,.88)!important;}
           <span class="acceso-ext">↗</span>
         </a>
 
+        <a href="/agenda.html" target="_blank" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">📅</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Agenda de turnos</div>
+            <div class="acceso-desc">Turnos de la web, señas, bloqueos y fechas de clase</div>
+          </div>
+          <span class="acceso-ext">↗</span>
+        </a>
+
         <a href="/vision.html" target="_blank" class="acceso-card" style="text-decoration:none">
           <div class="acceso-ico">🌟</div>
           <div class="acceso-info">
@@ -10421,7 +10430,10 @@ function copiarLinkTesoro(url){
    con anon key sin depender de que el admin tenga todo cargado en memoria. */
 let _biblioteca=[];
 let _bibSeresSel=[]; // seres puntuales elegidos para el material que se está cargando
-const BIB_TIPO_ICO={Audio:'🎧',PDF:'📄',Libro:'📖',Video:'🎬',Link:'🔗'};
+const BIB_TIPO_ICO={Audio:'🎧',Libro:'📖','Material complementario':'📎'};
+const BIB_NIVELES=[1,2,3,4];
+// Material viejo cargado como PDF/Video/Link se muestra como "Material complementario"
+function _bibTipo(d){return BIB_TIPO_ICO[d?.tipo]?d.tipo:'Material complementario';}
 
 async function renderBiblioteca(){
   const el=document.getElementById('bibBody');
@@ -10456,11 +10468,13 @@ function _renderBibBody(){
   el.innerHTML=`
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px">
       <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">+ Nuevo material</div>
-      <div style="display:grid;grid-template-columns:2fr 1fr;gap:10px;margin-bottom:10px">
+      <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:10px;margin-bottom:10px">
         <div class="fg" style="margin:0"><label>Nombre</label>
           <input type="text" id="bibNombre" placeholder="ej: Meditación guiada — Barras de Access"></div>
         <div class="fg" style="margin:0"><label>Tipo</label>
           <select id="bibTipo">${Object.keys(BIB_TIPO_ICO).map(t=>`<option>${t}</option>`).join('')}</select></div>
+        <div class="fg" style="margin:0"><label>Nivel</label>
+          <select id="bibNivel"><option value="">Sin nivel</option>${BIB_NIVELES.map(n=>`<option value="${n}">Nivel ${n}</option>`).join('')}</select></div>
       </div>
       <div class="fg" style="margin:0 0 10px"><label>Descripción (opcional)</label>
         <input type="text" id="bibDesc" placeholder="Una línea contando de qué se trata"></div>
@@ -10490,15 +10504,20 @@ function _renderBibBody(){
     <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Material (${_biblioteca.length})</div>
     ${_biblioteca.length? _biblioteca.map(b=>{
       const d=b.data||{};
-      const ico=BIB_TIPO_ICO[d.tipo]||'📚';
-      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px;${d.activo===false?'opacity:.5':''}">
+      const tipo=_bibTipo(d);
+      const ico=BIB_TIPO_ICO[tipo];
+      return `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--card2);border-radius:10px;margin-bottom:8px;flex-wrap:wrap;${d.activo===false?'opacity:.5':''}">
         <div style="font-size:20px;flex-shrink:0">${ico}</div>
         <div style="flex:1;min-width:0">
           <div style="font-size:13px;font-weight:700;color:var(--text)">${_tzEsc(d.nombre)}</div>
           ${d.descripcion?`<div style="font-size:11.5px;color:var(--muted);margin-top:2px">${_tzEsc(d.descripcion)}</div>`:''}
           <div style="font-size:11px;color:var(--muted);margin-top:2px">${(!d.programa&&!d.seres?.length)?'🌐 General':[d.programa?'📚 '+_tzEsc(programas.find(p=>p.id===d.programa)?.nombre||'Programa eliminado'):'',d.seres?.length?'👤 '+d.seres.length+' ser'+(d.seres.length!==1?'es':'')+' puntual'+(d.seres.length!==1?'es':''):''].filter(Boolean).join(' · ')}${d.activo===false?' · inactivo':''}</div>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0">
+        <div style="display:flex;gap:6px;flex-shrink:0;align-items:center">
+          <select class="btn btn-s btn-sm" title="Tipo" onchange="editarBiblioteca('${b.id}','tipo',this.value)">
+            ${Object.keys(BIB_TIPO_ICO).map(t=>`<option${t===tipo?' selected':''}>${t}</option>`).join('')}</select>
+          <select class="btn btn-s btn-sm" title="Nivel" onchange="editarBiblioteca('${b.id}','nivel',this.value?Number(this.value):null)">
+            <option value="">Sin nivel</option>${BIB_NIVELES.map(n=>`<option value="${n}"${Number(d.nivel)===n?' selected':''}>Nivel ${n}</option>`).join('')}</select>
           <button class="btn btn-s btn-sm" onclick="toggleBiblioteca('${b.id}',${d.activo===false})">${d.activo===false?'Activar':'Desactivar'}</button>
           <button class="btn btn-s btn-sm" onclick="borrarBiblioteca('${b.id}')" title="Borrar">🗑</button>
         </div>
@@ -10535,6 +10554,7 @@ async function crearBiblioteca(){
   const archivo=document.getElementById('bibArchivo').files[0];
   let url=document.getElementById('bibUrl').value.trim();
   const programa=document.getElementById('bibPrograma').value;
+  const nivel=document.getElementById('bibNivel').value?Number(document.getElementById('bibNivel').value):null;
   if(!nombre||(!url&&!archivo)){toast('⚠️ Completá el nombre, y subí un archivo o pegá un link');return;}
   if(archivo&&archivo.size>50*1024*1024){
     toast('⚠️ El archivo pesa '+(archivo.size/1024/1024).toFixed(0)+'MB — el máximo es 50MB. Para videos, subilo a YouTube (podés dejarlo "no listado") y pegá ese link acá en vez del archivo.');
@@ -10554,7 +10574,7 @@ async function crearBiblioteca(){
   }
   btn.textContent='+ Agregar material';
   const seresIds=_bibSeresSel.map(s=>s.id);
-  const {error}=await _sb.from('biblioteca').insert({id,data:{nombre,tipo,descripcion,url,programa,seres:seresIds,activo:true}});
+  const {error}=await _sb.from('biblioteca').insert({id,data:{nombre,tipo,nivel,descripcion,url,programa,seres:seresIds,activo:true}});
   btn.disabled=false;
   if(error){toast('⚠️ Error: '+error.message);return;}
   toast('✓ Material agregado');
@@ -10567,6 +10587,16 @@ async function toggleBiblioteca(id,activar){
   const {error}=await _sb.from('biblioteca').update({data:{...b.data,activo:activar}}).eq('id',id);
   if(error){toast('⚠️ Error: '+error.message);return;}
   renderBiblioteca();
+}
+
+async function editarBiblioteca(id,campo,valor){
+  const b=_biblioteca.find(x=>x.id===id);
+  if(!b)return;
+  const data={...b.data,[campo]:valor};
+  const {error}=await _sb.from('biblioteca').update({data}).eq('id',id);
+  if(error){toast('⚠️ Error: '+error.message);renderBiblioteca();return;}
+  b.data=data;
+  toast('✓ Guardado');
 }
 
 async function borrarBiblioteca(id){

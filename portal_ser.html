@@ -239,7 +239,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   border-radius:10px;color:var(--text);font-size:12.5px;line-height:1.6;outline:none;resize:vertical;font-family:inherit;}
 .bib-nota-ta:focus{border-color:rgba(232,201,106,.6);}
 .bib-nota-status{display:block;font-size:10px;color:var(--gl);margin-top:4px;min-height:12px;}
-.bib-filtros{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.bib-filtros{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px;}
+.bib-filtro-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;min-width:38px;}
+.bib-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px;}
+.bib-tag{font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;background:rgba(122,114,96,.15);color:#B0A68C;}
+.bib-tag.nivel{background:rgba(201,168,76,.15);color:var(--gl);}
 .bib-grupo{margin-bottom:18px;}
 .bib-grupo-tit{font-size:10px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:1.5px;
   margin:0 2px 8px;display:flex;align-items:center;gap:8px;}
@@ -845,7 +849,9 @@ function closeRegalos(){
 function closeRegalosOutside(e){if(e.target===document.getElementById('regalosOverlay'))closeRegalos();}
 
 /* ── BIBLIOTECA ── */
-const BIB_TIPO_ICO={Audio:'🎧',PDF:'📄',Libro:'📖',Video:'🎬',Link:'🔗'};
+const BIB_TIPO_ICO={Audio:'🎧',Libro:'📖','Material complementario':'📎'};
+// Material viejo cargado como PDF/Video/Link se muestra como "Material complementario"
+function _bibTipo(r){return BIB_TIPO_ICO[r?.tipo]?r.tipo:'Material complementario';}
 async function openBiblioteca(){
   document.getElementById('bibliotecaOverlay').classList.add('open');
   document.body.style.overflow='hidden';
@@ -871,7 +877,7 @@ async function openBiblioteca(){
       grid.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">✦</div><p>Todavía no hay material cargado para vos.</p></div>';
       return;
     }
-    _bib={lista,progMap,notas:notasMap,visto:vistoMap,filtro:'Todos'};
+    _bib={lista,progMap,notas:notasMap,visto:vistoMap,fTipo:'',fNivel:''};
     renderBiblioteca();
     grid.dataset.loaded='1';
   }catch(e){
@@ -879,17 +885,18 @@ async function openBiblioteca(){
   }
 }
 
-let _bib={lista:[],progMap:{},notas:{},visto:{},filtro:'Todos'};
-const BIB_TIPO_PLURAL={Audio:'Audios',PDF:'PDFs',Libro:'Libros',Video:'Videos',Link:'Links'};
-function setBibFiltro(f){_bib.filtro=f;renderBiblioteca();}
+let _bib={lista:[],progMap:{},notas:{},visto:{},fTipo:'',fNivel:''};
+const BIB_TIPO_PLURAL={Audio:'Audios',Libro:'Libros','Material complementario':'Material complementario'};
+function setBibFiltro(campo,v){_bib[campo]=v;renderBiblioteca();}
 function toggleBibExtra(id){document.getElementById(id)?.classList.toggle('open');}
 
-// Agrupa: material personal ("Para vos") → cada programa → "General". Filtro por tipo arriba.
+// Agrupa: material personal ("Para vos") → cada programa → "General". Filtros por nivel y por tipo arriba.
 function renderBiblioteca(){
   const grid=document.getElementById('bibliotecaGrid');
-  const {lista,progMap,notas,visto,filtro}=_bib;
-  const tipos=[...new Set(lista.map(r=>r.tipo).filter(Boolean))];
-  const filtrada=filtro==='Todos'?lista:lista.filter(r=>r.tipo===filtro);
+  const {lista,progMap,notas,visto,fTipo,fNivel}=_bib;
+  const tipos=Object.keys(BIB_TIPO_ICO).filter(t=>lista.some(r=>_bibTipo(r)===t));
+  const niveles=[...new Set(lista.map(r=>Number(r.nivel)).filter(Boolean))].sort();
+  const filtrada=lista.filter(r=>(!fTipo||_bibTipo(r)===fTipo)&&(!fNivel||Number(r.nivel)===fNivel));
 
   const grupos={};
   filtrada.forEach(r=>{
@@ -903,17 +910,20 @@ function renderBiblioteca(){
   const tituloGrupo=k=>k==='vos'?'Para vos':k==='general'?'General':(progMap[k.slice(2)]||'Programa');
 
   const item=r=>{
-    const esAudio=r.tipo==='Audio'&&r.url;
+    const tipo=_bibTipo(r);
+    const esAudio=tipo==='Audio'&&r.url;
+    const esVideo=/youtu\.?be|vimeo|\.mp4/i.test(r.url||'');
     const tieneNota=!!(notas[r.id]||'').trim();
     let accion;
     if(!r.url)accion=`<span class="bib-btn off">Próximamente</span>`;
     else if(esAudio)accion=`<button class="bib-btn" onclick="toggleBibExtra('bibPlay-${r.id}')">▶ Escuchar</button>`;
-    else accion=`<a class="bib-btn" href="${r.url}" target="_blank" rel="noopener">${r.tipo==='Video'?'▶ Ver':r.tipo==='Link'?'Ver →':'Abrir'}</a>`;
+    else accion=`<a class="bib-btn" href="${r.url}" target="_blank" rel="noopener">${esVideo?'▶ Ver':'Abrir'}</a>`;
     return`<div class="bib-item">
       <div class="bib-row">
-        <div class="bib-ico">${BIB_TIPO_ICO[r.tipo]||'📚'}</div>
+        <div class="bib-ico">${BIB_TIPO_ICO[tipo]}</div>
         <div style="min-width:0">
-          <div class="bib-nom">${r.nombre||'Material'}${r.tipo==='Audio'?`<span class="bib-visto-badge" id="visto-${r.id}" style="${visto[r.id]?'':'display:none'}">✓ Escuchado</span>`:''}</div>
+          <div class="bib-nom">${r.nombre||'Material'}${tipo==='Audio'?`<span class="bib-visto-badge" id="visto-${r.id}" style="${visto[r.id]?'':'display:none'}">✓ Escuchado</span>`:''}</div>
+          <div class="bib-tags">${r.nivel?`<span class="bib-tag nivel">Nivel ${r.nivel}</span>`:''}<span class="bib-tag">${tipo}</span></div>
           ${r.descripcion?`<div class="bib-desc" onclick="this.classList.toggle('full')">${r.descripcion}</div>`:''}
         </div>
         <div class="bib-acc">
@@ -930,12 +940,14 @@ function renderBiblioteca(){
     </div>`;
   };
 
-  grid.innerHTML=
-    (tipos.length>1?`<div class="bib-filtros">${['Todos',...tipos].map(t=>
-      `<button class="fil${filtro===t?' active':''}" onclick="setBibFiltro('${t}')">${t==='Todos'?'Todos':(BIB_TIPO_ICO[t]||'')+' '+(BIB_TIPO_PLURAL[t]||t)}</button>`).join('')}</div>`:'')+
+  const chip=(campo,v,label)=>`<button class="fil${_bib[campo]===v?' active':''}" onclick="setBibFiltro('${campo}',${typeof v==='number'?v:`'${v}'`})">${label}</button>`;
+  grid.innerHTML=(niveles.length?'<p style="font-size:12.5px;color:var(--muted);line-height:1.6;margin:0 2px 14px">El material está ordenado por niveles: empezá por el <b style="color:var(--gl)">Nivel 1</b> y avanzá a tu ritmo.</p>':'')+
+    '<div style="margin-bottom:16px">'+
+    (niveles.length?`<div class="bib-filtros"><span class="bib-filtro-lbl">Nivel</span>${chip('fNivel','','Todos')}${niveles.map(n=>chip('fNivel',n,String(n))).join('')}</div>`:'')+
+    (tipos.length>1?`<div class="bib-filtros"><span class="bib-filtro-lbl">Tipo</span>${chip('fTipo','','Todos')}${tipos.map(t=>chip('fTipo',t,BIB_TIPO_ICO[t]+' '+BIB_TIPO_PLURAL[t])).join('')}</div>`:'')+'</div>'+
     (orden.length?orden.map(k=>`<div class="bib-grupo">
       ${orden.length>1||k!=='general'?`<div class="bib-grupo-tit">${tituloGrupo(k)}</div>`:''}
-      ${grupos[k].map(item).join('')}
+      ${grupos[k].slice().sort((a,b)=>(Number(a.nivel)||99)-(Number(b.nivel)||99)).map(item).join('')}
     </div>`).join(''):'<div style="text-align:center;padding:32px;color:var(--muted)">No hay material de este tipo.</div>');
 }
 function closeBiblioteca(){
