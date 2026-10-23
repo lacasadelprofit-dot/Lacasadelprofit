@@ -147,6 +147,7 @@ select.fi:focus{border-color:var(--gold);}
 .ce.ba{background:rgba(61,170,106,.2);color:#5DD89A;}
 .ce.pr{background:rgba(201,168,76,.25);color:var(--gl);}
 .ce.po{background:rgba(91,155,213,.2);color:#8BBDE8;}
+.ce.web{background:rgba(232,168,124,.18);color:#E8A87C;border:1px dashed rgba(232,168,124,.6);}
 .me{font-size:10px;color:var(--muted);}
 /* MODAL */
 .mo{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:1000;align-items:center;justify-content:center;}
@@ -3914,7 +3915,32 @@ function _renderCalKPIs(){
     <div class="kc or"><div class="ki">🔮</div><div class="kl">Próximos 7 días</div><div class="kv">${ses7}</div><div class="ks">Desde hoy</div></div>
     <div class="kc rd"><div class="ki">⏳</div><div class="kl">Pendientes/Conf.</div><div class="kv">${pendCal}</div><div class="ks">Sin completar</div></div>`;
 }
+// ── Reservas de la web (tabla turnos) dentro del Calendario ──
+let _turnosWeb=[],_turnosWebTs=0;
+function _escTW(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function cargarTurnosWeb(){
+  if(Date.now()-_turnosWebTs<60000)return;
+  _turnosWebTs=Date.now();
+  const {data,error}=await _sb.from('turnos').select('id,fecha,hora,servicio,estado,data')
+    .in('estado',['pendiente_senia','confirmado']).in('servicio',['barras','proceso_cuerpos']);
+  if(error){console.warn('turnos web',error);return;}
+  _turnosWeb=data||[];
+  if(curSec==='calendario')renderCal();
+}
+// Reservas de ese día que todavía no están cargadas como sesión (misma fecha y hora)
+function turnosWebDel(ds){return _turnosWeb.filter(t=>t.fecha===ds&&!sessions.some(s=>s.fecha===ds&&s.hora===t.hora));}
+function _servTW(t){return t.servicio==='barras'?'Barras de Access':'Proceso de Cuerpos';}
+function _estTW(t){return t.estado==='pendiente_senia'?'⏳ seña pendiente':'✔ seña recibida';}
+function chipTurnoWeb(t,sem){
+  const nom=_escTW((t.data?.nombre||'').split(' ')[0]);
+  const tit=_escTW(`Reserva web: ${t.data?.nombre||''} — ${_servTW(t)} ${t.hora} · ${_estTW(t)}`);
+  const pend=t.estado==='pendiente_senia'?' ⏳':'';
+  return sem
+    ?`<div class="ce web" title="${tit}">🌐 ${nom}${pend}<br><span style="font-size:9px;opacity:.8">${t.hora}</span></div>`
+    :`<div class="ce web" title="${tit}">🌐 ${nom} ${t.hora}${pend}</div>`;
+}
 function renderCal(){
+  cargarTurnosWeb();
   _renderCalKPIs();
   if(_calView==='sem'){renderCalSemana();return;}
   const yr=calDate.getFullYear(),mo=calDate.getMonth();
@@ -3929,11 +3955,13 @@ function renderCal(){
     const ds=`${yr}-${String(mo+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const ev=sessions.filter(s=>s.fecha===ds);
     const iT=tod.getFullYear()===yr&&tod.getMonth()===mo&&tod.getDate()===d;
-    const evH=ev.slice(0,3).map(s=>{
+    const tw=turnosWebDel(ds);
+    const chips=[...ev.map(s=>{
       const c=s.sesion==='Barras de Access'?'ba':s.sesion==='Sesión Profit'?'pr':s.sesion==='Proceso de Cuerpos'?'po':'';
       return `<div class="ce ${c}" title="${s.ser} — ${s.sesion}">${s.ser.split(' ')[0]}${s.hora?' '+s.hora:''}</div>`;
-    }).join('')+(ev.length>3?`<div class="me">+${ev.length-3} más</div>`:'');
-    h+=`<div class="cd ${iT?'tod':''}" onclick="calClick('${ds}',${ev.length})"><div class="dn">${d}</div>${evH}</div>`;
+    }),...tw.map(t=>chipTurnoWeb(t,false))];
+    const evH=chips.slice(0,3).join('')+(chips.length>3?`<div class="me">+${chips.length-3} más</div>`:'');
+    h+=`<div class="cd ${iT?'tod':''}" onclick="calClick('${ds}',${ev.length+tw.length})"><div class="dn">${d}</div>${evH}</div>`;
   }
   const rem=42-first-days;
   for(let i=1;i<=rem;i++)h+=`<div class="cd om"><div class="dn">${i}</div></div>`;
@@ -3961,15 +3989,17 @@ function renderCalSemana(){
     const ds=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     const ev=sessions.filter(s=>s.fecha===ds);
     const isT=d.getTime()===tod.getTime();
-    const evH=ev.length
-      ?ev.map(s=>{const c=s.sesion==='Barras de Access'?'ba':s.sesion==='Sesión Profit'?'pr':s.sesion==='Proceso de Cuerpos'?'po':'';return `<div class="ce ${c}" title="${s.ser} — ${s.sesion}${s.hora?' '+s.hora:''}">${s.ser.split(' ')[0]}${s.hora?`<br><span style="font-size:9px;opacity:.8">${s.hora}</span>`:''}</div>`;}).join('')
+    const tw=turnosWebDel(ds);
+    const evH=(ev.length||tw.length)
+      ?ev.map(s=>{const c=s.sesion==='Barras de Access'?'ba':s.sesion==='Sesión Profit'?'pr':s.sesion==='Proceso de Cuerpos'?'po':'';return `<div class="ce ${c}" title="${s.ser} — ${s.sesion}${s.hora?' '+s.hora:''}">${s.ser.split(' ')[0]}${s.hora?`<br><span style="font-size:9px;opacity:.8">${s.hora}</span>`:''}</div>`;}).join('')+tw.map(t=>chipTurnoWeb(t,true)).join('')
       :`<div style="color:var(--muted);font-size:11px;text-align:center;padding:14px 0">—</div>`;
-    h+=`<div class="cd csw ${isT?'tod':''}" onclick="calClick('${ds}',${ev.length})"><div class="dn" style="margin-bottom:6px">${fd(ds)}</div>${evH}</div>`;
+    h+=`<div class="cd csw ${isT?'tod':''}" onclick="calClick('${ds}',${ev.length+turnosWebDel(ds).length})"><div class="dn" style="margin-bottom:6px">${fd(ds)}</div>${evH}</div>`;
   }
   document.getElementById('calGrid').innerHTML=h;
 }
 function calClick(date,cnt){
-  if(cnt>0){alert('Sesiones del '+fd(date)+':\n\n'+sessions.filter(s=>s.fecha===date).map(s=>`• ${s.ser} — ${s.sesion}${s.hora?' '+s.hora:''}${s.estado?' ['+s.estado+']':''}`).join('\n'));}
+  if(cnt>0){alert('Sesiones del '+fd(date)+':\n\n'+[...sessions.filter(s=>s.fecha===date).map(s=>`• ${s.ser} — ${s.sesion}${s.hora?' '+s.hora:''}${s.estado?' ['+s.estado+']':''}`),
+    ...turnosWebDel(date).map(t=>`🌐 ${t.data?.nombre||''} — ${_servTW(t)} ${t.hora} [reserva web · ${_estTW(t)}]`)].join('\n'));}
   else{if(confirm('¿Agendar sesión para el '+fd(date)+'?')){document.getElementById('nsFecha').value=date;openModal('ses');}}
 }
 function calPrev(){if(_calView==='sem'){calDate.setDate(calDate.getDate()-7);}else{calDate.setMonth(calDate.getMonth()-1);}renderCal();}
