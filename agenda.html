@@ -73,7 +73,7 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
 
 <div id="app" class="wrap" style="display:none">
   <header>
-    <h1>📅 Agenda de Turnos<small>juancruzconsciencia.lat · Posada Luz y Brillo, Búzios · Lun a Vie 09:00 / 10:30 / 19:00</small></h1>
+    <h1>📅 Agenda de Turnos<small>juancruzconsciencia.lat · Posada Luz y Brillo, Búzios · Lun a Vie 08:00 / 09:20 / 10:40 (1 h + 20 min de pausa)</small></h1>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="cargar()">↻ Actualizar</button>
       <a class="btn" href="index.html" style="text-decoration:none">← Admin</a>
@@ -89,7 +89,23 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
     <button class="tab" data-tab="historial" onclick="setTab('historial')">Historial</button>
   </div>
 
-  <div id="tab-proximos"></div>
+  <div id="tab-proximos">
+    <div class="card" id="formManual">
+      <h2>Agendar un turno vos</h2>
+      <p class="det" style="margin:0 0 12px">Para cuando alguien te escribe por WhatsApp o en persona. El horario queda ocupado en la web al instante.</p>
+      <div class="form">
+        <label>Fecha<input type="date" id="mFecha"></label>
+        <label>Horario<select id="mHora"><option>08:00</option><option>09:20</option><option>10:40</option></select></label>
+        <label>Sesión<select id="mServ"><option value="barras">Barras de Access</option><option value="proceso_cuerpos">Proceso de Cuerpos</option></select></label>
+        <label style="flex:1;min-width:150px">Nombre<input id="mNombre" placeholder="Nombre y apellido"></label>
+        <label>WhatsApp<input id="mCel" type="tel" placeholder="Con código de país" style="width:170px"></label>
+        <label>Seña<select id="mEstado"><option value="confirmado">Ya pagó la seña</option><option value="pendiente_senia">Falta la seña</option></select></label>
+        <label style="flex:1;min-width:150px">Nota (opcional)<input id="mNota"></label>
+        <button class="btn btn-p" onclick="agendarManual()">Agendar</button>
+      </div>
+    </div>
+    <div id="listaProximos"></div>
+  </div>
 
   <div id="tab-bloqueos" style="display:none">
     <div class="card">
@@ -97,7 +113,7 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
       <p class="det" style="margin:0 0 12px">Vacaciones, feriados, un compromiso. Lo bloqueado deja de aparecer en la web. Para liberarlo, tocá "Desbloquear".</p>
       <div class="form">
         <label>Fecha<input type="date" id="bFecha"></label>
-        <label>Horario<select id="bHora"><option value="todo">Todo el día</option><option>09:00</option><option>10:30</option><option>19:00</option></select></label>
+        <label>Horario<select id="bHora"><option value="todo">Todo el día</option><option>08:00</option><option>09:20</option><option>10:40</option></select></label>
         <label style="flex:1;min-width:160px">Motivo (solo lo ves vos)<input id="bMotivo" placeholder="Ej: viaje"></label>
         <button class="btn btn-p" onclick="bloquear()">Bloquear</button>
       </div>
@@ -128,7 +144,7 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
-const HORAS=['09:00','10:30','19:00'];
+const HORAS=['08:00','09:20','10:40'];
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
 const SENIA={barras:'R$ 100 / USD 30',proceso_cuerpos:'R$ 150 / USD 35'};
 let turnos=[], clases=[], _tab='proximos';
@@ -150,6 +166,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Enter'&&login.style.display!
 async function iniciar(){
   login.style.display='none';app.style.display='block';
   document.getElementById('bFecha').value=hoyBR();
+  document.getElementById('mFecha').value=hoyBR();
   await cargar();
 }
 (async()=>{
@@ -166,7 +183,7 @@ async function cargar(){
   ]);
   if(t.error||c.error){
     const e=t.error||c.error;console.warn(e);
-    document.getElementById('tab-proximos').innerHTML=`<div class="card">⚠️ No se pudo cargar la agenda: ${esc(e.message)}<div class="det">Si dice que la tabla no existe, falta correr <b>4_BASE_DE_DATOS/29_agenda_turnos.sql</b> en Supabase.</div></div>`;
+    document.getElementById('listaProximos').innerHTML=`<div class="card">⚠️ No se pudo cargar la agenda: ${esc(e.message)}<div class="det">Si dice que la tabla no existe, falta correr <b>4_BASE_DE_DATOS/29_agenda_turnos.sql</b> en Supabase.</div></div>`;
     return;
   }
   turnos=t.data||[];clases=c.data||[];
@@ -180,6 +197,24 @@ async function setEstado(id,estado,msgOk){
 function confirmarSenia(id){setEstado(id,'confirmado','✓ Seña registrada, turno confirmado');}
 function cancelar(id){if(confirm('¿Cancelar este turno? El horario vuelve a quedar libre en la web.'))setEstado(id,'cancelado','Turno cancelado · horario liberado');}
 function desbloquear(id){setEstado(id,'cancelado','Horario desbloqueado');}
+
+/* Turno cargado a mano desde el panel: ocupa el horario en la web igual que una reserva online */
+function prepararManual(fecha,hora){
+  mFecha.value=fecha;mHora.value=hora;
+  document.getElementById('formManual').scrollIntoView({behavior:'smooth'});
+  setTimeout(()=>mNombre.focus(),300);
+}
+async function agendarManual(){
+  const fecha=mFecha.value,hora=mHora.value,nombre=mNombre.value.trim(),celular=mCel.value.replace(/\D/g,'');
+  if(!fecha){toast('Elegí una fecha');return;}
+  if(nombre.length<2){toast('Poné el nombre');return;}
+  if(turnos.some(t=>t.fecha===fecha&&t.hora==='todo'&&t.estado!=='cancelado')){toast('Ese día está bloqueado. Desbloquealo primero.');return;}
+  const {error}=await _sb.from('turnos').insert({id:crypto.randomUUID(),fecha,hora,servicio:mServ.value,estado:mEstado.value,
+    data:{nombre,celular,mensaje:mNota.value.trim(),origen:'manual',ts:new Date().toISOString()}});
+  if(error){toast(error.code==='23505'?'Ese horario ya está ocupado':'Error: '+error.message);return;}
+  mNombre.value='';mCel.value='';mNota.value='';
+  toast(`✓ Agendado: ${nombre} · ${fmt(fecha,{weekday:'short',day:'numeric',month:'short'})} ${hora}`);cargar();
+}
 
 async function bloquear(){
   const fecha=bFecha.value,hora=bHora.value;
@@ -269,13 +304,13 @@ function render(){
     }
     else HORAS.forEach(h=>{
       const t=delDia.find(x=>x.hora===h);
-      if(!t)html+=`<div class="row libre"><div class="hora" style="color:var(--muted)">${h}</div>Libre</div>`;
+      if(!t)html+=`<div class="row libre"><div class="hora" style="color:var(--muted)">${h}</div>Libre<button class="btn" style="margin-left:auto" onclick="prepararManual('${f}','${h}')">+ Agendar</button></div>`;
       else if(t.servicio==='bloqueo')html+=`<div class="row libre"><div class="hora" style="color:var(--muted)">${h}</div>⛔ Bloqueado${t.data?.motivo?' · '+esc(t.data.motivo):''}<button class="btn" style="margin-left:auto" onclick="desbloquear('${t.id}')">Desbloquear</button></div>`;
       else html+=filaTurno(t);
     });
     html+='</div>';
   }
-  document.getElementById('tab-proximos').innerHTML=html;
+  document.getElementById('listaProximos').innerHTML=html;
 
   // Bloqueos vigentes
   const bl=futuros.filter(t=>t.servicio==='bloqueo');
