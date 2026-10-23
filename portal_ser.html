@@ -263,8 +263,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .bib-extra .bib-audio{margin-bottom:0;}
 
 /* ── RESEÑA GOOGLE ── */
-.btn-sec-resena{width:100%;background:rgba(245,228,168,.08);color:var(--gold-pale);border:1px solid rgba(245,228,168,.28);
-  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);margin-bottom:24px;}
+.btn-sec-resena{background:rgba(245,228,168,.08);color:var(--gold-pale);border:1px solid rgba(245,228,168,.28);
+  backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
 .resena-card{background:linear-gradient(135deg,rgba(201,168,76,.16),rgba(139,105,20,.14));border:1px solid rgba(232,201,106,.4);
   border-radius:16px;padding:18px 20px;margin-bottom:20px;text-align:center;}
 .resena-card h3{font-size:15px;color:var(--gl);margin-bottom:6px;}
@@ -321,7 +321,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   .ses-icon{width:40px;height:40px;font-size:18px;}
   .intake-card{padding:18px 14px;}
   .tools-grid{grid-template-columns:1fr 1fr;}
-  .sec-btns-row{grid-template-columns:1fr 1fr!important;}
+  .sec-btns-row .btn-sec{padding:11px 4px;font-size:12px;gap:5px;}
+  .sec-btns-row .btn-sec-lvl2{padding:14px 4px;font-size:12.5px;}
   .bib-row{grid-template-columns:34px 1fr;gap:10px;}
   .bib-ico{width:34px;height:34px;font-size:16px;}
   .bib-acc{grid-column:1/-1;justify-content:flex-end;}
@@ -381,7 +382,7 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
     </svg>
     Agenda tu sesión
   </button>
-  <div class="sec-btns-row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+  <div class="sec-btns-row" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
     <a class="btn-sec btn-sec-lvl2 btn-sec-programa" href="/portal_programa.html" target="_blank">
       <svg width="17" height="17" viewBox="0 0 18 18" fill="none" style="flex-shrink:0">
         <path d="M2 15C2 15 5 9 9 9C13 9 16 15 16 15" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
@@ -396,12 +397,12 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       </svg>
       Biblioteca
     </button>
-  </div>
-  <div class="sec-btns-row" id="rowExtras" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px">
-    <a class="btn-sec btn-sec-vision" href="/vision.html" target="_blank">
+    <a class="btn-sec btn-sec-lvl2 btn-sec-vision" href="/vision.html" target="_blank">
       <svg width="20" height="14" viewBox="0 0 22 16" fill="none" style="flex-shrink:0"><path d="M1 8C1 8 5 1 11 1C17 1 21 8 21 8C21 8 17 15 11 15C5 15 1 8 1 8Z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/><circle cx="11" cy="8" r="3.5" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="8" r="1.3" fill="currentColor"/></svg>
       Visión
     </a>
+  </div>
+  <div class="sec-btns-row" id="rowExtras" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:24px">
     <a class="btn-sec btn-sec-wapp" href="https://chat.whatsapp.com/LAvSA8ma3F9JsV7QFZU7tH?mode=gi_t" target="_blank">
       <svg width="18" height="14" viewBox="0 0 22 16" fill="none" style="flex-shrink:0"><circle cx="7.5" cy="8" r="6" stroke="currentColor" stroke-width="1.1"/><circle cx="14.5" cy="8" r="6" stroke="currentColor" stroke-width="1.1"/></svg>
       Comunidad
@@ -416,11 +417,11 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
       </svg>
       Regalos
     </button>
+    <a class="btn-sec btn-sec-resena" id="btnResena" style="display:none" target="_blank" rel="noopener" onclick="trackResena('boton_portal')">
+      <span style="font-size:15px;line-height:1">★</span>
+      Reseña
+    </a>
   </div>
-  <a class="btn-sec btn-sec-resena" id="btnResena" style="display:none" target="_blank" rel="noopener" onclick="trackResena('boton_portal')">
-    <span style="font-size:15px;line-height:1">★</span>
-    Dejá tu reseña en Google
-  </a>
   <div id="preguntaDiaBox" style="margin-bottom:20px"></div>
   <div class="sec-title">✨ Mis Sesiones</div>
   <div class="filter-row" id="filterRow"></div>
@@ -684,7 +685,7 @@ function renderResenaBtn(){
   const ok=!!GOOGLE_RESENA_URL;
   btn.style.display=ok?'flex':'none';
   if(ok)btn.href=GOOGLE_RESENA_URL;
-  document.getElementById('rowExtras').style.marginBottom=ok?'8px':'24px';
+  document.getElementById('rowExtras').style.gridTemplateColumns=ok?'1fr 1fr 1fr':'1fr 1fr';
 }
 function trackResena(origen){
   try{
