@@ -3929,7 +3929,7 @@ async function cargarTurnosWeb(){
 }
 // Reservas de ese día que todavía no están cargadas como sesión (misma fecha y hora)
 function turnosWebDel(ds){return _turnosWeb.filter(t=>t.fecha===ds&&!sessions.some(s=>s.fecha===ds&&s.hora===t.hora));}
-function _servTW(t){return t.servicio==='barras'?'Barras de Access':'Proceso de Cuerpos';}
+function _servTW(t){return (t.data?.pack==='mes_energetico'?'Mes Energético · ':'')+(t.servicio==='barras'?'Barras de Access':'Proceso de Cuerpos');}
 function _estTW(t){return t.estado==='pendiente_senia'?'⏳ seña pendiente':'✔ seña recibida';}
 function chipTurnoWeb(t,sem){
   const nom=_escTW((t.data?.nombre||'').split(' ')[0]);
@@ -3963,6 +3963,7 @@ async function pasarASesion(id){
   set('nsProv','Rio de Janeiro');_refreshCiudadDL();
   set('nsCiudad','Búzios');
   set('nsMoneda','BRL');updateCurrencyLabels();
+  if(t.data?.pack==='mes_energetico'&&programas.some(p=>p.nombre==='Mes Energético'))set('nsPrograma','Mes Energético');
   _turnoAPasar={id:t.id,fecha:t.fecha};
 }
 function renderCal(){

@@ -265,7 +265,7 @@ function filaTurno(t,conAcciones=true){
     <div class="hora">${esc(t.hora)}</div>
     <div class="info">
       <div class="n">${esc(d.nombre||'—')}${badge(t.estado)}</div>
-      <div class="s">${SERV[t.servicio]||esc(t.servicio)}${SENIA[t.servicio]&&t.estado==='pendiente_senia'?' · seña '+SENIA[t.servicio]:''}${d.celular?' · +'+esc(d.celular):''}</div>
+      <div class="s">${d.pack==='mes_energetico'?'✨ Mes Energético (1ª sesión) · ':''}${SERV[t.servicio]||esc(t.servicio)}${SENIA[t.servicio]&&t.estado==='pendiente_senia'?' · seña '+SENIA[t.servicio]:''}${d.celular?' · +'+esc(d.celular):''}</div>
       ${detalle?`<div class="det">${esc(detalle)}</div>`:''}
     </div>
     <div class="acc">${acc}</div>
