@@ -3935,9 +3935,35 @@ function chipTurnoWeb(t,sem){
   const nom=_escTW((t.data?.nombre||'').split(' ')[0]);
   const tit=_escTW(`Reserva web: ${t.data?.nombre||''} — ${_servTW(t)} ${t.hora} · ${_estTW(t)}`);
   const pend=t.estado==='pendiente_senia'?' ⏳':'';
+  const clk=`onclick="event.stopPropagation();pasarASesion('${_escTW(t.id)}')" style="cursor:pointer"`;
   return sem
-    ?`<div class="ce web" title="${tit}">🌐 ${nom}${pend}<br><span style="font-size:9px;opacity:.8">${t.hora}</span></div>`
-    :`<div class="ce web" title="${tit}">🌐 ${nom} ${t.hora}${pend}</div>`;
+    ?`<div class="ce web" ${clk} title="${tit} · Tocá para pasarla a sesión">🌐 ${nom}${pend}<br><span style="font-size:9px;opacity:.8">${t.hora}</span></div>`
+    :`<div class="ce web" ${clk} title="${tit} · Tocá para pasarla a sesión">🌐 ${nom} ${t.hora}${pend}</div>`;
+}
+// ── Pasar una reserva web al historial: abre "Nueva sesión" con los datos y,
+//    al guardar, marca el turno como realizado ──
+let _turnoAPasar=null;
+async function pasarASesion(id){
+  let t=_turnosWeb.find(x=>x.id===id);
+  if(!t){const {data}=await _sb.from('turnos').select('id,fecha,hora,servicio,estado,data').eq('id',id).maybeSingle();t=data;}
+  if(!t){toast('No encontré esa reserva');return;}
+  if(t.estado==='realizado'){toast('Esa reserva ya está en el historial ✨');return;}
+  if(t.estado==='cancelado'){toast('Esa reserva está cancelada');return;}
+  document.getElementById('nsFecha').value=t.fecha;
+  openModal('ses');
+  const tipo=t.servicio==='barras'?'Barras de Access':'Proceso de Cuerpos';
+  const set=(i,v)=>{const el=document.getElementById(i);if(el)el.value=v;};
+  set('nsHora',t.hora);
+  set('nsSer',t.data?.nombre||'');
+  set('nsTipo',tipo);
+  onSesHerramientaChange(FAC_ADMIN);
+  set('nsMod','Presencial');
+  set('nsEst','Completado');
+  set('nsPais','Brasil');_refreshProvDL();
+  set('nsProv','Rio de Janeiro');_refreshCiudadDL();
+  set('nsCiudad','Búzios');
+  set('nsMoneda','BRL');updateCurrencyLabels();
+  _turnoAPasar={id:t.id,fecha:t.fecha};
 }
 function renderCal(){
   cargarTurnosWeb();
@@ -3999,7 +4025,8 @@ function renderCalSemana(){
 }
 function calClick(date,cnt){
   if(cnt>0){alert('Sesiones del '+fd(date)+':\n\n'+[...sessions.filter(s=>s.fecha===date).map(s=>`• ${s.ser} — ${s.sesion}${s.hora?' '+s.hora:''}${s.estado?' ['+s.estado+']':''}`),
-    ...turnosWebDel(date).map(t=>`🌐 ${t.data?.nombre||''} — ${_servTW(t)} ${t.hora} [reserva web · ${_estTW(t)}]`)].join('\n'));}
+    ...turnosWebDel(date).map(t=>`🌐 ${t.data?.nombre||''} — ${_servTW(t)} ${t.hora} [reserva web · ${_estTW(t)}]`)].join('\n')
+    +(turnosWebDel(date).length?'\n\nPara pasar una reserva 🌐 al historial, tocala en el calendario.':''));}
   else{if(confirm('¿Agendar sesión para el '+fd(date)+'?')){document.getElementById('nsFecha').value=date;openModal('ses');}}
 }
 function calPrev(){if(_calView==='sem'){calDate.setDate(calDate.getDate()-7);}else{calDate.setMonth(calDate.getMonth()-1);}renderCal();}
@@ -4995,6 +5022,7 @@ function _refreshSrCiudadDL(){
 /* MODALS */
 function openModal(type,id,extra){
   const _id=id!=null?String(id):null; // normalise to string always
+  if(type==='ses')_turnoAPasar=null;
   const tod=new Date().toISOString().split('T')[0];
   if(type==='ses'){
     const ses=_id?sessions.find(x=>String(x.id)===_id):null;
@@ -7900,6 +7928,16 @@ function saveSes(){
   }
   save();closeModal('moSes');
   document.getElementById('nsSer').value='';document.getElementById('nsObs').value='';document.getElementById('nsMonto').value='';document.getElementById('nsPagado').value='';document.getElementById('nsHora').value='';document.getElementById('nsPrograma').value='';document.getElementById('nsId').value='';
+  if(_turnoAPasar){
+    const tp=_turnoAPasar;_turnoAPasar=null;
+    if(tp.fecha===fecha){
+      _sb.from('turnos').update({estado:'realizado'}).eq('id',tp.id).then(({error})=>{
+        if(error){console.warn('turno realizado',error);toast('La sesión se guardó, pero no pude marcar la reserva como realizada');return;}
+        _turnosWeb=_turnosWeb.filter(x=>x.id!==tp.id);
+        if(curSec==='calendario')renderCal();
+      });
+    }
+  }
   if(curSec==='sesiones')renderSes();else if(curSec==='calendario')renderCal();else renderDash();
 }
 // Ocupa en la agenda de la web (tabla turnos) los horarios que pisa una sesión de Juan Cruz.
@@ -13289,7 +13327,14 @@ async function syncProgramTemplates(){
   renderProg();
 }
 
-function initApp(){renderDash();updateOfflineUI();startInscPolling();loadManualFromSupabase();}
+function initApp(){renderDash();updateOfflineUI();startInscPolling();loadManualFromSupabase();_checkPasarParam();}
+function _checkPasarParam(){
+  const id=new URLSearchParams(location.search).get('pasar');
+  if(!id)return;
+  history.replaceState(null,'',location.pathname);
+  nav('calendario');
+  pasarASesion(id);
+}
 
 // ── POLLING EN TIEMPO CASI-REAL (notas, desafíos, hábitos, comunicación) ─────
 let _pollTimer=null;

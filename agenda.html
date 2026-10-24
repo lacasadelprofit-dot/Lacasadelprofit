@@ -146,7 +146,7 @@ const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
 const HORAS=['08:00','09:20','10:40'];
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
-const SENIA={barras:'R$ 100 / USD 30',proceso_cuerpos:'R$ 150 / USD 35'};
+const SENIA={barras:'R$ 100 / USD 30 / $30.000 ARS',proceso_cuerpos:'R$ 150 / USD 35 / $45.000 ARS'};
 let turnos=[], clases=[], _tab='proximos';
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -245,7 +245,7 @@ function setTab(t){
 function badge(e){
   return {pendiente_senia:'<span class="badge b-pend">Falta seña</span>',confirmado:'<span class="badge b-ok">Confirmado</span>',
     bloqueado:'<span class="badge b-blq">Bloqueado</span>',inscripto:'<span class="badge b-ins">Inscripto</span>',
-    cancelado:'<span class="badge b-blq">Cancelado</span>'}[e]||'';
+    cancelado:'<span class="badge b-blq">Cancelado</span>',realizado:'<span class="badge b-ok">✔ En historial</span>'}[e]||'';
 }
 function filaTurno(t,conAcciones=true){
   const d=t.data||{};
@@ -253,7 +253,10 @@ function filaTurno(t,conAcciones=true){
   const fechaTxt=fmt(t.fecha);
   const msgRecordatorio=`¡Hola ${d.nombre||''}! Te escribo por tu turno de ${(SERV[t.servicio]||'').replace(/^\S+ /,'')} el ${fechaTxt} a las ${t.hora} en Posada Luz y Brillo, Búzios.`;
   let acc='';
-  if(conAcciones){
+  // Reservas de sesión que todavía no están en el historial del admin
+  const pasable=(t.servicio==='barras'||t.servicio==='proceso_cuerpos')&&(t.estado==='pendiente_senia'||t.estado==='confirmado');
+  if(pasable)acc+=`<a class="btn" style="text-decoration:none" href="/?pasar=${encodeURIComponent(t.id)}">→ Pasar a sesión</a>`;
+  if(conAcciones&&t.estado!=='realizado'){
     if(t.estado==='pendiente_senia')acc+=`<button class="btn btn-ok" onclick="confirmarSenia('${t.id}')">✓ Seña recibida</button>`;
     if(d.celular)acc+=`<a class="btn" style="text-decoration:none" target="_blank" href="${waLink(d.celular,msgRecordatorio)}">WhatsApp</a>`;
     acc+=`<button class="btn btn-x" onclick="cancelar('${t.id}')">Cancelar</button>`;
