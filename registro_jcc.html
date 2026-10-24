@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#C17A48">
 <meta property="og:title" content="Barras de Access — Juan Cruz Consciencia">
 <meta property="og:description" content="Liberá el estrés y la mente sin hablar de tus problemas. Dejá tus datos y te contactamos.">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <style>
 :root{
   --bg:#FAFAF8;--card:#FFFFFF;--card2:#F4F2EE;--border:#E5E0D8;
@@ -165,6 +165,9 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   <div class="form-card">
 
     <div class="sec-label">Tus datos</div>
+    <!-- honeypot -->
+    <input type="text" id="rHoney" tabindex="-1" autocomplete="off"
+      style="position:absolute;opacity:0;height:0;pointer-events:none">
     <div class="fg">
       <label>Nombre y Apellido <span class="req">*</span></label>
       <input type="text" id="rNom" placeholder="Tu nombre completo" autocomplete="name">
@@ -255,8 +258,20 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 <script>
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
+/* ── PROSPECTOS: se guardan vía función (el público no puede leer la tabla seres) ── */
+async function guardarProspecto(sb,celular,nombre,campos,regalo,agendado){
+  const {error}=await sb.rpc('guardar_prospecto',{p_celular:celular,p_nombre:nombre,p_campos:campos||{},
+    p_regalo:regalo||null,p_agendado:!!agendado});
+  if(!error)return true;
+  if(error.code!=='PGRST202')throw error;
+  return false; // la función todavía no existe en Supabase → método anterior
+}
 
 function nid(){return String(Date.now()+Math.floor(Math.random()*1000));}
+
+const _params=new URLSearchParams(location.search);
+const _SESION_MAP={barras:'Barras de Access',proceso_cuerpos:'Proceso de Cuerpos',clase_barras:'Clase de Barras de Access®'};
+const _sesionInteres=_SESION_MAP[_params.get('sesion')||_params.get('tipo')||'']||'Barras de Access';
 
 async function enviarRegistro(){
   const nom=document.getElementById('rNom').value.trim();
@@ -280,6 +295,11 @@ async function enviarRegistro(){
 
   const canalProsp=origen||'Otro';
 
+  if(document.getElementById('rHoney').value){return;} // honeypot
+  const celLimpio=cel.replace(/\D/g,'');
+  if(!nom||nom.length<2){errEl.textContent='Completá tu nombre para continuar.';errEl.style.display='block';return;}
+  if(!email||!email.includes('@')){errEl.textContent='Poné un email válido.';errEl.style.display='block';return;}
+  if(celLimpio.length<8||celLimpio.length>15){errEl.textContent='Poné un celular válido (mínimo 8 dígitos).';errEl.style.display='block';return;}
   if(!nom||!email||!cel){
     errEl.textContent='Completá tu nombre, email y celular para continuar.';
     errEl.style.display='block';return;
@@ -300,9 +320,10 @@ async function enviarRegistro(){
     nacionalidad:'Argentina',
     prospecto:true,
     marca:'jcc',
-    origen:canalProsp||'Formulario JCC Barras',
-    interes:'Barras de Access',
-    herramientaInteres:'Barras de Access',
+    origen:canalProsp||'Formulario JCC',
+    interes:_sesionInteres,
+    herramientaInteres:_sesionInteres,
+    sesionInteres:_sesionInteres,
     mensajeRegistro:mensaje,
     review:'',
     campañaId:'',
@@ -315,17 +336,37 @@ async function enviarRegistro(){
   };
 
   try{
-    const fnResp=await fetch('/.netlify/functions/save-prospecto',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(ser)
-    });
-    let ok=fnResp.ok;
+    const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+    let ok=await guardarProspecto(sb,cel,nom,{email,pais,ciudad,marca:'jcc',origen:ser.origen,fuente:ser.origen,
+      interes:_sesionInteres,herramientaInteres:_sesionInteres,sesionInteres:_sesionInteres,mensajeRegistro:mensaje,
+      canalProsp,sintomas,momento,momentoOtro});
     if(!ok){
-      const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+    // Buscar si el celular ya existe como prospecto
+    const {data:existing}=await sb.from('seres').select('id,data').filter('data->>celular','eq',cel).limit(1);
+    if(existing&&existing.length){
+      // Ya existe — actualizar sumando la sesión de interés
+      const d=existing[0].data||{};
+      const merged={
+        ...d,
+        herramientaInteres:_sesionInteres,
+        sesionInteres:_sesionInteres,
+        email:email||d.email||'',
+        nombre:d.nombre||nom,
+        mensajeRegistro:mensaje||d.mensajeRegistro||'',
+        sintomas:sintomas.length?sintomas:(d.sintomas||[]),
+        momento:momento||d.momento||'',
+        canalProsp:canalProsp||d.canalProsp||'',
+        etapaProsp:d.etapaProsp||'Nuevo',
+      };
+      const {error}=await sb.from('seres').update({data:merged,updated_at:new Date().toISOString()}).eq('id',existing[0].id);
+      ok=!error;
+      if(error)console.warn('update error:',error.message);
+    } else {
+      // Nuevo — insertar
       const {error}=await sb.from('seres').insert({id:ser.id,data:ser,updated_at:new Date().toISOString()});
       ok=!error;
-      if(error)console.warn('Supabase anon insert error:',error.message);
+      if(error)console.warn('insert error:',error.message);
+    }
     }
     document.getElementById('loader').style.display='none';
     document.getElementById('formWrap').style.display='none';
