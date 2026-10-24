@@ -7,7 +7,7 @@
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="manifest" href="/site.webmanifest">
 <meta name="theme-color" content="#C9A84C">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.118.0"></script>
 <style>
 :root{
   --bg:#06060A;
@@ -56,10 +56,13 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
   cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px;
   transition:opacity .2s;text-decoration:none;}
 .btn-regalo:hover{opacity:.85;}
+.btn-dl{background:linear-gradient(135deg,var(--gold),var(--gd));color:#050401;font-weight:800;}
 .btn-wa{background:rgba(37,211,102,.15);color:#4ADE80;border:1px solid rgba(37,211,102,.3);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
 .btn-email{background:rgba(245,228,168,.10);color:var(--gold-pale);border:1px solid rgba(245,228,168,.28);
   backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);}
+.regalo-btns{display:flex;flex-direction:column;gap:10px;}
+.regalo-btns-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
 /* LOADER */
 #loader{display:none;position:fixed;inset:0;background:rgba(6,6,10,.92);z-index:9999;
@@ -247,9 +250,12 @@ function fill(template, nombre, nombreRegalo, trackUrl){
     .replace(/\{pdfUrl\}/g, trackUrl||'');
 }
 
-function trackUrl(regaloId, serNombre, serEmail){
+// Detecta la marca del portal desde ?marca= o por dominio
+const _marca=(new URLSearchParams(location.search).get('marca'))||'lcp';
+
+function trackUrl(regaloId, serNombre, serEmail, canal='portal_lcp'){
   const base=window.location.origin;
-  return `${base}/api/track-regalo?rid=${encodeURIComponent(regaloId)}&sn=${encodeURIComponent(serNombre)}&se=${encodeURIComponent(serEmail)}`;
+  return `${base}/api/track-regalo?rid=${encodeURIComponent(regaloId)}&sn=${encodeURIComponent(serNombre)}&se=${encodeURIComponent(serEmail)}&canal=${encodeURIComponent(canal)}`;
 }
 
 async function logEvento(regaloId, regaloNombre, tipo, serNombre, serEmail){
@@ -276,7 +282,9 @@ async function init(){
   try{
     const {data,error}=await _sb.from('regalos').select('id,data');
     if(!error&&data?.length){
-      lista=data.map(r=>({id:r.id,...r.data})).filter(r=>r.activo!==false);
+      lista=data.map(r=>({id:r.id,...r.data}))
+        .filter(r=>r.activo!==false)
+        .filter(r=>!r.marca||r.marca===_marca||r.marca==='ambos');
     }
   }catch(e){console.warn('regalos:',e);}
 
@@ -288,8 +296,10 @@ async function init(){
     return;
   }
 
+  const canal=_marca==='jcc'?'portal_jcc':'portal_lcp';
+
   document.getElementById('regaloList').innerHTML=lista.map(r=>{
-    const tUrl=trackUrl(r.id, _serNombre, _serEmail);
+    const tUrl=trackUrl(r.id, _serNombre, _serEmail, canal);
     const msgWA=fill(r.mensajeWA||'', _serNombre, r.nombre, tUrl);
     const asunto=fill(r.emailAsunto||'Tu regalo: '+r.nombre+' ✨', _serNombre, r.nombre, tUrl);
     const msgEmail=fill(r.mensajeEmail||'', _serNombre, r.nombre, tUrl);
@@ -299,20 +309,27 @@ async function init(){
       ?`mailto:${_serEmail}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msgEmail)}`
       :`mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(msgEmail)}`;
 
+    const nombreSafe=(r.nombre||'').replace(/'/g,"\\'");
+
     return`<div class="regalo-card">
       <div class="regalo-body">
         <span class="regalo-ico">${r.icono||'🎁'}</span>
         <div class="regalo-nombre">${r.nombre}</div>
         ${r.descripcion?`<div class="regalo-desc">${r.descripcion}</div>`:''}
         <div class="regalo-btns">
-          <a class="btn-regalo btn-wa" href="${hrefWA}" target="_blank"
-            onclick="logEvento('${r.id}','${(r.nombre||'').replace(/'/g,"\\'")}','envio_wa',_serNombre,_serEmail)">
-            💬 WhatsApp
+          <a class="btn-regalo btn-dl" href="${tUrl}" target="_blank">
+            ⬇️ Descargar PDF
           </a>
-          <a class="btn-regalo btn-email" href="${hrefEmail}"
-            onclick="logEvento('${r.id}','${(r.nombre||'').replace(/'/g,"\\'")}','envio_email',_serNombre,_serEmail)">
-            ✉️ Email
-          </a>
+          <div class="regalo-btns-row">
+            <a class="btn-regalo btn-wa" href="${hrefWA}" target="_blank"
+              onclick="logEvento('${r.id}','${nombreSafe}','envio_wa',_serNombre,_serEmail)">
+              💬 WhatsApp
+            </a>
+            <a class="btn-regalo btn-email" href="${hrefEmail}"
+              onclick="logEvento('${r.id}','${nombreSafe}','envio_email',_serNombre,_serEmail)">
+              ✉️ Email
+            </a>
+          </div>
         </div>
       </div>
     </div>`;
