@@ -3682,6 +3682,28 @@ function renderSes(){
         <span style="font-size:13px;font-weight:700;color:var(--purple)">${c}</span>
       </div>`).join('');
 
+    // Dónde y con quién: Brasil / Búzios / Juan Cruz en Búzios + nacionalidades
+    const _sa=t=>String(t||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().trim();
+    const enBuz=s=>_sa(s.ciudad).includes('buzios');
+    const enBra=s=>['brasil','brazil'].includes(_sa(s.pais))||enBuz(s);
+    const sesBra=compSes.filter(enBra),sesBuz=compSes.filter(enBuz);
+    const sesJC=compSes.filter(s=>s.facilitador===FAC_ADMIN);
+    const sesJCBuz=sesBuz.filter(s=>s.facilitador===FAC_ADMIN);
+    const nacPorNom={};seres.forEach(x=>{const k=_sa(x.nombre);if(k&&!nacPorNom[k])nacPorNom[k]=x.nacionalidad||'';});
+    const nacDe=list=>{const vistos=new Set(),c={};
+      list.forEach(x=>{const k=_sa(x.ser);if(!k||vistos.has(k))return;vistos.add(k);const n=nacPorNom[k]||'Sin dato';c[n]=(c[n]||0)+1;});
+      return {total:vistos.size,filas:Object.entries(c).sort((a,b)=>b[1]-a[1])};};
+    const listaNac=(r,col)=>r.filas.length?r.filas.map(([n,c])=>{const pc=r.total?Math.round(c/r.total*100):0;return `
+      <div style="padding:6px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+        <div style="display:flex;justify-content:space-between;font-size:12px"><span>${n}</span><span style="font-weight:700;color:${col}">${c} <span style="font-weight:400;color:var(--muted)">· ${pc}%</span></span></div>
+        <div style="height:4px;background:var(--border,#2A2840);border-radius:3px;margin-top:5px"><div style="height:100%;width:${pc}%;background:${col};border-radius:3px"></div></div>
+      </div>`;}).join(''):'<div style="color:var(--muted);font-size:12px">Sin datos</div>';
+    const nacJC=nacDe(sesJC),nacGen=nacDe(compSes);
+    const cajaLugar=(ic,tit,n,sub,col)=>`<div style="flex:1;min-width:130px;padding:12px;background:var(--card2);border-radius:10px">
+        <div style="font-size:11px;color:var(--muted)">${ic} ${tit}</div>
+        <div style="font-size:24px;font-weight:700;color:${col};margin:2px 0">${n}</div>
+        <div style="font-size:11px;color:var(--muted)">${sub}</div></div>`;
+
     // Últimas sesiones
     const recientes=compSes.slice().sort((a,b)=>new Date(b.fecha)-new Date(a.fecha)).slice(0,5).map(s=>`
       <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
@@ -3702,6 +3724,18 @@ function renderSes(){
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:180px"><canvas id="chResAnual"></canvas></div></div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🙋 Por facilitador</h3>${topFac||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
+      </div>
+      <div class="cc" style="margin-bottom:14px">
+        <h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📍 Sesiones por lugar <span style="font-weight:400">(completadas)</span></h3>
+        <div style="display:flex;flex-wrap:wrap;gap:10px">
+          ${cajaLugar('🇧🇷','En Brasil',sesBra.length,`${compSes.length?Math.round(sesBra.length/compSes.length*100):0}% del total`,'#7B9E87')}
+          ${cajaLugar('🏝️','En Búzios',sesBuz.length,`${sesBra.length?Math.round(sesBuz.length/sesBra.length*100):0}% de las de Brasil`,'#C9A84C')}
+          ${cajaLugar('🙋','Juan Cruz en Búzios',sesJCBuz.length,`${sesBuz.length?Math.round(sesJCBuz.length/sesBuz.length*100):0}% de las de Búzios`,'#C17A48')}
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:4px">🌎 Nacionalidad · seres de Juan Cruz</h3><div style="font-size:11px;color:var(--muted);margin-bottom:10px">${nacJC.total} seres distintos atendidos</div>${listaNac(nacJC,'#C17A48')}</div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:4px">🌍 Nacionalidad · todos los seres</h3><div style="font-size:11px;color:var(--muted);margin-bottom:10px">${nacGen.total} seres distintos atendidos</div>${listaNac(nacGen,'#7B9E87')}</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌐 Presencial vs Online</h3><div style="height:180px"><canvas id="chResMod"></canvas></div></div>
