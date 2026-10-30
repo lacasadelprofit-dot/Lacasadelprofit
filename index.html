@@ -3699,6 +3699,22 @@ function renderSes(){
         <div style="height:4px;background:var(--border,#2A2840);border-radius:3px;margin-top:5px"><div style="height:100%;width:${pc}%;background:${col};border-radius:3px"></div></div>
       </div>`;}).join(''):'<div style="color:var(--muted);font-size:12px">Sin datos</div>';
     const nacJC=nacDe(sesJC),nacGen=nacDe(compSes);
+    // Búzios: retorno (nuevos vs repetidores) y herramientas
+    const buzPers={};
+    sesBuz.forEach(x=>{const k=_sa(x.ser);if(!k)return;const p=buzPers[k]||(buzPers[k]={nombre:x.ser,n:0,ult:''});p.n++;if((x.fecha||'')>p.ult)p.ult=x.fecha||'';});
+    const buzLista=Object.values(buzPers),buzRep=buzLista.filter(x=>x.n>=2).length,buzUna=buzLista.length-buzRep;
+    const buzPctVuelve=buzLista.length?Math.round(buzRep/buzLista.length*100):0;
+    const hoyMs=new Date(new Date().toISOString().slice(0,10)).getTime();
+    window._buzVolver=buzLista.filter(x=>x.n===1&&x.ult&&(hoyMs-new Date(x.ult).getTime())/864e5>30)
+      .sort((a,b)=>b.ult.localeCompare(a.ult)).slice(0,15);
+    const listaVolver=_buzVolver.length?_buzVolver.map((x,i)=>{const dias=Math.round((hoyMs-new Date(x.ult).getTime())/864e5);return `
+      <div style="display:flex;align-items:center;gap:8px;padding:6px 12px;background:var(--card2);border-radius:8px;margin-bottom:5px">
+        <span style="font-size:12px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${x.nombre}</span>
+        <span style="font-size:11px;color:var(--muted)">hace ${dias} días</span>
+        <button class="btn btn-s btn-sm" title="Invitar a volver por WhatsApp" onclick="waVolver(_buzVolver[${i}].nombre)">💬</button>
+      </div>`;}).join(''):'<div style="color:var(--muted);font-size:12px">Nadie por ahora ✨</div>';
+    const buzHerr={};sesBuz.forEach(x=>{if(x.sesion)buzHerr[x.sesion]=(buzHerr[x.sesion]||0)+1;});
+    const buzHerrR={total:sesBuz.length,filas:Object.entries(buzHerr).sort((a,b)=>b[1]-a[1])};
     const cajaLugar=(ic,tit,n,sub,col)=>`<div style="flex:1;min-width:130px;padding:12px;background:var(--card2);border-radius:10px">
         <div style="font-size:11px;color:var(--muted)">${ic} ${tit}</div>
         <div style="font-size:24px;font-weight:700;color:${col};margin:2px 0">${n}</div>
@@ -3719,7 +3735,7 @@ function renderSes(){
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔮 Top herramientas</h3>${topHerr||'<div style="color:var(--muted);font-size:12px">Sin datos</div>'}</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
-        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌱 Acumulado por año (todas las sesiones)</h3><div style="height:180px"><canvas id="chResAcumAnual"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌱 Acumulado por año (todas las sesiones)</h3><div style="height:180px"><canvas id="chResAcumAnual"></canvas></div><div id="resCrecAnual" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:12px"></div></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">📈 Sesiones por mes — comparativo anual</h3><div style="height:180px"><canvas id="chResAnual"></canvas></div></div>
@@ -3736,6 +3752,21 @@ function renderSes(){
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:4px">🌎 Nacionalidad · seres de Juan Cruz</h3><div style="font-size:11px;color:var(--muted);margin-bottom:10px">${nacJC.total} seres distintos atendidos</div>${listaNac(nacJC,'#C17A48')}</div>
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:4px">🌍 Nacionalidad · todos los seres</h3><div style="font-size:11px;color:var(--muted);margin-bottom:10px">${nacGen.total} seres distintos atendidos</div>${listaNac(nacGen,'#7B9E87')}</div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏝️ Búzios mes a mes · sesiones</h3><div style="height:220px"><canvas id="chBuzSes"></canvas></div></div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏝️ Búzios mes a mes · R$ cobrados vs meta</h3><div style="height:220px"><canvas id="chBuzRev"></canvas></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔁 ¿Vuelven? · Búzios</h3>
+          <div style="display:flex;gap:10px;margin-bottom:12px">
+            ${cajaLugar('🌱','Vinieron 1 vez',buzUna,'personas','#5B9BD5')}
+            ${cajaLugar('💛','Volvieron',buzRep,`${buzPctVuelve}% de ${buzLista.length}`,'#C9A84C')}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Vinieron 1 vez y no volvieron hace +30 días · escribiles 💬</div>
+          ${listaVolver}
+        </div>
+        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:4px">🔮 Qué sesiones piden en Búzios</h3><div style="font-size:11px;color:var(--muted);margin-bottom:10px">${sesBuz.length} sesiones en Búzios</div>${listaNac(buzHerrR,'#C9A84C')}</div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🌐 Presencial vs Online</h3><div style="height:180px"><canvas id="chResMod"></canvas></div></div>
@@ -3795,8 +3826,22 @@ function renderSes(){
     // Chart: acumulado por año — todas las sesiones, todas las herramientas, todos los facilitadores
     let accY2=0;
     const acumAnualData2=yrs2.map(y=>{accY2+=compSes.filter(s=>new Date(s.fecha).getFullYear()===y).length;return accY2;});
+    // Crecimiento año a año: % del acumulado (arriba de cada barra) y % de sesiones del año vs el anterior
+    const pctCrec=(a,b)=>b>0?Math.round((a-b)/b*100):null;
+    const txtPct=v=>v==null?'':(v>=0?'+':'')+v+'%';
+    const sesAnio2=yrs2.map(y=>compSes.filter(s=>new Date(s.fecha).getFullYear()===y).length);
+    const crecAcum2=acumAnualData2.map((v,i)=>i?pctCrec(v,acumAnualData2[i-1]):null);
+    const crecEl=document.getElementById('resCrecAnual');
+    if(crecEl)crecEl.innerHTML=yrs2.map((y,i)=>{const pc=i?pctCrec(sesAnio2[i],sesAnio2[i-1]):null;const col=pc==null?'var(--muted)':pc>=0?'#3DAA6A':'#E05C5C';
+      return `<div style="flex:1;min-width:92px;padding:6px 8px;background:var(--card2);border-radius:8px;text-align:center">
+        <div style="font-size:11px;color:var(--muted)">${y}${y===yr2?' (en curso)':''}</div>
+        <div style="font-size:13px;font-weight:700">${sesAnio2[i]} ses.</div>
+        <div style="font-size:11px;font-weight:700;color:${col}">${pc==null?'—':txtPct(pc)+' vs '+yrs2[i-1]}</div></div>`;}).join('')
+      +'<div style="width:100%;font-size:10px;color:var(--muted)">Arriba de cada barra: cuánto creció el total acumulado. Abajo: sesiones de cada año comparadas con el año anterior.</div>';
+    const pctArriba={id:'pctArriba',afterDatasetsDraw(c){const ctx=c.ctx;ctx.save();ctx.font='bold 11px sans-serif';ctx.textAlign='center';ctx.fillStyle='#3DAA6A';
+      c.getDatasetMeta(0).data.forEach((b,i)=>{const t=txtPct(crecAcum2[i]);if(t)ctx.fillText(t,b.x,b.y-5);});ctx.restore();}};
     if(charts.resAcumAnual)charts.resAcumAnual.destroy();
-    charts.resAcumAnual=new Chart(document.getElementById('chResAcumAnual'),{type:'bar',data:{labels:yrs2.map(String),datasets:[{label:'Total acumulado',data:acumAnualData2,backgroundColor:'rgba(201,168,76,.55)',borderColor:'#C9A84C',borderRadius:5,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} sesiones acumuladas`}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+    charts.resAcumAnual=new Chart(document.getElementById('chResAcumAnual'),{type:'bar',plugins:[pctArriba],data:{labels:yrs2.map(String),datasets:[{label:'Total acumulado',data:acumAnualData2,backgroundColor:'rgba(201,168,76,.55)',borderColor:'#C9A84C',borderRadius:5,borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:18}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.raw} sesiones acumuladas${crecAcum2[ctx.dataIndex]!=null?' ('+txtPct(crecAcum2[ctx.dataIndex])+')':''}`}}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
 
     // Chart: Presencial vs Online
     const pr2=compSes.filter(s=>s.modalidad==='Presencial').length;
@@ -3818,6 +3863,34 @@ function renderSes(){
     const diaData2=diaIdx2.map(d=>compSes.filter(s=>s.fecha&&new Date(s.fecha).getDay()===d).length);
     if(charts.resDia)charts.resDia.destroy();
     charts.resDia=new Chart(document.getElementById('chResDia'),{type:'bar',data:{labels:DIAS2,datasets:[{data:diaData2,backgroundColor:diaData2.map((_,i)=>i<5?'rgba(201,168,76,.55)':'rgba(91,155,213,.55)'),borderColor:diaData2.map((_,i)=>i<5?'#C9A84C':'#5B9BD5'),borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
+
+    // Charts: Búzios mes a mes (sesiones + acumulado; R$ + meta + acumulado)
+    const META_BUZIOS={'2026-11':2000,'2026-12':3000,'2027-01':4500,'2027-02':6000,'2027-03':6000,'2027-04':6000,'2027-05':6000};
+    const buzMeses=[];
+    const buzPrim=sesBuz.map(x=>(x.fecha||'').slice(0,7)).filter(Boolean).sort()[0];
+    if(buzPrim){let [y,m]=buzPrim.split('-').map(Number);const fin=new Date().toISOString().slice(0,7);
+      while(true){const k=`${y}-${String(m).padStart(2,'0')}`;if(k>fin)break;buzMeses.push(k);m++;if(m>12){m=1;y++;}}}
+    const MNB=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+    const buzLab=buzMeses.map(k=>MNB[+k.slice(5)-1]+' '+k.slice(2,4));
+    const buzSesMes=buzMeses.map(k=>sesBuz.filter(x=>(x.fecha||'').startsWith(k)).length);
+    let acB=0;const buzSesAc=buzSesMes.map(v=>acB+=v);
+    const buzRevMes=buzMeses.map(k=>sesBuz.filter(x=>(x.fecha||'').startsWith(k)&&x.moneda==='BRL').reduce((a,x)=>a+(x.montoPagado!=null?x.montoPagado:x.monto||0),0));
+    let acR=0;const buzRevAc=buzRevMes.map(v=>acR+=v);
+    const buzMeta=buzMeses.map(k=>META_BUZIOS[k]??null);
+    const ejeB={ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true};
+    const optB=(tt)=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7A7260',font:{size:11},boxWidth:12}},tooltip:tt?{callbacks:{label:tt}}:{}},
+      scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{...ejeB,position:'left'},y1:{...ejeB,position:'right',grid:{display:false}}}});
+    if(charts.buzSes)charts.buzSes.destroy();
+    charts.buzSes=new Chart(document.getElementById('chBuzSes'),{type:'bar',data:{labels:buzLab,datasets:[
+      {type:'bar',label:'Sesiones del mes',data:buzSesMes,backgroundColor:'rgba(201,168,76,.55)',borderColor:'#C9A84C',borderWidth:1,borderRadius:5,yAxisID:'y'},
+      {type:'line',label:'Acumulado',data:buzSesAc,borderColor:'#7B9E87',backgroundColor:'#7B9E87',tension:.3,pointRadius:3,yAxisID:'y1'}]},options:optB()});
+    const fR=v=>'R$ '+Math.round(v||0).toLocaleString('es-AR');
+    if(charts.buzRev)charts.buzRev.destroy();
+    charts.buzRev=new Chart(document.getElementById('chBuzRev'),{type:'bar',data:{labels:buzLab,datasets:[
+      {type:'bar',label:'R$ del mes',data:buzRevMes,backgroundColor:'rgba(193,122,72,.55)',borderColor:'#C17A48',borderWidth:1,borderRadius:5,yAxisID:'y'},
+      {type:'line',label:'Meta',data:buzMeta,borderColor:'#E8C96A',backgroundColor:'#E8C96A',borderDash:[6,4],pointRadius:3,yAxisID:'y'},
+      {type:'line',label:'Acumulado',data:buzRevAc,borderColor:'#7B9E87',backgroundColor:'#7B9E87',tension:.3,pointRadius:3,yAxisID:'y1'}]},
+      options:optB(ctx=>`${ctx.dataset.label}: ${fR(ctx.raw)}`)});
 
     // Chart: frecuencia por ser
     const freqMap2={};
@@ -4428,6 +4501,18 @@ function waLink(cel, nombre){
   }
   const msg=encodeURIComponent('Hola '+(nombre||'').split(' ')[0]+'! 🌟');
   return `https://wa.me/${n}?text=${msg}`;
+}
+/* ── Invitar a volver a alguien que vino una sola vez (Resumen · Búzios) ── */
+function waVolver(nombre){
+  const ser=seres.find(x=>(x.nombre||'').toLowerCase().trim()===(nombre||'').toLowerCase().trim());
+  let n=(ser?.celular||'').replace(/\D/g,'');
+  if(!n){toast('⚠️ '+(nombre||'Este ser')+' no tiene celular cargado');return;}
+  if(!(n.startsWith('55')&&n.length>=12))n=waLink(n,'').replace('https://wa.me/','').split('?')[0];
+  const nom=(nombre||'').split(' ')[0];
+  const msg=`Hola ${nom}! ✦ ¿Cómo estás? Me acordé de vos y de la sesión que compartimos.\n\n`+
+    `Si sentís de regalarte otra, tengo turnos de lunes a viernes por la mañana. También está el Mes Energético: 4 sesiones al precio de 3 🙌\n\n`+
+    `¿Querés que te guarde un lugar?`;
+  window.open(`https://wa.me/${n}?text=${encodeURIComponent(msg)}`,'_blank');
 }
 /* ── Pedir reseña de Google por WhatsApp después de una sesión ── */
 const RESENA_GOOGLE_URL='https://g.page/r/CQ49CL7ZcGG1EAI/review';
