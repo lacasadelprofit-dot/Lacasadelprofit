@@ -438,7 +438,7 @@ th{background:rgba(28,26,46,.88)!important;}
         <select class="fi" id="sesPV" onchange="renderSes()"><option value="">Todas las sesiones</option><option value="1">Solo 1° Vez</option></select>
        </div>
        <table>
-        <thead><tr><th>Fecha / Hora</th><th>Ser</th><th>Herramienta</th><th>1°Vez</th><th>Facilitador</th><th>País</th><th>Provincia</th><th>Modalidad</th><th>Estado</th><th>Obs.</th><th></th></tr></thead>
+        <thead><tr><th>Fecha / Hora</th><th>Ser</th><th>Herramienta</th><th>1°Vez</th><th>Facilitador</th><th>País</th><th>Provincia / Ciudad</th><th>Modalidad</th><th>Estado</th><th>Obs.</th><th></th></tr></thead>
         <tbody id="sesBody"></tbody>
        </table>
        <div style="padding:10px 16px;border-top:1px solid #1E1C10;display:flex;justify-content:space-between;align-items:center;">
@@ -3755,7 +3755,7 @@ function renderSes(){
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏝️ Búzios mes a mes · sesiones</h3><div style="height:220px"><canvas id="chBuzSes"></canvas></div></div>
-        <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🏝️ Búzios mes a mes · R$ cobrados vs meta</h3><div style="height:220px"><canvas id="chBuzRev"></canvas></div></div>
+        <div class="cc"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px"><h3 style="font-size:13px;color:var(--muted)">🏝️ Búzios mes a mes · R$ cobrados vs meta</h3><button class="btn btn-s btn-sm" onclick="toggleMetasBuzios()">🎯 Metas ✏️</button></div><div id="metasBuzPanel" style="display:none;margin-bottom:12px"></div><div style="height:220px"><canvas id="chBuzRev"></canvas></div></div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px;margin-bottom:14px">
         <div class="cc"><h3 style="font-size:13px;color:var(--muted);margin-bottom:12px">🔁 ¿Vuelven? · Búzios</h3>
@@ -3865,7 +3865,6 @@ function renderSes(){
     charts.resDia=new Chart(document.getElementById('chResDia'),{type:'bar',data:{labels:DIAS2,datasets:[{data:diaData2,backgroundColor:diaData2.map((_,i)=>i<5?'rgba(201,168,76,.55)':'rgba(91,155,213,.55)'),borderColor:diaData2.map((_,i)=>i<5?'#C9A84C':'#5B9BD5'),borderWidth:1,borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{ticks:{color:'#7A7260',stepSize:1},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true}}}});
 
     // Charts: Búzios mes a mes (sesiones + acumulado; R$ + meta + acumulado)
-    const META_BUZIOS={'2026-11':2000,'2026-12':3000,'2027-01':4500,'2027-02':6000,'2027-03':6000,'2027-04':6000,'2027-05':6000};
     const buzMeses=[];
     const buzPrim=sesBuz.map(x=>(x.fecha||'').slice(0,7)).filter(Boolean).sort()[0];
     if(buzPrim){let [y,m]=buzPrim.split('-').map(Number);const fin=new Date().toISOString().slice(0,7);
@@ -3876,7 +3875,7 @@ function renderSes(){
     let acB=0;const buzSesAc=buzSesMes.map(v=>acB+=v);
     const buzRevMes=buzMeses.map(k=>sesBuz.filter(x=>(x.fecha||'').startsWith(k)&&x.moneda==='BRL').reduce((a,x)=>a+(x.montoPagado!=null?x.montoPagado:x.monto||0),0));
     let acR=0;const buzRevAc=buzRevMes.map(v=>acR+=v);
-    const buzMeta=buzMeses.map(k=>META_BUZIOS[k]??null);
+    const buzMeta=buzMeses.map(k=>metaBuzios(k));
     const ejeB={ticks:{color:'#7A7260'},grid:{color:'rgba(30,28,16,.8)'},beginAtZero:true};
     const optB=(tt)=>({responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#7A7260',font:{size:11},boxWidth:12}},tooltip:tt?{callbacks:{label:tt}}:{}},
       scales:{x:{ticks:{color:'#7A7260'},grid:{display:false}},y:{...ejeB,position:'left'},y1:{...ejeB,position:'right',grid:{display:false}}}});
@@ -3959,7 +3958,7 @@ function renderSes(){
       <td>${s.primeraVez?'<span class="bdg b-or">⭐ 1°Vez</span>':'—'}</td>
       <td style="font-size:12px">${s.facilitador}</td>
       <td style="font-size:12px;color:var(--muted)">${s.pais||'—'}</td>
-      <td style="font-size:12px;color:var(--muted)">${s.provincia||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${s.provincia||'—'}${s.ciudad?`<br><span style="font-size:11px;color:var(--gl)">📍 ${s.ciudad}</span>`:''}</td>
       <td><span class="bdg ${s.modalidad==='Online'?'b-bl':'b-go'}">${s.modalidad||'—'}</span></td>
       <td><span class="bdg ${estCls(s.estado||'Completado')}">${s.estado||'Completado'}</span>${s.intakeCompletado?'<div style="margin-top:3px"><span class="bdg b-pu" style="font-size:9px">💫 Integrado</span></div>':''}</td>
       <td style="max-width:140px;font-size:11px">
@@ -4501,6 +4500,44 @@ function waLink(cel, nombre){
   }
   const msg=encodeURIComponent('Hola '+(nombre||'').split(' ')[0]+'! 🌟');
   return `https://wa.me/${n}?text=${msg}`;
+}
+/* ── Metas de plata en Búzios (R$ por mes). Se guardan con las metas mensuales
+      (tabla configuracion, clave buziosBRL); si un mes no tiene, usa la base ── */
+const META_BUZIOS_BASE={'2026-11':2000,'2026-12':3000,'2027-01':4500,'2027-02':6000,'2027-03':6000,'2027-04':6000,'2027-05':6000};
+function metaBuzios(mes){
+  const g=getMonthGoals(mes);
+  if(g.buziosBRL!=null)return g.buziosBRL||null;
+  return META_BUZIOS_BASE[mes]??null;
+}
+function _mesesMetasBuzios(){
+  // desde el mes actual hasta mayo 2027 (o 6 meses si ya pasó)
+  const out=[];let d=new Date();d.setDate(1);
+  const hasta=new Date().toISOString().slice(0,7)>'2027-05'?null:'2027-05';
+  while(out.length<24){const k=d.toISOString().slice(0,7);if(hasta?k>hasta:out.length>=6)break;out.push(k);d.setMonth(d.getMonth()+1);}
+  return out;
+}
+function toggleMetasBuzios(){
+  const el=document.getElementById('metasBuzPanel');if(!el)return;
+  if(el.style.display!=='none'){el.style.display='none';return;}
+  const MN=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  el.innerHTML=`<div style="padding:12px;background:var(--card2);border-radius:10px">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Meta en R$ de cada mes (dejá vacío o 0 para no tener meta ese mes)</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:8px">
+      ${_mesesMetasBuzios().map(k=>`<label style="font-size:11px;color:var(--muted)">${MN[+k.slice(5)-1]} ${k.slice(0,4)}
+        <input type="number" min="0" step="100" data-mes="${k}" value="${metaBuzios(k)??''}" style="width:100%;margin-top:3px"></label>`).join('')}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-p btn-sm" onclick="guardarMetasBuzios()">Guardar metas</button><button class="btn btn-s btn-sm" onclick="toggleMetasBuzios()">Cancelar</button></div>
+  </div>`;
+  el.style.display='';
+}
+function guardarMetasBuzios(){
+  const all=JSON.parse(localStorage.getItem('lcp_goals_by_month')||'{}');
+  document.querySelectorAll('#metasBuzPanel input[data-mes]').forEach(i=>{
+    const v=parseFloat(i.value);all[i.dataset.mes]={...(all[i.dataset.mes]||{}),buziosBRL:isNaN(v)||v<0?0:v};
+  });
+  localStorage.setItem('lcp_goals_by_month',JSON.stringify(all));cfgPush('lcp_goals_by_month');
+  toast('🎯 Metas de Búzios guardadas');
+  renderSes();
 }
 /* ── Invitar a volver a alguien que vino una sola vez (Resumen · Búzios) ── */
 function waVolver(nombre){
