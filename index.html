@@ -846,6 +846,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
+      <button class="tab-btn" id="mktTabFlyers" onclick="setMktTab('flyers')">📱 Flyers</button>
       <button class="tab-btn" id="mktTabTesoro" onclick="setMktTab('tesoro')">🗺️ Búsqueda del Tesoro</button>
       <button class="tab-btn" onclick="navCRM()" style="border-color:rgba(201,168,76,.3);color:var(--gold)">👥 Ir a CRM →</button>
      </div>
@@ -856,6 +857,7 @@ th{background:rgba(28,26,46,.88)!important;}
      <div id="mktMeta" style="display:none"></div>
      <div id="mktRegalos" style="display:none"></div>
      <div id="mktStats" style="display:none"></div>
+     <div id="mktFlyers" style="display:none"></div>
      <div id="mktTesoro" style="display:none"></div>
     </div>
 
@@ -1333,6 +1335,10 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg"><label>Modalidad</label>
     <select id="nsMod"><option>Presencial</option><option>Online</option></select>
    </div>
+  </div>
+  <div class="fg"><label>Flyer / origen <span style="color:var(--muted);font-weight:400;font-size:11px">(ej: BUZ-01 · si vino por un flyer)</span></label>
+   <input type="text" id="nsFlyer" list="dlFlyers" placeholder="BUZ-01, ARR-03, CAB-02, Instagram…" style="text-transform:uppercase">
+   <datalist id="dlFlyers"></datalist>
   </div>
   <div class="fg"><label>Programa (opcional)</label>
    <select id="nsPrograma">
@@ -5186,6 +5192,8 @@ function openModal(type,id,extra){
     document.getElementById('moSesTitle').textContent=ses?'✏️ Editar Sesión':'✨ Nueva Sesión';
     document.getElementById('nsId').value=id||'';
     document.getElementById('nsPais').innerHTML=PAISES.map(p=>`<option>${p}</option>`).join('');
+    document.getElementById('dlFlyers').innerHTML=FLYER_CODIGOS.map(c=>`<option value="${c}">`).join('');
+    document.getElementById('nsFlyer').value=ses?(ses.flyer||''):'';
     if(ses){
       document.getElementById('nsFecha').value=ses.fecha;
       document.getElementById('nsHora').value=ses.hora||'';
@@ -8051,6 +8059,7 @@ function saveSes(){
     provincia:document.getElementById('nsProv').value,
     ciudad:document.getElementById('nsCiudad').value,
     modalidad:document.getElementById('nsMod').value,
+    flyer:(document.getElementById('nsFlyer')?.value||'').trim().toUpperCase(),
     primeraVez:document.getElementById('nsPV').checked,
     estado:document.getElementById('nsEst').value,
     moneda:document.getElementById('nsMoneda')?.value||'ARS',
@@ -8836,7 +8845,7 @@ function doImport(){
 let mktTab='resumen';
 function setMktTab(t){
   mktTab=t;
-  ['resumen','pub','conv','ret','meta','regalos','stats','tesoro'].forEach(x=>{
+  ['resumen','pub','conv','ret','meta','regalos','stats','flyers','tesoro'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
@@ -8849,6 +8858,7 @@ function setMktTab(t){
   else if(t==='regalos')renderMktRegalos();
   else if(t==='stats')renderMktStats();
   else if(t==='tesoro')renderMktTesoro();
+  else if(t==='flyers')renderMktFlyers();
   else if(t==='contenido')renderMktContenido();
   else renderMetaTab();
 }
@@ -10337,6 +10347,125 @@ async function renderMktRegalos(){
   _renderRgTab();
 }
 
+/* ── FLYERS (QR → ruleta.html?f=CÓDIGO) — resultados por flyer, ciudad e idioma ──
+   Lee los eventos anónimos que registra ruleta.html (regalo_eventos, pagina='ruleta')
+   y las sesiones que tienen cargado el campo "Flyer / origen". */
+const FLYER_CIUDADES={BUZ:{nombre:'Búzios',n:10},ARR:{nombre:'Arraial do Cabo',n:5},CAB:{nombre:'Cabo Frío',n:5}};
+const FLYER_CODIGOS=Object.entries(FLYER_CIUDADES).flatMap(([k,c])=>Array.from({length:c.n},(_,i)=>`${k}-${String(i+1).padStart(2,'0')}`));
+const FLYER_URL='https://www.juancruzconsciencia.lat/ruleta.html?f=';
+const FLYER_DIM_LBL={Consciencia:'Consciencia',Dinero:'Recibir',Cuerpo:'Cuerpo',Relaciones:'Vínculos',Propósito:'Propósito',Identidad:'Identidad'};
+let _flyerDias=30,_flyerEvs=null,_flyerCargadoDias=null;
+
+function setFlyerDias(d){_flyerDias=d;renderMktFlyers();}
+async function renderMktFlyers(){
+  const el=document.getElementById('mktFlyers');if(!el)return;
+  if(_flyerCargadoDias!==_flyerDias){
+    el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Cargando resultados…</div>';
+    const desde=_flyerDias?new Date(Date.now()-_flyerDias*864e5).toISOString():null;
+    const evs=[];
+    try{
+      for(let i=0;i<20000;i+=1000){
+        let q=_sb.from('regalo_eventos').select('data,created_at').filter('data->>pagina','eq','ruleta').order('created_at',{ascending:false}).range(i,i+999);
+        if(desde)q=q.gte('created_at',desde);
+        const {data,error}=await q;
+        if(error){console.warn('flyers:',error);break;}
+        (data||[]).forEach(r=>evs.push(r.data||{}));
+        if(!data||data.length<1000)break;
+      }
+    }catch(e){console.warn('flyers:',e);}
+    _flyerEvs=evs;_flyerCargadoDias=_flyerDias;
+  }
+  const evs=_flyerEvs||[];
+  const desdeF=_flyerDias?new Date(Date.now()-_flyerDias*864e5).toISOString().slice(0,10):'';
+  const sesF=sessions.filter(s=>s.flyer&&(!desdeF||(s.fecha||'')>=desdeF));
+  const vacio=()=>({esc:0,gir:0,comp:0,guia:0,agen:0,tes:0,ses:0});
+  const por={};FLYER_CODIGOS.forEach(c=>por[c]=vacio());
+  const otros={};
+  const idiomas={},dims={};
+  evs.forEach(e=>{
+    const k=e.flyer||null;
+    let b;
+    if(k){b=por[k]||(por[k]=vacio());}
+    else{const o=e.origen||'directo';b=otros[o]||(otros[o]=vacio());}
+    if(e.tipo==='page_view'){b.esc++;idiomas[e.idioma||'?']=(idiomas[e.idioma||'?']||0)+1;}
+    else if(e.tipo==='ruleta_girar'||e.tipo==='ruleta_girar_otra')b.gir++;
+    else if(e.tipo==='compartir')b.comp++;
+    else if(e.tipo==='guia_whatsapp')b.guia++;
+    else if(e.tipo==='agendar_whatsapp')b.agen++;
+    else if(e.tipo==='click_tesoro')b.tes++;
+    else if(e.tipo==='ruleta_resultado'&&e.dimension)dims[e.dimension]=(dims[e.dimension]||0)+1;
+  });
+  sesF.forEach(s=>{const k=s.flyer.toUpperCase();(por[k]||(por[k]=vacio())).ses++;});
+  const suma=list=>list.reduce((a,b)=>{Object.keys(a).forEach(k=>a[k]+=b[k]);return a;},vacio());
+  const flyersCod=[...FLYER_CODIGOS,...Object.keys(por).filter(k=>/^[A-Z]{3}-\d{2}$/.test(k)&&!FLYER_CODIGOS.includes(k)).sort()];
+  const tot=suma(flyersCod.map(k=>por[k]));
+  const pct=(a,b)=>b?Math.round(a*100/b)+'%':'—';
+  const ciudades=Object.entries(FLYER_CIUDADES).map(([k,c])=>({k,nombre:c.nombre,...suma(flyersCod.filter(f=>f.startsWith(k)).map(f=>por[f]))}));
+  // recomendación simple para la decisión semanal
+  const conEsc=flyersCod.filter(k=>por[k].esc>0);
+  const top=[...conEsc].sort((a,b)=>por[b].esc-por[a].esc).slice(0,3);
+  const cero=flyersCod.filter(k=>FLYER_CODIGOS.includes(k)&&por[k].esc===0);
+  const fila=(k,b,extra='')=>`<tr>
+      <td style="font-weight:700;white-space:nowrap">${k}${extra}</td>
+      <td>${b.esc}</td><td>${b.gir}</td><td>${b.comp}</td><td>${b.guia}</td><td>${b.agen}</td><td>${b.tes}</td>
+      <td style="font-weight:700;color:${b.ses?'#5DD89A':'var(--muted)'}">${b.ses}</td>
+      <td style="color:var(--muted)">${pct(b.guia+b.agen,b.esc)}</td></tr>`;
+  const thead=`<thead><tr><th>Flyer</th><th>Escaneos</th><th>Giros</th><th>Compartió</th><th>Pidió guía</th><th>Agendar (WA)</th><th>Tesoro</th><th>Sesiones</th><th>Contacto / escaneo</th></tr></thead>`;
+  const periodo=[[7,'7 días'],[30,'30 días'],[90,'90 días'],[0,'Todo']].map(([d,l])=>`<button class="tab-btn ${_flyerDias===d?'active':''}" onclick="setFlyerDias(${d})">${l}</button>`).join('');
+  const totIdi=Object.values(idiomas).reduce((a,b)=>a+b,0);
+  const totDim=Object.values(dims).reduce((a,b)=>a+b,0);
+  const otrosList=Object.entries(otros).sort((a,b)=>b[1].esc-a[1].esc);
+  document.getElementById('mktFlyers').innerHTML=`
+    <div class="tab-bar" style="margin-bottom:14px">${periodo}</div>
+    <div class="kpi-grid">
+      <div class="kc go"><div class="ki">📱</div><div class="kl">Escaneos de flyers</div><div class="kv">${tot.esc}</div><div class="ks">${conEsc.length} de ${FLYER_CODIGOS.length} flyers con escaneos</div></div>
+      <div class="kc bl"><div class="ki">🎡</div><div class="kl">Giros</div><div class="kv">${tot.gir}</div><div class="ks">${tot.esc?(tot.gir/tot.esc).toFixed(1):'0'} por escaneo</div></div>
+      <div class="kc pu"><div class="ki">💬</div><div class="kl">Contactos por WhatsApp</div><div class="kv">${tot.guia+tot.agen}</div><div class="ks">${tot.guia} guías · ${tot.agen} agendar</div></div>
+      <div class="kc gr"><div class="ki">✨</div><div class="kl">Sesiones con flyer</div><div class="kv">${tot.ses}</div><div class="ks">cargadas en Sesiones con el código</div></div>
+    </div>
+
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-bottom:18px;font-size:12.5px;line-height:1.7">
+      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Decisión de la semana</div>
+      ${tot.esc?`<div>⭐ <b>Mejores lugares:</b> ${top.map(k=>`${k} (${por[k].esc})`).join(' · ')||'—'}</div>`:''}
+      ${cero.length?`<div>↪️ <b>Sin escaneos en este período</b> (para mover o redistribuir): ${cero.join(', ')}</div>`:''}
+      ${!tot.esc?'<div style="color:var(--muted)">Todavía no hay escaneos de flyers en este período. Cuando peguen los QR, acá vas a ver qué lugares funcionan.</div>':''}
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Por ciudad</div>
+    <div style="overflow-x:auto;margin-bottom:20px"><table>${thead.replace('<th>Flyer</th>','<th>Ciudad</th>')}<tbody>
+      ${ciudades.map(c=>fila(c.nombre,c)).join('')}
+      <tr style="background:var(--card2)">${fila('Total',tot).replace(/^<tr>|<\/tr>$/g,'')}</tr>
+    </tbody></table></div>
+
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Por flyer</div>
+    <div style="overflow-x:auto;margin-bottom:20px"><table>${thead}<tbody>
+      ${flyersCod.map(k=>fila(k,por[k],` <button class="btn btn-s btn-sm" style="padding:1px 7px;font-size:10px;margin-left:4px" title="Copiar link del QR" onclick="copiarLinkFlyer('${k}')">🔗</button>`)).join('')}
+    </tbody></table></div>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:20px">
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Por idioma (visitas)</div>
+        ${totIdi?Object.entries(idiomas).sort((a,b)=>b[1]-a[1]).map(([l,n])=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0"><span>${({es:'🇦🇷 Español',pt:'🇧🇷 Português',en:'🇺🇸 English'})[l]||l}</span><b>${n} · ${pct(n,totIdi)}</b></div>`).join(''):'<div style="font-size:12.5px;color:var(--muted)">Sin datos todavía</div>'}
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Qué dimensión sale (giros)</div>
+        ${totDim?Object.entries(dims).sort((a,b)=>b[1]-a[1]).map(([d,n])=>`<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0"><span>${FLYER_DIM_LBL[d]||d}</span><b>${n}</b></div>`).join(''):'<div style="font-size:12.5px;color:var(--muted)">Sin datos todavía</div>'}
+      </div>
+    </div>
+
+    ${otrosList.length?`<div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Ruleta sin flyer (otros orígenes)</div>
+    <div style="overflow-x:auto;margin-bottom:20px"><table>${thead.replace('<th>Flyer</th>','<th>Origen</th>')}<tbody>${otrosList.map(([o,b])=>fila(_tzEsc(o),b)).join('')}</tbody></table></div>`:''}
+
+    <div style="font-size:11.5px;color:var(--muted);line-height:1.6">
+      Los datos de la ruleta son anónimos (sin nombres ni números). Las <b>sesiones</b> salen del campo <b>"Flyer / origen"</b> del formulario de sesión: cuando alguien agende y te diga (o veas en el mensaje de WhatsApp) el código del flyer, cargalo ahí.
+      Los mensajes de WhatsApp que salen de la ruleta ya incluyen el código, por ejemplo "(BUZ-01)".
+    </div>`;
+}
+function copiarLinkFlyer(k){
+  const url=FLYER_URL+k;
+  (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('🔗 Link copiado: '+url)).catch(()=>prompt('Copiá el link del QR:',url));
+}
+
 /* ── BÚSQUEDA DEL TESORO (stickers Access + premios) ──
    Tabla propia (tesoro_premios), fuera del array global sync (save()/_syncSupabase)
    a propósito: los "seres" reclaman premios en tiempo real desde tesoro.html con
@@ -10505,7 +10634,7 @@ function _renderTesoroStickersTab(){
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
         <div class="fg" style="margin:0"><label>Código del sticker (va en el QR)</label>
-          <input type="text" id="tzId" placeholder="ej: barras-01"></div>
+          <input type="text" id="tzId" placeholder="ej: buz (opcional)"><div style="font-size:10.5px;color:var(--muted);margin-top:3px">Se le agrega un código al azar para que nadie lo adivine</div></div>
         <div class="fg" style="margin:0"><label>Categoría</label>
           <select id="tzCategoria">
             <option value="">Sin categoría</option>
@@ -10671,17 +10800,20 @@ function tzUsarMiUbicacion(){
 }
 
 async function crearTesoroPremio(){
-  const id=document.getElementById('tzId').value.trim();
+  // Al código siempre se le suma una parte al azar: así nadie puede adivinar los QR de otros stickers
+  const base=(document.getElementById('tzId').value.trim().toLowerCase().replace(/[^a-z0-9-]/g,'')||'tz').slice(0,20);
+  const rnd=Array.from(crypto.getRandomValues(new Uint8Array(6)),b=>'abcdefghjkmnpqrstuvwxyz23456789'[b%31]).join('');
+  const id=base+'-'+rnd;
   const pregunta=document.getElementById('tzPregunta').value.trim();
   const categoria=document.getElementById('tzCategoria').value;
   const edicion=document.getElementById('tzEdicion').value.trim();
-  if(!id||!pregunta){toast('⚠️ Completá el código y la pregunta');return;}
+  if(!pregunta){toast('⚠️ Completá la pregunta');return;}
   const data={pregunta,categoria,edicion,activo:true,reclamado:false};
   if(_tzLat!=null&&_tzLng!=null){data.lat=_tzLat;data.lng=_tzLng;}
   const {error}=await _sb.from('tesoro_premios').insert({id, data});
   if(error){toast('⚠️ Error: '+error.message+(error.message.includes('duplicate')?' (ese código ya existe)':''));return;}
   if(edicion)localStorage.setItem('tesoro_ultima_edicion',edicion);
-  toast('✓ Sticker agregado'+(data.lat==null?' (sin ubicación — lo podés borrar y recargar con el pin puesto)':''));
+  toast('✓ Sticker agregado: '+id+' '+(data.lat==null?' (sin ubicación — lo podés borrar y recargar con el pin puesto)':''));
   renderMktTesoro();
 }
 
