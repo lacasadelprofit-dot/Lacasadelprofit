@@ -13,7 +13,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL || 'https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPABASE_SERVICE_KEY = process.env.SUPABASE_SERVICE_KEY || '';
 const IG_TOKEN = process.env.IG_TOKEN || '';
-const GRAPH = 'https://graph.facebook.com/v21.0';
+const GRAPH = 'https://graph.facebook.com/v25.0'; // v21 ya fue retirada por Meta
 
 async function graph(path, params = {}) {
   const u = new URL(GRAPH + path);
@@ -81,6 +81,7 @@ async function insightsDe(m) {
       const r = await graph('/' + m.id + '/insights', { metric: g.join(',') });
       const o = {};
       (r.data || []).forEach(x => { o[x.name] = x.values && x.values[0] ? x.values[0].value : x.total_value && x.total_value.value; });
+      if (o.reach == null && !errorInsights) errorInsights = 'respuesta sin datos: ' + JSON.stringify(r).slice(0, 200);
       return o;
     } catch (e) { errorInsights = e.message; /* probar el siguiente grupo */ }
   }
