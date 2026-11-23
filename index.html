@@ -1332,9 +1332,11 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg"><label>Horario</label><input type="text" id="eHora" placeholder="10:00 · o «Por la mañana»"></div>
   </div>
   <div class="fg-row">
-   <div class="fg"><label>Lugar</label><input type="text" id="eLugar" placeholder="Geribá"></div>
-   <div class="fg"><label>Aporte (opcional)</label><input type="text" id="eAporte" placeholder="R$ 108 · vacío = gratis"></div>
+   <div class="fg"><label>Ciudad</label>
+    <select id="eCiudad"><option>Búzios</option><option>Arraial do Cabo</option><option>Cabo Frío</option></select></div>
+   <div class="fg"><label>Lugar / playa</label><input type="text" id="eLugar" placeholder="Geribá"></div>
   </div>
+  <div class="fg"><label>Aporte (opcional)</label><input type="text" id="eAporte" placeholder="R$ 108 · vacío = gratis"></div>
   <div class="fg"><label>Facilitador/es <span style="font-weight:400;color:var(--muted);font-size:11px">— los Instagram se cargan una vez en «👥 Facilitadores»</span></label><input type="text" id="eFac" placeholder="Mel y Vero · separá con coma o «y»"></div>
   <div class="fg"><label>Enfoque / tema</label><input type="text" id="eEnf" placeholder="Respiración"></div>
   <div class="fg-row">
@@ -13913,7 +13915,7 @@ async function renderEnc(sinRecargar){
     const facs=new Set();pas.forEach(r=>_encFacs(r.facilitadores).forEach(n=>facs.add(n.toLowerCase())));
     return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
       <div style="font-size:11px;color:var(--muted);font-weight:700">${ico} ${nom}</div>
-      <div style="font-size:13px;margin-top:6px"><b style="font-size:20px;color:var(--gl)">${pas.length}</b> encuentros · <b>${part}</b> participaciones${com==='consciencia'?` · <b>${facs.size}</b> facilitadores`:''}</div>
+      <div style="font-size:13px;margin-top:6px"><b style="font-size:20px;color:var(--gl)">${pas.length}</b> encuentros · <b>${part}</b> participaciones · <b>${facs.size}</b> facilitador${facs.size===1?'':'es'}</div>
       <div style="font-size:11px;color:var(--muted);margin-top:4px">${prox?`📅 ${prox} próximo${prox>1?'s':''}`:'Sin próximos cargados'}</div></div>`;
   };
   document.getElementById('encStats').innerHTML=st('barras','💆','Barras en Búzios')+st('consciencia','🌿','Consciencia en Búzios');
@@ -13931,7 +13933,7 @@ async function renderEnc(sinRecargar){
         <td>${r.comunidad==='barras'?'💆 Barras':'🌿 Consciencia'}</td>
         <td>${_encE(r.numero??'')}</td>
         <td>${_encE(r.enfoque||'')}</td>
-        <td>${_encE(r.lugar||'')}</td>
+        <td>${_encE(r.lugar||'')}${(r.ciudad||'Búzios')!=='Búzios'?`<div style="font-size:10px;color:var(--gl)">📍 ${_encE(r.ciudad)}</div>`:''}</td>
         <td style="max-width:180px">${_encE(r.facilitadores||'')}</td>
         <td>${faltaPart}</td>
         <td>${(r.fotos||[]).length||''}</td>
@@ -13958,6 +13960,7 @@ function abrirEnc(id){
   $('eFecha').value=r?.fecha||'';
   $('eHora').value=r?.hora||'';
   $('eLugar').value=r?.lugar||'';
+  $('eCiudad').value=r?.ciudad||'Búzios';
   $('eAporte').value=r?.aporte||'';
   $('eFac').value=r?.facilitadores||'';
   $('eEnf').value=r?.enfoque||'';
@@ -14028,7 +14031,7 @@ async function guardarEnc(){
   const part=$('ePart').value;
   const id=$('eId').value;
   const data={tipo:'encuentro',comunidad:$('eCom').value,numero:$('eNum').value?+$('eNum').value:null,fecha,
-    hora:$('eHora').value.trim(),lugar:$('eLugar').value.trim(),aporte:$('eAporte').value.trim(),
+    hora:$('eHora').value.trim(),lugar:$('eLugar').value.trim(),ciudad:$('eCiudad').value,aporte:$('eAporte').value.trim(),
     facilitadores:$('eFac').value.trim(),enfoque:$('eEnf').value.trim(),pregunta:$('ePreg').value.trim(),palabra:$('ePal').value.trim(),
     participantes:part===''?null:+part,dia_completo:$('eDia').checked,activo:$('eActivo').checked,fotos:_encFotos};
   const btn=$('eGuardarBtn');btn.disabled=true;
