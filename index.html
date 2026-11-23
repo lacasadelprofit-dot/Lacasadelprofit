@@ -343,9 +343,10 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="nl">Gestión</div>
     <div class="ni" onclick="nav('seres',this)"><span class="ico">💫</span><span>Seres</span></div>
     <div class="ni" onclick="nav('herramientas',this)"><span class="ico">🔮</span><span>Sesiones / Facilitadores</span></div>
-    <div class="ni" onclick="nav('practicas',this)"><span class="ico">🌿</span><span>Herramientas</span></div>
+    <div class="ni" id="niPracticas" onclick="nav('practicas',this)"><span class="ico">🌿</span><span>Herramientas</span></div>
     <div class="ni" onclick="nav('programas',this)"><span class="ico">📚</span><span>Programas</span></div>
-    <div class="ni" onclick="nav('biblioteca',this)"><span class="ico">📖</span><span>Biblioteca</span></div>
+    <!-- Biblioteca ahora es una pestaña de Herramientas. Se deja oculto porque otras funciones lo buscan. -->
+    <div class="ni" style="display:none" onclick="nav('biblioteca',this)"><span class="ico">📖</span><span>Biblioteca</span></div>
     <div class="ni" onclick="nav('fidelidad',this)"><span class="ico">🎡</span><span>Ruleta Fidelidad</span></div>
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
@@ -579,6 +580,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn active" id="pracTab_mapa"      onclick="setPracTab('mapa')">🗺️ Mapa</button>
       <button class="tab-btn"        id="pracTab_practicas"  onclick="setPracTab('practicas')">🌿 Herramientas prácticas</button>
       <button class="tab-btn"        id="pracTab_preguntas"  onclick="setPracTab('preguntas')">💬 Preguntas Expansivas</button>
+      <button class="tab-btn"        onclick="irPrac('biblioteca')">📖 Biblioteca</button>
      </div>
      <div id="pracContent"></div>
      <!-- Preguntas Expansivas (movido desde Contenido) -->
@@ -715,6 +717,7 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- BIBLIOTECA -->
     <div id="sec-biblioteca" class="sec">
+     <div class="tab-bar" id="pracBarCopia" style="margin-bottom:18px"></div>
      <div id="bibKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
      <div id="bibBody"></div>
     </div>
@@ -826,12 +829,18 @@ th{background:rgba(28,26,46,.88)!important;}
 
       <div class="tab-bar" style="margin-bottom:18px">
         <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
+        <button class="tab-btn"        id="contTabInstagram" onclick="setContSection('instagram')">📸 Instagram · Qué funciona</button>
+        <button class="tab-btn"        id="contTabTiktok"    onclick="setContSection('tiktok')">🎵 TikTok · Qué funciona</button>
         <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
         <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
         <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
       </div>
       <!-- Sub-tab: Resumen -->
       <div id="contResumen"></div>
+      <!-- Sub-tab: Instagram automático (api/ig-sync + tabla redes_metricas) -->
+      <div id="contInstagram" style="display:none"></div>
+      <!-- Sub-tab: TikTok automático (api/tiktok + tabla redes_metricas) -->
+      <div id="contTiktok" style="display:none"></div>
       <!-- Sub-tab: Redes Sociales -->
       <div id="contRedes" style="display:none"></div>
       <!-- Sub-tab: Manual de Marca -->
@@ -2975,7 +2984,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Contenido',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Contenido',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -3007,6 +3016,17 @@ function nav(name,el){
     document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
     document.getElementById('niMarketing')?.classList.add('active');
     _mktPintarCopias(name);
+  }
+  // Biblioteca es una pestaña de Herramientas
+  if(name==='biblioteca'){
+    document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+    document.getElementById('niPracticas')?.classList.add('active');
+    const orig=document.getElementById('pracTabBar'),cop=document.getElementById('pracBarCopia');
+    if(orig&&cop)cop.innerHTML=[...orig.querySelectorAll('button')].map(b=>{
+      const m=/setPracTab\('(\w+)'\)/.exec(b.getAttribute('onclick')||'')||/irPrac\('(\w+)'\)/.exec(b.getAttribute('onclick')||'');
+      const t=m?m[1]:'';
+      return `<button class="tab-btn${t==='biblioteca'?' active':''}" onclick="irPrac('${t}')">${b.innerHTML}</button>`;
+    }).join('');
   }
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
@@ -5024,6 +5044,13 @@ function renderHerrFacs(){
 }
 let _pracTab='mapa', _pracFiltro='todas';
 
+/* ir a una pestaña de Herramientas desde donde estés (Biblioteca vive en su propia sección) */
+function irPrac(t){
+  const ni=document.getElementById('niPracticas');
+  if(t==='biblioteca'){nav('biblioteca',ni);return;}
+  if(curSec!=='practicas')nav('practicas',ni);
+  setPracTab(t);
+}
 function setPracTab(t){
   _pracTab=t;
   ['mapa','practicas','preguntas'].forEach(k=>{document.getElementById('pracTab_'+k)?.classList.toggle('active',k===t);});
@@ -12084,7 +12111,7 @@ async function delComunidad(id){
 let _contSection='resumen';
 function setContSection(tab){
   _contSection=tab;
-  ['resumen','redes','manual','comunidad','generador'].forEach(t=>{
+  ['resumen','instagram','tiktok','redes','manual','comunidad','generador'].forEach(t=>{
     const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
     const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl)tabEl.classList.toggle('active',t===tab);
@@ -12092,6 +12119,8 @@ function setContSection(tab){
   });
   if(tab==='resumen')renderContResumen();
   if(tab==='redes')renderMktContenido();
+  if(tab==='instagram')renderContInstagram();
+  if(tab==='tiktok')renderContTiktok();
   if(tab==='manual')renderContManual();
   if(tab==='comunidad')renderComunidad();
   if(tab==='generador')renderContGenerador();
@@ -14807,6 +14836,249 @@ async function guardarEncPersonas(){
   btn.disabled=false;
   toast(`✓ ${filas.length} Instagram guardado${filas.length===1?'':'s'} · ya están en la web`);
   closeModal('moEncPer');renderEnc();
+}
+</script>
+<script>
+/* ══════════ CONTENIDO · 📸 INSTAGRAM AUTOMÁTICO + QUÉ FUNCIONA ══════════
+   Datos: tabla redes_metricas (4_BASE_DE_DATOS/41_redes_metricas.sql), la llena /api/ig-sync.
+   Se actualiza con el botón o sola al abrir si pasaron más de 12 h. */
+let _ig={posts:[],cuenta:[],sync:null,cargado:false,sincronizando:false},_igDias=90,_igOrden='fecha';
+const _igE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const _igN=n=>n==null?'—':Math.round(n).toLocaleString('es-AR');
+const IG_DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+/* valor de una publicación: lo que más pesa para crecer y vender (guardar, compartir, seguir) sobre las personas alcanzadas */
+const _igValor=p=>p.alcance?((+p.guardados||0)*3+(+p.compartidos||0)*3+(+p.comentarios||0)*2+(+p.likes||0)+(+p.seguidores_ganados||0)*5)*100/p.alcance:null;
+const _igFranja=h=>h<12?'Mañana (6–12)':h<15?'Mediodía (12–15)':h<19?'Tarde (15–19)':'Noche (19–24)';
+
+async function _igCargar(){
+  const {data,error}=await _sb.from('redes_metricas').select('id,data');
+  if(error){_ig.error=error.message;return false;}
+  _ig.error='';
+  _ig.posts=(data||[]).filter(r=>r.id.startsWith('post-')).map(r=>r.data).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  _ig.cuenta=(data||[]).filter(r=>r.id.startsWith('cuenta-')).map(r=>r.data).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  _ig.sync=(data||[]).find(r=>r.id==='sync')?.data||null;
+  _ig.cargado=true;return true;
+}
+async function igSincronizar(silencioso){
+  if(_ig.sincronizando)return;
+  _ig.sincronizando=true;if(!silencioso)renderContInstagram(true);
+  try{
+    const {data:{session}}=await _sb.auth.getSession();
+    const r=await fetch('/api/ig-sync?cantidad=60',{method:'POST',headers:{'Authorization':'Bearer '+(session?.access_token||'')}});
+    const j=await r.json().catch(()=>({ok:false,error:'Respuesta inválida del servidor ('+r.status+')'}));
+    if(!j.ok)throw new Error(j.error||'Error');
+    if(!silencioso)toast(`📸 Instagram actualizado · ${j.posts} publicaciones · ${_igN(j.seguidores)} seguidores`);
+  }catch(e){if(!silencioso)toast('⚠️ Instagram: '+e.message,'err');_ig.errSync=e.message;}
+  _ig.sincronizando=false;
+  await _igCargar();renderContInstagram(true);
+}
+function setIgDias(d){_igDias=d;renderContInstagram(true);}
+function setIgOrden(o){_igOrden=o;renderContInstagram(true);}
+
+async function renderContInstagram(sinRecargar){
+  const el=document.getElementById('contInstagram');if(!el)return;
+  if(!sinRecargar||!_ig.cargado){
+    el.innerHTML='<div style="color:var(--muted);padding:30px;text-align:center">Cargando métricas de Instagram…</div>';
+    await _igCargar();
+    // se actualiza sola si pasaron más de 12 horas desde la última vez (y la última salió bien)
+    if(_ig.sync?.ok&&Date.now()-new Date(_ig.sync.cuando)>12*3600e3)igSincronizar(true);
+  }
+  const card=(t,body,extra='')=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;${extra}"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">${t}</div>${body}</div>`;
+  const sync=_ig.sync;
+  const cab=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);flex:1;min-width:220px">📸 <b style="color:var(--text)">@${_igE(sync?.usuario||'juancruzconsciencia')}</b> · ${sync?(sync.ok?'Última actualización: '+new Date(sync.cuando).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):'<span style="color:var(--red)">La última actualización falló: '+_igE(sync.error||'')+'</span>'):'Todavía no se conectó.'}</div>
+      ${[[30,'30 días'],[90,'90 días'],[365,'1 año'],[0,'Todo']].map(([d,l])=>`<button class="tab-btn${_igDias===d?' active':''}" onclick="setIgDias(${d})">${l}</button>`).join('')}
+      <button class="btn btn-p btn-sm" onclick="igSincronizar()" ${_ig.sincronizando?'disabled':''}>${_ig.sincronizando?'⏳ Actualizando…':'🔄 Actualizar ahora'}</button>
+    </div>`;
+  if(_ig.error){
+    el.innerHTML=cab+`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px;font-size:13px;line-height:1.7">⚠️ No se pudo leer la tabla de métricas: ${_igE(_ig.error)}<br>¿Ya corriste <b>41_redes_metricas.sql</b> en Supabase?</div>`;return;
+  }
+  if(!_ig.posts.length){
+    el.innerHTML=cab+`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.8">
+      <b>Todavía no hay datos de Instagram.</b> Para conectarlo (una sola vez):<br>
+      1. Correr <b>41_redes_metricas.sql</b> en Supabase.<br>
+      2. Cargar en Vercel la variable <b>IG_TOKEN</b> (token de la página de Facebook vinculada a @juancruzconsciencia).<br>
+      3. Subir el archivo <b>api/ig-sync.js</b> al repo del admin.<br>
+      4. Tocar <b>🔄 Actualizar ahora</b>.
+      ${_ig.errSync?`<div style="color:var(--red);margin-top:8px">Último intento: ${_igE(_ig.errSync)}</div>`:''}</div>`;
+    return;
+  }
+  const desde=_igDias?new Date(Date.now()-_igDias*864e5).toISOString():'';
+  const P=_ig.posts.filter(p=>!desde||(p.fecha||'')>=desde).map(p=>({...p,valor:_igValor(p),d:new Date(p.fecha)}));
+  const conAl=P.filter(p=>p.alcance);
+  const prom=(a,k)=>{const v=a.map(p=>p[k]).filter(x=>x!=null);return v.length?v.reduce((s,x)=>s+(+x),0)/v.length:null;};
+  const suma=(a,k)=>a.reduce((s,p)=>s+(+p[k]||0),0);
+  // seguidores: último dato y variación en el período
+  const C=_ig.cuenta,ultC=C[C.length-1];
+  const baseC=desde?C.find(c=>c.fecha>=desde.slice(0,10)):C[0];
+  const difSeg=ultC&&baseC&&baseC!==ultC?ultC.seguidores-baseC.seguidores:null;
+  const ganados=suma(P,'seguidores_ganados');
+  // agrupaciones
+  const agrupar=(fn)=>{const m=new Map();conAl.forEach(p=>{const k=fn(p);if(!m.has(k))m.set(k,[]);m.get(k).push(p);});
+    return [...m].map(([k,a])=>({k,n:a.length,alcance:prom(a,'alcance'),valor:prom(a,'valor'),guard:prom(a,'guardados'),comp:prom(a,'compartidos')}));};
+  const porTipo=agrupar(p=>p.tipo).sort((a,b)=>b.alcance-a.alcance);
+  const porDia=agrupar(p=>IG_DIAS[p.d.getDay()]).sort((a,b)=>b.alcance-a.alcance);
+  const porHora=agrupar(p=>_igFranja(p.d.getHours())).sort((a,b)=>b.alcance-a.alcance);
+  const porLargo=agrupar(p=>{const l=(p.texto||'').length;return l<150?'Texto corto (<150)':l<500?'Texto medio':'Texto largo (500+)';}).sort((a,b)=>b.valor-a.valor);
+  const tabla=(rows,col)=>{const max=Math.max(...rows.map(r=>r.alcance||0),1);return rows.map(r=>`<div style="padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:13px"><span>${_igE(r.k)} <span style="color:var(--muted);font-size:11px">(${r.n})</span></span><span><b>${_igN(r.alcance)}</b> <span style="color:var(--muted);font-size:11px">alcance · valor ${r.valor!=null?r.valor.toFixed(1):'—'}</span></span></div>
+      <div style="height:5px;border-radius:3px;background:var(--card2);margin-top:4px"><div style="height:100%;width:${(r.alcance||0)*100/max}%;border-radius:3px;background:${col}"></div></div></div>`).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>';};
+  // recomendaciones de la semana (solo con suficientes datos)
+  const rec=[];
+  const okGrupo=a=>a.filter(r=>r.n>=3);
+  const t=okGrupo(porTipo);if(t.length>1)rec.push(`🎬 <b>${_igE(t[0].k)}</b> llega a más gente: ${_igN(t[0].alcance)} de alcance promedio contra ${_igN(t[t.length-1].alcance)} de ${_igE(t[t.length-1].k)}. Priorizalo esta semana.`);
+  const tv=okGrupo(porTipo).filter(r=>r.valor!=null).sort((a,b)=>b.valor-a.valor);if(tv.length>1&&tv[0].k!==t[0]?.k)rec.push(`🔖 <b>${_igE(tv[0].k)}</b> es lo que más se guarda y comparte (valor ${tv[0].valor.toFixed(1)}): sirve para contenido de enseñanza o preguntas.`);
+  const d=okGrupo(porDia);if(d.length>1)rec.push(`📅 El mejor día viene siendo <b>${_igE(d[0].k)}</b> y el más flojo <b>${_igE(d[d.length-1].k)}</b>.`);
+  const h=okGrupo(porHora);if(h.length>1)rec.push(`🕒 Publicá a la <b>${_igE(h[0].k.toLowerCase())}</b>: es la franja con más alcance.`);
+  const ult30=_ig.posts.filter(p=>(p.fecha||'')>=new Date(Date.now()-30*864e5).toISOString()).length;
+  rec.push(ult30<8?`📈 En los últimos 30 días publicaste <b>${ult30}</b> veces. Con 2–3 publicaciones por semana el algoritmo te muestra más.`:`✅ Venís con buen ritmo: <b>${ult30}</b> publicaciones en 30 días.`);
+  const topSeg=[...P].filter(p=>p.seguidores_ganados).sort((a,b)=>b.seguidores_ganados-a.seguidores_ganados)[0];
+  if(topSeg)rec.push(`➕ La que más seguidores trajo: <a href="${_igE(topSeg.link)}" target="_blank" rel="noopener" style="color:var(--gl)">«${_igE((topSeg.texto||topSeg.tipo).slice(0,60))}…»</a> (+${topSeg.seguidores_ganados}). Hacé otra con ese tema o ese gancho.`);
+  // top publicaciones
+  const top=(k,n=5)=>[...conAl].filter(p=>p[k]!=null).sort((a,b)=>b[k]-a[k]).slice(0,n);
+  const mini=p=>`<a href="${_igE(p.link)}" target="_blank" rel="noopener" style="display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="width:44px;height:44px;flex:none;border-radius:8px;background:var(--card2) center/cover no-repeat;${p.miniatura?`background-image:url('${_igE(p.miniatura)}')`:''}"></div>
+      <div style="min-width:0;flex:1"><div style="font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_igE((p.texto||'(sin texto)').split('\n')[0])}</div>
+      <div style="font-size:11px;color:var(--muted)">${_igE(p.tipo)} · ${p.d.toLocaleDateString('es-AR')} · ${_igN(p.alcance)} alcance · ${_igN((+p.guardados||0)+(+p.compartidos||0))} guard.+comp.</div></div></a>`;
+  // tabla de todas
+  const ords={fecha:(a,b)=>b.d-a.d,alcance:(a,b)=>(b.alcance||0)-(a.alcance||0),valor:(a,b)=>(b.valor||0)-(a.valor||0),guardados:(a,b)=>(b.guardados||0)-(a.guardados||0),seguidores:(a,b)=>(b.seguidores_ganados||0)-(a.seguidores_ganados||0)};
+  const filas=[...P].sort(ords[_igOrden]||ords.fecha).map(p=>`<tr>
+      <td><a href="${_igE(p.link)}" target="_blank" rel="noopener"><div style="width:48px;height:48px;border-radius:8px;background:var(--card2) center/cover no-repeat;${p.miniatura?`background-image:url('${_igE(p.miniatura)}')`:''}"></div></a></td>
+      <td style="white-space:nowrap">${p.d.toLocaleDateString('es-AR')}<div style="font-size:10.5px;color:var(--muted)">${IG_DIAS[p.d.getDay()].slice(0,3)} ${String(p.d.getHours()).padStart(2,'0')}:${String(p.d.getMinutes()).padStart(2,'0')}</div></td>
+      <td><span class="bdg ${p.tipo==='Reel'?'b-pu':p.tipo==='Carrusel'?'b-bl':'b-gy'}">${_igE(p.tipo)}</span></td>
+      <td style="max-width:280px"><div style="font-size:12px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${_igE(p.texto||'')}</div></td>
+      <td>${_igN(p.alcance)}</td><td>${_igN(p.vistas)}</td><td>${_igN(p.likes)}</td><td>${_igN(p.comentarios)}</td><td>${_igN(p.guardados)}</td><td>${_igN(p.compartidos)}</td><td>${_igN(p.seguidores_ganados)}</td>
+      <td style="font-weight:700;color:var(--gl)">${p.valor!=null?p.valor.toFixed(1):'—'}</td></tr>`).join('');
+  el.innerHTML=cab+`
+    <div class="kpi-grid">
+      <div class="kc go"><div class="ki">👥</div><div class="kl">Seguidores</div><div class="kv">${_igN(ultC?.seguidores)}</div><div class="ks">${difSeg!=null?(difSeg>=0?'+':'')+difSeg+' en el período':ganados?'+'+ganados+' desde publicaciones':'se mide desde que se conectó'}</div></div>
+      <div class="kc bl"><div class="ki">🗂</div><div class="kl">Publicaciones</div><div class="kv">${P.length}</div><div class="ks">${_igDias?'últimos '+_igDias+' días':'en total'}</div></div>
+      <div class="kc pu"><div class="ki">👁</div><div class="kl">Alcance promedio</div><div class="kv">${_igN(prom(conAl,'alcance'))}</div><div class="ks">personas por publicación</div></div>
+      <div class="kc gr"><div class="ki">🔖</div><div class="kl">Guardados + compartidos</div><div class="kv">${_igN(suma(P,'guardados')+suma(P,'compartidos'))}</div><div class="ks">lo que más impulsa el algoritmo</div></div>
+    </div>
+    ${card('💡 Qué hacer esta semana',rec.map(r=>`<div style="font-size:13px;line-height:1.6;padding:4px 0">${r}</div>`).join(''),'margin-bottom:14px;border-color:rgba(201,168,76,.35)')}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px">
+      ${card('Por formato',tabla(porTipo,'var(--gold)'))}
+      ${card('Por día',tabla(porDia,'#8BBDE8'))}
+      ${card('Por horario',tabla(porHora,'#5DD89A'))}
+      ${card('Por largo del texto',tabla(porLargo,'var(--pl)'))}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
+      ${card('🏆 Más alcance',top('alcance').map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
+      ${card('🔖 Más valor (guardan, comparten, siguen)',top('valor').map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
+    </div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px"><b>Valor</b> = (guardados×3 + compartidos×3 + comentarios×2 + likes + seguidores×5) cada 100 personas alcanzadas. Sirve para comparar publicaciones aunque hayan llegado a distinta cantidad de gente.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><span style="font-size:12px;color:var(--muted)">Ordenar por:</span>
+      ${[['fecha','Fecha'],['alcance','Alcance'],['valor','Valor'],['guardados','Guardados'],['seguidores','Seguidores']].map(([k,l])=>`<button class="tab-btn${_igOrden===k?' active':''}" onclick="setIgOrden('${k}')">${l}</button>`).join('')}</div>
+    <div style="overflow-x:auto"><table><thead><tr><th></th><th>Fecha</th><th>Tipo</th><th>Texto</th><th>Alcance</th><th>Vistas</th><th>❤️</th><th>💬</th><th>🔖</th><th>↗️</th><th>➕ Seg.</th><th>Valor</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+}
+
+/* ── 🎵 TikTok (api/tiktok: conectar con OAuth una vez, después sync) ──
+   TikTok da vistas, likes, comentarios y compartidos por video (no da alcance ni guardados). */
+let _tt={posts:[],cuenta:[],sync:null,cargado:false,sinc:false},_ttDias=90,_ttOrden='fecha';
+const _ttValor=p=>p.vistas?((+p.compartidos||0)*3+(+p.comentarios||0)*2+(+p.likes||0))*100/p.vistas:null;
+async function _ttCargar(){
+  const {data,error}=await _sb.from('redes_metricas').select('id,data').like('id','tt-%');
+  if(error){_tt.error=error.message;return;}
+  _tt.error='';
+  _tt.posts=(data||[]).filter(r=>r.id.startsWith('tt-post-')).map(r=>r.data).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  _tt.cuenta=(data||[]).filter(r=>r.id.startsWith('tt-cuenta-')).map(r=>r.data).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  _tt.sync=(data||[]).find(r=>r.id==='tt-sync')?.data||null;_tt.cargado=true;
+}
+async function _ttApi(accion){
+  const {data:{session}}=await _sb.auth.getSession();
+  const r=await fetch('/api/tiktok?accion='+accion,{method:'POST',headers:{'Authorization':'Bearer '+(session?.access_token||'')}});
+  const j=await r.json().catch(()=>({ok:false,error:'Respuesta inválida del servidor ('+r.status+')'}));
+  if(!j.ok)throw new Error(j.error||'Error');
+  return j;
+}
+async function ttConectar(){
+  try{const j=await _ttApi('conectar');window.open(j.url,'_blank');toast('🎵 Autorizá tu cuenta en la pestaña de TikTok y después tocá «Actualizar ahora»');}
+  catch(e){toast('⚠️ TikTok: '+e.message,'err');}
+}
+async function ttSincronizar(silencioso){
+  if(_tt.sinc)return;_tt.sinc=true;if(!silencioso)renderContTiktok(true);
+  try{const j=await _ttApi('sync');if(!silencioso)toast(`🎵 TikTok actualizado · ${j.posts} videos · ${_igN(j.seguidores)} seguidores`);}
+  catch(e){if(!silencioso)toast('⚠️ TikTok: '+e.message,'err');}
+  _tt.sinc=false;await _ttCargar();renderContTiktok(true);
+}
+function setTtDias(d){_ttDias=d;renderContTiktok(true);}
+function setTtOrden(o){_ttOrden=o;renderContTiktok(true);}
+async function renderContTiktok(sinRecargar){
+  const el=document.getElementById('contTiktok');if(!el)return;
+  if(!sinRecargar||!_tt.cargado){
+    el.innerHTML='<div style="color:var(--muted);padding:30px;text-align:center">Cargando métricas de TikTok…</div>';
+    await _ttCargar();
+    if(_tt.sync?.ok&&Date.now()-new Date(_tt.sync.cuando)>12*3600e3)ttSincronizar(true);
+  }
+  const card=(t,body,extra='')=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;${extra}"><div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">${t}</div>${body}</div>`;
+  const s=_tt.sync;
+  const cab=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
+      <div style="font-size:12px;color:var(--muted);flex:1;min-width:220px">🎵 <b style="color:var(--text)">@${_igE(s?.usuario||'juancruzconsciencia')}</b> · ${s?(s.ok?'Última actualización: '+new Date(s.cuando).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):'<span style="color:var(--red)">Falló: '+_igE(s.error||'')+'</span>'):'Todavía no se conectó.'}</div>
+      ${[[30,'30 días'],[90,'90 días'],[365,'1 año'],[0,'Todo']].map(([d,l])=>`<button class="tab-btn${_ttDias===d?' active':''}" onclick="setTtDias(${d})">${l}</button>`).join('')}
+      <button class="btn btn-s btn-sm" onclick="ttConectar()">🔗 Conectar TikTok</button>
+      <button class="btn btn-p btn-sm" onclick="ttSincronizar()" ${_tt.sinc?'disabled':''}>${_tt.sinc?'⏳ Actualizando…':'🔄 Actualizar ahora'}</button>
+    </div>`;
+  if(_tt.error){el.innerHTML=cab+`<div style="padding:16px;font-size:13px">⚠️ ${_igE(_tt.error)} · ¿Ya corriste <b>41_redes_metricas.sql</b>?</div>`;return;}
+  if(!_tt.posts.length){
+    el.innerHTML=cab+`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 18px;font-size:13px;line-height:1.8">
+      <b>Todavía no hay datos de TikTok.</b> Para conectarlo (una sola vez):<br>
+      1. Registrar la app en <b>developers.tiktok.com</b> y cargar en Vercel <b>TIKTOK_CLIENT_KEY</b> y <b>TIKTOK_CLIENT_SECRET</b>.<br>
+      2. Subir <b>api/tiktok.js</b> al repo del admin.<br>
+      3. Tocar <b>🔗 Conectar TikTok</b>, autorizar tu cuenta y después <b>🔄 Actualizar ahora</b>.</div>`;return;
+  }
+  const desde=_ttDias?new Date(Date.now()-_ttDias*864e5).toISOString():'';
+  const P=_tt.posts.filter(p=>!desde||(p.fecha||'')>=desde).map(p=>({...p,valor:_ttValor(p),d:new Date(p.fecha)}));
+  const conV=P.filter(p=>p.vistas);
+  const prom=(a,k)=>{const v=a.map(p=>p[k]).filter(x=>x!=null);return v.length?v.reduce((x,y)=>x+(+y),0)/v.length:null;};
+  const suma=(a,k)=>a.reduce((x,p)=>x+(+p[k]||0),0);
+  const C=_tt.cuenta,ult=C[C.length-1],base=desde?C.find(c=>c.fecha>=desde.slice(0,10)):C[0];
+  const dif=ult&&base&&base!==ult?ult.seguidores-base.seguidores:null;
+  const agrupar=fn=>{const m=new Map();conV.forEach(p=>{const k=fn(p);if(!m.has(k))m.set(k,[]);m.get(k).push(p);});
+    return [...m].map(([k,a])=>({k,n:a.length,vistas:prom(a,'vistas'),valor:prom(a,'valor')})).sort((a,b)=>b.vistas-a.vistas);};
+  const porDia=agrupar(p=>IG_DIAS[p.d.getDay()]),porHora=agrupar(p=>_igFranja(p.d.getHours()));
+  const porDur=agrupar(p=>p.duracion==null?'Sin dato':p.duracion<20?'Corto (<20 s)':p.duracion<60?'Medio (20–60 s)':'Largo (60 s+)');
+  const barras=(rows,col)=>{const max=Math.max(...rows.map(r=>r.vistas||0),1);return rows.map(r=>`<div style="padding:5px 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;gap:8px;font-size:13px"><span>${_igE(r.k)} <span style="color:var(--muted);font-size:11px">(${r.n})</span></span><span><b>${_igN(r.vistas)}</b> <span style="color:var(--muted);font-size:11px">vistas · valor ${r.valor!=null?r.valor.toFixed(1):'—'}</span></span></div>
+      <div style="height:5px;border-radius:3px;background:var(--card2);margin-top:4px"><div style="height:100%;width:${(r.vistas||0)*100/max}%;border-radius:3px;background:${col}"></div></div></div>`).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>';};
+  const rec=[];const ok=a=>a.filter(r=>r.n>=3);
+  const dd=ok(porDur).filter(r=>r.k!=='Sin dato');if(dd.length>1)rec.push(`⏱ Los videos <b>${_igE(dd[0].k.toLowerCase())}</b> tienen más vistas (${_igN(dd[0].vistas)} promedio).`);
+  const d=ok(porDia);if(d.length>1)rec.push(`📅 Mejor día: <b>${_igE(d[0].k)}</b> · el más flojo: <b>${_igE(d[d.length-1].k)}</b>.`);
+  const h=ok(porHora);if(h.length>1)rec.push(`🕒 Publicá a la <b>${_igE(h[0].k.toLowerCase())}</b>.`);
+  const u30=_tt.posts.filter(p=>(p.fecha||'')>=new Date(Date.now()-30*864e5).toISOString()).length;
+  rec.push(u30<10?`📈 ${u30} videos en 30 días: en TikTok rinde publicar seguido (3–5 por semana).`:`✅ Buen ritmo: ${u30} videos en 30 días.`);
+  const topC=[...conV].sort((a,b)=>(b.compartidos||0)-(a.compartidos||0))[0];
+  if(topC&&topC.compartidos)rec.push(`↗️ El más compartido: <a href="${_igE(topC.link)}" target="_blank" rel="noopener" style="color:var(--gl)">«${_igE((topC.texto||'video').slice(0,60))}…»</a> (${topC.compartidos}). Repetí ese tema o ese gancho.`);
+  const mini=p=>`<a href="${_igE(p.link)}" target="_blank" rel="noopener" style="display:flex;gap:10px;align-items:center;text-decoration:none;color:inherit;padding:6px 0;border-bottom:1px solid var(--border)">
+      <div style="width:36px;height:52px;flex:none;border-radius:6px;background:var(--card2) center/cover no-repeat;${p.miniatura?`background-image:url('${_igE(p.miniatura)}')`:''}"></div>
+      <div style="min-width:0;flex:1"><div style="font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_igE((p.texto||'(sin texto)').split('\n')[0])}</div>
+      <div style="font-size:11px;color:var(--muted)">${p.d.toLocaleDateString('es-AR')} · ${_igN(p.vistas)} vistas · ${_igN(p.compartidos)} compartidos</div></div></a>`;
+  const top=k=>[...conV].filter(p=>p[k]!=null).sort((a,b)=>b[k]-a[k]).slice(0,5).map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>';
+  const ords={fecha:(a,b)=>b.d-a.d,vistas:(a,b)=>(b.vistas||0)-(a.vistas||0),valor:(a,b)=>(b.valor||0)-(a.valor||0),compartidos:(a,b)=>(b.compartidos||0)-(a.compartidos||0)};
+  const filas=[...P].sort(ords[_ttOrden]||ords.fecha).map(p=>`<tr>
+      <td><a href="${_igE(p.link)}" target="_blank" rel="noopener"><div style="width:36px;height:52px;border-radius:6px;background:var(--card2) center/cover no-repeat;${p.miniatura?`background-image:url('${_igE(p.miniatura)}')`:''}"></div></a></td>
+      <td style="white-space:nowrap">${p.d.toLocaleDateString('es-AR')}<div style="font-size:10.5px;color:var(--muted)">${IG_DIAS[p.d.getDay()].slice(0,3)} ${String(p.d.getHours()).padStart(2,'0')}:${String(p.d.getMinutes()).padStart(2,'0')}</div></td>
+      <td style="max-width:300px"><div style="font-size:12px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">${_igE(p.texto||'')}</div></td>
+      <td>${p.duracion!=null?p.duracion+' s':'—'}</td><td>${_igN(p.vistas)}</td><td>${_igN(p.likes)}</td><td>${_igN(p.comentarios)}</td><td>${_igN(p.compartidos)}</td>
+      <td style="font-weight:700;color:var(--gl)">${p.valor!=null?p.valor.toFixed(1):'—'}</td></tr>`).join('');
+  el.innerHTML=cab+`
+    <div class="kpi-grid">
+      <div class="kc go"><div class="ki">👥</div><div class="kl">Seguidores</div><div class="kv">${_igN(ult?.seguidores)}</div><div class="ks">${dif!=null?(dif>=0?'+':'')+dif+' en el período':'se mide desde que se conectó'}</div></div>
+      <div class="kc bl"><div class="ki">🎬</div><div class="kl">Videos</div><div class="kv">${P.length}</div><div class="ks">${_ttDias?'últimos '+_ttDias+' días':'en total'}</div></div>
+      <div class="kc pu"><div class="ki">▶️</div><div class="kl">Vistas promedio</div><div class="kv">${_igN(prom(conV,'vistas'))}</div><div class="ks">por video</div></div>
+      <div class="kc gr"><div class="ki">↗️</div><div class="kl">Compartidos</div><div class="kv">${_igN(suma(P,'compartidos'))}</div><div class="ks">lo que más empuja en TikTok</div></div>
+    </div>
+    ${card('💡 Qué hacer esta semana',rec.map(r=>`<div style="font-size:13px;line-height:1.6;padding:4px 0">${r}</div>`).join(''),'margin-bottom:14px;border-color:rgba(201,168,76,.35)')}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px">
+      ${card('Por duración',barras(porDur,'var(--gold)'))}${card('Por día',barras(porDia,'#8BBDE8'))}${card('Por horario',barras(porHora,'#5DD89A'))}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
+      ${card('🏆 Más vistas',top('vistas'))}${card('↗️ Más valor (comparten, comentan)',top('valor'))}
+    </div>
+    <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px"><b>Valor</b> = (compartidos×3 + comentarios×2 + likes) cada 100 vistas.</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><span style="font-size:12px;color:var(--muted)">Ordenar por:</span>
+      ${[['fecha','Fecha'],['vistas','Vistas'],['valor','Valor'],['compartidos','Compartidos']].map(([k,l])=>`<button class="tab-btn${_ttOrden===k?' active':''}" onclick="setTtOrden('${k}')">${l}</button>`).join('')}</div>
+    <div style="overflow-x:auto"><table><thead><tr><th></th><th>Fecha</th><th>Texto</th><th>Duración</th><th>Vistas</th><th>❤️</th><th>💬</th><th>↗️</th><th>Valor</th></tr></thead><tbody>${filas}</tbody></table></div>`;
 }
 </script>
 
