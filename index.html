@@ -12644,98 +12644,87 @@ function editMetasMes(){
   renderContResumen();
 }
 
-function renderContResumen(){
+async function renderContResumen(){
   const el=document.getElementById('contResumen');if(!el)return;
+  // Datos automáticos de las 2 redes (tabla redes_metricas, la llenan /api/ig-sync y /api/tiktok todos los días)
+  if(!_ig.cargado||!_tt.cargado){
+    el.innerHTML='<div style="color:var(--muted);padding:30px;text-align:center">Cargando datos de Instagram y TikTok…</div>';
+    await Promise.all([_ig.cargado?null:_igCargar(),_tt.cargado?null:_ttCargar()]);
+  }
   const goals=getMonthGoals(_resumenMes);
   const metaPosts=goals.posts_mes||0;
   const metaAlcance=goals.alcance_mes||0;
   const mesActual=new Date().toISOString().slice(0,7);
   const esFuturo=_resumenMes>mesActual;
+  const mesDe=f=>{const d=new Date(f);return isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}; // mes en hora local
+  const K=n=>n>=1000?(n/1000).toFixed(1).replace('.0','')+'K':String(Math.round(n||0));
 
-  // Posts publicados del mes
-  const pubs=contenidoRedes.filter(c=>c.tipo==='publicado'&&c.fecha?.startsWith(_resumenMes));
-  const alcTotal=pubs.reduce((a,c)=>a+_mainReach(c),0);
-  const guardTotal=pubs.reduce((a,c)=>a+(c.guardados||0),0);
-  const segGanTotal=pubs.reduce((a,c)=>a+(c.seguidores_ganados||0),0);
+  // Publicaciones de las 2 redes, con el mismo formato
+  const ig=(_ig.posts||[]).map(p=>({red:'ig',fecha:p.fecha,tipo:p.tipo||'Post',texto:p.texto||'',link:p.link,alc:+p.alcance||0,vistas:+p.vistas||0,
+    likes:+p.likes||0,com:+p.comentarios||0,guard:p.guardados==null?null:+p.guardados,comp:+p.compartidos||0,seg:+p.seguidores_ganados||0,conDatos:p.alcance!=null}));
+  const tt=(_tt.posts||[]).map(p=>({red:'tt',fecha:p.fecha,tipo:'Video',texto:p.texto||'',link:p.link,alc:+p.vistas||0,vistas:+p.vistas||0,
+    likes:+p.likes||0,com:+p.comentarios||0,guard:null,comp:+p.compartidos||0,seg:0,conDatos:p.vistas!=null}));
+  const todos=[...ig,...tt];
+  const pubs=todos.filter(p=>mesDe(p.fecha)===_resumenMes);
+  const pIg=pubs.filter(p=>p.red==='ig'),pTt=pubs.filter(p=>p.red==='tt');
+  const suma=(a,k)=>a.reduce((s,p)=>s+(+p[k]||0),0);
+  const alcIg=suma(pIg,'alc'),vistasTt=suma(pTt,'vistas'),alcTotal=alcIg+vistasTt;
+  const igConDatos=pIg.filter(p=>p.conDatos);
+  const alcIgDatos=suma(igConDatos,'alc'),guardTotal=igConDatos.reduce((s,p)=>s+(p.guard||0),0);
+  const tasaGuard=alcIgDatos>0?(guardTotal/alcIgDatos*100).toFixed(1):null;
+  const interacc=suma(pubs,'likes')+suma(pubs,'com')+suma(pubs,'comp')+guardTotal;
+  const tasaInter=alcTotal>0?(interacc/alcTotal*100).toFixed(1):null;
+  const segGanPosts=suma(pIg,'seg');
 
-  // Tasa de guardados del mes (total guardados / total alcance)
-  const tasaGuard=alcTotal>0?(guardTotal/alcTotal*100):null;
-
-  // % no-seguidores: promedio de los posts que tienen el dato
-  const postsConNS=pubs.filter(c=>_mainReach(c)>0&&(c.alcance_no_seguidores||0)>0);
-  const pctNoSeg=postsConNS.length>0
-    ?Math.round(postsConNS.reduce((a,c)=>a+(c.alcance_no_seguidores/_mainReach(c)*100),0)/postsConNS.length)
-    :null;
-
-  // Progress vs metas
   const postsPct=metaPosts>0?Math.min(100,Math.round(pubs.length/metaPosts*100)):null;
   const alcPct=metaAlcance>0?Math.min(100,Math.round(alcTotal/metaAlcance*100)):null;
-
-  // Color helpers
   const pctCol=v=>v>=80?'var(--green)':v>=50?'var(--gold)':'var(--red)';
   const barCol=v=>v>=80?'var(--green)':v>=50?'var(--gold)':'#E05555';
-
   const mesLabel=new Date(_resumenMes+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
 
-  // ── Tendencia 6 meses ──
+  // ── Tendencia 6 meses (terminando en el mes elegido) ──
   const meses6=[];
-  for(let i=5;i>=0;i--){const d=new Date();d.setDate(1);d.setMonth(d.getMonth()-i);meses6.push(d.toISOString().slice(0,7));}
-  const t6=meses6.map(m=>{
-    const pp=contenidoRedes.filter(c=>c.tipo==='publicado'&&c.fecha?.startsWith(m));
-    const alc=pp.reduce((a,c)=>a+_mainReach(c),0);
-    const grd=pp.reduce((a,c)=>a+(c.guardados||0),0);
-    const tg=alc>0?(grd/alc*100).toFixed(1):null;
-    return{m,cnt:pp.length,alc,tg,label:new Date(m+'-15').toLocaleDateString('es-AR',{month:'short'})};
-  });
-  const maxCnt=Math.max(...t6.map(x=>x.cnt),metaPosts||1,1);
-  const maxAlc=Math.max(...t6.map(x=>x.alc),metaAlcance||1,1);
+  for(let i=5;i>=0;i--){const d=new Date(_resumenMes+'-15');d.setMonth(d.getMonth()-i);meses6.push(d.toISOString().slice(0,7));}
+  const meses12=[];for(let i=11;i>=0;i--){const d=new Date(_resumenMes+'-15');d.setMonth(d.getMonth()-i);meses12.push(d.toISOString().slice(0,7));}
+  const porMes=(red,fn)=>meses12.map(m=>todos.filter(p=>p.red===red&&mesDe(p.fecha)===m).reduce((s,p)=>s+(fn(p)||0),0));
 
-  // ── Seguidores mes a mes ──
+  // ── Seguidores: foto diaria automática; para meses anteriores a la conexión, lo cargado a mano ──
+  const finMes=m=>{const d=new Date(m+'-15');d.setMonth(d.getMonth()+1);d.setDate(0);return d.toISOString().slice(0,10);};
+  const segDe=(cuenta,red,m)=>{
+    const c=(cuenta||[]).filter(x=>x.fecha<=finMes(m)&&x.fecha>=m+'-01');
+    if(c.length)return{v:+c[c.length-1].seguidores||0,auto:true};
+    const man=getFollowers(m)[red];return man?{v:man,auto:false}:null;
+  };
+  const mesAnt=(()=>{const d=new Date(_resumenMes+'-15');d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7);})();
   const platsFollow=[
-    {k:'instagram',l:'Instagram',ico:'📸',col:'#E4405F'},
-    {k:'tiktok',   l:'TikTok',  ico:'🎵',col:'#69C9D0'},
-    {k:'youtube',  l:'YouTube', ico:'▶️', col:'#FF0000'},
-    {k:'facebook', l:'Facebook',ico:'👍',col:'#1877F2'},
+    {k:'instagram',l:'Instagram',ico:'📸',col:'#E4405F',cuenta:_ig.cuenta,n:pIg.length,extra:`${K(alcIg)} alcance`},
+    {k:'tiktok',   l:'TikTok',  ico:'🎵',col:'#1A98A6',cuenta:_tt.cuenta,n:pTt.length,extra:`${K(vistasTt)} vistas`},
   ];
-  const fw=getFollowers(_resumenMes);
-  const dPrev=new Date(_resumenMes+'-15');dPrev.setMonth(dPrev.getMonth()-1);
-  const mesPrev=dPrev.toISOString().slice(0,7);
-  const fwPrev=getFollowers(mesPrev);
-  const fwHistory=meses6.map(m=>getFollowers(m));
-  const startPoints=getStartPoints();
-  // Todos los meses con datos para evolución completa
-  const allFw=getAllFollowers();
-  const allMeses=Object.keys(allFw).sort();
 
-  // ── Tabla posts del mes ──
-  const tablaRows=pubs.length?[...pubs].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(c=>{
-    const alc=_mainReach(c);
-    const grd=c.guardados||0;
-    const ns=c.alcance_no_seguidores||0;
-    const tg=alc>0?(grd/alc*100).toFixed(1):null;
-    const pns=alc>0&&ns>0?Math.round(ns/alc*100):null;
+  // ── Tabla de publicaciones del mes ──
+  const tablaRows=pubs.length?[...pubs].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(p=>{
+    const d=new Date(p.fecha);
+    const fecha=d.toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'});
+    const tg=p.red==='ig'&&p.alc>0&&p.guard!=null?(p.guard/p.alc*100).toFixed(1):null;
     const tgCol=tg===null?'var(--muted)':parseFloat(tg)>=3?'var(--green)':parseFloat(tg)>=1.5?'var(--gold)':'var(--muted)';
-    const pnsCol=pns===null?'var(--muted)':pns>=50?'var(--green)':pns>=30?'var(--gold)':'var(--muted)';
-    const fechaShort=c.fecha?c.fecha.slice(5).replace('-','/'):'—';
-    const titulo=(c.titulo||'Sin título').slice(0,26)+(c.titulo?.length>26?'…':'');
-    const plIco=PLAT_CONT_ICO[c.plataforma]||'📱';
-    // Posts del mismo grupo (otras plataformas)
-    const hermanos=c.grupo?pubs.filter(x=>x.grupo===c.grupo&&x.id!==c.id):[];
-    const hermIcos=hermanos.map(h=>`<span title="${h.plataforma}">${PLAT_CONT_ICO[h.plataforma]||'📱'}</span>`).join('');
-    return`<tr onclick="openContenidoModal('${c.id}')" style="cursor:pointer;transition:.15s" onmouseenter="this.style.background='rgba(255,255,255,.04)'" onmouseleave="this.style.background=''">
-      <td style="padding:9px 10px;font-size:12px;color:var(--muted);white-space:nowrap">${fechaShort}</td>
-      <td style="padding:9px 6px;font-size:14px;text-align:center" title="${c.plataforma||''}">${plIco}${hermIcos?`<span style="font-size:10px;opacity:.6">${hermIcos}</span>`:''}</td>
-      <td style="padding:9px 10px;font-size:12px;color:var(--text);max-width:160px">${titulo}${c.grupo?`<div style="font-size:9px;color:var(--gold);margin-top:1px">🔗 ${c.grupo}</div>`:''}</td>
-      <td style="padding:9px 10px;font-size:12px;color:var(--blue);font-weight:700;text-align:right">${alc>0?alc.toLocaleString('es-AR'):'—'}</td>
-      <td style="padding:9px 10px;font-size:12px;font-weight:700;color:${pnsCol};text-align:right">${pns!==null?pns+'%':'—'}</td>
+    const txt=_igE((p.texto||'Sin texto').replace(/\s+/g,' ').slice(0,60))+((p.texto||'').length>60?'…':'');
+    return`<tr ${p.link?`onclick="window.open('${_igE(p.link)}','_blank')" style="cursor:pointer"`:''} onmouseenter="this.style.background='rgba(255,255,255,.04)'" onmouseleave="this.style.background=''">
+      <td style="padding:9px 10px;font-size:12px;color:var(--muted);white-space:nowrap">${fecha}</td>
+      <td style="padding:9px 6px;font-size:14px;text-align:center" title="${p.red==='ig'?'Instagram':'TikTok'} · ${_igE(p.tipo)}">${p.red==='ig'?'📸':'🎵'}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--text);max-width:260px"><span style="font-size:10px;color:var(--gold)">${_igE(p.tipo)}</span> ${txt}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--blue);font-weight:700;text-align:right">${p.conDatos?p.alc.toLocaleString('es-AR'):'—'}</td>
+      <td style="padding:9px 10px;font-size:12px;text-align:right">${p.likes.toLocaleString('es-AR')}</td>
+      <td style="padding:9px 10px;font-size:12px;text-align:right">${p.com}</td>
       <td style="padding:9px 10px;font-size:12px;font-weight:700;color:${tgCol};text-align:right">${tg!==null?tg+'%':'—'}</td>
-      <td style="padding:9px 10px;font-size:12px;color:var(--green);text-align:right">${c.seguidores_ganados>0?'+'+c.seguidores_ganados:'—'}</td>
+      <td style="padding:9px 10px;font-size:12px;color:var(--green);text-align:right">${p.seg>0?'+'+p.seg:'—'}</td>
     </tr>`;
-  }).join(''):`<tr><td colspan="7" style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Sin posts publicados este mes</td></tr>`;
+  }).join(''):`<tr><td colspan="8" style="padding:24px;text-align:center;color:var(--muted);font-size:13px">Sin publicaciones este mes</td></tr>`;
+
+  const sinConexion=!(_ig.posts||[]).length&&!(_tt.posts||[]).length;
+  const ultAct=[_ig.sync?.cuando,_tt.sync?.cuando].filter(Boolean).sort().pop();
 
   el.innerHTML=`
-  <!-- Navegador de mes -->
-  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:10px">
     <div style="display:flex;align-items:center;gap:10px">
       <button onclick="navResumenMes(-1)" style="padding:7px 14px;border-radius:10px;background:var(--card2);border:1px solid var(--border);color:var(--text);font-size:14px;cursor:pointer;font-weight:700">←</button>
       <span style="font-size:18px;font-weight:800;color:var(--gl);text-transform:capitalize;min-width:160px;text-align:center">${mesLabel}</span>
@@ -12743,175 +12732,173 @@ function renderContResumen(){
     </div>
     <button onclick="editMetasMes()" style="padding:8px 16px;border-radius:10px;background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.3);color:var(--gold);font-size:12px;font-weight:700;cursor:pointer">⚙️ Editar metas del mes</button>
   </div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:20px">🔄 Datos automáticos de Instagram y TikTok${ultAct?' · última actualización '+new Date(ultAct).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):''} · se actualizan solos todos los días a las 6:00</div>
 
+  ${sinConexion?`<div style="background:rgba(224,85,85,.08);border:1px solid rgba(224,85,85,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px">⚠️ Todavía no hay datos de las redes. Andá a <b>Instagram</b> o <b>TikTok</b> y tocá <b>🔄 Actualizar ahora</b>.</div>`:''}
   ${metaPosts===0&&metaAlcance===0?`<div style="background:rgba(201,168,76,.07);border:1px dashed rgba(201,168,76,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">
-    💡 Todavía no configuraste tus metas mensuales. Hacé clic en <strong style="color:var(--gold)">⚙️ Editar metas</strong> para empezar a medir tu progreso.
-  </div>`:''}
+    💡 Todavía no configuraste tus metas mensuales. Hacé clic en <strong style="color:var(--gold)">⚙️ Editar metas</strong> para medir tu progreso.</div>`:''}
 
-  <!-- KPIs 2×2 -->
-  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:24px">
-
-    <!-- Posts -->
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px">
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📋 Posts publicados</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📋 Publicaciones</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
         <span style="font-size:32px;font-weight:800;color:var(--green)">${pubs.length}</span>
         ${metaPosts>0?`<span style="font-size:14px;color:var(--muted)">/ ${metaPosts}</span>`:''}
       </div>
-      ${metaPosts>0?`
-      <div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden">
-        <div style="height:100%;background:${barCol(postsPct)};width:${postsPct}%;border-radius:3px;transition:width .6s"></div>
-      </div>
-      <div style="font-size:11px;color:${pctCol(postsPct)};font-weight:700">${postsPct}% de la meta${postsPct>=100?' ✅':''}</div>`
-      :`<div style="font-size:11px;color:var(--muted)">Sin meta configurada</div>`}
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">📸 ${pIg.length} Instagram · 🎵 ${pTt.length} TikTok</div>
+      ${metaPosts>0?`<div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden"><div style="height:100%;background:${barCol(postsPct)};width:${postsPct}%;border-radius:3px"></div></div>
+      <div style="font-size:11px;color:${pctCol(postsPct)};font-weight:700">${postsPct}% de la meta${postsPct>=100?' ✅':''}</div>`:''}
     </div>
-
-    <!-- Alcance -->
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">👁 Alcance total</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:10px">
-        <span style="font-size:32px;font-weight:800;color:var(--blue)">${alcTotal>=1000?(alcTotal/1000).toFixed(1)+'K':alcTotal}</span>
-        ${metaAlcance>0?`<span style="font-size:14px;color:var(--muted)">/ ${metaAlcance>=1000?(metaAlcance/1000).toFixed(0)+'K':metaAlcance}</span>`:''}
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">👁 Alcance + vistas</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+        <span style="font-size:32px;font-weight:800;color:var(--blue)">${K(alcTotal)}</span>
+        ${metaAlcance>0?`<span style="font-size:14px;color:var(--muted)">/ ${K(metaAlcance)}</span>`:''}
       </div>
-      ${metaAlcance>0?`
-      <div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden">
-        <div style="height:100%;background:${barCol(alcPct)};width:${alcPct}%;border-radius:3px;transition:width .6s"></div>
-      </div>
-      <div style="font-size:11px;color:${pctCol(alcPct)};font-weight:700">${alcPct}% de la meta${alcPct>=100?' ✅':''}</div>`
-      :`<div style="font-size:11px;color:var(--muted)">Sin meta configurada</div>`}
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">📸 ${K(alcIg)} cuentas alcanzadas · 🎵 ${K(vistasTt)} vistas</div>
+      ${metaAlcance>0?`<div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden"><div style="height:100%;background:${barCol(alcPct)};width:${alcPct}%;border-radius:3px"></div></div>
+      <div style="font-size:11px;color:${pctCol(alcPct)};font-weight:700">${alcPct}% de la meta${alcPct>=100?' ✅':''}</div>`:''}
     </div>
-
-    <!-- Tasa de guardados -->
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🔖 Tasa de guardados</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
-        <span style="font-size:32px;font-weight:800;color:${tasaGuard===null?'var(--muted)':parseFloat(tasaGuard)>=3?'var(--green)':parseFloat(tasaGuard)>=1.5?'var(--gold)':'var(--red)'}">${tasaGuard!==null?tasaGuard+'%':'—'}</span>
-      </div>
-      <div style="font-size:11px;color:var(--muted)">guardados ÷ alcance · bueno ≥ 2%</div>
+      <div style="font-size:32px;font-weight:800;margin-bottom:6px;color:${tasaGuard===null?'var(--muted)':parseFloat(tasaGuard)>=3?'var(--green)':parseFloat(tasaGuard)>=1.5?'var(--gold)':'var(--red)'}">${tasaGuard!==null?tasaGuard+'%':'—'}</div>
+      <div style="font-size:11px;color:var(--muted)">Instagram · guardados ÷ alcance · bueno ≥ 2%</div>
       ${tasaGuard!==null?`<div style="font-size:10px;margin-top:4px;color:${parseFloat(tasaGuard)>=3?'var(--green)':parseFloat(tasaGuard)>=1.5?'var(--gold)':'#E05555'};font-weight:700">${parseFloat(tasaGuard)>=3?'🟢 Excelente':parseFloat(tasaGuard)>=1.5?'🟡 Bien, podés mejorar':'🔴 Por debajo del promedio'}</div>`:''}
     </div>
-
-    <!-- % no-seguidores -->
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
-      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🌐 Alcance no-seguidores</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:8px">
-        <span style="font-size:32px;font-weight:800;color:${pctNoSeg===null?'var(--muted)':pctNoSeg>=50?'var(--green)':pctNoSeg>=30?'var(--gold)':'var(--red)'}">${pctNoSeg!==null?pctNoSeg+'%':'—'}</span>
-      </div>
-      <div style="font-size:11px;color:var(--muted)">promedio por post · bueno ≥ 40%</div>
-      ${pctNoSeg!==null?`<div style="font-size:10px;margin-top:4px;color:${pctNoSeg>=50?'var(--green)':pctNoSeg>=30?'var(--gold)':'#E05555'};font-weight:700">${pctNoSeg>=50?'🟢 Muy buena difusión':pctNoSeg>=30?'🟡 En crecimiento':'🔴 Casi solo seguidores'}</div>`
-      :`<div style="font-size:10px;margin-top:4px;color:var(--muted)">Cargá "Alcance no-seguidores" en cada post</div>`}
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">💬 Interacción</div>
+      <div style="font-size:32px;font-weight:800;margin-bottom:6px;color:${tasaInter===null?'var(--muted)':parseFloat(tasaInter)>=5?'var(--green)':parseFloat(tasaInter)>=2?'var(--gold)':'var(--red)'}">${tasaInter!==null?tasaInter+'%':'—'}</div>
+      <div style="font-size:11px;color:var(--muted)">${interacc.toLocaleString('es-AR')} likes, comentarios, compartidos y guardados ÷ alcance</div>
     </div>
-
   </div>
 
-  <!-- Tendencia 6 meses -->
-  <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px;margin-bottom:24px">
-    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:16px">📈 Posts publicados — últimos 6 meses</div>
-    <div style="display:flex;align-items:flex-end;gap:8px;height:80px">
-      ${t6.map(x=>{
-        const h=x.cnt>0?Math.max(8,Math.round(x.cnt/maxCnt*64)):4;
-        const isCur=x.m===_resumenMes;
-        const isHoy=x.m===mesActual;
-        const metaH=metaPosts>0?Math.round(metaPosts/maxCnt*64):0;
-        return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-          <div style="font-size:10px;font-weight:700;color:${isCur?'var(--gl)':'var(--muted)'}">${x.cnt||''}</div>
-          <div style="width:100%;position:relative;height:64px;display:flex;align-items:flex-end">
-            ${metaPosts>0?`<div style="position:absolute;bottom:${metaH}px;left:0;right:0;border-top:1px dashed rgba(201,168,76,.4)"></div>`:''}
-            <div style="width:100%;background:${isCur?'var(--gl)':isHoy?'var(--gold)':'rgba(91,155,213,.5)'};border-radius:5px 5px 0 0;height:${h}px;transition:height .5s"></div>
-          </div>
-          <div style="font-size:10px;color:${isCur?'var(--gl)':'var(--muted)'};font-weight:${isCur?700:400};text-transform:capitalize">${x.label}</div>
-        </div>`;
-      }).join('')}
-    </div>
-    ${metaPosts>0?`<div style="display:flex;align-items:center;gap:6px;margin-top:10px"><div style="width:16px;border-top:1px dashed rgba(201,168,76,.5)"></div><span style="font-size:10px;color:var(--muted)">meta: ${metaPosts} posts/mes</span></div>`:''}
+  <div style="font-size:13px;font-weight:800;color:var(--gl);margin:4px 0 12px">📊 Evolución <span style="font-size:11px;font-weight:400;color:var(--muted)">· 12 meses hasta ${mesLabel} · pasá el mouse para ver cada valor</span></div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:24px">
+    ${[['resChSeg','👥 Seguidores','foto diaria de cada cuenta (empezó el 23/11/2026) + lo cargado a mano antes'],
+       ['resChPub','📋 Publicaciones por mes',metaPosts?'línea punteada: tu meta de '+metaPosts+' por mes':'cantidad publicada en cada red'],
+       ['resChVis','▶️ Visualizaciones por mes','reproducciones de reels y videos'],
+       ['resChAlc','👁 Alcance de Instagram por mes','cuentas únicas alcanzadas'],
+       ['resChInt','💬 Interacciones por mes','likes + comentarios + compartidos + guardados']].map(([id,t,sub])=>`
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:16px 18px;${id==='resChSeg'?'grid-column:1/-1':''}">
+      <div style="font-size:12px;font-weight:700;color:var(--text)">${t}</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">${sub}</div>
+      <div style="position:relative;height:220px"><canvas id="${id}"></canvas></div>
+    </div>`).join('')}
   </div>
 
-  <!-- Seguidores por plataforma -->
   <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:24px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
       <span style="font-size:13px;font-weight:800;color:var(--gl)">👥 Seguidores — ${mesLabel}</span>
-      <span style="font-size:11px;color:var(--muted)">Ingresá el total al cierre del mes</span>
+      <span style="font-size:11px;color:var(--muted)">automático (foto diaria de cada cuenta)</span>
     </div>
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
       ${platsFollow.map(p=>{
-        const cur=fw[p.k]||0;
-        const prev=fwPrev[p.k]||0;
-        const diff=cur&&prev?cur-prev:null;
-        const pct=diff!==null&&prev>0?((diff/prev)*100).toFixed(1):null;
+        const cur=segDe(p.cuenta,p.k,_resumenMes),prev=segDe(p.cuenta,p.k,mesAnt);
+        const diff=cur&&prev?cur.v-prev.v:null;
+        const pct=diff!==null&&prev.v>0?((diff/prev.v)*100).toFixed(1):null;
         const diffCol=diff>0?'var(--green)':diff<0?'var(--red)':'var(--muted)';
-        // Sparkline: last 6 months values
-        const vals=fwHistory.map(h=>h[p.k]||0);
-        const maxV=Math.max(...vals,1);
-        const spark=vals.map((v,i)=>{
-          const h=v>0?Math.max(4,Math.round(v/maxV*28)):2;
-          const isCur=i===vals.length-1;
-          return`<div style="flex:1;background:${isCur?p.col:'rgba(255,255,255,.15)'};border-radius:2px 2px 0 0;height:${h}px;align-self:flex-end"></div>`;
-        }).join('');
+        const vals=meses6.map(m=>segDe(p.cuenta,p.k,m)?.v||0),maxV=Math.max(...vals,1);
+        const spark=vals.map((v,i)=>`<div style="flex:1;background:${i===vals.length-1?p.col:'rgba(255,255,255,.15)'};border-radius:2px 2px 0 0;height:${v>0?Math.max(4,Math.round(v/maxV*28)):2}px;align-self:flex-end"></div>`).join('');
         return`<div style="background:var(--card);border:1px solid var(--border);border-top:2px solid ${p.col};border-radius:12px;padding:14px">
-          <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
-            <span style="font-size:16px">${p.ico}</span>
-            <span style="font-size:11px;font-weight:700;color:var(--muted)">${p.l}</span>
-          </div>
-          <input type="number" value="${cur||''}" placeholder="0"
-            onchange="saveFollower('${_resumenMes}','${p.k}',this.value)"
-            style="width:100%;padding:8px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:18px;font-weight:800;text-align:center;outline:none;margin-bottom:8px">
-          ${diff!==null?`<div style="font-size:11px;font-weight:700;color:${diffCol};text-align:center">${diff>0?'↑':diff<0?'↓':'='} ${Math.abs(diff).toLocaleString('es-AR')} ${pct?`(${diff>0?'+':''}${pct}%)`:''}</div>`
-          :`<div style="font-size:10px;color:var(--muted);text-align:center">Cargá el mes anterior para ver variación</div>`}
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="font-size:16px">${p.ico}</span><span style="font-size:11px;font-weight:700;color:var(--muted)">${p.l}</span></div>
+          <div style="font-size:24px;font-weight:800;text-align:center;margin-bottom:4px">${cur?cur.v.toLocaleString('es-AR'):'—'}</div>
+          ${diff!==null?`<div style="font-size:11px;font-weight:700;color:${diffCol};text-align:center">${diff>0?'↑':diff<0?'↓':'='} ${Math.abs(diff).toLocaleString('es-AR')} vs mes anterior ${pct?`(${diff>0?'+':''}${pct}%)`:''}</div>`
+          :`<div style="font-size:10px;color:var(--muted);text-align:center">${cur?'La variación aparece cuando haya datos del mes anterior':'Sin datos de este mes'}</div>`}
+          <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">${p.n} publicaciones · ${p.extra}</div>
           <div style="display:flex;align-items:flex-end;gap:2px;height:32px;margin-top:10px">${spark}</div>
         </div>`;
       }).join('')}
     </div>
-    <!-- Proyección hacia 10K -->
     ${(()=>{
-      const ig=fw.instagram||0;
-      if(!ig)return'';
-      const remaining=10000-ig;
-      if(remaining<=0)return`<div style="background:rgba(61,170,106,.1);border:1px solid rgba(61,170,106,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--green);font-weight:700">🎉 ¡Superaste los 10.000 seguidores en Instagram!</div>`;
-      // Calcular promedio mensual de crecimiento
-      const igHistory=fwHistory.map(h=>h.instagram||0).filter(v=>v>0);
-      const growthRates=[];
-      for(let i=1;i<igHistory.length;i++){if(igHistory[i-1]>0)growthRates.push(igHistory[i]-igHistory[i-1]);}
-      const avgGrowth=growthRates.length?Math.round(growthRates.reduce((a,b)=>a+b,0)/growthRates.length):null;
-      const mesesFalta=avgGrowth>0?Math.ceil(remaining/avgGrowth):null;
-      return`<div style="background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted)">
-        ⭐ <strong style="color:var(--gl)">Meta 10K Instagram:</strong> te faltan <strong style="color:var(--gold)">${remaining.toLocaleString('es-AR')} seguidores</strong>
-        ${mesesFalta?` · A tu ritmo actual: ~${mesesFalta} meses`:'· Cargá más meses para ver proyección'}
-      </div>`;
+      const cur=segDe(_ig.cuenta,'instagram',_resumenMes);if(!cur)return'';
+      const remaining=10000-cur.v;
+      if(remaining<=0)return`<div style="margin-top:14px;background:rgba(61,170,106,.1);border:1px solid rgba(61,170,106,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--green);font-weight:700">🎉 ¡Superaste los 10.000 seguidores en Instagram!</div>`;
+      const hist=meses6.map(m=>segDe(_ig.cuenta,'instagram',m)?.v||0).filter(v=>v>0);
+      const g=[];for(let i=1;i<hist.length;i++)g.push(hist[i]-hist[i-1]);
+      const avg=g.length?g.reduce((a,b)=>a+b,0)/g.length:null,meses=avg>0?Math.ceil(remaining/avg):null;
+      return`<div style="margin-top:14px;background:rgba(201,168,76,.07);border:1px solid rgba(201,168,76,.2);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--muted)">⭐ <strong style="color:var(--gl)">Meta 10K Instagram:</strong> te faltan <strong style="color:var(--gold)">${remaining.toLocaleString('es-AR')} seguidores</strong>${meses?` · a tu ritmo actual: ~${meses} meses`:' · la proyección aparece con más meses de datos'}${segGanPosts?` · este mes tus publicaciones sumaron +${segGanPosts}`:''}</div>`;
     })()}
   </div>
 
-  <!-- Tabla posts del mes -->
   <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;overflow:hidden">
-    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between">
-      <span style="font-size:13px;font-weight:700;color:var(--text)">📋 Posts de ${mesLabel}</span>
-      <span style="font-size:11px;color:var(--muted)">${pubs.length} publicado${pubs.length!==1?'s':''} · click para editar</span>
+    <div style="padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px">
+      <span style="font-size:13px;font-weight:700;color:var(--text)">📋 Publicaciones de ${mesLabel}</span>
+      <span style="font-size:11px;color:var(--muted)">${pubs.length} publicada${pubs.length!==1?'s':''} · click para abrirla en la red</span>
     </div>
     <div style="overflow-x:auto">
       <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="border-bottom:1px solid var(--border)">
-            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Fecha</th>
-            <th style="padding:8px 6px;font-size:10px;font-weight:700;color:var(--muted);text-align:center;text-transform:uppercase;letter-spacing:.5px">Red</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:left;text-transform:uppercase;letter-spacing:.5px">Título</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--blue);text-align:right;text-transform:uppercase;letter-spacing:.5px">Alcance</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.5px" title="% del alcance que NO son tus seguidores">No-seg %</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--muted);text-align:right;text-transform:uppercase;letter-spacing:.5px" title="Guardados ÷ Alcance × 100">Guard %</th>
-            <th style="padding:8px 10px;font-size:10px;font-weight:700;color:var(--green);text-align:right;text-transform:uppercase;letter-spacing:.5px">Seg +</th>
-          </tr>
-        </thead>
+        <thead><tr style="border-bottom:1px solid var(--border)">
+          <th style="padding:8px 10px;font-size:10px;color:var(--muted);text-align:left">FECHA</th>
+          <th style="padding:8px 6px;font-size:10px;color:var(--muted)">RED</th>
+          <th style="padding:8px 10px;font-size:10px;color:var(--muted);text-align:left">PUBLICACIÓN</th>
+          <th style="padding:8px 10px;font-size:10px;color:var(--blue);text-align:right" title="Instagram: cuentas alcanzadas · TikTok: vistas">ALCANCE / VISTAS</th>
+          <th style="padding:8px 10px;font-size:10px;color:var(--muted);text-align:right">❤️</th>
+          <th style="padding:8px 10px;font-size:10px;color:var(--muted);text-align:right">💬</th>
+          <th style="padding:8px 10px;font-size:10px;color:var(--muted);text-align:right" title="Guardados ÷ alcance (solo Instagram)">GUARD %</th>
+          <th style="padding:8px 10px;font-size:10px;color:var(--green);text-align:right" title="Seguidores que ganaste con la publicación (Instagram)">SEG +</th>
+        </tr></thead>
         <tbody>${tablaRows}</tbody>
-        ${pubs.length>0?`<tfoot>
-          <tr style="border-top:1px solid var(--border);background:rgba(201,168,76,.04)">
-            <td colspan="3" style="padding:10px 10px;font-size:11px;font-weight:700;color:var(--muted)">TOTAL / PROMEDIO</td>
-            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--blue);text-align:right">${alcTotal>=1000?(alcTotal/1000).toFixed(1)+'K':alcTotal}</td>
-            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--muted);text-align:right">${pctNoSeg!==null?pctNoSeg+'%':'—'}</td>
-            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--muted);text-align:right">${tasaGuard!==null?tasaGuard+'%':'—'}</td>
-            <td style="padding:10px 10px;font-size:12px;font-weight:800;color:var(--green);text-align:right">${segGanTotal>0?'+'+segGanTotal:'—'}</td>
-          </tr>
-        </tfoot>`:''}
+        ${pubs.length?`<tfoot><tr style="border-top:1px solid var(--border);background:rgba(201,168,76,.04)">
+          <td colspan="3" style="padding:10px;font-size:11px;font-weight:700;color:var(--muted)">TOTAL</td>
+          <td style="padding:10px;font-size:12px;font-weight:800;color:var(--blue);text-align:right">${K(alcTotal)}</td>
+          <td style="padding:10px;font-size:12px;font-weight:800;text-align:right">${suma(pubs,'likes').toLocaleString('es-AR')}</td>
+          <td style="padding:10px;font-size:12px;font-weight:800;text-align:right">${suma(pubs,'com')}</td>
+          <td style="padding:10px;font-size:12px;font-weight:800;color:var(--muted);text-align:right">${tasaGuard!==null?tasaGuard+'%':'—'}</td>
+          <td style="padding:10px;font-size:12px;font-weight:800;color:var(--green);text-align:right">${segGanPosts>0?'+'+segGanPosts:'—'}</td>
+        </tr></tfoot>`:''}
       </table>
     </div>
   </div>`;
+  _resDibujarGraficos({meses12,porMes,mesLabel,metaPosts});
+}
+
+/* Gráficos del Resumen (Chart.js). Un eje por gráfico; Instagram #E4405F y TikTok #1A98A6 siempre (validados para el fondo oscuro). */
+let _resCharts=[];
+function _resDibujarGraficos({meses12,porMes,metaPosts}){
+  if(typeof Chart==='undefined')return;
+  _resCharts.forEach(c=>{try{c.destroy();}catch(e){}});_resCharts=[];
+  const css=getComputedStyle(document.documentElement);
+  const tinta=css.getPropertyValue('--muted').trim()||'#7A7260',texto=css.getPropertyValue('--text').trim()||'#EDE5C8',grilla='rgba(255,255,255,.06)';
+  const IG='#E4405F',TT='#1A98A6';
+  const etiquetas=meses12.map(m=>new Date(m+'-15').toLocaleDateString('es-AR',{month:'short',year:'2-digit'}));
+  const nf=v=>Math.round(v).toLocaleString('es-AR');
+  const base=(extra={})=>({responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{color:texto,boxWidth:10,boxHeight:10,usePointStyle:true,font:{size:11}}},
+      tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+(c.parsed.y==null?'—':nf(c.parsed.y))}}},
+    scales:{x:{ticks:{color:tinta,font:{size:10},maxRotation:0,autoSkip:true},grid:{display:false},border:{color:grilla}},
+            y:{beginAtZero:true,ticks:{color:tinta,font:{size:10},callback:v=>v>=1000?(v/1000)+'K':v},grid:{color:grilla},border:{display:false}}},...extra});
+  const barras=(lab,data,col)=>({label:lab,data,backgroundColor:col,borderRadius:4,borderSkipped:'bottom',maxBarThickness:18,borderColor:'#1C1A2E',borderWidth:{left:1,right:1}});
+  const mk=(id,cfg)=>{const cv=document.getElementById(id);if(cv)_resCharts.push(new Chart(cv,cfg));};
+
+  // 1) Seguidores: puntos diarios automáticos + valores mensuales cargados a mano antes de la conexión
+  const serieSeg=(cuenta,red)=>{
+    const m=new Map();
+    const man=getAllFollowers();Object.keys(man).sort().forEach(mes=>{const v=man[mes]?.[red];if(v){const d=new Date(mes+'-15');d.setMonth(d.getMonth()+1);d.setDate(0);m.set(d.toISOString().slice(0,10),+v);}});
+    (cuenta||[]).forEach(c=>{if(c.seguidores!=null)m.set(c.fecha,+c.seguidores);});
+    return [...m].sort((a,b)=>a[0].localeCompare(b[0])).map(([x,y])=>({x,y}));
+  };
+  const sIg=serieSeg(_ig.cuenta,'instagram'),sTt=serieSeg(_tt.cuenta,'tiktok');
+  const fechas=[...new Set([...sIg,...sTt].map(p=>p.x))].sort();
+  const val=(serie,f)=>{const p=serie.find(q=>q.x===f);return p?p.y:null;};
+  mk('resChSeg',{type:'line',data:{labels:fechas.map(f=>new Date(f+'T12:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'})),
+    datasets:[{label:'Instagram',data:fechas.map(f=>val(sIg,f)),borderColor:IG,backgroundColor:IG,borderWidth:2,pointRadius:fechas.length>20?0:4,pointHoverRadius:5,spanGaps:true,tension:.2},
+              {label:'TikTok',data:fechas.map(f=>val(sTt,f)),borderColor:TT,backgroundColor:TT,borderWidth:2,pointRadius:fechas.length>20?0:4,pointHoverRadius:5,spanGaps:true,tension:.2}]},
+    options:base({scales:{x:{ticks:{color:tinta,font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:6},grid:{display:false}},y:{beginAtZero:false,ticks:{color:tinta,font:{size:10}},grid:{color:grilla},border:{display:false}}}})});
+
+  // Publicaciones por mes (apiladas: el total es lo que cuenta para la meta)
+  const pubIg=porMes('ig',()=>1),pubTt=porMes('tt',()=>1);
+  const dsPub=[{...barras('Instagram',pubIg,IG),stack:'p'},{...barras('TikTok',pubTt,TT),stack:'p'}];
+  if(metaPosts)dsPub.push({type:'line',label:'Meta',data:etiquetas.map(()=>metaPosts),borderColor:'rgba(201,168,76,.7)',borderDash:[5,4],borderWidth:1.5,pointRadius:0,pointHoverRadius:0});
+  mk('resChPub',{type:'bar',data:{labels:etiquetas,datasets:dsPub},options:base({scales:{x:{stacked:true,ticks:{color:tinta,font:{size:10},maxRotation:0,autoSkip:true},grid:{display:false}},y:{stacked:true,beginAtZero:true,ticks:{color:tinta,font:{size:10}},grid:{color:grilla},border:{display:false}}},
+    plugins:{legend:{display:true,position:'top',align:'start',labels:{color:texto,boxWidth:10,boxHeight:10,usePointStyle:true,font:{size:11}}},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+nf(c.parsed.y)},footer:its=>'Total: '+nf(its.filter(i=>i.dataset.label!=='Meta').reduce((s,i)=>s+i.parsed.y,0))}}})});
+  // 2) Visualizaciones por mes
+  mk('resChVis',{type:'bar',data:{labels:etiquetas,datasets:[barras('Instagram',porMes('ig',p=>p.vistas),IG),barras('TikTok',porMes('tt',p=>p.vistas),TT)]},options:base()});
+  // 3) Alcance Instagram por mes
+  mk('resChAlc',{type:'line',data:{labels:etiquetas,datasets:[{label:'Instagram',data:porMes('ig',p=>p.conDatos?p.alc:0),borderColor:IG,backgroundColor:IG,borderWidth:2,pointRadius:4,pointHoverRadius:5,tension:.2}]},
+    options:base({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+nf(c.parsed.y)+' cuentas alcanzadas'}}}})});
+  // 4) Interacciones por mes
+  const inter=p=>(p.likes||0)+(p.com||0)+(p.comp||0)+(p.guard||0);
+  mk('resChInt',{type:'bar',data:{labels:etiquetas,datasets:[barras('Instagram',porMes('ig',inter),IG),barras('TikTok',porMes('tt',inter),TT)]},options:base()});
 }
 
 function renderMkt(){
