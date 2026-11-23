@@ -124,8 +124,9 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
   <div id="tab-clase" style="display:none">
     <div class="card">
       <h2>Nueva fecha de clase</h2>
-      <p class="det" style="margin:0 0 12px">Apenas la cargás, aparece en la web para que la gente se anote. Sin cupo máximo. Si no hay ninguna fecha activa, la web muestra el formulario de siempre.</p>
+      <p class="det" style="margin:0 0 12px"><b>Clase grande:</b> apenas la cargás, aparece en la web para que la gente se anote (sin cupo máximo). <b>Particular o grupo chico:</b> no se publica; es para registrarla y que cuente en las metas.</p>
       <div class="form">
+        <label>Tipo<select id="cTipo"><option value="grande">🏫 Clase grande · se publica en la web</option><option value="particular">👥 Particular / grupo chico · no se publica</option></select></label>
         <label>Fecha<input type="date" id="cFecha"></label>
         <label>Hora de inicio<input type="time" id="cHora" value="10:00"></label>
         <label style="flex:1;min-width:200px">Lugar<input id="cLugar" value="Posada Luz y Brillo · Búzios"></label>
@@ -226,9 +227,19 @@ async function bloquear(){
 async function crearClase(){
   const fecha=cFecha.value,hora=cHora.value||'10:00',lugar=cLugar.value.trim()||'Posada Luz y Brillo · Búzios';
   if(!fecha){toast('Elegí una fecha');return;}
-  const {error}=await _sb.from('clase_fechas').insert({id:crypto.randomUUID(),fecha,hora,lugar,activo:true});
+  const tipo=(document.getElementById('cTipo')||{}).value||'grande';
+  const {error}=await _sb.from('clase_fechas').insert({id:crypto.randomUUID(),fecha,hora,lugar,activo:tipo==='grande',data:{tipo}});
   if(error){toast('Error: '+error.message);return;}
-  toast('Fecha agregada · ya aparece en la web');cargar();
+  toast(tipo==='grande'?'Clase grande agregada · ya aparece en la web':'Clase particular registrada · no se publica');cargar();
+}
+/* Alumnos que hicieron la clase: suma a la meta «Alumnos formados» (Marketing → Estrategia) */
+async function guardarAlumnos(id,valor){
+  const c=clases.find(x=>x.id===id);if(!c)return;
+  const n=valor===''?null:Math.max(0,parseInt(valor)||0);
+  const data={...(c.data||{})};if(n===null)delete data.alumnos;else data.alumnos=n;
+  const {error}=await _sb.from('clase_fechas').update({data}).eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  toast(n===null?'Se cuentan los inscriptos':'✓ '+n+' alumno'+(n===1?'':'s')+' en esta clase');cargar();
 }
 async function toggleClase(id,activo){
   const {error}=await _sb.from('clase_fechas').update({activo}).eq('id',id);
@@ -324,11 +335,14 @@ function render(){
   // Clases
   document.getElementById('listaClases').innerHTML=clases.length?clases.slice().reverse().map(c=>{
     const ins=act.filter(t=>t.servicio==='clase_barras'&&t.data?.claseId===c.id);
-    const pasada=c.fecha<hoy;
+    const pasada=c.fecha<hoy,part=(c.data?.tipo||'grande')==='particular',alu=c.data?.alumnos;
     return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
-      <h2 style="margin:0">${fmt(c.fecha)} · ${esc(c.hora)}${pasada?' <span class="badge b-blq">Pasada</span>':c.activo?' <span class="badge b-ok">Visible en la web</span>':' <span class="badge b-blq">Oculta</span>'}</h2>
+      <h2 style="margin:0">${part?'👥 Particular':'🏫 Grande'} · ${fmt(c.fecha)} · ${esc(c.hora)}${pasada?' <span class="badge b-blq">Pasada</span>':c.activo?' <span class="badge b-ok">Visible en la web</span>':' <span class="badge b-blq">'+(part?'No se publica':'Oculta')+'</span>'}</h2>
       ${pasada?'':`<button class="btn" onclick="toggleClase('${c.id}',${!c.activo})">${c.activo?'Ocultar de la web':'Mostrar en la web'}</button>`}</div>
       <div class="det" style="margin:0 0 10px">📍 ${esc(c.lugar)} · ${ins.length} inscripto${ins.length===1?'':'s'}</div>
+      <div class="det" style="margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">🎓 Alumnos que la hicieron:
+        <input type="number" min="0" value="${alu??''}" placeholder="${ins.length}" style="width:70px" onchange="guardarAlumnos('${c.id}',this.value)">
+        <span style="opacity:.7">${alu!=null?'cargado a mano':'si lo dejás vacío se cuentan los '+ins.length+' inscriptos'} · suma a la meta de alumnos</span></div>
       ${ins.map(t=>filaTurno(t)).join('')||'<div class="vacio">Todavía nadie se anotó.</div>'}</div>`;
   }).join(''):'<div class="card vacio">No hay fechas de clase cargadas.</div>';
 
