@@ -611,12 +611,12 @@ th{background:rgba(28,26,46,.88)!important;}
                <span style="font-size:11px;color:var(--muted)">Aplicar área a todas:</span>
                <select id="pregMasivaAreaGlobal" style="padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">
                  <option value="">— Sin área —</option>
-                 <option value="Identidad">🪞 Identidad</option>
-                 <option value="Dinero">💰 Dinero</option>
+                 <option value="Recibir">💰 Recibir</option>
                  <option value="Cuerpo">🌿 Cuerpo</option>
-                 <option value="Relaciones">🤝 Relaciones</option>
-                 <option value="Propósito">🌟 Propósito</option>
-                 <option value="Consciencia">✨ Consciencia</option>
+                 <option value="Vínculos">💛 Vínculos</option>
+                 <option value="Viajes">✈️ Viajes</option>
+                 <option value="Emprender">🚀 Emprender</option>
+                 <option value="Identidad">🪞 Identidad</option>
                </select>
                <button class="btn btn-s btn-sm" onclick="aplicarAreaATodas()">Aplicar</button>
                <button class="btn btn-s btn-sm" onclick="addPregRow()">+ Fila</button>
@@ -2271,7 +2271,7 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg"><label>PDF en inglés (opcional)</label><input id="rgPdfEn" placeholder="https://..."></div>
   </div>
   <div class="fg"><label>Guía de 20 preguntas · área</label>
-   <select id="rgArea"><option value="">— No es una guía de 20 preguntas —</option><option value="Consciencia">Consciencia</option><option value="Recibir">Recibir</option><option value="Cuerpo">Cuerpo</option><option value="Vínculos">Vínculos</option><option value="Propósito">Propósito</option><option value="Identidad">Identidad</option></select>
+   <select id="rgArea"><option value="">— No es una guía de 20 preguntas —</option><option value="Recibir">Recibir</option><option value="Cuerpo">Cuerpo</option><option value="Vínculos">Vínculos</option><option value="Viajes">Viajes</option><option value="Emprender">Emprender</option><option value="Identidad">Identidad</option></select>
    <div style="font-size:11px;color:var(--muted);margin-top:4px">Si elegís un área, la portada de juancruzconsciencia.lat la entrega cuando alguien toca ese botón, en el idioma de la persona (si falta ese idioma, va la de español). Marca/Portal tiene que ser Juancruz Consciencia o Ambos.</div>
   </div>
   <div class="fg">
@@ -10612,7 +10612,7 @@ async function renderMktRegalos(){
 const FLYER_CIUDADES={BUZ:{nombre:'Búzios',n:10},ARR:{nombre:'Arraial do Cabo',n:5},CAB:{nombre:'Cabo Frío',n:5}};
 const FLYER_CODIGOS=Object.entries(FLYER_CIUDADES).flatMap(([k,c])=>Array.from({length:c.n},(_,i)=>`${k}-${String(i+1).padStart(2,'0')}`));
 const FLYER_URL='https://www.juancruzconsciencia.lat/ruleta.html?f=';
-const FLYER_DIM_LBL={Consciencia:'Consciencia',Dinero:'Recibir',Cuerpo:'Cuerpo',Relaciones:'Vínculos',Propósito:'Propósito',Identidad:'Identidad'};
+const FLYER_DIM_LBL={Recibir:'Recibir',Cuerpo:'Cuerpo',Vínculos:'Vínculos',Viajes:'Viajes',Emprender:'Emprender',Identidad:'Identidad',Consciencia:'Consciencia (anterior)',Dinero:'Recibir',Relaciones:'Vínculos',Propósito:'Propósito (anterior)'};
 let _flyerDias=30,_flyerEvs=null,_flyerCargadoDias=null;
 
 function setFlyerDias(d){_flyerDias=d;renderMktFlyers();}
@@ -10736,7 +10736,7 @@ let _tesoroPremios=[];
 let _tesoroRuleta=[];
 let _tesoroSubTab='resumen';
 let _tzMap=null, _tzMarker=null, _tzLat=null, _tzLng=null;
-const TESORO_CAT_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
+const TESORO_CAT_ICO={Recibir:'💰',Cuerpo:'🌿',Vínculos:'💛',Viajes:'✈️',Emprender:'🚀',Identidad:'🪞',Dinero:'💰',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 const TESORO_URL_BASE='https://juancruzconsciencia.lat/tesoro.html?id=';
 const TESORO_MAP_DEFAULT=[-22.7469,-41.8817]; // Búzios, Brasil
 function _tzEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -10913,7 +10913,7 @@ function _renderTesoroStickersTab(){
         <div class="fg" style="margin:0"><label>Categoría</label>
           <select id="tzCategoria">
             <option value="">Sin categoría</option>
-            ${Object.keys(TESORO_CAT_ICO).map(c=>`<option>${c}</option>`).join('')}
+            ${['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'].map(c=>`<option>${c}</option>`).join('')}
           </select></div>
       </div>
       <div class="fg" style="margin:0 0 12px"><label>Pregunta</label>
@@ -11705,15 +11705,9 @@ function initPregMasiva(){
     _renumPregRows();
   });
 }
-const _PREG_MATIZ_OPTS=[
-  {v:'',           l:'— Sin área —'},
-  {v:'Identidad',  l:'🪞 Identidad'},
-  {v:'Dinero',     l:'💰 Dinero'},
-  {v:'Cuerpo',     l:'🌿 Cuerpo'},
-  {v:'Relaciones', l:'🤝 Relaciones'},
-  {v:'Propósito',  l:'🌟 Propósito'},
-  {v:'Consciencia',l:'✨ Consciencia'},
-];
+const _PREG_MATIZ_OPTS=[{v:'',l:'— Sin área —'},{v:'Recibir',l:'💰 Recibir'},{v:'Cuerpo',l:'🌿 Cuerpo'},{v:'Vínculos',l:'💛 Vínculos'},{v:'Viajes',l:'✈️ Viajes'},{v:'Emprender',l:'🚀 Emprender'},{v:'Identidad',l:'🪞 Identidad'}];
+/* Las 120 preguntas de la temporada tienen set 'temporada-2026'; las anteriores quedan en su propia pestaña */
+function _comEnMatiz(c,m){return m==='anteriores'?c.set!=='temporada-2026':(c.set==='temporada-2026'&&c.matiz===m);}
 function _pregMatizSelect(val){
   return`<select class="preg-matiz" style="width:100%;padding:7px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">${
     _PREG_MATIZ_OPTS.map(o=>`<option value="${o.v}"${o.v===val?' selected':''}>${o.l}</option>`).join('')
@@ -11865,19 +11859,19 @@ function _renderComList(){
   // Sub-tabs de matiz — solo cuando estamos en "Preguntas"
   let matizBar='';
   if(_comTab==='pregunta'){
-    const MATICES=['todos','Identidad','Dinero','Cuerpo','Relaciones','Propósito','Consciencia'];
-    const MATIZ_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'🤝',Propósito:'🌟',Consciencia:'✨'};
+    const MATICES=['todos','Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad','anteriores'];
+    const MATIZ_ICO={Recibir:'💰',Cuerpo:'🌿',Vínculos:'💛',Viajes:'✈️',Emprender:'🚀',Identidad:'🪞',anteriores:'📦'};
     matizBar=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
       ${MATICES.map(m=>{
         const activo=_comMatizTab===m;
         const count=m==='todos'
           ?comunidad.filter(c=>c.tipo==='pregunta'&&c.activo!==false).length
-          :comunidad.filter(c=>c.tipo==='pregunta'&&c.matiz===m&&c.activo!==false).length;
+          :comunidad.filter(c=>c.tipo==='pregunta'&&_comEnMatiz(c,m)&&c.activo!==false).length;
         return `<button onclick="setComMatiz('${m}')"
           style="padding:5px 13px;border-radius:20px;border:1px solid ${activo?'rgba(155,130,212,.6)':'rgba(155,130,212,.2)'};
           background:${activo?'rgba(155,130,212,.2)':'transparent'};
           color:${activo?'#C4AEFF':'var(--muted)'};font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px">
-          ${m==='todos'?'Todas':`${MATIZ_ICO[m]||''} ${m}`}
+          ${m==='todos'?'Todas':m==='anteriores'?'📦 Anteriores (antes de la temporada)':`${MATIZ_ICO[m]||''} ${m}`}
           <span style="font-size:10px;padding:1px 5px;border-radius:10px;background:rgba(155,130,212,.15)">${count}</span>
         </button>`;
       }).join('')}
@@ -11886,7 +11880,7 @@ function _renderComList(){
 
   let lista=_comTab==='todos'?[...comunidad]:comunidad.filter(c=>c.tipo===_comTab);
   if(_comTab==='pregunta'&&_comMatizTab!=='todos'){
-    lista=lista.filter(c=>c.matiz===_comMatizTab);
+    lista=lista.filter(c=>_comEnMatiz(c,_comMatizTab));
   }
   lista=lista.filter(c=>c.activo!==false).sort((a,b)=>(a.fechaProgramada||'').localeCompare(b.fechaProgramada||''));
   const inactivos=comunidad.filter(c=>c.activo===false);
@@ -15144,7 +15138,7 @@ async function renderContTiktok(sinRecargar){
    Cada persona que descarga una guía de 20 preguntas desde la portada aparece acá para contactarla en el día. */
 let _gpRows=[],_gpVerTodas=false;
 const _gpE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const _GP_AREA={pt:{Consciencia:'Consciência',Recibir:'Receber',Cuerpo:'Corpo',Vínculos:'Vínculos',Propósito:'Propósito',Identidad:'Identidade'},en:{Consciencia:'Consciousness',Recibir:'Receiving',Cuerpo:'Body',Vínculos:'Bonds',Propósito:'Purpose',Identidad:'Identity'}};
+const _GP_AREA={pt:{Recibir:'Receber',Cuerpo:'Corpo',Vínculos:'Vínculos',Viajes:'Viagens',Emprender:'Empreender',Identidad:'Identidade',Consciencia:'Consciência',Propósito:'Propósito'},en:{Recibir:'Receiving',Cuerpo:'Body',Vínculos:'Bonds',Viajes:'Travel',Emprender:'Business',Identidad:'Identity',Consciencia:'Consciousness',Propósito:'Purpose'}};
 function _gpMsg(d){
   const n=(d.nombre||'').split(' ')[0],l=d.idioma||'es',a=(_GP_AREA[l]&&_GP_AREA[l][d.area])||d.area||'';
   if(l==='pt')return {wa:`Oi ${n}! Aqui é o Juan Cruz 🌿 Você conseguiu ver o guia de 20 perguntas de ${a}? Qual pergunta mais ressoou em você?`,asunto:`Seu guia de 20 perguntas de ${a}`};
@@ -15341,9 +15335,9 @@ async function _renderTesoroResumen(){
 /* ══════════ BÚSQUEDA DEL TESORO · 📖 Álbum de preguntas (el catálogo) ══════════
    Las 120 preguntas (6 temas × 20). Es el MISMO álbum que el de la pestaña «Álbum en el portal del ser»:
    acá se cargan y editan las preguntas; allá se ve cómo lo va completando cada persona. */
-const ALB_AREAS=['Consciencia','Recibir','Cuerpo','Vínculos','Propósito','Identidad'];
-const ALB_COL={Consciencia:'#C9A84C',Recibir:'#C4895A',Cuerpo:'#3DAA6A',Vínculos:'#C46A8E',Propósito:'#5B9BD5',Identidad:'#9B82D4'};
-let _albCat=[],_albCatArea='Consciencia';
+const ALB_AREAS=['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'];
+const ALB_COL={Recibir:'#C4895A',Cuerpo:'#3DAA6A',Vínculos:'#C46A8E',Viajes:'#5B9BD5',Emprender:'#D4863A',Identidad:'#9B82D4'};
+let _albCat=[],_albCatArea='Recibir';
 const _albSlug=a=>a.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 async function _renderAlbumCatalogo(recargar=true){
   const el=document.getElementById('tzAlbumCat');if(!el)return;

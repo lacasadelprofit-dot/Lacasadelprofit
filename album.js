@@ -4,8 +4,8 @@
    Reglas: 1 giro por día + giros extra (sesiones, clase, a mano desde el admin), el tema no se elige,
    pueden salir repetidas, 120 figuritas (20 × 6 temas), premio al completar un tema y el álbum. */
 (function(){
-  const AREAS=['Consciencia','Recibir','Cuerpo','Vínculos','Propósito','Identidad'];
-  const COL={Consciencia:'#C9A84C',Recibir:'#C4895A',Cuerpo:'#3DAA6A',Vínculos:'#C46A8E',Propósito:'#5B9BD5',Identidad:'#9B82D4'};
+  const AREAS=['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'];
+  const COL={Recibir:'#C4895A',Cuerpo:'#3DAA6A',Vínculos:'#C46A8E',Viajes:'#5B9BD5',Emprender:'#D4863A',Identidad:'#9B82D4'};
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let est=null,girando=false,rot=0;
 
@@ -44,13 +44,13 @@
 .alb-ah{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .alb-ah b{font-size:15px}
 .alb-ah span{font-size:12px;color:var(--muted);margin-left:auto}
-.alb-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
-.alb-s{aspect-ratio:3/4;border-radius:10px;border:1px dashed rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;color:rgba(255,255,255,.25);position:relative}
+.alb-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:5px}
+.alb-s{aspect-ratio:3/4;max-height:64px;border-radius:8px;border:1px dashed rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-size:13px;color:rgba(255,255,255,.25);position:relative}
 .alb-s.ok{border:0;color:#1a1206;font-weight:800;cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,.3)}
 .alb-s.ok:after{content:attr(data-x);position:absolute;top:3px;right:5px;font-size:9px;font-weight:800;opacity:.7}
 .alb-modal{position:fixed;inset:0;z-index:950;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px}
 .alb-modal.open{display:flex}
-@media(max-width:420px){.alb-grid{grid-template-columns:repeat(4,1fr)}}`;
+@media(max-width:520px){.alb-grid{grid-template-columns:repeat(5,1fr)}}`;
   document.head.appendChild(css);
 
   const ov=document.createElement('div');ov.className='alb-ov';ov.innerHTML='<div class="alb-in" id="albIn"></div>';
@@ -89,7 +89,7 @@
       s+=`<path d="M${c},${c} L${x0},${y0} A${r},${r} 0 0 1 ${x1},${y1} Z" fill="${COL[a]}" stroke="#06060A" stroke-width="2"/>
           <text x="${tx}" y="${ty}" fill="#1a1206" font-size="10.5" font-weight="800" text-anchor="middle" dominant-baseline="middle" transform="rotate(${am*180/Math.PI+90} ${tx} ${ty})">${a}</text>`;
     });
-    return `<svg viewBox="0 0 210 210" id="albSvg" style="transform:rotate(${rot}deg)">${s}<circle cx="105" cy="105" r="16" fill="#06060A" stroke="${COL.Consciencia}" stroke-width="2"/></svg>`;
+    return `<svg viewBox="0 0 210 210" id="albSvg" style="transform:rotate(${rot}deg)">${s}<circle cx="105" cy="105" r="16" fill="#06060A" stroke="#C9A84C" stroke-width="2"/></svg>`;
   }
 
   function pintarAlbum(resultado){
