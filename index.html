@@ -10757,14 +10757,17 @@ function _renderTesoroTab(){
     <button class="tab-btn ${_tesoroSubTab==='ruleta'?'active':''}" onclick="setTesoroSubTab('ruleta')">🎡 Ruleta de premios</button>
     <button class="tab-btn ${_tesoroSubTab==='historial'?'active':''}" onclick="setTesoroSubTab('historial')">🏆 Historial</button>
     <button class="tab-btn ${_tesoroSubTab==='mapa'?'active':''}" onclick="setTesoroSubTab('mapa')">🗺️ Mapa</button>
+    <button class="tab-btn ${_tesoroSubTab==='album'?'active':''}" onclick="setTesoroSubTab('album')">📖 Álbum de preguntas</button>
   </div>`;
   const body = _tesoroSubTab==='flyers' ? '<div id="tzFlyers"></div>'
+    : _tesoroSubTab==='album' ? '<div id="tzAlbum"></div>'
     : _tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab()
     : _tesoroSubTab==='historial' ? _renderTesoroHistorialTab()
     : _tesoroSubTab==='mapa' ? _renderTesoroMapaTab()
     : _renderTesoroStickersTab();
   el.innerHTML = subTabBar + body;
   if(_tesoroSubTab==='flyers') renderMktFlyers();
+  if(_tesoroSubTab==='album') _renderAlbumAdmin();
   if(_tesoroSubTab==='stickers') setTimeout(_tzInitMap, 0);
   if(_tesoroSubTab==='mapa') setTimeout(_tzInitMapaGeneral, 0);
 }
@@ -15172,6 +15175,89 @@ async function _gpMarcar(id,val){
 }
 /* se dibuja junto con el CRM */
 if(typeof renderCRM==='function'){const _renderCRMbase=renderCRM;renderCRM=function(){const r=_renderCRMbase.apply(this,arguments);renderCrmGuias();return r;};}
+</script>
+<script>
+/* ══════════ ÁLBUM DE PREGUNTAS · admin (Marketing → Búsqueda del tesoro → 📖 Álbum)
+   Tablas de 4_BASE_DE_DATOS/45_album_preguntas.sql. Métricas propias (aparte del tesoro y los flyers).
+   Acá se dan giros extra a mano (ej. por un sticker) y se marcan los premios entregados. */
+let _alb={giros:[],extras:[],logros:[],figs:0};
+const _albE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function _renderAlbumAdmin(){
+  const el=document.getElementById('tzAlbum');if(!el)return;
+  el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando álbum…</div>';
+  const [g,x,l,f]=await Promise.all([
+    _sb.from('album_giros').select('ser_id,figurita_id,area,tipo,fecha').limit(20000),
+    _sb.from('album_extras').select('id,ser_id,cantidad,motivo,created_at'),
+    _sb.from('album_logros').select('id,ser_id,tipo,area,entregado,created_at'),
+    _sb.from('album_figuritas').select('id',{count:'exact',head:true})
+  ]);
+  if(g.error){el.innerHTML=`<div class="es"><div class="ei">📖</div><p>El álbum todavía no está activado.<br><span style="font-size:12px;color:var(--muted)">Se activa corriendo <b>45_album_preguntas.sql</b> en Supabase (cuando estén listos los stickers).</span></p></div>`;return;}
+  _alb={giros:g.data||[],extras:x.data||[],logros:l.data||[],figs:f.count||0};
+  _pintarAlbumAdmin();
+}
+function _pintarAlbumAdmin(){
+  const el=document.getElementById('tzAlbum');if(!el)return;
+  const hoy=new Date(new Date().toLocaleString('en-US',{timeZone:'America/Sao_Paulo'})).toISOString().slice(0,10);
+  const hace7=new Date(Date.now()-7*864e5).toISOString().slice(0,10);
+  const porSer={};
+  _alb.giros.forEach(r=>{const p=porSer[r.ser_id]||(porSer[r.ser_id]={giros:0,figs:new Set(),ult:'',extrasUsados:0});p.giros++;p.figs.add(r.figurita_id);if(r.fecha>p.ult)p.ult=r.fecha;if(r.tipo==='extra')p.extrasUsados++;});
+  _alb.extras.forEach(r=>{(porSer[r.ser_id]||(porSer[r.ser_id]={giros:0,figs:new Set(),ult:'',extrasUsados:0}));});
+  const ids=Object.keys(porSer);
+  const nombre=id=>{const s=seres.find(x=>x.id===id);return s?(s.nombre||'Sin nombre'):'(ser borrado)';};
+  const girosHoy=_alb.giros.filter(r=>r.fecha===hoy).length;
+  const activos7=new Set(_alb.giros.filter(r=>r.fecha>=hace7).map(r=>r.ser_id)).size;
+  const temas=_alb.logros.filter(r=>r.tipo==='area').length,albums=_alb.logros.filter(r=>r.tipo==='album').length;
+  const pendPremio=_alb.logros.filter(r=>!r.entregado);
+  const prom=ids.length?Math.round(ids.reduce((t,id)=>t+porSer[id].figs.size,0)/ids.length):0;
+  const kpi=(i,l,v,s)=>`<div class="kc"><div class="ki">${i}</div><div class="kl">${l}</div><div class="kv">${v}</div><div class="ks">${s||''}</div></div>`;
+  el.innerHTML=`
+  <div class="kpi-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px">
+    ${kpi('👥','Personas jugando',ids.length,activos7+' giraron en 7 días')}
+    ${kpi('🎡','Giros hoy',girosHoy,_alb.giros.length+' en total')}
+    ${kpi('📖','Figuritas promedio',prom,'de '+(_alb.figs||120))}
+    ${kpi('🏆','Temas completos',temas,albums+' álbum'+(albums===1?'':'es')+' completo'+(albums===1?'':'s'))}
+  </div>
+  ${!_alb.figs?'<div style="background:rgba(212,134,58,.1);border:1px solid rgba(212,134,58,.3);border-radius:10px;padding:10px 14px;font-size:12px;color:var(--or);margin-bottom:14px">⚠️ Todavía no hay figuritas cargadas: cargá las 120 preguntas de las guías (ver 45_album_preguntas.sql).</div>':''}
+  ${pendPremio.length?`<div style="background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(201,168,76,.04));border:1px solid rgba(201,168,76,.35);border-radius:14px;padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:13px;font-weight:700;color:var(--gl);margin-bottom:8px">🎁 Premios por entregar (${pendPremio.length})</div>
+    ${pendPremio.map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--border);font-size:13px">
+      <span style="flex:1">${_albE(nombre(r.ser_id))} · ${r.tipo==='album'?'<b>¡Álbum completo!</b>':'Completó <b>'+_albE(r.area)+'</b>'} <span style="color:var(--muted);font-size:11px">${(r.created_at||'').slice(0,10)}</span></span>
+      <button class="btn btn-p btn-sm" onclick="_albEntregado('${_albE(r.id)}')">✓ Entregado</button></div>`).join('')}
+  </div>`:''}
+  <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+    <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px">Personas</div>
+    <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="_albDarExtra()">+ Dar giro extra</button>
+  </div>
+  ${!ids.length?'<div style="color:var(--muted);font-size:13px;padding:10px 0">Todavía nadie giró. La primera vez que alguien gire desde el portal del ser, aparece acá.</div>':
+  `<div style="overflow-x:auto"><table><thead><tr><th>Ser</th><th>Figuritas</th><th>Giros</th><th>Último giro</th><th>Extra a mano</th><th>Premios</th><th></th></tr></thead><tbody>
+  ${ids.sort((a,b)=>porSer[b].figs.size-porSer[a].figs.size).map(id=>{const p=porSer[id];
+    const man=_alb.extras.filter(r=>r.ser_id===id).reduce((t,r)=>t+(r.cantidad||1),0);
+    const lg=_alb.logros.filter(r=>r.ser_id===id);
+    return `<tr><td>${_albE(nombre(id))}</td>
+      <td><b style="color:var(--gl)">${p.figs.size}</b> / ${_alb.figs||120}</td><td>${p.giros}</td><td>${p.ult?fd(p.ult):'—'}</td>
+      <td>${man||''}</td><td>${lg.map(r=>r.tipo==='album'?'📖':'🏆').join(' ')}</td>
+      <td><button class="btn btn-s btn-sm" onclick="_albDarExtra('${_albE(id)}')">+1 giro</button></td></tr>`;}).join('')}
+  </tbody></table></div>`}
+  <div style="font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6">Reglas: 1 giro por día por persona · el tema lo elige la ruleta · pueden salir repetidas · giros extra automáticos por cada <b>sesión completada</b> y por la <b>clase</b>; los demás (por ej. un <b>sticker</b>) se dan acá a mano · premio al completar un tema y el álbum (te llega aviso a Telegram).</div>`;
+}
+async function _albDarExtra(serId){
+  if(!serId){
+    const q=prompt('¿A quién le das el giro extra? Escribí el nombre (o parte):');if(!q)return;
+    const c=seres.filter(s=>(s.nombre||'').toLowerCase().includes(q.trim().toLowerCase()));
+    if(!c.length){toast('⚠️ No encontré a nadie con ese nombre','err');return;}
+    if(c.length>1){toast('⚠️ Hay '+c.length+' personas con ese nombre: escribí el nombre completo','err');return;}
+    serId=c[0].id;
+  }
+  const motivo=prompt('Motivo del giro extra (ej.: Sticker BUZ-03):','Sticker');if(motivo===null)return;
+  const {error}=await _sb.from('album_extras').insert({ser_id:serId,cantidad:1,motivo:motivo.trim()||'Giro extra'});
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('✓ Giro extra cargado');_renderAlbumAdmin();
+}
+async function _albEntregado(id){
+  const {error}=await _sb.from('album_logros').update({entregado:true}).eq('id',id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('✓ Premio marcado como entregado');_renderAlbumAdmin();
+}
 </script>
 </body>
 </html>
