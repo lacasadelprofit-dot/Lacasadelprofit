@@ -356,7 +356,6 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" style="display:none" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
     <div class="ni" style="display:none" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
     <div class="ni" onclick="nav('encuentros',this)"><span class="ico">🤝</span><span>Encuentros</span></div>
-    <div class="ni" id="niTesoro" onclick="irTesoro()"><span class="ico">🗺️</span><span>Búsqueda del tesoro</span></div>
     <div class="nl">Portales</div>
     <div class="ni" id="niAccesos" onclick="nav('accesos',this)"><span class="ico">🔗</span><span>Accesos Rápidos</span></div>
    </div>
@@ -861,7 +860,6 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn active" id="mktTabResumen" onclick="setMktTab('resumen')">📊 Resumen</button>
       <button class="tab-btn" id="mktTabPub" onclick="setMktTab('pub')">📢 Publicidades</button>
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
-      <button class="tab-btn" id="mktTabRet" onclick="setMktTab('ret')">🔄 Retención</button>
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
@@ -881,9 +879,6 @@ th{background:rgba(28,26,46,.88)!important;}
     </div>
 
     <!-- CRM -->
-    <!-- BÚSQUEDA DEL TESORO (sección propia, fuera de Marketing) -->
-    <div id="sec-tesoro" class="sec"><div id="mktTesoro"></div></div>
-
     <div id="sec-encuentros" class="sec">
      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px">
       <button class="btn btn-s btn-sm enc-f" data-f="todos" onclick="setEncFiltro('todos')">Todos</button>
@@ -3009,7 +3004,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={encuentros:'🤝 Encuentros',tesoro:'🗺️ Búsqueda del tesoro',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🗺️ Búsqueda del tesoro · 💛 Ruleta de fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Redes sociales',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'📣 Marketing · 🧭 Estrategia · 💛 Ruleta de fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Redes sociales',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -3056,7 +3051,7 @@ function nav(name,el){
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
-  const fn={encuentros:renderEnc,tesoro:renderMktTesoro,dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
+  const fn={encuentros:renderEnc,dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
   if(fn[name])fn[name]();
   closeSidebar(); // auto-close on mobile after navigating
 }
@@ -9081,7 +9076,7 @@ let mktTab='resumen';
    irMkt: ir a cualquier pestaña de Marketing desde donde estés. */
 function irTesoro(sub){
   if(sub)_tesoroSubTab=sub;
-  nav('tesoro',document.getElementById('niTesoro'));
+  _estSub='tesoro';irMkt('estrategia');
 }
 function irMkt(t){
   if(t==='flyers'){irTesoro('flyers');return;}
@@ -10768,7 +10763,7 @@ function _tzBarra(activa,fuera){
   </div>`;
 }
 function irFidelidad(){
-  nav('fidelidad',document.getElementById('niTesoro'));
+  nav('fidelidad',document.getElementById('niMarketing'));
   const b=document.getElementById('tzBarFid');if(b)b.innerHTML=_tzBarra('fidelidad',true);
 }
 function setTesoroSubTab(t){
@@ -15441,7 +15436,9 @@ async function renderMktEstrategia(){
       <button class="tab-btn ${_estSub==='flujo'?'active':''}" onclick="_estSub='flujo';renderMktEstrategia()">🔄 Flujo de trabajo</button>
       <button class="tab-btn ${_estSub==='piezas'?'active':''}" onclick="_estSub='piezas';renderMktEstrategia()">🔢 Plan en números</button>
       <button class="tab-btn ${_estSub==='aliados'?'active':''}" onclick="_estSub='aliados';renderMktEstrategia()">🏨 Aliados · ruta y mapa</button>
-    </div><div id="estVision"></div><div id="estFlujo"></div><div id="estPiezas"></div><div id="estAliados"></div>`;
+      <button class="tab-btn ${_estSub==='tesoro'?'active':''}" onclick="_estSub='tesoro';renderMktEstrategia()">🗺️ Búsqueda del tesoro</button>
+    </div><div id="estVision"></div><div id="estFlujo"></div><div id="estPiezas"></div><div id="estAliados"></div>${_estSub==='tesoro'?'<div id="mktTesoro"></div>':''}`;
+  if(_estSub==='tesoro'){renderMktTesoro();return;}
   if(_estSub==='piezas'){renderPlanNumeros();return;}
   if(_estSub==='aliados'){renderAliadosRuta();return;}
   if(_estSub==='flujo'){renderFlujoTrabajo();return;}
