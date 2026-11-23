@@ -15444,8 +15444,10 @@ async function renderMktEstrategia(){
   cont.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:16px">
       <button class="tab-btn ${_estSub==='vision'?'active':''}" onclick="_estSub='vision';renderMktEstrategia()">🧭 Visión y metas</button>
       <button class="tab-btn ${_estSub==='flujo'?'active':''}" onclick="_estSub='flujo';renderMktEstrategia()">🔄 Flujo de trabajo</button>
+      <button class="tab-btn ${_estSub==='piezas'?'active':''}" onclick="_estSub='piezas';renderMktEstrategia()">🔢 Plan en números</button>
       <button class="tab-btn ${_estSub==='aliados'?'active':''}" onclick="_estSub='aliados';renderMktEstrategia()">🏨 Aliados · ruta y mapa</button>
-    </div><div id="estVision"></div><div id="estFlujo"></div><div id="estAliados"></div>`;
+    </div><div id="estVision"></div><div id="estFlujo"></div><div id="estPiezas"></div><div id="estAliados"></div>`;
+  if(_estSub==='piezas'){renderPlanNumeros();return;}
   if(_estSub==='aliados'){renderAliadosRuta();return;}
   if(_estSub==='flujo'){renderFlujoTrabajo();return;}
   const el=document.getElementById('estVision');
@@ -15472,8 +15474,8 @@ async function renderMktEstrategia(){
     return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
       <div style="font-size:11px;font-weight:700;color:var(--muted)">${m.ico} ${E(m.l)}</div>
       ${ed?`<div style="display:flex;gap:6px;align-items:center;margin-top:6px">${m.auto?`<b title="Se calcula solo">${m.act}</b><input id="estMa${i}" type="hidden" value="${m.act}">`:`<input id="estMa${i}" type="number" value="${m.act}" style="width:80px;padding:4px 6px">`} / +<input id="estMo${i}" type="number" value="${m.obj}" style="width:80px;padding:4px 6px"></div>${m.auto?'<div style="font-size:10px;color:var(--muted)">🔄 se calcula solo</div>':''}`
-        :`<div style="margin-top:4px"><span style="font-size:24px;font-weight:800;color:var(--text)">${m.act.toLocaleString('es-AR')}</span><span style="font-size:13px;color:var(--muted)"> / +${m.obj.toLocaleString('es-AR')}</span></div>
-          <div style="height:6px;background:var(--card);border-radius:3px;margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div></div>
+        :`<div style="margin-top:6px;line-height:1"><span style="font-size:40px;font-weight:800;color:var(--text);letter-spacing:-1px">${m.act.toLocaleString('es-AR')}</span><span style="font-size:18px;font-weight:700;color:var(--muted)"> / +${m.obj.toLocaleString('es-AR')}</span></div>
+          <div style="height:8px;background:var(--card);border-radius:4px;margin:10px 0 6px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};border-radius:4px"></div></div>
           ${m.cada3?(()=>{const d=_est.resenas_fecha?Math.floor((Date.now()-new Date(_est.resenas_fecha+'T12:00'))/864e5):null,toca=d===null||d>=3;
             return`<div style="display:flex;align-items:center;gap:6px;margin:2px 0 6px;flex-wrap:wrap"><button class="btn ${toca?'btn-p':'btn-s'} btn-sm" style="font-size:11px;padding:3px 9px" onclick="_estResenas()">⭐ Actualizar</button>
               <span style="font-size:10.5px;color:${toca?'var(--gl)':'var(--muted)'}">${d===null?'⏰ todavía no se cargó':d===0?'✓ actualizado hoy':(toca?'⏰ toca actualizar · ':'')+'hace '+d+' día'+(d===1?'':'s')}</span></div>`;})():''}
@@ -15529,7 +15531,7 @@ const ALI_DEF=[{"id":"al01","ciudad":"Arraial do Cabo","estrellas":4,"nombre":"S
 const ALI_NIVEL={anfitrion:{l:'Anfitrión',c:'#C9A84C'},sede:{l:'Sede',c:'#9B82D4'},recomendador:{l:'Recomendador',c:'#5B9BD5'},intercambio:{l:'Intercambio',c:'#3DAA6A'}};
 const ALI_ESTADO={pendiente:{l:'Pendiente',c:'#7A7260',i:'⚪'},visitado:{l:'Visitado',c:'#5B9BD5',i:'🔵'},conversacion:{l:'En conversación',c:'#D4863A',i:'🟠'},aliado:{l:'Aliado activo',c:'#3DAA6A',i:'🟢'},descartado:{l:'Descartado',c:'#E05555',i:'🔴'}};
 let _aliEdit=null;
-let _ali=null,_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:''},_aliOrden={k:'ciudad',d:1},_aliMap=null,_aliCapa=null,_aliUbicando=null;
+let _ali=null,_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:'',zona:'',contacto:''},_aliOrden={k:'ciudad',d:1},_aliMap=null,_aliCapa=null,_aliUbicando=null;
 async function _aliCargar(){
   if(_ali)return _ali;
   try{const {data}=await _sb.from('configuracion').select('data').eq('id',ALI_ID).maybeSingle();
@@ -15546,20 +15548,24 @@ async function renderAliadosRuta(){
   const el=document.getElementById('estAliados');if(!el)return;
   await _aliCargar();
   const E=_estE,f=_aliF;
+  const wa=t=>{const m=String(t||'').match(/\(?(\d{2})\)?\s*(9?\d{4})-?(\d{4})/);return m?'https://wa.me/55'+m[1]+m[2]+m[3]:'';};
+  const igUrl=ig=>{const m=String(ig||'').match(/@([\w.]+)/);return m?'https://instagram.com/'+m[1]:'';};
   const ORD={estrellas:a=>a.estrellas,nombre:a=>a.nombre,ciudad:a=>a.ciudad+' '+(a.barrio||''),nivel:a=>ALI_NIVEL[a.nivel]?.l||'',
     estado:a=>Object.keys(ALI_ESTADO).indexOf(a.estado),notas:a=>(a.notas||'').toLowerCase()};
   const L=_ali.filter(a=>(!f.ciudad||a.ciudad===f.ciudad)&&(!f.nivel||a.nivel===f.nivel)&&(!f.estado||a.estado===f.estado)
     &&(!f.est||a.estrellas===+f.est)&&(!f.notas||(f.notas==='con'?!!(a.notas||'').trim():!(a.notas||'').trim()))
+    &&(!f.zona||(a.ciudad+'|'+(a.barrio||'Sin barrio'))===f.zona)
+    &&(!f.contacto||(f.contacto==='wa'?!!wa(a.tel):f.contacto==='ig'?!!igUrl(a.ig):!(a.tel||'').trim()&&!(a.ig||'').trim()))
     &&(!f.q||(a.nombre+' '+a.barrio+' '+(a.notas||'')).toLowerCase().includes(f.q.toLowerCase())))
     .sort((a,b)=>{const g=ORD[_aliOrden.k]||ORD.ciudad,x=g(a),y=g(b);const c=(typeof x==='number'?x-y:String(x).localeCompare(String(y)))*_aliOrden.d;
       return c||a.ciudad.localeCompare(b.ciudad)||b.estrellas-a.estrellas;});
   const th=(k,l)=>`<th onclick="_aliOrden=_aliOrden.k==='${k}'?{k:'${k}',d:-_aliOrden.d}:{k:'${k}',d:${k==='estrellas'?-1:1}};renderAliadosRuta()" style="cursor:pointer;white-space:nowrap" title="Ordenar">${l} ${_aliOrden.k===k?(_aliOrden.d>0?'▲':'▼'):'<span style="opacity:.35">↕</span>'}</th>`;
-  const hayF=f.ciudad||f.nivel||f.estado||f.est||f.notas||f.q;
+  const zonas=[...new Set(_ali.filter(a=>!f.ciudad||a.ciudad===f.ciudad).map(a=>a.ciudad+'|'+(a.barrio||'Sin barrio')))].sort();
+  const fs=(id,val,ops,todo)=>`<select onchange="_aliF.${id}=this.value;renderAliadosRuta()" style="width:100%;height:28px;padding:0 6px;font-size:11.5px;background:${val?'rgba(201,168,76,.15)':'var(--card)'};color:${val?'var(--gl)':'var(--text)'};border:1px solid ${val?'var(--gold)':'var(--border)'};border-radius:6px"><option value="">${todo}</option>${ops.map(([v,l])=>`<option value="${E(v)}" ${val===v?'selected':''}>${E(l)}</option>`).join('')}</select>`;
+  const hayF=f.ciudad||f.nivel||f.estado||f.est||f.notas||f.q||f.zona||f.contacto;
   const cnt=k=>_ali.filter(a=>a.estado===k).length;
   const CTL='width:100%;height:34px;padding:0 10px;font-size:12.5px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;box-sizing:border-box';
-  const sel=(id,val,ops,todo,lbl)=>`<label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${lbl}<select onchange="_aliF.${id}=this.value;renderAliadosRuta()" style="${CTL};${val?'border-color:var(--gold);color:var(--gl)':''}"><option value="">${todo}</option>${ops.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select></label>`;
-  const wa=t=>{const m=String(t||'').match(/\(?(\d{2})\)?\s*(9?\d{4})-?(\d{4})/);return m?'https://wa.me/55'+m[1]+m[2]+m[3]:'';};
-  const igUrl=ig=>{const m=String(ig||'').match(/@([\w.]+)/);return m?'https://instagram.com/'+m[1]:'';};
+  const sel=(id,val,ops,todo,lbl)=>`<label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${lbl}<select onchange="_aliF.${id}=this.value;${id==='ciudad'?"_aliF.zona='';":''}renderAliadosRuta()" style="${CTL};${val?'border-color:var(--gold);color:var(--gl)':''}"><option value="">${todo}</option>${ops.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select></label>`;
   const gm=a=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.nombre.replace(/\s*[–(].*$/,'')+' '+a.ciudad);
   el.innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr));gap:8px;margin-bottom:12px">
@@ -15577,7 +15583,7 @@ async function renderAliadosRuta(){
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <span style="font-size:12.5px"><b style="color:var(--gl)">${L.length}</b> <span style="color:var(--muted)">de ${_ali.length} lugares · tocá un título de la tabla para ordenar</span></span>
-        ${hayF?`<button class="btn btn-s btn-sm" onclick="_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:''};renderAliadosRuta()">✕ Limpiar filtros</button>`:''}
+        ${hayF?`<button class="btn btn-s btn-sm" onclick="_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:'',zona:'',contacto:''};renderAliadosRuta()">✕ Limpiar filtros</button>`:''}
         <button class="btn btn-p btn-sm" style="margin-left:auto" onclick="_aliEdit='nuevo';renderAliadosRuta();setTimeout(()=>document.getElementById('aliFNom')?.focus(),50)">+ Nuevo lugar</button>
       </div>
     </div>
@@ -15589,7 +15595,17 @@ async function renderAliadosRuta(){
       <span>· borde punteado = ubicación aproximada (centro del barrio)</span>
     </div>
     <div style="overflow-x:auto"><table>
-      <thead><tr>${th('estrellas','★')}${th('nombre','Lugar')}${th('ciudad','Ciudad · barrio')}${th('nivel','Nivel')}<th>Contacto</th>${th('estado','Estado')}${th('notas','Notas')}<th></th></tr></thead>
+      <thead><tr>${th('estrellas','★')}${th('nombre','Lugar')}${th('ciudad','Ciudad · barrio')}${th('nivel','Nivel')}<th>Contacto</th>${th('estado','Estado')}${th('notas','Notas')}<th></th></tr>
+      <tr style="background:rgba(201,168,76,.04)">
+        <th style="min-width:70px">${fs('est',f.est,[['5','★★★★★'],['4','★★★★'],['3','★★★'],['2','★★'],['1','★']],'Todas')}</th>
+        <th><input value="${E(f.q)}" placeholder="🔎 Buscar…" oninput="_aliF.q=this.value;clearTimeout(window._aliT);window._aliT=setTimeout(()=>{renderAliadosRuta();setTimeout(()=>{const x=document.getElementById('aliBuscarT');if(x){x.focus();x.setSelectionRange(x.value.length,x.value.length);}},0);},400)" id="aliBuscarT" style="width:100%;height:28px;padding:0 8px;font-size:11.5px;background:${f.q?'rgba(201,168,76,.15)':'var(--card)'};color:var(--text);border:1px solid ${f.q?'var(--gold)':'var(--border)'};border-radius:6px"></th>
+        <th style="min-width:170px">${fs('zona',f.zona,zonas.map(z=>{const [c,b]=z.split('|');return[z,(f.ciudad?'':c.replace('Arraial do Cabo','Arraial')+' · ')+b];}),'📍 Todas las zonas')}</th>
+        <th style="min-width:120px">${fs('nivel',f.nivel,Object.entries(ALI_NIVEL).map(([k,v])=>[k,v.l]),'Todos')}</th>
+        <th>${fs('contacto',f.contacto,[['wa','💬 Con WhatsApp'],['ig','📸 Con Instagram'],['sin','Sin contacto']],'Todos')}</th>
+        <th>${fs('estado',f.estado,Object.entries(ALI_ESTADO).map(([k,v])=>[k,v.i+' '+v.l]),'Todos')}</th>
+        <th>${fs('notas',f.notas,[['con','📝 Con notas'],['sin','Sin notas']],'Todas')}</th>
+        <th>${hayF?`<button class="btn btn-s btn-sm" title="Limpiar filtros" onclick="_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:'',zona:'',contacto:''};renderAliadosRuta()">✕</button>`:''}</th>
+      </tr></thead>
       <tbody>${L.map(a=>{const w=wa(a.tel),ig=igUrl(a.ig);return`<tr>
         <td style="white-space:nowrap;color:var(--gold)">${'★'.repeat(a.estrellas)}</td>
         <td style="min-width:180px"><b style="cursor:pointer" onclick="_aliCentrar('${a.id}')">${E(a.nombre)}</b>${a.ruta?`<div style="font-size:10.5px;color:var(--gl)">🚶 Ruta 19/11: ${E(a.ruta)}</div>`:''}${a.nota?`<div style="font-size:10.5px;color:var(--muted)">${E(a.nota)}</div>`:''}</td>
@@ -15890,6 +15906,84 @@ function renderFlujoTrabajo(){
   </div>`;
   setTimeout(()=>{_fjMapaLineas(FJM_GENERAL);_fjMapaLineas(FJM_TESORO);},30);
   _fjMapaResize();
+}
+
+/* ══════════ ESTRATEGIA · 🔢 Plan en números (las 120 preguntas convertidas en piezas) ══════════
+   6 tipos × 20 preguntas = 120. Cada tipo genera: 4 posts (5 preguntas c/u + pedir la guía), 20 reels ES, 20 reels PT,
+   3 PDF (guía en ES/PT/EN) y 60 stickers (20 para la búsqueda + 40 para pegar o regalar en sesiones).
+   El avance se carga con +/− y se guarda en configuracion id 'cfg_piezas'. */
+const PZ_ID='cfg_piezas';
+const PZ_TIPOS=[['recibir','Recibir','#C4895A','💰'],['cuerpo','Cuerpo','#3DAA6A','🌿'],['vinculos','Vínculos','#C46A8E','💛'],['viajes','Viajes','#5B9BD5','✈️'],['emprender','Emprender','#D4863A','🚀'],['identidad','Identidad','#9B82D4','🪞']];
+const PZ_PIEZAS=[
+  {k:'preg',l:'Preguntas',ico:'❓',por:20,g:'base',d:'la base de todo'},
+  {k:'post',l:'Posts (5 preguntas + pedir la guía)',ico:'🖼️',por:4,g:'contenido',d:'20 preguntas ÷ 5'},
+  {k:'reel_es',l:'Reels en español',ico:'🎬',por:20,g:'contenido',d:'1 por pregunta'},
+  {k:'reel_pt',l:'Reels en portugués',ico:'🇧🇷',por:20,g:'contenido',d:'1 por pregunta'},
+  {k:'pdf',l:'Guías PDF (ES · PT · EN)',ico:'📘',por:3,g:'dar',d:'1 por idioma'},
+  {k:'stk_bus',l:'Stickers para la búsqueda',ico:'📍',por:20,g:'stickers',d:'1 por pregunta'},
+  {k:'stk_reg',l:'Stickers para pegar / regalar en sesiones',ico:'🎁',por:40,g:'stickers',d:'2 por pregunta'}
+];
+let _pz=null;
+async function _pzCargar(){
+  if(_pz)return _pz;
+  try{const {data}=await _sb.from('configuracion').select('data').eq('id',PZ_ID).maybeSingle();_pz=data?.data?.hechos?data.data:{hechos:{}};}catch(e){_pz={hechos:{}};}
+  return _pz;
+}
+async function _pzSumar(tipo,pieza,delta){
+  const p=PZ_PIEZAS.find(x=>x.k===pieza),k=tipo+'.'+pieza,v=Math.max(0,Math.min(p.por,(_pz.hechos[k]||0)+delta));
+  if(v===(_pz.hechos[k]||0))return;
+  _pz.hechos[k]=v;_pz.actualizado=new Date().toISOString();
+  const {error}=await _sb.from('configuracion').upsert({id:PZ_ID,data:_pz,updated_at:_pz.actualizado});
+  if(error){toast('⚠️ No se pudo guardar: '+error.message,'err');return;}
+  renderPlanNumeros();
+}
+async function renderPlanNumeros(){
+  const el=document.getElementById('estPiezas');if(!el)return;
+  await _pzCargar();
+  const E=_estE,h=_pz.hechos,nT=PZ_TIPOS.length;
+  const hecho=(t,p)=>h[t+'.'+p]||0;
+  const totP=p=>PZ_PIEZAS.find(x=>x.k===p).por*nT,hechoP=p=>PZ_TIPOS.reduce((s,[t])=>s+hecho(t,p),0);
+  const grupo=g=>PZ_PIEZAS.filter(p=>p.g===g);
+  const tot=g=>grupo(g).reduce((s,p)=>s+totP(p.k),0),hec=g=>grupo(g).reduce((s,p)=>s+hechoP(p.k),0);
+  const barra=(a,b,c)=>{const pct=b?Math.round(a/b*100):0;return`<div style="height:6px;background:var(--card);border-radius:3px;overflow:hidden;margin-top:6px"><div style="height:100%;width:${pct}%;background:${c||'var(--gold)'};border-radius:3px"></div></div>`;};
+  const big=(ico,n,l,sub,g,c)=>`<div style="background:var(--card2);border:1px solid var(--border);border-top:3px solid ${c};border-radius:14px;padding:14px 16px">
+    <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${ico} ${l}</div>
+    <div style="margin-top:6px;line-height:1"><span style="font-size:40px;font-weight:800;letter-spacing:-1px">${n}</span></div>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.5">${sub}</div>
+    ${g?`${barra(hec(g),tot(g),c)}<div style="font-size:11px;color:var(--muted);margin-top:4px">${hec(g)} de ${tot(g)} hechas</div>`:''}</div>`;
+  el.innerHTML=`
+  <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">Todo sale de lo mismo: <b style="color:var(--text)">6 tipos × 20 preguntas = 120 preguntas</b>. Cada pregunta se convierte en contenido para las redes, en una guía para regalar y en stickers para la calle y las sesiones.</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:18px">
+    ${big('❓','120','Preguntas','6 tipos × 20',`base`,'#C9A84C')}
+    ${big('📱','264','Piezas de contenido','24 posts (de a 5 preguntas, con la guía) + 120 reels en español + 120 reels en portugués','contenido','#E4405F')}
+    ${big('📘','18','Guías PDF para dar','6 tipos × 3 idiomas (español, portugués e inglés)','dar','#5B9BD5')}
+    ${big('📍','360','Stickers físicos','120 para la búsqueda del tesoro + 240 para pegar o regalar en cada sesión (3 por pregunta)','stickers','#3DAA6A')}
+  </div>
+
+  <div style="background:var(--card2);border:1px solid rgba(201,168,76,.35);border-radius:16px;padding:16px 18px;margin-bottom:18px">
+    <div style="font-size:15px;font-weight:800;color:var(--gl);margin-bottom:12px">🧩 De 1 pregunta salen…</div>
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12.5px">
+      <div style="background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;font-weight:800">❓ 1 pregunta</div>
+      <div style="color:var(--muted);font-size:18px">➜</div>
+      ${[['🎬','1 reel en español','#E4405F'],['🇧🇷','1 reel en portugués','#E4405F'],['🖼️','⅕ de post (5 preguntas por post)','#E4405F'],['📘','va dentro de la guía PDF (ES · PT · EN)','#5B9BD5'],['📍','3 stickers: 1 para la búsqueda + 2 para pegar o regalar','#3DAA6A']]
+        .map(([i,t,c])=>`<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${c};border-radius:10px;padding:8px 12px">${i} ${t}</div>`).join('')}
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📋 Avance por tipo · tocá + cuando terminás una pieza</div>
+  <div style="overflow-x:auto;margin-bottom:10px"><table style="width:100%;min-width:900px">
+    <thead><tr><th>Pieza</th>${PZ_TIPOS.map(([k,l,c,i])=>`<th style="text-align:center;border-bottom:2px solid ${c}">${i} ${l}</th>`).join('')}<th style="text-align:center">Total</th></tr></thead>
+    <tbody>${PZ_PIEZAS.map(p=>`<tr>
+      <td style="white-space:nowrap"><b>${p.ico} ${E(p.l)}</b><div style="font-size:10.5px;color:var(--muted)">${E(p.d)} · ${p.por} por tipo</div></td>
+      ${PZ_TIPOS.map(([t,,c])=>{const v=hecho(t,p.k),ok=v>=p.por;return`<td style="text-align:center;${ok?'background:rgba(61,170,106,.12)':''}">
+        <div style="display:inline-flex;align-items:center;gap:6px">
+          <button class="btn btn-s btn-sm" style="padding:1px 7px" onclick="_pzSumar('${t}','${p.k}',-1)">−</button>
+          <b style="min-width:42px;font-size:13px;color:${ok?'var(--green)':'var(--text)'}">${v}/${p.por}</b>
+          <button class="btn btn-s btn-sm" style="padding:1px 7px" onclick="_pzSumar('${t}','${p.k}',1)">+</button></div>
+        ${barra(v,p.por,c)}</td>`;}).join('')}
+      <td style="text-align:center;font-weight:800">${hechoP(p.k)}/${totP(p.k)}</td></tr>`).join('')}
+    </tbody></table></div>
+  <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Hoy: al terminar cada sesión se regalan stickers de las preguntas. Los 6 tipos (Recibir, Cuerpo, Vínculos, Viajes, Emprender, Identidad) son los mismos para el contenido, las guías y los stickers.</div>`;
 }
 
 </script>
