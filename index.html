@@ -350,6 +350,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
     <div class="ni" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
     <div class="ni" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span><span id="crmBadge" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
+    <div class="ni" onclick="nav('encuentros',this)"><span class="ico">🤝</span><span>Encuentros</span></div>
     <div class="nl">Inteligencia</div>
     <div class="ni" onclick="nav('profit',this)"><span class="ico">🧠</span><span>Profit IA</span></div>
     <div class="nl">Portales</div>
@@ -862,6 +863,18 @@ th{background:rgba(28,26,46,.88)!important;}
     </div>
 
     <!-- CRM -->
+    <div id="sec-encuentros" class="sec">
+     <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px">
+      <button class="btn btn-s btn-sm enc-f" data-f="todos" onclick="setEncFiltro('todos')">Todos</button>
+      <button class="btn btn-s btn-sm enc-f" data-f="barras" onclick="setEncFiltro('barras')">💆 Barras en Búzios</button>
+      <button class="btn btn-s btn-sm enc-f" data-f="consciencia" onclick="setEncFiltro('consciencia')">🌿 Consciencia en Búzios</button>
+      <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="abrirEncGaleria()">📷 Fotos del mosaico (Consciencia)</button>
+     </div>
+     <div id="encStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Los encuentros con fecha futura aparecen en la web como <b>Próximo encuentro</b>. Cuando pasa la fecha, se mueven solos a los encuentros ya compartidos. Cargá los participantes después de cada encuentro.</div>
+     <div id="encLista"></div>
+    </div>
+
     <div id="sec-crm" class="sec">
       <div id="crmContainer"></div>
     </div>
@@ -1304,6 +1317,63 @@ th{background:rgba(28,26,46,.88)!important;}
 </div>
 
 <!-- MODAL SESION -->
+<div class="mo" id="moEnc">
+ <div class="mb" style="width:620px">
+  <h2 id="moEncTitle">🤝 Encuentro</h2>
+  <input type="hidden" id="eId">
+  <div class="fg-row">
+   <div class="fg"><label>Comunidad *</label>
+    <select id="eCom" onchange="encSugerirNumero()"><option value="barras">Barras en Búzios</option><option value="consciencia">Consciencia en Búzios</option></select></div>
+   <div class="fg"><label>N° de encuentro</label><input type="number" id="eNum" min="1"></div>
+  </div>
+  <div class="fg-row">
+   <div class="fg"><label>Fecha *</label><input type="date" id="eFecha"></div>
+   <div class="fg"><label>Horario</label><input type="text" id="eHora" placeholder="10:00 · o «Por la mañana»"></div>
+  </div>
+  <div class="fg-row">
+   <div class="fg"><label>Lugar</label><input type="text" id="eLugar" placeholder="Geribá"></div>
+   <div class="fg"><label>Aporte (opcional)</label><input type="text" id="eAporte" placeholder="R$ 108 · vacío = gratis"></div>
+  </div>
+  <div class="fg"><label>Facilitador/es</label><input type="text" id="eFac" placeholder="Mel y Vero · separá con coma o «y»"></div>
+  <div class="fg"><label>Enfoque / tema</label><input type="text" id="eEnf" placeholder="Respiración"></div>
+  <div class="fg-row">
+   <div class="fg"><label>Pregunta (opcional)</label><input type="text" id="ePreg" placeholder="¿Qué tengo para dar?"></div>
+   <div class="fg"><label>Palabra (opcional)</label><input type="text" id="ePal" placeholder="Respirar"></div>
+  </div>
+  <div class="fg-row">
+   <div class="fg"><label>Participantes</label><input type="number" id="ePart" min="0" placeholder="Se carga después del encuentro"></div>
+   <div class="fg" style="display:flex;flex-direction:column;gap:8px;justify-content:flex-end">
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;margin:0"><input type="checkbox" id="eDia" style="accent-color:var(--gold)"> 🟠 Día de Consciencia (día completo)</label>
+    <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;margin:0"><input type="checkbox" id="eActivo" checked style="accent-color:var(--gold)"> Visible en la web</label>
+   </div>
+  </div>
+  <div class="fg">
+   <label>📷 Fotos <span style="font-weight:400;color:var(--muted);font-size:11px">— la primera es la principal. Se achican solas al subirlas.</span></label>
+   <div id="eFotos" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
+   <input type="file" id="eFotoIn" accept="image/*" multiple onchange="encSubirFotos(this)">
+   <div id="eFotoEstado" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+   <button class="btn btn-s" onclick="closeModal('moEnc')">Cancelar</button>
+   <button class="btn btn-p" id="eGuardarBtn" onclick="guardarEnc()">Guardar</button>
+  </div>
+ </div>
+</div>
+
+<div class="mo" id="moEncGal">
+ <div class="mb" style="width:620px">
+  <h2>📷 Fotos del mosaico · Consciencia en Búzios</h2>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Fotos generales de la comunidad (no hace falta que sean de un encuentro en particular). La primera sale grande y la segunda alta. Después siguen las fotos que cargues en cada encuentro.</div>
+  <div id="gFotos" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0"></div>
+  <input type="file" id="gFotoIn" accept="image/*" multiple onchange="encSubirFotos(this,true)">
+  <div id="gFotoEstado" style="font-size:11px;color:var(--muted);margin-top:6px"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+   <button class="btn btn-s" onclick="closeModal('moEncGal')">Cancelar</button>
+   <button class="btn btn-p" id="gGuardarBtn" onclick="guardarEncGaleria()">Guardar</button>
+  </div>
+ </div>
+</div>
+
 <div class="mo" id="moSes">
  <div class="mb">
   <h2 id="moSesTitle">✨ Nueva Sesión</h2>
@@ -2802,8 +2872,9 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
+  encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   sesiones:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
   calendario:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -2831,7 +2902,7 @@ function nav(name,el){
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
-  const fn={dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
+  const fn={encuentros:renderEnc,dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
   if(fn[name])fn[name]();
   closeSidebar(); // auto-close on mobile after navigating
 }
@@ -13792,6 +13863,192 @@ function startInscPolling(){
   resize();window.addEventListener('resize',()=>{resize();if(isMobile)drawFrame(false);});
   drawFrame(!isMobile);
 })();
+</script>
+<script>
+/* ══════════ ENCUENTROS (Barras en Búzios + Consciencia en Búzios) ══════════
+   Tabla `encuentros` (id + data jsonb) y bucket `encuentros` — ver 4_BASE_DE_DATOS/39_encuentros.sql
+   La página pública comunidad.html lee esta tabla. */
+let _encs=[],_encFiltro='todos',_encFotos=[],_encGalFotos=[];
+const ENC_WEB='https://www.juancruzconsciencia.lat/';
+const _encUrl=u=>/^(https?:|blob:|data:)/.test(u)?u:ENC_WEB+u;
+const _encE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function _encHoy(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+const _encFacs=t=>(t||'').split(/,|\s+y\s+|\/|\s+-\s+/).map(x=>x.trim()).filter(Boolean);
+
+async function _encCargar(){
+  const {data,error}=await _sb.from('encuentros').select('id,data');
+  if(error){toast('⚠️ Encuentros: '+error.message,'err');return false;}
+  _encs=(data||[]).map(r=>({id:r.id,...(r.data||{})}));
+  return true;
+}
+function setEncFiltro(f){_encFiltro=f;renderEnc(true);}
+
+async function renderEnc(sinRecargar){
+  const box=document.getElementById('encLista');
+  document.querySelectorAll('.enc-f').forEach(b=>{const on=b.dataset.f===_encFiltro;b.classList.toggle('btn-p',on);b.classList.toggle('btn-s',!on);});
+  if(!sinRecargar){
+    box.innerHTML='<div style="color:var(--muted);padding:20px">Cargando…</div>';
+    if(!await _encCargar()){box.innerHTML='<div style="color:var(--red);padding:20px">No se pudieron cargar los encuentros. ¿Ya corriste <b>39_encuentros.sql</b> en Supabase?</div>';return;}
+  }
+  const hoy=_encHoy();
+  const ev=_encs.filter(r=>r.tipo!=='galeria');
+  // resumen
+  const st=(com,ico,nom)=>{
+    const pas=ev.filter(r=>r.comunidad===com&&r.fecha&&r.fecha<hoy&&r.activo!==false);
+    const prox=ev.filter(r=>r.comunidad===com&&r.fecha>=hoy).length;
+    const part=pas.reduce((t,r)=>t+(+r.participantes||0),0);
+    const facs=new Set();pas.forEach(r=>_encFacs(r.facilitadores).forEach(n=>facs.add(n.toLowerCase())));
+    return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+      <div style="font-size:11px;color:var(--muted);font-weight:700">${ico} ${nom}</div>
+      <div style="font-size:13px;margin-top:6px"><b style="font-size:20px;color:var(--gl)">${pas.length}</b> encuentros · <b>${part}</b> participaciones${com==='consciencia'?` · <b>${facs.size}</b> facilitadores`:''}</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">${prox?`📅 ${prox} próximo${prox>1?'s':''}`:'Sin próximos cargados'}</div></div>`;
+  };
+  document.getElementById('encStats').innerHTML=st('barras','💆','Barras en Búzios')+st('consciencia','🌿','Consciencia en Búzios');
+  const lista=(_encFiltro==='todos'?ev:ev.filter(r=>r.comunidad===_encFiltro))
+    .sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||((+b.numero||0)-(+a.numero||0)));
+  if(!lista.length){box.innerHTML='<div style="color:var(--muted);padding:20px">Todavía no hay encuentros. Tocá «+ Nuevo encuentro».</div>';return;}
+  box.innerHTML=`<div style="overflow-x:auto"><table><thead><tr>
+    <th>Fecha</th><th>Comunidad</th><th>N°</th><th>Enfoque</th><th>Lugar</th><th>Facilitan</th><th>Part.</th><th>📷</th><th></th></tr></thead><tbody>
+    ${lista.map(r=>{
+      const prox=r.fecha>=hoy;
+      const tags=(prox?'<span class="bdg b-bl" style="margin-left:4px">Próximo</span>':'')+(r.dia_completo?'<span class="bdg b-or" style="margin-left:4px">Día completo</span>':'')+(r.activo===false?'<span class="bdg b-gy" style="margin-left:4px">Oculto</span>':'');
+      const faltaPart=!prox&&!r.participantes?'<span style="color:var(--or)" title="Falta cargar participantes">—</span>':(r.participantes??'');
+      return `<tr>
+        <td style="white-space:nowrap">${fd(r.fecha)}${tags}</td>
+        <td>${r.comunidad==='barras'?'💆 Barras':'🌿 Consciencia'}</td>
+        <td>${_encE(r.numero??'')}</td>
+        <td>${_encE(r.enfoque||'')}</td>
+        <td>${_encE(r.lugar||'')}</td>
+        <td style="max-width:180px">${_encE(r.facilitadores||'')}</td>
+        <td>${faltaPart}</td>
+        <td>${(r.fotos||[]).length||''}</td>
+        <td style="white-space:nowrap"><button class="btn btn-s btn-sm" onclick="abrirEnc('${_encE(r.id)}')">✏️</button> <button class="btn btn-d btn-sm" onclick="borrarEnc('${_encE(r.id)}')">🗑</button></td>
+      </tr>`;}).join('')}
+    </tbody></table></div>`;
+}
+
+function encSugerirNumero(){
+  if(document.getElementById('eId').dataset.nuevo!=='1')return;
+  const com=document.getElementById('eCom').value;
+  const max=_encs.filter(r=>r.tipo!=='galeria'&&r.comunidad===com).reduce((m,r)=>Math.max(m,+r.numero||0),0);
+  document.getElementById('eNum').value=max+1;
+}
+
+function abrirEnc(id){
+  const r=id?_encs.find(x=>x.id===id):null;
+  const $=k=>document.getElementById(k);
+  $('moEncTitle').textContent=r?'✏️ Editar encuentro':'🤝 Nuevo encuentro';
+  $('eId').value=r?r.id:'enc-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  $('eId').dataset.nuevo=r?'':'1';
+  $('eCom').value=r?.comunidad||(_encFiltro==='consciencia'?'consciencia':'barras');
+  $('eNum').value=r?.numero??'';
+  $('eFecha').value=r?.fecha||'';
+  $('eHora').value=r?.hora||'';
+  $('eLugar').value=r?.lugar||'';
+  $('eAporte').value=r?.aporte||'';
+  $('eFac').value=r?.facilitadores||'';
+  $('eEnf').value=r?.enfoque||'';
+  $('ePreg').value=r?.pregunta||'';
+  $('ePal').value=r?.palabra||'';
+  $('ePart').value=r?.participantes??'';
+  $('eDia').checked=!!r?.dia_completo;
+  $('eActivo').checked=r?r.activo!==false:true;
+  $('eFotoIn').value='';$('eFotoEstado').textContent='';
+  _encFotos=[...(r?.fotos||[])];
+  _encPintarFotos();
+  if(!r)encSugerirNumero();
+  document.getElementById('moEnc').classList.add('open');
+}
+
+function _encPintarFotos(gal){
+  const arr=gal?_encGalFotos:_encFotos;
+  document.getElementById(gal?'gFotos':'eFotos').innerHTML=arr.length?arr.map((u,i)=>`
+    <div style="position:relative;width:92px;height:92px;border-radius:10px;overflow:hidden;border:2px solid ${i?'var(--border)':'var(--gold)'}">
+      <img src="${_encE(_encUrl(u))}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.opacity=.25">
+      ${i?`<button type="button" title="Hacer principal" onclick="_encMoverFoto(${i},${!!gal})" style="position:absolute;left:3px;bottom:3px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:6px;font-size:10px;padding:2px 5px;cursor:pointer">★</button>`:'<span style="position:absolute;left:3px;bottom:3px;background:var(--gold);color:#000;border-radius:6px;font-size:9px;padding:1px 5px;font-weight:700">Principal</span>'}
+      <button type="button" title="Quitar" onclick="_encQuitarFoto(${i},${!!gal})" style="position:absolute;right:3px;top:3px;background:rgba(0,0,0,.65);color:#fff;border:0;border-radius:50%;width:20px;height:20px;font-size:11px;cursor:pointer">✕</button>
+    </div>`).join(''):'<div style="font-size:11px;color:var(--muted)">Sin fotos todavía.</div>';
+}
+function _encMoverFoto(i,gal){const a=gal?_encGalFotos:_encFotos;a.unshift(a.splice(i,1)[0]);_encPintarFotos(gal);}
+function _encQuitarFoto(i,gal){const a=gal?_encGalFotos:_encFotos;a.splice(i,1);_encPintarFotos(gal);}
+
+function _encAchicar(file){
+  return new Promise((res,rej)=>{
+    const img=new Image(),u=URL.createObjectURL(file);
+    img.onload=()=>{
+      const s=Math.min(1,1200/Math.max(img.naturalWidth,img.naturalHeight));
+      const c=document.createElement('canvas');c.width=Math.round(img.naturalWidth*s);c.height=Math.round(img.naturalHeight*s);
+      c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);
+      c.toBlob(b=>b?res(b):rej(new Error('no se pudo procesar')),'image/jpeg',0.8);
+    };
+    img.onerror=()=>{URL.revokeObjectURL(u);rej(new Error('formato no soportado (probá exportarla como JPG)'));};
+    img.src=u;
+  });
+}
+
+async function encSubirFotos(input,gal){
+  const files=[...input.files];if(!files.length)return;
+  const est=document.getElementById(gal?'gFotoEstado':'eFotoEstado');
+  const carpeta=gal?'galeria-consciencia':document.getElementById('eId').value;
+  const btn=document.getElementById(gal?'gGuardarBtn':'eGuardarBtn');btn.disabled=true;
+  let ok=0;
+  for(let i=0;i<files.length;i++){
+    est.textContent=`Subiendo ${i+1} de ${files.length}…`;
+    try{
+      const blob=await _encAchicar(files[i]);
+      const path=`${carpeta}/${Date.now()}-${i}.jpg`;
+      const {error}=await _sb.storage.from('encuentros').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'});
+      if(error)throw error;
+      const {data:pub}=_sb.storage.from('encuentros').getPublicUrl(path);
+      (gal?_encGalFotos:_encFotos).push(pub.publicUrl);ok++;
+      _encPintarFotos(gal);
+    }catch(e){toast('⚠️ '+files[i].name+': '+(e.message||e),'err');}
+  }
+  est.textContent=ok?`✓ ${ok} foto${ok>1?'s':''} subida${ok>1?'s':''}. Tocá Guardar para confirmar.`:'';
+  input.value='';btn.disabled=false;
+}
+
+async function guardarEnc(){
+  const $=k=>document.getElementById(k);
+  const fecha=$('eFecha').value;
+  if(!fecha){toast('⚠️ Poné la fecha del encuentro','err');return;}
+  const part=$('ePart').value;
+  const id=$('eId').value;
+  const data={tipo:'encuentro',comunidad:$('eCom').value,numero:$('eNum').value?+$('eNum').value:null,fecha,
+    hora:$('eHora').value.trim(),lugar:$('eLugar').value.trim(),aporte:$('eAporte').value.trim(),
+    facilitadores:$('eFac').value.trim(),enfoque:$('eEnf').value.trim(),pregunta:$('ePreg').value.trim(),palabra:$('ePal').value.trim(),
+    participantes:part===''?null:+part,dia_completo:$('eDia').checked,activo:$('eActivo').checked,fotos:_encFotos};
+  const btn=$('eGuardarBtn');btn.disabled=true;
+  const {error}=await _sb.from('encuentros').upsert({id,data});
+  btn.disabled=false;
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('✓ Encuentro guardado · ya está en la web');
+  closeModal('moEnc');renderEnc();
+}
+
+async function borrarEnc(id){
+  const r=_encs.find(x=>x.id===id);if(!r)return;
+  if(!confirm(`¿Borrar el encuentro N° ${r.numero??''} del ${fd(r.fecha)}${r.enfoque?' ('+r.enfoque+')':''}?\nSi solo querés sacarlo de la web, mejor editalo y destildá «Visible en la web».`))return;
+  const {error}=await _sb.from('encuentros').delete().eq('id',id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('🗑 Encuentro borrado');renderEnc();
+}
+
+async function abrirEncGaleria(){
+  if(!_encs.length)await _encCargar();
+  const g=_encs.find(r=>r.id==='gal-consciencia');
+  _encGalFotos=[...(g?.fotos||[])];
+  document.getElementById('gFotoIn').value='';document.getElementById('gFotoEstado').textContent='';
+  _encPintarFotos(true);
+  document.getElementById('moEncGal').classList.add('open');
+}
+async function guardarEncGaleria(){
+  const btn=document.getElementById('gGuardarBtn');btn.disabled=true;
+  const {error}=await _sb.from('encuentros').upsert({id:'gal-consciencia',data:{tipo:'galeria',comunidad:'consciencia',fotos:_encGalFotos,activo:true}});
+  btn.disabled=false;
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('✓ Mosaico actualizado');closeModal('moEncGal');renderEnc();
+}
 </script>
 </body>
 </html>
