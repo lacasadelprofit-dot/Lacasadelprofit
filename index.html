@@ -231,6 +231,8 @@ th{background:rgba(28,26,46,.88)!important;}
 .tab-btn{padding:5px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card2);color:var(--muted);transition:all .15s;}
 .tab-btn.active{background:rgba(201,168,76,.15);border-color:var(--gold);color:var(--gl);}
 .tab-btn:hover:not(.active){border-color:var(--gold);color:var(--text);}
+#encVistas{border-bottom:0;padding:0;flex-wrap:wrap;}
+@media(max-width:800px){.enc-hilo-grid{grid-template-columns:1fr!important;}}
 /* ── MOBILE RESPONSIVE ──────────────────────────────────── */
 .hamburger{display:none;background:none;border:none;color:var(--gl);font-size:22px;cursor:pointer;padding:4px 8px;line-height:1;}
 .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9998;}
@@ -871,9 +873,20 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="abrirEncPersonas()">👥 Facilitadores · Instagram</button>
       <button class="btn btn-s btn-sm" onclick="abrirEncGaleria()">📷 Fotos del mosaico (Consciencia)</button>
      </div>
-     <div id="encStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
-     <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Los encuentros con fecha futura aparecen en la web como <b>Próximo encuentro</b>. Cuando pasa la fecha, se mueven solos a los encuentros ya compartidos. Cargá los participantes después de cada encuentro.</div>
-     <div id="encLista"></div>
+     <!-- Ficha interna de Consciencia en Búzios (solo visible con el filtro Consciencia) -->
+     <div id="encVistas" class="tab-bar" style="display:none;margin-bottom:16px">
+      <button class="tab-btn enc-v" data-v="lista" onclick="setEncVista('lista')">📋 Encuentros</button>
+      <button class="tab-btn enc-v" data-v="vision" onclick="setEncVista('vision')">🧭 Visión</button>
+      <button class="tab-btn enc-v" data-v="datos" onclick="setEncVista('datos')">📊 Datos</button>
+      <button class="tab-btn enc-v" data-v="plan" onclick="setEncVista('plan')">🗓 Planificación</button>
+      <button class="tab-btn enc-v" data-v="hilo" onclick="setEncVista('hilo')">🧵 Hilo</button>
+     </div>
+     <div id="encPanelLista">
+      <div id="encStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Los encuentros con fecha futura aparecen en la web como <b>Próximo encuentro</b>. Cuando pasa la fecha, se mueven solos a los encuentros ya compartidos. Cargá los participantes después de cada encuentro. Los que están en <b>Idea</b> o <b>En armado</b> no se ven en la web.</div>
+      <div id="encLista"></div>
+     </div>
+     <div id="encPanelConsc" style="display:none"></div>
     </div>
 
     <div id="sec-crm" class="sec">
@@ -1324,11 +1337,14 @@ th{background:rgba(28,26,46,.88)!important;}
   <input type="hidden" id="eId">
   <div class="fg-row">
    <div class="fg"><label>Comunidad *</label>
-    <select id="eCom" onchange="encSugerirNumero()"><option value="barras">Barras en Búzios</option><option value="consciencia">Consciencia en Búzios</option></select></div>
+    <select id="eCom" onchange="encSugerirNumero();_encLlenarConecta()"><option value="barras">Barras en Búzios</option><option value="consciencia">Consciencia en Búzios</option></select></div>
    <div class="fg"><label>N° de encuentro</label><input type="number" id="eNum" min="1"></div>
   </div>
+  <div class="fg"><label>Estado</label>
+   <select id="eEstado" onchange="encEstadoCambio()"><option value="confirmado">✅ Confirmado (se ve en la web)</option><option value="armado">🛠 En armado (solo vos)</option><option value="idea">💡 Idea (solo vos)</option></select>
+   <div id="eEstadoAyuda" style="font-size:11px;color:var(--muted);margin-top:4px"></div></div>
   <div class="fg-row">
-   <div class="fg"><label>Fecha *</label><input type="date" id="eFecha"></div>
+   <div class="fg"><label id="eFechaLbl">Fecha *</label><input type="date" id="eFecha"></div>
    <div class="fg"><label>Horario</label><input type="text" id="eHora" placeholder="10:00 · o «Por la mañana»"></div>
   </div>
   <div class="fg-row">
@@ -1343,6 +1359,14 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg"><label>Pregunta (opcional)</label><input type="text" id="ePreg" placeholder="¿Qué tengo para dar?"></div>
    <div class="fg"><label>Palabra (opcional)</label><input type="text" id="ePal" placeholder="Respirar"></div>
   </div>
+  <div class="fg"><label>🏷 Etiquetas <span style="font-weight:400;color:var(--muted);font-size:11px">— temas del encuentro, separados por coma (uso interno)</span></label>
+   <input type="text" id="eTags" placeholder="Cuerpo, Respiración" oninput="_encPintarTagSug()">
+   <div id="eTagsSug" style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px"></div></div>
+  <div class="fg-row">
+   <div class="fg"><label>🧵 Conecta con</label><select id="eConecta"></select></div>
+   <div class="fg"><label>¿Qué retoma o continúa?</label><input type="text" id="eConectaNota" placeholder="Retoma la pregunta sobre recibir"></div>
+  </div>
+  <div class="fg"><label>📝 Notas (solo vos)</label><textarea id="eNotas" rows="2" placeholder="Ideas, qué preparar, a quién invitar, qué surgió…"></textarea></div>
   <div class="fg-row">
    <div class="fg"><label>Participantes</label><input type="number" id="ePart" min="0" placeholder="Se carga después del encuentro"></div>
    <div class="fg" style="display:flex;flex-direction:column;gap:8px;justify-content:flex-end">
@@ -13889,6 +13913,9 @@ const _encUrl=u=>/^(https?:|blob:|data:)/.test(u)?u:ENC_WEB+u;
 const _encE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function _encHoy(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
 const _encFacs=t=>(t||'').split(/,|\s+y\s+|\/|\s+-\s+/).map(x=>x.trim()).filter(Boolean);
+let _encVista='lista';
+/* estado: confirmado (o sin estado = encuentros viejos) | armado | idea. Solo los confirmados van a la web. */
+const _encConf=r=>!r.estado||r.estado==='confirmado';
 
 async function _encCargar(){
   const {data,error}=await _sb.from('encuentros').select('id,data');
@@ -13896,7 +13923,8 @@ async function _encCargar(){
   _encs=(data||[]).map(r=>({id:r.id,...(r.data||{})}));
   return true;
 }
-function setEncFiltro(f){_encFiltro=f;renderEnc(true);}
+function setEncFiltro(f){_encFiltro=f;if(f!=='consciencia')_encVista='lista';renderEnc(true);}
+function setEncVista(v){_encVista=v;renderEnc(true);}
 
 async function renderEnc(sinRecargar){
   const box=document.getElementById('encLista');
@@ -13905,12 +13933,20 @@ async function renderEnc(sinRecargar){
     box.innerHTML='<div style="color:var(--muted);padding:20px">Cargando…</div>';
     if(!await _encCargar()){box.innerHTML='<div style="color:var(--red);padding:20px">No se pudieron cargar los encuentros. ¿Ya corriste <b>39_encuentros.sql</b> en Supabase?</div>';return;}
   }
+  // ficha interna de Consciencia en Búzios
+  const esConsc=_encFiltro==='consciencia';
+  document.getElementById('encVistas').style.display=esConsc?'':'none';
+  document.querySelectorAll('.enc-v').forEach(b=>b.classList.toggle('active',b.dataset.v===_encVista));
+  const enFicha=esConsc&&_encVista!=='lista';
+  document.getElementById('encPanelLista').style.display=enFicha?'none':'';
+  document.getElementById('encPanelConsc').style.display=enFicha?'':'none';
+  if(enFicha){_encRenderConsc();return;}
   const hoy=_encHoy();
   const ev=_encs.filter(r=>(r.tipo||'encuentro')==='encuentro');
-  // resumen
+  // resumen (solo encuentros confirmados)
   const st=(com,ico,nom)=>{
-    const pas=ev.filter(r=>r.comunidad===com&&r.fecha&&r.fecha<hoy&&r.activo!==false);
-    const prox=ev.filter(r=>r.comunidad===com&&r.fecha>=hoy).length;
+    const pas=ev.filter(r=>r.comunidad===com&&_encConf(r)&&r.fecha&&r.fecha<hoy&&r.activo!==false);
+    const prox=ev.filter(r=>r.comunidad===com&&_encConf(r)&&r.fecha>=hoy).length;
     const part=pas.reduce((t,r)=>t+(+r.participantes||0),0);
     const facs=new Set();pas.forEach(r=>_encFacs(r.facilitadores).forEach(n=>facs.add(n.toLowerCase())));
     return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
@@ -13925,11 +13961,12 @@ async function renderEnc(sinRecargar){
   box.innerHTML=`<div style="overflow-x:auto"><table><thead><tr>
     <th>Fecha</th><th>Comunidad</th><th>N°</th><th>Enfoque</th><th>Lugar</th><th>Facilitan</th><th>Part.</th><th>📷</th><th></th></tr></thead><tbody>
     ${lista.map(r=>{
-      const prox=r.fecha>=hoy;
-      const tags=(prox?'<span class="bdg b-bl" style="margin-left:4px">Próximo</span>':'')+(r.dia_completo?'<span class="bdg b-or" style="margin-left:4px">Día completo</span>':'')+(r.activo===false?'<span class="bdg b-gy" style="margin-left:4px">Oculto</span>':'');
-      const faltaPart=!prox&&!r.participantes?'<span style="color:var(--or)" title="Falta cargar participantes">—</span>':(r.participantes??'');
+      const plan=!_encConf(r);
+      const prox=!plan&&r.fecha>=hoy;
+      const tags=(plan?`<span class="bdg b-pu" style="margin-left:4px">${r.estado==='idea'?'💡 Idea':'🛠 En armado'}</span>`:'')+(prox?'<span class="bdg b-bl" style="margin-left:4px">Próximo</span>':'')+(r.dia_completo?'<span class="bdg b-or" style="margin-left:4px">Día completo</span>':'')+(r.activo===false?'<span class="bdg b-gy" style="margin-left:4px">Oculto</span>':'');
+      const faltaPart=!plan&&!prox&&!r.participantes?'<span style="color:var(--or)" title="Falta cargar participantes">—</span>':(r.participantes??'');
       return `<tr>
-        <td style="white-space:nowrap">${fd(r.fecha)}${tags}</td>
+        <td style="white-space:nowrap">${r.fecha?fd(r.fecha):'<span style="color:var(--muted)">Sin fecha</span>'}${tags}</td>
         <td>${r.comunidad==='barras'?'💆 Barras':'🌿 Consciencia'}</td>
         <td>${_encE(r.numero??'')}</td>
         <td>${_encE(r.enfoque||'')}</td>
@@ -13949,13 +13986,13 @@ function encSugerirNumero(){
   document.getElementById('eNum').value=max+1;
 }
 
-function abrirEnc(id){
+function abrirEnc(id,opts){
   const r=id?_encs.find(x=>x.id===id):null;
   const $=k=>document.getElementById(k);
   $('moEncTitle').textContent=r?'✏️ Editar encuentro':'🤝 Nuevo encuentro';
   $('eId').value=r?r.id:'enc-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
   $('eId').dataset.nuevo=r?'':'1';
-  $('eCom').value=r?.comunidad||(_encFiltro==='consciencia'?'consciencia':'barras');
+  $('eCom').value=r?.comunidad||opts?.com||(_encFiltro==='consciencia'?'consciencia':'barras');
   $('eNum').value=r?.numero??'';
   $('eFecha').value=r?.fecha||'';
   $('eHora').value=r?.hora||'';
@@ -13969,6 +14006,15 @@ function abrirEnc(id){
   $('ePart').value=r?.participantes??'';
   $('eDia').checked=!!r?.dia_completo;
   $('eActivo').checked=r?r.activo!==false:true;
+  $('eActivo').disabled=false;
+  $('eEstado').value=r?.estado||opts?.estado||'confirmado';
+  const m=_encMeta(r?.id);
+  $('eTags').value=(m.tags||[]).join(', ');
+  $('eConectaNota').value=m.conecta_nota||'';
+  $('eNotas').value=m.notas||'';
+  _encLlenarConecta(m.conecta||'');
+  _encPintarTagSug();
+  encEstadoCambio();
   $('eFotoIn').value='';$('eFotoEstado').textContent='';
   _encFotos=[...(r?.fotos||[])];
   _encPintarFotos();
@@ -14027,24 +14073,32 @@ async function encSubirFotos(input,gal){
 async function guardarEnc(){
   const $=k=>document.getElementById(k);
   const fecha=$('eFecha').value;
-  if(!fecha){toast('⚠️ Poné la fecha del encuentro','err');return;}
+  const estado=$('eEstado').value,conf=estado==='confirmado';
+  if(conf&&!fecha){toast('⚠️ Poné la fecha del encuentro (o dejalo como Idea / En armado)','err');return;}
   const part=$('ePart').value;
   const id=$('eId').value;
-  const data={tipo:'encuentro',comunidad:$('eCom').value,numero:$('eNum').value?+$('eNum').value:null,fecha,
+  const data={tipo:'encuentro',comunidad:$('eCom').value,estado,numero:$('eNum').value?+$('eNum').value:null,fecha:fecha||null,
     hora:$('eHora').value.trim(),lugar:$('eLugar').value.trim(),ciudad:$('eCiudad').value,aporte:$('eAporte').value.trim(),
     facilitadores:$('eFac').value.trim(),enfoque:$('eEnf').value.trim(),pregunta:$('ePreg').value.trim(),palabra:$('ePal').value.trim(),
-    participantes:part===''?null:+part,dia_completo:$('eDia').checked,activo:$('eActivo').checked,fotos:_encFotos};
+    participantes:part===''?null:+part,dia_completo:$('eDia').checked,activo:conf&&$('eActivo').checked,fotos:_encFotos};
   const btn=$('eGuardarBtn');btn.disabled=true;
   const {error}=await _sb.from('encuentros').upsert({id,data});
+  if(error){btn.disabled=false;toast('⚠️ '+error.message,'err');return;}
+  // etiquetas, conexión y notas → fila privada (la web no la lee)
+  const meta={tags:_encTagsDe($('eTags').value),conecta:$('eConecta').value||'',conecta_nota:$('eConectaNota').value.trim(),notas:$('eNotas').value.trim()};
+  const metaVacia=!meta.tags.length&&!meta.conecta&&!meta.conecta_nota&&!meta.notas;
+  if(!metaVacia||_encMeta(id).tags||_encMeta(id).notas||_encMeta(id).conecta||_encMeta(id).conecta_nota){
+    try{await _encGuardarPriv(p=>{if(metaVacia)delete p.meta[id];else p.meta[id]=meta;});}
+    catch(e){toast('⚠️ El encuentro se guardó, pero no las etiquetas/notas: '+(e.message||e),'err');}
+  }
   btn.disabled=false;
-  if(error){toast('⚠️ '+error.message,'err');return;}
-  toast('✓ Encuentro guardado · ya está en la web');
+  toast(conf?(data.activo?'✓ Encuentro guardado · ya está en la web':'✓ Encuentro guardado (oculto en la web)'):'✓ Guardado en Planificación · no se ve en la web');
   closeModal('moEnc');renderEnc();
 }
 
 async function borrarEnc(id){
   const r=_encs.find(x=>x.id===id);if(!r)return;
-  if(!confirm(`¿Borrar el encuentro N° ${r.numero??''} del ${fd(r.fecha)}${r.enfoque?' ('+r.enfoque+')':''}?\nSi solo querés sacarlo de la web, mejor editalo y destildá «Visible en la web».`))return;
+  if(!confirm(`¿Borrar el encuentro N° ${r.numero??''} del ${r.fecha?fd(r.fecha):'(sin fecha)'}${r.enfoque?' ('+r.enfoque+')':''}?\nSi solo querés sacarlo de la web, mejor editalo y destildá «Visible en la web».`))return;
   const {error}=await _sb.from('encuentros').delete().eq('id',id);
   if(error){toast('⚠️ '+error.message,'err');return;}
   toast('🗑 Encuentro borrado');renderEnc();
@@ -14065,6 +14119,281 @@ async function guardarEncGaleria(){
   if(error){toast('⚠️ '+error.message,'err');return;}
   toast('✓ Mosaico actualizado');closeModal('moEncGal');renderEnc();
 }
+/* ══════════ FICHA INTERNA · CONSCIENCIA EN BÚZIOS (solo admin) ══════════
+   Fila privada `com-privado` con activo:false → la web (anon) NO la puede leer (RLS de 39_encuentros.sql).
+   Guarda: vision{...} y meta{[idEncuentro]:{tags[],conecta,conecta_nota,notas}}.
+   Los encuentros en Idea / En armado se guardan con activo:false (tampoco se ven en la web). */
+const ENC_PRIV_ID='com-privado';
+const ENC_TAGS=['Cuerpo','Movimiento','Meditación','Respiración','Naturaleza','Vínculos','Comunidad','Recibir','Servicio','Inconsciente','Soltar','Emociones','Creatividad'];
+const ENC_TAG_CLAVES=[['Cuerpo',/cuerpo|yoga|teatr/],['Movimiento',/movim|mover|yoga|danz/],['Meditación',/medit/],['Respiracion',/respir/],
+  ['Naturaleza',/naturalez|cerro|sendero/],['Vínculos',/conociendonos|convivencia|vincul|relacion/],['Comunidad',/convivencia|comunidad|conociendonos/],
+  ['Recibir',/dinero|recib|vasija/],['Servicio',/servi|para dar|tengo para dar/],['Inconsciente',/inconsciente|finjo|no saber/],
+  ['Soltar',/dejar ir|soltar/],['Emociones',/miedo|amor|emocion/]].map(([k,re])=>[k==='Respiracion'?'Respiración':k,re]);
+const ENC_VISION_DEF={
+  proposito:'Un espacio para encontrarnos, explorar y crear juntos.\n\nSomos una comunidad abierta de personas que comparten la curiosidad por la vida, las ganas de explorar nuevas posibilidades y la voluntad de crecer en conjunto.\n\nA través de encuentros, preguntas, experiencias, movimiento y naturaleza, creamos oportunidades para conectar con nosotros mismos y con otras personas.\n\nEncuentros abiertos y gratuitos.',
+  vision:'',
+  compartimos:'Encuentros y conversaciones\nPreguntas y herramientas de consciencia\nExperiencias y talleres\nMeditación y movimiento\nNaturaleza y aventuras\nIniciativas creadas entre todos',
+  principios:'Todos son bienvenidos\nRespeto por las diferencias\nLibertad para ser y participar\nTodos tenemos algo para aportar\nCreamos en conjunto\nComunidad orgánica',
+  whatsapp:'https://chat.whatsapp.com/EYAg6qOjwq3F9mv6li9QfY',
+  instagram:'https://www.instagram.com/conscienciaenbuzios',
+  autonomia:'Puede funcionar sin Juan Cruz: la autonomía está en construcción.\nNo depende de una persona, se construye entre todos.',
+  pasos:''
+};
+let _encHiloTag='',_encEtiquetando=false;
+const _encPriv=()=>_encs.find(r=>r.id===ENC_PRIV_ID)||{tipo:'privado',activo:false,vision:{},meta:{}};
+const _encMeta=id=>(id&&(_encPriv().meta||{})[id])||{};
+const _encTagsDe=t=>[...new Set((t||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>x[0].toUpperCase()+x.slice(1)))];
+const _encSinAcento=t=>(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+const _encSugerirTags=r=>{const t=_encSinAcento([r.enfoque,r.pregunta,r.palabra].join(' '));return ENC_TAG_CLAVES.filter(([,re])=>re.test(t)).map(([k])=>k);};
+const _encDias=f=>Math.round((new Date(_encHoy()+'T12:00')-new Date(f+'T12:00'))/864e5);
+const _encHace=d=>d<=0?'hoy':d<14?`hace ${d} día${d===1?'':'s'}`:d<70?`hace ${Math.round(d/7)} semanas`:`hace ${Math.round(d/30)} meses`;
+const _encC=()=>_encs.filter(r=>(r.tipo||'encuentro')==='encuentro'&&r.comunidad==='consciencia');
+const _encHechos=()=>_encC().filter(r=>_encConf(r)&&r.activo!==false&&r.fecha&&r.fecha<_encHoy()).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+const _encNom=r=>`${r.numero?'N° '+r.numero+' · ':''}${r.enfoque||'Sin tema'}`;
+const _encTit=t=>`<div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">${t}</div>`;
+const _encCard=(t,body,extra='')=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;${extra}">${t?_encTit(t):''}${body}</div>`;
+
+async function _encGuardarPriv(mut){
+  const p=JSON.parse(JSON.stringify(_encPriv()));delete p.id;
+  p.tipo='privado';p.comunidad='consciencia';p.vision=p.vision||{};p.meta=p.meta||{};
+  mut(p);p.activo=false; // siempre privada
+  const {error}=await _sb.from('encuentros').upsert({id:ENC_PRIV_ID,data:p});
+  if(error)throw error;
+  const i=_encs.findIndex(r=>r.id===ENC_PRIV_ID),nr={id:ENC_PRIV_ID,...p};
+  if(i>=0)_encs[i]=nr;else _encs.push(nr);
+}
+
+/* ── campos nuevos del modal de encuentro ── */
+function encEstadoCambio(){
+  const conf=document.getElementById('eEstado').value==='confirmado';
+  const a=document.getElementById('eActivo');
+  if(!conf){a.checked=false;a.disabled=true;}else{if(a.disabled)a.checked=true;a.disabled=false;}
+  document.getElementById('eFechaLbl').textContent=conf?'Fecha *':'Fecha tentativa (opcional)';
+  document.getElementById('eEstadoAyuda').innerHTML=conf?'Se publica en la web (si «Visible en la web» está tildado).':'🔒 No se ve en la web. Cuando lo tengas definido, pasalo a <b>Confirmado</b> y aparece como Próximo encuentro.';
+}
+function _encLlenarConecta(sel){
+  const id=document.getElementById('eId').value,com=document.getElementById('eCom').value,s=document.getElementById('eConecta');
+  if(sel===undefined)sel=s.value;
+  const ops=_encs.filter(r=>(r.tipo||'encuentro')==='encuentro'&&r.comunidad===com&&r.id!==id)
+    .sort((a,b)=>(a.fecha||'9999').localeCompare(b.fecha||'9999'));
+  s.innerHTML='<option value="">— Ninguno —</option>'+ops.map(r=>`<option value="${_encE(r.id)}">${_encE(_encNom(r))}${r.fecha?' ('+fd(r.fecha)+')':''}</option>`).join('');
+  s.value=ops.some(r=>r.id===sel)?sel:'';
+}
+function _encPintarTagSug(){
+  const cur=_encTagsDe(document.getElementById('eTags').value).map(x=>x.toLowerCase());
+  const todas=new Set(ENC_TAGS);Object.values(_encPriv().meta||{}).forEach(m=>(m.tags||[]).forEach(t=>todas.add(t)));
+  document.getElementById('eTagsSug').innerHTML=[...todas].filter(t=>!cur.includes(t.toLowerCase()))
+    .map(t=>`<button type="button" class="bdg b-gy" style="border:0;cursor:pointer" data-t="${_encE(t)}" onclick="_encAddTag(this.dataset.t)">+ ${_encE(t)}</button>`).join('');
+}
+function _encAddTag(t){const i=document.getElementById('eTags');const a=_encTagsDe(i.value);if(!a.some(x=>x.toLowerCase()===t.toLowerCase()))a.push(t);i.value=a.join(', ');_encPintarTagSug();}
+
+/* ── vistas de la ficha ── */
+function _encRenderConsc(){
+  const el=document.getElementById('encPanelConsc');
+  const v=_encVista;
+  el.innerHTML=v==='vision'?_encVistaVision():v==='datos'?_encVistaDatos():v==='plan'?_encVistaPlan():(_encEtiquetando?_encVistaEtiquetar():_encVistaHilo());
+}
+
+function _encVistaVision(){
+  const v={...ENC_VISION_DEF,...(_encPriv().vision||{})};
+  const ta=(id,val,rows,ph)=>`<div class="fg" style="margin-bottom:0"><textarea id="${id}" rows="${rows}" placeholder="${_encE(ph||'')}">${_encE(val||'')}</textarea></div>`;
+  const link=u=>u?` <a href="${_encE(u)}" target="_blank" rel="noopener" style="font-weight:400;font-size:11px;color:var(--gl)">abrir ↗</a>`:'';
+  return `<div style="font-size:12px;color:var(--muted);margin-bottom:12px">🔒 Solo para vos: nada de esta ficha aparece en la web.${v.actualizado?' · Última actualización: '+fd(v.actualizado.slice(0,10)):''}</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px">
+    ${_encCard('Para qué existe',ta('vProp',v.proposito,9))}
+    ${_encCard('Hacia dónde va (visión)',ta('vVision',v.vision,9,'Cómo imaginás la comunidad dentro de un año: cuántas personas, qué tipo de encuentros, quiénes facilitan, en qué lugares…'))}
+    ${_encCard('Qué compartimos · uno por línea',ta('vComp',v.compartimos,7))}
+    ${_encCard('Principios · uno por línea',ta('vPrin',v.principios,7))}
+    ${_encCard('Canales',`<div class="fg"><label>Grupo de WhatsApp${link(v.whatsapp)}</label><input type="text" id="vWa" value="${_encE(v.whatsapp)}"></div>
+      <div class="fg" style="margin-bottom:0"><label>Instagram${link(v.instagram)}</label><input type="text" id="vIg" value="${_encE(v.instagram)}"></div>`)}
+    ${_encCard('Autonomía · cómo avanza',ta('vAut',v.autonomia,5,'Quiénes ya proponen o facilitan solos, qué falta para que funcione sin vos…'))}
+  </div>
+  <div style="margin-top:14px">${_encCard('Próximos pasos · uno por línea',ta('vPasos',v.pasos,5,'Armar una ronda de facilitadores\nProbar un encuentro en Arraial\n…'))}</div>
+  <div style="display:flex;justify-content:flex-end;margin-top:14px"><button class="btn btn-p" id="vGuardarBtn" onclick="guardarEncVision()">Guardar visión</button></div>`;
+}
+async function guardarEncVision(){
+  const g=k=>document.getElementById(k).value.trim();
+  const v={proposito:g('vProp'),vision:g('vVision'),compartimos:g('vComp'),principios:g('vPrin'),whatsapp:g('vWa'),instagram:g('vIg'),autonomia:g('vAut'),pasos:g('vPasos'),actualizado:new Date().toISOString()};
+  const btn=document.getElementById('vGuardarBtn');btn.disabled=true;
+  try{await _encGuardarPriv(p=>{p.vision=v;});toast('✓ Visión guardada (solo vos la ves)');_encRenderConsc();}
+  catch(e){btn.disabled=false;toast('⚠️ '+(e.message||e),'err');}
+}
+
+function _encVistaDatos(){
+  const h=_encHechos(),hoy=_encHoy();
+  if(!h.length)return '<div style="color:var(--muted);padding:20px">Todavía no hay encuentros realizados de Consciencia en Búzios.</div>';
+  const conPart=h.filter(r=>+r.participantes>0);
+  const tot=conPart.reduce((t,r)=>t+(+r.participantes),0);
+  const prom=conPart.length?tot/conPart.length:0;
+  const avg=a=>a.reduce((s,r)=>s+(+r.participantes),0)/a.length;
+  const ult=conPart.slice(-5),ant=conPart.slice(-10,-5);
+  let tend='Faltan encuentros para comparar';
+  if(ult.length&&ant.length){const pct=Math.round((avg(ult)-avg(ant))*100/avg(ant));tend=pct>5?`📈 Subiendo (+${pct}%)`:pct<-5?`📉 Bajando (${pct}%)`:'➡️ Estable';}
+  const facs=new Map();h.forEach(r=>_encFacs(r.facilitadores).forEach(n=>{const k=n.toLowerCase();const o=facs.get(k)||{n,c:0};o.c++;facs.set(k,o);}));
+  const lugs=new Map();h.forEach(r=>{const k=(r.lugar||'').trim();if(k)lugs.set(k,(lugs.get(k)||0)+1);});
+  const horas=new Map();h.forEach(r=>{const m=/^(\d{1,2})/.exec(r.hora||'');if(!m)return;const k=+m[1]<12?'Mañana':'Tarde';horas.set(k,(horas.get(k)||0)+1);});
+  const ultimo=h[h.length-1];
+  const proximo=_encC().filter(r=>_encConf(r)&&r.fecha&&r.fecha>=hoy).sort((a,b)=>a.fecha.localeCompare(b.fecha))[0];
+  const enPlan=_encC().filter(r=>!_encConf(r)).length;
+  const frec=h.length>1?Math.round(_encDias(h[0].fecha)-_encDias(ultimo.fecha))/(h.length-1):0;
+  const max=Math.max(...h.map(r=>+r.participantes||0),1);
+  const barras=h.map(r=>{const p=+r.participantes||0;return `<div title="${_encE(_encNom(r))} · ${fd(r.fecha)} · ${p} personas" style="flex:1;min-width:14px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px">
+      <div style="font-size:10px;color:var(--muted)">${p||''}</div>
+      <div style="width:100%;height:${Math.max(3,p*110/max)}px;border-radius:5px 5px 0 0;background:${r.dia_completo?'var(--or)':'var(--gold)'};opacity:${p?1:.25}"></div>
+      <div style="font-size:9.5px;color:var(--muted)">${r.numero||''}</div></div>`;}).join('');
+  const ranking=(m,suf)=>[...m].sort((a,b)=>b[1]-a[1]).slice(0,6).map(([k,c])=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)"><span>${_encE(k)}</span><b>${c} ${suf}</b></div>`).join('');
+  const facRank=new Map([...facs.values()].map(o=>[o.n,o.c]));
+  return `<div class="kpi-grid">
+      <div class="kc go"><div class="ki">🌿</div><div class="kl">Encuentros realizados</div><div class="kv">${h.length}</div><div class="ks">uno cada ${frec?Math.round(frec):'—'} días en promedio</div></div>
+      <div class="kc bl"><div class="ki">🙌</div><div class="kl">Participaciones</div><div class="kv">${tot}</div><div class="ks">${prom.toFixed(1)} personas por encuentro</div></div>
+      <div class="kc pu"><div class="ki">🎤</div><div class="kl">Facilitadores</div><div class="kv">${facs.size}</div><div class="ks">en ${lugs.size} lugares distintos</div></div>
+      <div class="kc gr"><div class="ki">📈</div><div class="kl">Tendencia</div><div class="kv" style="font-size:17px">${tend}</div><div class="ks">últimos 5 vs. 5 anteriores</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:14px">
+      ${_encCard('Último encuentro',`<div style="font-size:14px;font-weight:700">${_encE(_encNom(ultimo))}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${fd(ultimo.fecha)} · ${_encHace(_encDias(ultimo.fecha))} · ${_encE(ultimo.lugar||'')}${ultimo.participantes?' · '+ultimo.participantes+' personas':' · <span style="color:var(--or)">faltan participantes</span>'}</div>`)}
+      ${_encCard('Próximo encuentro',proximo?`<div style="font-size:14px;font-weight:700">${_encE(_encNom(proximo))}</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${fd(proximo.fecha)}${proximo.hora?' · '+_encE(proximo.hora):''} · ${_encE(proximo.lugar||'')}</div>`:`<div style="font-size:13px;color:var(--or)">Ninguno confirmado.</div><div style="font-size:12px;color:var(--muted);margin-top:4px">${enPlan?`Tenés ${enPlan} en planificación.`:'Cargá uno en 🗓 Planificación.'}</div>`)}
+    </div>
+    ${_encCard('Personas por encuentro',`<div style="display:flex;align-items:flex-end;gap:4px;height:150px;overflow-x:auto">${barras}</div><div style="font-size:11px;color:var(--muted);margin-top:8px">El número de abajo es el N° de encuentro. En naranja, los días completos.</div>`,'margin-bottom:14px')}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px">
+      ${_encCard('Quiénes facilitan más',ranking(facRank,'')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
+      ${_encCard('Lugares más usados',ranking(lugs,'')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
+      ${_encCard('Horario',ranking(horas,'')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
+    </div>`;
+}
+
+function _encVistaPlan(){
+  const hoy=_encHoy(),C=_encC();
+  const col=(tit,ayuda,lista,estado)=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><b style="font-size:13px">${tit}</b><span class="bdg b-gy">${lista.length}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">${ayuda}</div>
+      ${lista.map(r=>_encPlanCard(r,estado)).join('')||'<div style="font-size:12px;color:var(--muted);padding:8px 0">Vacío</div>'}
+      ${estado!=='confirmado'?`<button class="btn btn-s btn-sm" style="width:100%;margin-top:6px" onclick="abrirEnc(null,{com:'consciencia',estado:'${estado}'})">+ Agregar</button>`:''}
+    </div>`;
+  const ord=(a,b)=>(a.fecha||'9999').localeCompare(b.fecha||'9999');
+  const ideas=C.filter(r=>r.estado==='idea').sort(ord),armado=C.filter(r=>r.estado==='armado').sort(ord);
+  const conf=C.filter(r=>_encConf(r)&&r.fecha&&r.fecha>=hoy).sort(ord);
+  // inspiración: temas, facilitadores y lugares que hace rato no aparecen
+  const h=_encHechos();
+  const ultimoDe=new Map(),facUlt=new Map();
+  h.forEach(r=>{(_encMeta(r.id).tags||[]).forEach(t=>ultimoDe.set(t,r.fecha));_encFacs(r.facilitadores).forEach(n=>facUlt.set(n,r.fecha));});
+  const viejos=(m,dias)=>[...m].filter(([,f])=>_encDias(f)>=dias).sort((a,b)=>a[1].localeCompare(b[1])).slice(0,8)
+    .map(([k,f])=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:3px 0"><span>${_encE(k)}</span><span style="color:var(--muted)">${_encHace(_encDias(f))}</span></div>`).join('');
+  const sinUsar=ENC_TAGS.filter(t=>!ultimoDe.has(t));
+  return `<div style="font-size:12px;color:var(--muted);margin-bottom:12px">🔒 Las <b>ideas</b> y los encuentros <b>en armado</b> son solo para vos. Cuando un encuentro está definido, tocá <b>Avanzar →</b> hasta Confirmado y aparece en la web como Próximo encuentro. Después de hacerlo, cargale participantes, palabra y fotos (✏️) y pasa solo al historial.</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-bottom:16px">
+      ${col('💡 Ideas','Temas, preguntas o personas que te gustaría sumar.',ideas,'idea')}
+      ${col('🛠 En armado','Ya tiene forma: falta confirmar fecha, lugar o facilitador.',armado,'armado')}
+      ${col('✅ Confirmados','Próximos encuentros, ya visibles en la web.',conf,'confirmado')}
+    </div>
+    ${_encTit('Para inspirarte')}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px">
+      ${_encCard('Temas que hace rato no se tocan',(viejos(ultimoDe,28)||'<div style="font-size:12px;color:var(--muted)">'+(ultimoDe.size?'Todos los temas aparecieron en el último mes.':'Etiquetá los encuentros en 🧵 Hilo para ver esto.')+'</div>')+(sinUsar.length&&ultimoDe.size?`<div style="font-size:11.5px;color:var(--muted);margin-top:8px">Nunca tocados: ${sinUsar.map(_encE).join(', ')}</div>`:''))}
+      ${_encCard('Facilitadores que hace rato no facilitan',viejos(facUlt,42)||'<div style="font-size:12px;color:var(--muted)">Todos facilitaron en las últimas 6 semanas.</div>')}
+    </div>`;
+}
+function _encPlanCard(r,estado){
+  const m=_encMeta(r.id);
+  const sig=estado==='idea'?'En armado':estado==='armado'?'Confirmar':'';
+  return `<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+    <div style="font-size:13px;font-weight:700">${_encE(r.enfoque||'Sin tema')}</div>
+    ${r.pregunta?`<div style="font-size:12px;font-style:italic;color:var(--gl);margin-top:2px">${_encE(r.pregunta)}</div>`:''}
+    <div style="font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5">
+      ${r.fecha?'📅 '+fd(r.fecha)+(r.hora?' · '+_encE(r.hora):''):'📅 Sin fecha'}${r.lugar?' · 📍 '+_encE(r.lugar):''}
+      ${r.facilitadores?'<br>🎤 '+_encE(r.facilitadores):''}
+      ${(m.tags||[]).length?'<br>🏷 '+m.tags.map(_encE).join(', '):''}
+      ${m.notas?'<br>📝 '+_encE(m.notas):''}
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn btn-s btn-sm" onclick="abrirEnc('${_encE(r.id)}')">✏️</button>
+      ${sig?`<button class="btn btn-p btn-sm" style="margin-left:auto" onclick="encAvanzar('${_encE(r.id)}')">${sig} →</button>`:''}
+    </div></div>`;
+}
+async function encAvanzar(id){
+  const r=_encs.find(x=>x.id===id);if(!r)return;
+  if(r.estado==='idea'){
+    const data={...r};delete data.id;data.estado='armado';data.activo=false;
+    const {error}=await _sb.from('encuentros').upsert({id,data});
+    if(error){toast('⚠️ '+error.message,'err');return;}
+    toast('🛠 Pasó a En armado');renderEnc();return;
+  }
+  // para confirmar: abrir el encuentro con estado Confirmado, revisar fecha y guardar
+  abrirEnc(id);
+  document.getElementById('eEstado').value='confirmado';encEstadoCambio();
+  toast('Revisá fecha, lugar y horario, y tocá Guardar para publicarlo');
+}
+
+function _encVistaHilo(){
+  const hoy=_encHoy();
+  const lista=_encC().filter(r=>_encConf(r)&&r.activo!==false&&r.fecha).sort((a,b)=>a.fecha.localeCompare(b.fecha)||((+a.numero||0)-(+b.numero||0)));
+  if(!lista.length)return '<div style="color:var(--muted);padding:20px">Todavía no hay encuentros de Consciencia en Búzios.</div>';
+  const porId=new Map(lista.map(r=>[r.id,r]));
+  // continuaciones (inverso de "conecta con")
+  const sigue=new Map();lista.forEach(r=>{const c=_encMeta(r.id).conecta;if(c){if(!sigue.has(c))sigue.set(c,[]);sigue.get(c).push(r);}});
+  // etiquetas
+  const tags=new Map();let sinTag=0;
+  lista.filter(r=>r.fecha<hoy).forEach(r=>{const t=_encMeta(r.id).tags||[];if(!t.length)sinTag++;t.forEach(x=>{const o=tags.get(x)||{c:0,f:''};o.c++;o.f=r.fecha;tags.set(x,o);});});
+  const chips=[...tags].sort((a,b)=>b[1].c-a[1].c).map(([t,o])=>`<button type="button" class="bdg ${_encHiloTag===t?'b-or':'b-gy'}" style="border:0;cursor:pointer;font-size:12px;padding:4px 10px" data-t="${_encE(t)}" onclick="encHiloFiltrar(this.dataset.t)">${_encE(t)} · ${o.c} <span style="opacity:.7;font-weight:400">· ${_encHace(_encDias(o.f))}</span></button>`).join(' ');
+  // palabras de cierre
+  const palabras=lista.filter(r=>r.palabra).map(r=>`<span title="${_encE(_encNom(r))}" style="white-space:nowrap"><b style="color:var(--gl)">${_encE(r.palabra)}</b></span>`).join(' <span style="color:var(--muted)">→</span> ');
+  // facilitadores en el tiempo
+  const fac=new Map();
+  lista.filter(r=>r.fecha<hoy).forEach(r=>_encFacs(r.facilitadores).forEach(n=>{const k=n.toLowerCase();const o=fac.get(k)||{n,primera:r,enc:[]};o.enc.push(r);fac.set(k,o);}));
+  const facHtml=[...fac.values()].sort((a,b)=>a.primera.fecha.localeCompare(b.primera.fecha)).map(o=>`<tr><td style="font-weight:600">${_encE(o.n)}</td><td style="white-space:nowrap">${fd(o.primera.fecha)}</td><td>${o.enc.length}</td><td style="color:var(--muted)">${o.enc.map(r=>'N° '+(r.numero||'?')).join(', ')}</td></tr>`).join('');
+  // línea de tiempo
+  const vis=_encHiloTag?lista.filter(r=>(_encMeta(r.id).tags||[]).includes(_encHiloTag)):lista;
+  const items=vis.map(r=>{
+    const m=_encMeta(r.id),fut=r.fecha>=hoy,prev=m.conecta&&porId.get(m.conecta);
+    const desp=(sigue.get(r.id)||[]);
+    return `<div style="display:grid;grid-template-columns:22px 1fr;gap:12px">
+      <div style="display:flex;flex-direction:column;align-items:center"><div style="width:12px;height:12px;border-radius:50%;margin-top:4px;background:${fut?'transparent':r.dia_completo?'var(--or)':'var(--gold)'};border:2px solid ${r.dia_completo?'var(--or)':'var(--gold)'}"></div><div style="flex:1;width:2px;background:var(--border);margin-top:4px"></div></div>
+      <div style="padding-bottom:18px">
+        <div style="font-size:11px;color:var(--muted)">${r.numero?'N° '+r.numero+' · ':''}${fd(r.fecha)} · ${_encE(r.lugar||'')}${r.participantes?' · '+r.participantes+' personas':''}${fut?' · <span class="bdg b-bl">Próximo</span>':''}${r.dia_completo?' · <span class="bdg b-or">Día completo</span>':''}</div>
+        <div style="font-size:14.5px;font-weight:700;margin-top:2px">${_encE(r.enfoque||'Sin tema')}</div>
+        ${r.pregunta?`<div style="font-size:12.5px;font-style:italic;color:var(--gl);margin-top:2px">${_encE(r.pregunta)}</div>`:''}
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">${r.facilitadores?'🎤 '+_encE(r.facilitadores):''}${r.palabra?` · Palabra: <b style="color:var(--text)">${_encE(r.palabra)}</b>`:''}</div>
+        ${(m.tags||[]).length?`<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:6px">${m.tags.map(t=>`<span class="bdg b-gy">${_encE(t)}</span>`).join('')}</div>`:''}
+        ${prev?`<div style="font-size:12px;margin-top:6px">↩️ Retoma <b>${_encE(_encNom(prev))}</b>${m.conecta_nota?' — '+_encE(m.conecta_nota):''}</div>`:(m.conecta_nota?`<div style="font-size:12px;margin-top:6px">↩️ ${_encE(m.conecta_nota)}</div>`:'')}
+        ${desp.length?`<div style="font-size:12px;margin-top:4px;color:var(--muted)">↪️ Continúa en ${desp.map(d=>'<b>'+_encE(_encNom(d))+'</b>').join(', ')}</div>`:''}
+        ${m.notas?`<div style="font-size:12px;margin-top:4px;color:var(--muted)">📝 ${_encE(m.notas)}</div>`:''}
+        <button class="btn btn-s btn-sm" style="margin-top:6px;padding:1px 8px;font-size:11px" onclick="abrirEnc('${_encE(r.id)}')">✏️ Etiquetas y conexión</button>
+      </div></div>`;}).join('');
+  return `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--muted);flex:1;min-width:220px">🔒 Solo para vos. Cómo se conectan los encuentros: temas que se repiten, de qué encuentro viene cada uno y quiénes se fueron sumando.</div>
+      <button class="btn ${sinTag?'btn-p':'btn-s'} btn-sm" onclick="encEtiquetar(true)">🏷 Etiquetar encuentros${sinTag?' ('+sinTag+' sin etiquetas)':''}</button>
+    </div>
+    ${_encCard('Temas que se repiten',(chips||'<div style="font-size:12px;color:var(--muted)">Todavía no hay etiquetas. Tocá «🏷 Etiquetar encuentros»: te propongo etiquetas según el tema de cada uno y vos las corregís.</div>')+(_encHiloTag?`<div style="font-size:11.5px;margin-top:8px">Mostrando solo <b>${_encE(_encHiloTag)}</b> · <a href="#" onclick="encHiloFiltrar('');return false" style="color:var(--gl)">ver todos</a></div>`:''),'margin-bottom:14px')}
+    ${palabras?_encCard('El recorrido en palabras',`<div style="font-size:13.5px;line-height:2">${palabras}</div>`,'margin-bottom:14px'):''}
+    <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px" class="enc-hilo-grid">
+      ${_encCard('Línea de tiempo',items||'<div style="font-size:12px;color:var(--muted)">Ningún encuentro con esa etiqueta.</div>')}
+      ${_encCard('Facilitadores en el tiempo',`<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">Ordenados por cuándo se sumaron.</div><div style="overflow-x:auto"><table><thead><tr><th>Quién</th><th>Primera vez</th><th>Veces</th><th>Encuentros</th></tr></thead><tbody>${facHtml}</tbody></table></div>`,'align-self:start')}
+    </div>`;
+}
+function encHiloFiltrar(t){_encHiloTag=_encHiloTag===t?'':t;_encRenderConsc();}
+function encEtiquetar(on){_encEtiquetando=on;_encRenderConsc();}
+function _encVistaEtiquetar(){
+  const lista=_encC().filter(r=>_encConf(r)&&r.fecha).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+  const filas=lista.map(r=>{
+    const m=_encMeta(r.id),tiene=(m.tags||[]).length,val=tiene?m.tags:_encSugerirTags(r);
+    return `<tr><td style="white-space:nowrap">${r.numero?'N° '+r.numero:''}<div style="font-size:10.5px;color:var(--muted)">${fd(r.fecha)}</div></td>
+      <td><b>${_encE(r.enfoque||'Sin tema')}</b>${r.pregunta?`<div style="font-size:11px;color:var(--muted);font-style:italic">${_encE(r.pregunta)}</div>`:''}</td>
+      <td style="min-width:260px"><div class="fg" style="margin-bottom:0"><input type="text" class="enc-tg" data-id="${_encE(r.id)}" value="${_encE(val.join(', '))}" placeholder="Cuerpo, Respiración" style="${!tiene&&val.length?'border-color:var(--gold)':''}">
+      </div>${!tiene&&val.length?'<div style="font-size:10.5px;color:var(--gl);margin-top:2px">✨ sugerida</div>':''}</td></tr>`;}).join('');
+  return `<div style="font-size:12.5px;color:var(--muted);margin-bottom:12px">Etiquetas = los temas de cada encuentro, separados por coma. Las marcadas como <b style="color:var(--gl)">✨ sugerida</b> las propuse yo según el tema: corregilas, borrá las que no van y sumá las que falten. Podés usar estas o inventar otras: <span style="color:var(--text)">${ENC_TAGS.join(', ')}</span>.</div>
+    <div style="overflow-x:auto"><table><thead><tr><th>N°</th><th>Encuentro</th><th>Etiquetas</th></tr></thead><tbody>${filas}</tbody></table></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+      <button class="btn btn-s" onclick="encEtiquetar(false)">Cancelar</button>
+      <button class="btn btn-p" id="tgGuardarBtn" onclick="guardarEncEtiquetas()">Guardar etiquetas</button>
+    </div>`;
+}
+async function guardarEncEtiquetas(){
+  const btn=document.getElementById('tgGuardarBtn');btn.disabled=true;
+  const vals=[...document.querySelectorAll('.enc-tg')].map(i=>[i.dataset.id,_encTagsDe(i.value)]);
+  try{
+    await _encGuardarPriv(p=>{vals.forEach(([id,t])=>{const m={...(p.meta[id]||{}),tags:t};if(!t.length&&!m.conecta&&!m.conecta_nota&&!m.notas)delete p.meta[id];else p.meta[id]=m;});});
+    toast('✓ Etiquetas guardadas');_encEtiquetando=false;_encRenderConsc();
+  }catch(e){btn.disabled=false;toast('⚠️ '+(e.message||e),'err');}
+}
+
 /* ── Facilitadores de la comunidad + Instagram (filas tipo "persona" en la tabla encuentros) ── */
 let _encPer=[];
 const _encSlug=t=>(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
