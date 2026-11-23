@@ -51,6 +51,10 @@
     {
       "path": "/api/tiktok",
       "schedule": "10 9 * * *"
+    },
+    {
+      "path": "/api/gsc-sync",
+      "schedule": "0 9 * * 1"
     }
   ],
   "functions": {
@@ -59,6 +63,9 @@
     },
     "api/tiktok.js": {
       "maxDuration": 60
+    },
+    "api/gsc-sync.js": {
+      "maxDuration": 30
     }
   }
 }
