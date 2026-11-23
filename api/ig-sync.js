@@ -73,6 +73,7 @@ const METRICAS = {
   BASE: ['reach', 'saved', 'shares', 'total_interactions'],
   MIN: ['reach']
 };
+let errorInsights = ''; // último motivo por el que Instagram rechazó las estadísticas (para diagnóstico)
 async function insightsDe(m) {
   const grupos = [m.media_product_type === 'REELS' ? METRICAS.REELS : METRICAS.FEED, METRICAS.BASE, METRICAS.MIN];
   for (const g of grupos) {
@@ -81,9 +82,17 @@ async function insightsDe(m) {
       const o = {};
       (r.data || []).forEach(x => { o[x.name] = x.values && x.values[0] ? x.values[0].value : x.total_value && x.total_value.value; });
       return o;
-    } catch (e) { /* probar el siguiente grupo */ }
+    } catch (e) { errorInsights = e.message; /* probar el siguiente grupo */ }
   }
   return {};
+}
+
+// Permisos que tiene el token cargado en Vercel (para diagnóstico; no muestra el token)
+async function permisosDelToken() {
+  try {
+    const p = await graph('/me/permissions');
+    return (p.data || []).filter(x => x.status === 'granted').map(x => x.permission);
+  } catch (e) { return ['(token de página: ' + e.message.slice(0, 60) + ')']; }
 }
 
 // Reloj automático de Vercel (vercel.json → crons): actualiza todo a las 6:00 de Brasil, antes del resumen de Telegram.
@@ -159,9 +168,11 @@ module.exports = async function handler(req, res) {
     const nPosts = filas.length;
     const hoy = new Date().toISOString().slice(0, 10);
     filas.push({ id: 'cuenta-' + hoy, data: { fecha: hoy, usuario: cuenta.username, seguidores: cuenta.followers_count, siguiendo: cuenta.follows_count, publicaciones: cuenta.media_count } });
-    filas.push({ id: 'sync', data: { cuando: new Date().toISOString(), ok: true, posts: nPosts, usuario: cuenta.username } });
+    const permisos = await permisosDelToken();
+    const conMetricas = filas.filter(f => f.data.alcance != null).length;
+    filas.push({ id: 'sync', data: { cuando: new Date().toISOString(), ok: true, posts: nPosts, con_metricas: conMetricas, usuario: cuenta.username, permisos, error_metricas: errorInsights || null } });
     await guardar(filas);
-    return res.status(200).json({ ok: true, usuario: cuenta.username, seguidores: cuenta.followers_count, posts: nPosts, de: medias.length });
+    return res.status(200).json({ ok: true, usuario: cuenta.username, seguidores: cuenta.followers_count, posts: nPosts, de: medias.length, con_metricas: conMetricas, permisos, error_metricas: errorInsights || null });
   } catch (e) {
     try { await guardar([{ id: 'sync', data: { cuando: new Date().toISOString(), ok: false, error: e.message } }]); } catch (_) {}
     const vencido = e.code === 190;
