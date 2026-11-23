@@ -9345,7 +9345,7 @@ const PILARES_CONT=[
   {k:'promo',       l:'Promocional',          col:'#E05555', ico:'📣'},
 ];
 // Colores de marca de cada plataforma
-const PLAT_CONT_COL={Instagram:'#E4405F',TikTok:'#69C9D0',Facebook:'#1877F2',YouTube:'#FF0000'};
+const PLAT_CONT_COL={Instagram:'#D03E8C',TikTok:'#69C9D0',Facebook:'#1877F2',YouTube:'#FF0000'};
 const PLAT_CONT_ICO={Instagram:'📸',TikTok:'🎵',Facebook:'👍',YouTube:'▶️'};
 const TIPO_CONT_ICO={idea:'💡',planificado:'📅',publicado:'✅'};
 const TIPO_CONT_COL={idea:'var(--gold)',planificado:'var(--blue)',publicado:'var(--green)'};
@@ -12644,8 +12644,10 @@ async function renderContResumen(){
   };
   const mesAnt=(()=>{const d=new Date(_resumenMes+'-15');d.setMonth(d.getMonth()-1);return d.toISOString().slice(0,7);})();
   const platsFollow=[
-    {k:'instagram',l:'Instagram',ico:'📸',col:'#E4405F',cuenta:_ig.cuenta,n:pIg.length,extra:`${K(alcIg)} alcance`},
-    {k:'tiktok',   l:'TikTok',  ico:'🎵',col:'#1A98A6',cuenta:_tt.cuenta,n:pTt.length,extra:`${K(vistasTt)} vistas`},
+    {k:'instagram',l:'Instagram',ico:'📸',col:'#D03E8C',cuenta:_ig.cuenta,n:pIg.length,extra:`${K(alcIg)} alcance`},
+    {k:'tiktok',   l:'TikTok',  ico:'🎵',col:'#21A0B8',cuenta:_tt.cuenta,n:pTt.length,extra:`${K(vistasTt)} vistas`},
+    {k:'youtube',  l:'YouTube Shorts',ico:'▶️',col:'#E5561C',cuenta:null,manual:true},
+    {k:'linkedin', l:'LinkedIn',ico:'💼',col:'#5161DC',cuenta:null,manual:true},
   ];
 
   // ── Tabla de publicaciones del mes ──
@@ -12699,7 +12701,7 @@ async function renderContResumen(){
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📸 Alcance Instagram</div>
       <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
-        <span style="font-size:32px;font-weight:800;color:#E4405F">${K(alcIg)}</span>
+        <span style="font-size:32px;font-weight:800;color:#D03E8C">${K(alcIg)}</span>
         ${metaAlcance>0?`<span style="font-size:14px;color:var(--muted)">/ ${K(metaAlcance)}</span>`:''}
       </div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:8px">cuentas alcanzadas · ${K(suma(pIg,'vistas'))} reproducciones</div>
@@ -12708,7 +12710,7 @@ async function renderContResumen(){
     </div>
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🎵 Visualizaciones TikTok</div>
-      <div style="font-size:32px;font-weight:800;color:#1A98A6;margin-bottom:6px">${K(vistasTt)}</div>
+      <div style="font-size:32px;font-weight:800;color:#21A0B8;margin-bottom:6px">${K(vistasTt)}</div>
       <div style="font-size:11px;color:var(--muted)">${pTt.length} video${pTt.length===1?'':'s'} · ${pTt.length?K(vistasTt/pTt.length):0} promedio por video</div>
     </div>
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
@@ -12741,7 +12743,7 @@ async function renderContResumen(){
   <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:20px 22px;margin-bottom:24px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px">
       <span style="font-size:13px;font-weight:800;color:var(--gl)">👥 Seguidores — ${mesLabel}</span>
-      <span style="font-size:11px;color:var(--muted)">automático (foto diaria de cada cuenta)</span>
+      <span style="font-size:11px;color:var(--muted)">Instagram y TikTok automáticos · YouTube Shorts y LinkedIn se cargan a mano</span>
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
       ${platsFollow.map(p=>{
@@ -12753,10 +12755,11 @@ async function renderContResumen(){
         const spark=vals.map((v,i)=>`<div style="flex:1;background:${i===vals.length-1?p.col:'rgba(255,255,255,.15)'};border-radius:2px 2px 0 0;height:${v>0?Math.max(4,Math.round(v/maxV*28)):2}px;align-self:flex-end"></div>`).join('');
         return`<div style="background:var(--card);border:1px solid var(--border);border-top:2px solid ${p.col};border-radius:12px;padding:14px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="font-size:16px">${p.ico}</span><span style="font-size:11px;font-weight:700;color:var(--muted)">${p.l}</span></div>
-          <div style="font-size:24px;font-weight:800;text-align:center;margin-bottom:4px">${cur?cur.v.toLocaleString('es-AR'):'—'}</div>
+          ${p.manual?`<input type="number" value="${cur?cur.v:''}" placeholder="cargar" onchange="saveFollower('${_resumenMes}','${p.k}',this.value)" title="Seguidores al cierre del mes" style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:20px;font-weight:800;text-align:center;margin-bottom:4px">`
+            :`<div style="font-size:24px;font-weight:800;text-align:center;margin-bottom:4px">${cur?cur.v.toLocaleString('es-AR'):'—'}</div>`}
           ${diff!==null?`<div style="font-size:11px;font-weight:700;color:${diffCol};text-align:center">${diff>0?'↑':diff<0?'↓':'='} ${Math.abs(diff).toLocaleString('es-AR')} vs mes anterior ${pct?`(${diff>0?'+':''}${pct}%)`:''}</div>`
           :`<div style="font-size:10px;color:var(--muted);text-align:center">${cur?'La variación aparece cuando haya datos del mes anterior':'Sin datos de este mes'}</div>`}
-          <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">${p.n} publicaciones · ${p.extra}</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">${p.manual?'se carga a mano · total al cierre del mes':p.n+' publicaciones · '+p.extra}</div>
           <div style="display:flex;align-items:flex-end;gap:2px;height:32px;margin-top:10px">${spark}</div>
         </div>`;
       }).join('')}
@@ -12804,14 +12807,14 @@ async function renderContResumen(){
   _resDibujarGraficos({meses12,porMes,mesLabel,metaPosts});
 }
 
-/* Gráficos del Resumen (Chart.js). Un eje por gráfico; Instagram #E4405F y TikTok #1A98A6 siempre (validados para el fondo oscuro). */
+/* Gráficos del Resumen (Chart.js). Un eje por gráfico; Instagram #D03E8C y TikTok #21A0B8 siempre (validados para el fondo oscuro). */
 let _resCharts=[];
 function _resDibujarGraficos({meses12,porMes,metaPosts}){
   if(typeof Chart==='undefined')return;
   _resCharts.forEach(c=>{try{c.destroy();}catch(e){}});_resCharts=[];
   const css=getComputedStyle(document.documentElement);
   const tinta=css.getPropertyValue('--muted').trim()||'#7A7260',texto=css.getPropertyValue('--text').trim()||'#EDE5C8',grilla='rgba(255,255,255,.06)';
-  const IG='#E4405F',TT='#1A98A6';
+  const IG='#D03E8C',TT='#21A0B8';
   const etiquetas=meses12.map(m=>new Date(m+'-15').toLocaleDateString('es-AR',{month:'short',year:'2-digit'}));
   const nf=v=>Math.round(v).toLocaleString('es-AR');
   const base=(extra={})=>({responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},
@@ -12829,12 +12832,14 @@ function _resDibujarGraficos({meses12,porMes,metaPosts}){
     (cuenta||[]).forEach(c=>{if(c.seguidores!=null)m.set(c.fecha,+c.seguidores);});
     return [...m].sort((a,b)=>a[0].localeCompare(b[0])).map(([x,y])=>({x,y}));
   };
-  const sIg=serieSeg(_ig.cuenta,'instagram'),sTt=serieSeg(_tt.cuenta,'tiktok');
-  const fechas=[...new Set([...sIg,...sTt].map(p=>p.x))].sort();
+  const sIg=serieSeg(_ig.cuenta,'instagram'),sTt=serieSeg(_tt.cuenta,'tiktok'),sYt=serieSeg(null,'youtube'),sLi=serieSeg(null,'linkedin');
+  const fechas=[...new Set([...sIg,...sTt,...sYt,...sLi].map(p=>p.x))].sort();
   const val=(serie,f)=>{const p=serie.find(q=>q.x===f);return p?p.y:null;};
   mk('resChSeg',{type:'line',data:{labels:fechas.map(f=>new Date(f+'T12:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit',year:'2-digit'})),
     datasets:[{label:'Instagram',data:fechas.map(f=>val(sIg,f)),borderColor:IG,backgroundColor:IG,borderWidth:2,pointRadius:fechas.length>20?0:4,pointHoverRadius:5,spanGaps:true,tension:.2},
-              {label:'TikTok',data:fechas.map(f=>val(sTt,f)),borderColor:TT,backgroundColor:TT,borderWidth:2,pointRadius:fechas.length>20?0:4,pointHoverRadius:5,spanGaps:true,tension:.2}]},
+              {label:'TikTok',data:fechas.map(f=>val(sTt,f)),borderColor:TT,backgroundColor:TT,borderWidth:2,pointRadius:fechas.length>20?0:4,pointHoverRadius:5,spanGaps:true,tension:.2},
+              ...(sYt.length?[{label:'YouTube Shorts',data:fechas.map(f=>val(sYt,f)),borderColor:'#E5561C',backgroundColor:'#E5561C',borderWidth:2,pointRadius:4,pointHoverRadius:5,spanGaps:true,tension:.2}]:[]),
+              ...(sLi.length?[{label:'LinkedIn',data:fechas.map(f=>val(sLi,f)),borderColor:'#5161DC',backgroundColor:'#5161DC',borderWidth:2,pointRadius:4,pointHoverRadius:5,spanGaps:true,tension:.2}]:[])]},
     options:base({scales:{x:{ticks:{color:tinta,font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:6},grid:{display:false}},y:{beginAtZero:false,ticks:{color:tinta,font:{size:10}},grid:{color:grilla},border:{display:false}}}})});
 
   // Publicaciones por mes (apiladas: el total es lo que cuenta para la meta)
@@ -12882,7 +12887,7 @@ function renderMkt(){
 
 function renderMktPub(){
   const PLAT_ICO={'Instagram':'📸','Facebook':'👍','TikTok':'🎵','WhatsApp':'💬','Google Ads':'🔍','Referidos':'🤝','Orgánico':'🌱','Otro':'📣'};
-  const PLAT_COL={'Instagram':'#E4405F','Facebook':'#1877F2','TikTok':'#010101','WhatsApp':'#25D366','Google Ads':'#4285F4','Referidos':'#C9A84C','Orgánico':'#3DAA6A','Otro':'#7A7260'};
+  const PLAT_COL={'Instagram':'#D03E8C','Facebook':'#1877F2','TikTok':'#010101','WhatsApp':'#25D366','Google Ads':'#4285F4','Referidos':'#C9A84C','Orgánico':'#3DAA6A','Otro':'#7A7260'};
   const EST_CLS={'activa':'b-gr','finalizada':'b-gy','pausada':'b-or'};
 
   if(!campañas.length){
@@ -14852,6 +14857,7 @@ async function igSincronizar(silencioso){
   _ig.sincronizando=false;
   await _igCargar();renderContInstagram(true);
 }
+const _redTot=(P,campos)=>campos.map(k=>{const v=P.filter(p=>p[k]!=null);return v.length?_igN(v.reduce((s,p)=>s+(+p[k]||0),0)):'—';});
 function setIgDias(d){_igDias=d;_igRango=null;renderContInstagram(true);}
 function setIgRango(){const d=document.getElementById('igDesde')?.value||'',h=document.getElementById('igHasta')?.value||'';if(!d&&!h){toast('⚠️ Elegí al menos una fecha','err');return;}if(d&&h&&d>h){toast('⚠️ La fecha «Desde» es posterior a «Hasta»','err');return;}_igRango={d,h};renderContInstagram(true);}
 function setIgOrden(o){_igOrden=o;renderContInstagram(true);}
@@ -14923,7 +14929,7 @@ async function renderContInstagram(sinRecargar){
       <div style="min-width:0;flex:1"><div style="font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_igE((p.texto||'(sin texto)').split('\n')[0])}</div>
       <div style="font-size:11px;color:var(--muted)">${_igE(p.tipo)} · ${p.d.toLocaleDateString('es-AR')} · ${_igN(p.alcance)} alcance · ${_igN((+p.guardados||0)+(+p.compartidos||0))} guard.+comp.</div></div></a>`;
   // tabla de todas
-  const ords={fecha:(a,b)=>b.d-a.d,alcance:(a,b)=>(b.alcance||0)-(a.alcance||0),valor:(a,b)=>(b.valor||0)-(a.valor||0),guardados:(a,b)=>(b.guardados||0)-(a.guardados||0),seguidores:(a,b)=>(b.seguidores_ganados||0)-(a.seguidores_ganados||0)};
+  const ords={fecha:(a,b)=>b.d-a.d,alcance:(a,b)=>(b.alcance||0)-(a.alcance||0),vistas:(a,b)=>(b.vistas||0)-(a.vistas||0),comentarios:(a,b)=>(b.comentarios||0)-(a.comentarios||0),valor:(a,b)=>(b.valor||0)-(a.valor||0),guardados:(a,b)=>(b.guardados||0)-(a.guardados||0),seguidores:(a,b)=>(b.seguidores_ganados||0)-(a.seguidores_ganados||0)};
   const filas=[...P].sort(ords[_igOrden]||ords.fecha).map(p=>`<tr>
       <td><a href="${_igE(p.link)}" target="_blank" rel="noopener"><div style="width:48px;height:48px;border-radius:8px;background:var(--card2) center/cover no-repeat;${p.miniatura?`background-image:url('${_igE(p.miniatura)}')`:''}"></div></a></td>
       <td style="white-space:nowrap">${p.d.toLocaleDateString('es-AR')}<div style="font-size:10.5px;color:var(--muted)">${IG_DIAS[p.d.getDay()].slice(0,3)} ${String(p.d.getHours()).padStart(2,'0')}:${String(p.d.getMinutes()).padStart(2,'0')}</div></td>
@@ -14936,9 +14942,11 @@ async function renderContInstagram(sinRecargar){
       <div class="kc go"><div class="ki">👥</div><div class="kl">Seguidores</div><div class="kv">${_igN(ultC?.seguidores)}</div><div class="ks">${difSeg!=null?(difSeg>=0?'+':'')+difSeg+' en el período':ganados?'+'+ganados+' desde publicaciones':'se mide desde que se conectó'}</div></div>
       <div class="kc bl"><div class="ki">🗂</div><div class="kl">Publicaciones</div><div class="kv">${P.length}</div><div class="ks">${per.txt}</div></div>
       <div class="kc pu"><div class="ki">👁</div><div class="kl">Alcance promedio</div><div class="kv">${_igN(prom(conAl,'alcance'))}</div><div class="ks">personas por publicación</div></div>
+      <div class="kc bl"><div class="ki">▶️</div><div class="kl">Visualizaciones</div><div class="kv">${_igN(suma(P,'vistas'))}</div><div class="ks">${per.txt} · ${_igN(prom(P.filter(p=>p.vistas!=null),'vistas'))} promedio por publicación</div></div>
       <div class="kc gr"><div class="ki">🔖</div><div class="kl">Guardados + compartidos</div><div class="kv">${_igN(suma(P,'guardados')+suma(P,'compartidos'))}</div><div class="ks">lo que más impulsa el algoritmo</div></div>
     </div>
     ${card('💡 Qué hacer esta semana',rec.map(r=>`<div style="font-size:13px;line-height:1.6;padding:4px 0">${r}</div>`).join(''),'margin-bottom:14px;border-color:rgba(201,168,76,.35)')}
+    ${card('▶️ Visualizaciones por semana','<div style="position:relative;height:220px"><canvas id="igChVistas"></canvas></div><div style="font-size:11px;color:var(--muted);margin-top:6px">Suma de las reproducciones de lo publicado cada semana (lunes a domingo), dentro del período elegido · pasá el mouse para ver cada valor</div>','margin-bottom:14px')}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px">
       ${card('Por formato',tabla(porTipo,'var(--gold)'))}
       ${card('Por día',tabla(porDia,'#8BBDE8'))}
@@ -14948,11 +14956,15 @@ async function renderContInstagram(sinRecargar){
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
       ${card('🏆 Más alcance',top('alcance').map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
       ${card('🔖 Más valor (guardan, comparten, siguen)',top('valor').map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
+      ${card('💬 Más comentados',[...P].filter(p=>p.comentarios).sort((a,b)=>(b.comentarios||0)-(a.comentarios||0)).slice(0,5).map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
+      ${card('▶️ Más vistas',[...P].filter(p=>p.vistas!=null).sort((a,b)=>(b.vistas||0)-(a.vistas||0)).slice(0,5).map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>')}
     </div>
     <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px"><b>Valor</b> = (guardados×3 + compartidos×3 + comentarios×2 + likes + seguidores×5) cada 100 personas alcanzadas. Sirve para comparar publicaciones aunque hayan llegado a distinta cantidad de gente.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><span style="font-size:12px;color:var(--muted)">Ordenar por:</span>
-      ${[['fecha','Fecha'],['alcance','Alcance'],['valor','Valor'],['guardados','Guardados'],['seguidores','Seguidores']].map(([k,l])=>`<button class="tab-btn${_igOrden===k?' active':''}" onclick="setIgOrden('${k}')">${l}</button>`).join('')}</div>
-    <div style="overflow-x:auto"><table><thead><tr><th></th><th>Fecha</th><th>Tipo</th><th>Texto</th><th>Alcance</th><th>Vistas</th><th>❤️</th><th>💬</th><th>🔖</th><th>↗️</th><th>➕ Seg.</th><th>Valor</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+      ${[['fecha','Fecha'],['vistas','Visualizaciones'],['alcance','Alcance'],['comentarios','Comentarios'],['guardados','Guardados'],['valor','Valor'],['seguidores','Seguidores']].map(([k,l])=>`<button class="tab-btn${_igOrden===k?' active':''}" onclick="setIgOrden('${k}')">${l}</button>`).join('')}</div>
+    <div style="overflow-x:auto"><table><thead><tr><th></th><th>Fecha</th><th>Tipo</th><th>Texto</th><th>Alcance</th><th>Visualizaciones</th><th>❤️</th><th>💬</th><th>🔖</th><th>↗️</th><th>➕ Seg.</th><th>Valor</th></tr></thead><tbody>${filas}</tbody>
+      <tfoot><tr style="border-top:2px solid var(--border);background:rgba(201,168,76,.06);font-weight:800"><td colspan="4">TOTAL · ${P.length} publicaciones · ${per.txt}</td>${_redTot(P,['alcance','vistas','likes','comentarios','guardados','compartidos','seguidores_ganados']).map(v=>`<td>${v}</td>`).join('')}<td></td></tr></tfoot></table></div>`;
+  _redGraficoSemana('igChVistas',P,'#D03E8C');
 }
 
 /* ── 🎵 TikTok (api/tiktok: conectar con OAuth una vez, después sync) ──
@@ -14984,8 +14996,24 @@ async function ttSincronizar(silencioso){
   catch(e){if(!silencioso)toast('⚠️ TikTok: '+e.message,'err');}
   _tt.sinc=false;await _ttCargar();renderContTiktok(true);
 }
+let _redCh={};
+/* Visualizaciones por semana (lunes a domingo) de las publicaciones del período elegido */
+function _redGraficoSemana(id,P,color){
+  const cv=document.getElementById(id);if(!cv||typeof Chart==='undefined')return;
+  if(_redCh[id]){try{_redCh[id].destroy();}catch(e){}delete _redCh[id];}
+  const lun=d=>{const x=new Date(d);x.setHours(12,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.toLocaleDateString('sv-SE');};
+  const m=new Map(),n=new Map();P.forEach(p=>{if(p.vistas==null)return;const k=lun(p.d);m.set(k,(m.get(k)||0)+(+p.vistas||0));n.set(k,(n.get(k)||0)+1);});
+  const ks=[...m.keys()].sort();
+  if(ks.length){const a=new Date(ks[0]+'T12:00'),b=new Date(ks[ks.length-1]+'T12:00');for(let d=new Date(a);d<=b;d.setDate(d.getDate()+7)){const k=d.toLocaleDateString('sv-SE');if(!m.has(k)){m.set(k,0);n.set(k,0);}}}
+  const L=[...m.keys()].sort(),tinta=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#7A7260';
+  _redCh[id]=new Chart(cv,{type:'bar',data:{labels:L.map(k=>new Date(k+'T12:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})),
+    datasets:[{label:'Visualizaciones',data:L.map(k=>m.get(k)),backgroundColor:color,borderRadius:4,borderSkipped:'bottom',maxBarThickness:22}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:it=>'Semana del '+it[0].label,
+      label:c=>' '+Math.round(c.parsed.y).toLocaleString('es-AR')+' visualizaciones',afterLabel:c=>' '+(n.get(L[c.dataIndex])||0)+' publicaciones'}}},
+      scales:{x:{ticks:{color:tinta,font:{size:10},maxRotation:0,autoSkip:true},grid:{display:false}},y:{beginAtZero:true,ticks:{color:tinta,font:{size:10},callback:v=>v>=1000?(v/1000)+'K':v},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}}}});
+}
 let _ttCh=null;
-function _ttGraficoVistas(P){
+function _ttGraficoVistas(P){_redGraficoSemana('ttChVistas',P,'#21A0B8');return;
   const cv=document.getElementById('ttChVistas');if(!cv||typeof Chart==='undefined')return;
   if(_ttCh){try{_ttCh.destroy();}catch(e){}_ttCh=null;}
   const lun=d=>{const x=new Date(d);x.setHours(12,0,0,0);x.setDate(x.getDate()-((x.getDay()+6)%7));return x.toLocaleDateString('sv-SE');};
@@ -14995,7 +15023,7 @@ function _ttGraficoVistas(P){
   const L=[...m.keys()].sort();
   const css=getComputedStyle(document.documentElement),tinta=css.getPropertyValue('--muted').trim()||'#7A7260';
   _ttCh=new Chart(cv,{type:'bar',data:{labels:L.map(k=>new Date(k+'T12:00').toLocaleDateString('es-AR',{day:'2-digit',month:'2-digit'})),
-    datasets:[{label:'Visualizaciones',data:L.map(k=>m.get(k)),backgroundColor:'#1A98A6',borderRadius:4,borderSkipped:'bottom',maxBarThickness:22}]},
+    datasets:[{label:'Visualizaciones',data:L.map(k=>m.get(k)),backgroundColor:'#21A0B8',borderRadius:4,borderSkipped:'bottom',maxBarThickness:22}]},
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:it=>'Semana del '+it[0].label,label:c=>' '+Math.round(c.parsed.y).toLocaleString('es-AR')+' visualizaciones'}}},
       scales:{x:{ticks:{color:tinta,font:{size:10},maxRotation:0,autoSkip:true},grid:{display:false}},y:{beginAtZero:true,ticks:{color:tinta,font:{size:10},callback:v=>v>=1000?(v/1000)+'K':v},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}}}});
 }
@@ -15053,7 +15081,7 @@ async function renderContTiktok(sinRecargar){
       <div style="min-width:0;flex:1"><div style="font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${_igE((p.texto||'(sin texto)').split('\n')[0])}</div>
       <div style="font-size:11px;color:var(--muted)">${p.d.toLocaleDateString('es-AR')} · ${_igN(p.vistas)} vistas · ${_igN(p.compartidos)} compartidos</div></div></a>`;
   const top=k=>[...conV].filter(p=>p[k]!=null).sort((a,b)=>b[k]-a[k]).slice(0,5).map(mini).join('')||'<div style="font-size:12px;color:var(--muted)">Sin datos</div>';
-  const ords={fecha:(a,b)=>b.d-a.d,vistas:(a,b)=>(b.vistas||0)-(a.vistas||0),valor:(a,b)=>(b.valor||0)-(a.valor||0),compartidos:(a,b)=>(b.compartidos||0)-(a.compartidos||0)};
+  const ords={fecha:(a,b)=>b.d-a.d,vistas:(a,b)=>(b.vistas||0)-(a.vistas||0),comentarios:(a,b)=>(b.comentarios||0)-(a.comentarios||0),valor:(a,b)=>(b.valor||0)-(a.valor||0),compartidos:(a,b)=>(b.compartidos||0)-(a.compartidos||0)};
   const filas=[...P].sort(ords[_ttOrden]||ords.fecha).map(p=>`<tr>
       <td><a href="${_igE(p.link)}" target="_blank" rel="noopener"><div style="width:36px;height:52px;border-radius:6px;background:var(--card2) center/cover no-repeat;${p.miniatura?`background-image:url('${_igE(p.miniatura)}')`:''}"></div></a></td>
       <td style="white-space:nowrap">${p.d.toLocaleDateString('es-AR')}<div style="font-size:10.5px;color:var(--muted)">${IG_DIAS[p.d.getDay()].slice(0,3)} ${String(p.d.getHours()).padStart(2,'0')}:${String(p.d.getMinutes()).padStart(2,'0')}</div></td>
@@ -15073,12 +15101,14 @@ async function renderContTiktok(sinRecargar){
       ${card('Por duración',barras(porDur,'var(--gold)'))}${card('Por día',barras(porDia,'#8BBDE8'))}${card('Por horario',barras(porHora,'#5DD89A'))}
     </div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px;margin-bottom:14px">
-      ${card('🏆 Más vistas',top('vistas'))}${card('↗️ Más valor (comparten, comentan)',top('valor'))}
+      ${card('🏆 Más vistas',top('vistas'))}${card('💬 Más comentados',top('comentarios'))}${card('↗️ Más valor (comparten, comentan)',top('valor'))}
     </div>
     <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px"><b>Valor</b> = (compartidos×3 + comentarios×2 + likes) cada 100 vistas.</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><span style="font-size:12px;color:var(--muted)">Ordenar por:</span>
-      ${[['fecha','Fecha'],['vistas','Vistas'],['valor','Valor'],['compartidos','Compartidos']].map(([k,l])=>`<button class="tab-btn${_ttOrden===k?' active':''}" onclick="setTtOrden('${k}')">${l}</button>`).join('')}</div>
-    <div style="overflow-x:auto"><table><thead><tr><th></th><th>Fecha</th><th>Texto</th><th>Duración</th><th>Vistas</th><th>❤️</th><th>💬</th><th>↗️</th><th>Valor</th></tr></thead><tbody>${filas}</tbody></table></div>`;
+      ${[['fecha','Fecha'],['vistas','Visualizaciones'],['comentarios','Comentarios'],['compartidos','Compartidos'],['valor','Valor']].map(([k,l])=>`<button class="tab-btn${_ttOrden===k?' active':''}" onclick="setTtOrden('${k}')">${l}</button>`).join('')}</div>
+    <div style="overflow-x:auto"><table><thead><tr><th></th><th>Fecha</th><th>Texto</th><th>Duración</th><th>Visualizaciones</th><th>❤️</th><th>💬</th><th>↗️</th><th>Valor</th></tr></thead><tbody>${filas}</tbody>
+      <tfoot><tr style="border-top:2px solid var(--border);background:rgba(201,168,76,.06);font-weight:800"><td colspan="4">TOTAL · ${P.length} videos · ${per.txt}</td>${_redTot(P,['vistas','likes','comentarios','compartidos']).map(v=>`<td>${v}</td>`).join('')}<td></td></tr></tfoot></table></div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">🔖 TikTok no comparte los <b>guardados</b> con aplicaciones externas: solo vistas, likes, comentarios y compartidos. Los guardados se ven en la app de TikTok (Estadísticas de cada video).</div>`;
   _ttGraficoVistas(P);
 }
 </script>
@@ -15824,6 +15854,11 @@ function renderFlujoTrabajo(){
     ${_fjMapaHtml(FJM_TESORO)}
   </div>
 
+  <div style="background:var(--card2);border:1px solid rgba(201,168,76,.35);border-radius:16px;padding:16px 18px;margin-bottom:24px">
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px"><div style="font-size:15px;font-weight:800;color:var(--gl)">📊 Búsqueda del tesoro en números</div><div style="font-size:12px;color:var(--muted)">el embudo real y lo que hace falta en cada paso para llegar a la meta</div></div>
+    <div id="fjEmbudo"></div>
+  </div>
+
   <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">1 · El recorrido de una persona</div>
   <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px">
     ${FJ_PASOS.map((p,i)=>`<span style="font-size:12px;padding:4px 10px;border-radius:14px;background:var(--card2);border:1px solid var(--border)">${p.ico} ${E(p.t)}</span>${i<FJ_PASOS.length-1?'<span style="color:var(--muted)">→</span>':''}`).join('')}
@@ -15851,6 +15886,7 @@ function renderFlujoTrabajo(){
     ${FJ_AUTO.map(a=>`<div>⚙️ ${E(a)}</div>`).join('')}
   </div>`;
   setTimeout(()=>{_fjMapaLineas(FJM_GENERAL);_fjMapaLineas(FJM_TESORO);},30);
+  _embPintar();
   _fjMapaResize();
 }
 
@@ -15902,7 +15938,7 @@ async function renderPlanNumeros(){
   <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">Todo sale de lo mismo: <b style="color:var(--text)">6 tipos × 20 preguntas = 120 preguntas</b>. Cada pregunta se convierte en contenido para las redes, en una guía para regalar y en stickers para la calle y las sesiones.</div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px;margin-bottom:18px">
     ${big('❓','120','Preguntas','6 tipos × 20',`base`,'#C9A84C')}
-    ${big('📱','264','Piezas de contenido','24 carruseles (4 por tipo, uno por sección, de 5 preguntas con la guía) + 120 reels en español + 120 en portugués','contenido','#E4405F')}
+    ${big('📱','264','Piezas de contenido','24 carruseles (4 por tipo, uno por sección, de 5 preguntas con la guía) + 120 reels en español + 120 en portugués','contenido','#D03E8C')}
     ${big('📘','18','Guías PDF para dar','6 tipos × 3 idiomas (español, portugués e inglés)','dar','#5B9BD5')}
     ${big('📍','360','Stickers físicos','120 para la búsqueda del tesoro + 240 para pegar o regalar en cada sesión (3 por pregunta)','stickers','#3DAA6A')}
   </div>
@@ -15912,7 +15948,7 @@ async function renderPlanNumeros(){
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;font-size:12.5px">
       <div style="background:var(--card);border:1px solid var(--gold);border-radius:12px;padding:10px 14px;font-weight:800">❓ 1 pregunta</div>
       <div style="color:var(--muted);font-size:18px">➜</div>
-      ${[['🎬','1 reel en español','#E4405F'],['🇧🇷','1 reel en portugués','#E4405F'],['🖼️','va en el carrusel de su sección (5 preguntas por carrusel)','#E4405F'],['📘','va dentro de la guía PDF (ES · PT · EN)','#5B9BD5'],['📍','3 stickers: 1 para la búsqueda + 2 para pegar o regalar','#3DAA6A']]
+      ${[['🎬','1 reel en español','#D03E8C'],['🇧🇷','1 reel en portugués','#D03E8C'],['🖼️','va en el carrusel de su sección (5 preguntas por carrusel)','#D03E8C'],['📘','va dentro de la guía PDF (ES · PT · EN)','#5B9BD5'],['📍','3 stickers: 1 para la búsqueda + 2 para pegar o regalar','#3DAA6A']]
         .map(([i,t,c])=>`<div style="background:var(--card);border:1px solid var(--border);border-left:4px solid ${c};border-radius:10px;padding:8px 12px">${i} ${t}</div>`).join('')}
     </div>
   </div>
@@ -15933,6 +15969,98 @@ async function renderPlanNumeros(){
       <td style="text-align:center;font-weight:800">${hechoP(p.k)}/${totP(p.k)}</td></tr>`).join('')}
     </tbody></table></div>
   <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Hoy: al terminar cada sesión se regalan stickers de las preguntas. Los 6 tipos (Recibir, Cuerpo, Vínculos, Viajes, Emprender, Identidad) son los mismos para el contenido, las guías y los stickers.</div>`;
+}
+
+/* ══════════ ESTRATEGIA · Embudo en números de la búsqueda del tesoro ══════════
+   Real (desde el inicio de la campaña): escaneos → giran → contactos (piden la guía o tocan «Agendar») → sesiones con código de flyer.
+   Necesario: se calcula de atrás para adelante desde la meta (sesiones y alumnos que vienen de flyers y stickers),
+   con las tasas reales si ya hay datos suficientes, o con tasas estimadas (editables) mientras tanto.
+   Configuración en configuracion id 'cfg_embudo_tesoro'. */
+const EMB_ID='cfg_embudo_tesoro';
+const EMB_DEF={desde:'2026-11-01',hasta:'2027-05-31',meta_ses:60,meta_alu:20,tasas:{giro:60,contacto:12,sesion:25,clase:30}};
+let _emb=null;
+async function _embCargar(){
+  if(_emb)return _emb;
+  try{const {data}=await _sb.from('configuracion').select('data').eq('id',EMB_ID).maybeSingle();_emb=data?.data?.tasas?{...EMB_DEF,...data.data}:JSON.parse(JSON.stringify(EMB_DEF));}
+  catch(e){_emb=JSON.parse(JSON.stringify(EMB_DEF));}
+  return _emb;
+}
+async function _embEditar(){
+  await _embCargar();const e=_emb;
+  const pr=(t,v)=>{const r=prompt(t,v);return r===null?null:r.trim();};
+  const ms=pr('Meta de SESIONES que vienen de flyers y stickers en la temporada:',e.meta_ses);if(ms===null)return;
+  const ma=pr('Meta de ALUMNOS (clase) que vienen de flyers y stickers:',e.meta_alu);if(ma===null)return;
+  const t=pr('Tasas estimadas en % (se usan hasta que haya datos reales), separadas por coma:\n escaneo→gira, gira→contacto, contacto→sesión, sesión→clase',`${e.tasas.giro}, ${e.tasas.contacto}, ${e.tasas.sesion}, ${e.tasas.clase}`);if(t===null)return;
+  const n=t.split(',').map(x=>parseFloat(x));if(n.length!==4||n.some(x=>!(x>0&&x<=100))){toast('⚠️ Poné 4 porcentajes entre 1 y 100','err');return;}
+  const data={...e,meta_ses:parseInt(ms)||0,meta_alu:parseInt(ma)||0,tasas:{giro:n[0],contacto:n[1],sesion:n[2],clase:n[3]}};
+  const {error}=await _sb.from('configuracion').upsert({id:EMB_ID,data,updated_at:new Date().toISOString()});
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  _emb=data;_embPintar();toast('✓ Embudo actualizado');
+}
+async function _embPintar(){
+  const el=document.getElementById('fjEmbudo');if(!el)return;
+  const e=await _embCargar();
+  el.innerHTML='<div style="font-size:12.5px;color:var(--muted);padding:10px 0">Calculando el embudo…</div>';
+  // ── datos reales
+  let esc=0,gir=0,guiaClick=0,agenda=0,pedidas=0,stk=0,stkTot=0;
+  try{
+    for(let i=0;i<40000;i+=1000){
+      const {data,error}=await _sb.from('regalo_eventos').select('data').filter('data->>pagina','eq','ruleta').gte('created_at',e.desde).range(i,i+999);
+      if(error)break;(data||[]).forEach(r=>{const t=r.data?.tipo;if(t==='page_view')esc++;else if(t==='ruleta_girar'||t==='ruleta_girar_otra')gir++;else if(t==='guia_whatsapp')guiaClick++;else if(t==='agendar_whatsapp')agenda++;});
+      if(!data||data.length<1000)break;
+    }
+  }catch(x){}
+  try{const {data}=await _sb.from('regalo_pedidos').select('data').gte('created_at',e.desde);pedidas=(data||[]).filter(r=>r.data?.flyer||/ruleta|flyer/i.test(r.data?.origen||'')).length;}catch(x){}
+  try{const {data}=await _sb.from('tesoro_premios').select('data');stkTot=(data||[]).length;stk=(data||[]).filter(r=>r.data?.reclamado).length;}catch(x){}
+  const ses=(typeof sessions!=='undefined'?sessions:[]).filter(s=>s.flyer&&(s.fecha||'')>=e.desde&&(s.estado||'Completado')!=='Cancelado').length;
+  const guias=guiaClick+pedidas,contactos=guias+agenda;
+  // ── tasas: reales si hay base suficiente, si no las estimadas
+  const real=(a,b,min)=>b>=min&&a>0?a/b*100:null;
+  const T={giro:real(gir,esc,30),contacto:real(contactos,gir,30),sesion:real(ses,contactos,10)};
+  const usar=k=>T[k]!=null?T[k]:e.tasas[k];
+  // ── necesario para la meta (de atrás para adelante)
+  const nSes=e.meta_ses,nCon=Math.ceil(nSes/(usar('sesion')/100)),nGir=Math.ceil(nCon/(usar('contacto')/100)),nEsc=Math.ceil(nGir/(usar('giro')/100));
+  const hoy=new Date(),fin=new Date(e.hasta+'T23:59'),ini=new Date(e.desde+'T00:00');
+  const semRest=Math.max(1,Math.ceil((fin-hoy)/(7*864e5))),semPas=Math.max(1,Math.ceil((hoy-ini)/(7*864e5)));
+  const pctTiempo=Math.min(100,Math.round((hoy-ini)/(fin-ini)*100));
+  const N=n=>Math.round(n).toLocaleString('es-AR');
+  const etapas=[
+    {ico:'📲',l:'Escanean un QR',s:'flyers y stickers',real:esc,nec:nEsc,c:'#7A7260'},
+    {ico:'🎡',l:'Giran la ruleta',s:'reciben su pregunta',real:gir,nec:nGir,c:'#5B9BD5',tasa:'giro'},
+    {ico:'💬',l:'Te contactan',s:'piden la guía o tocan «Agendar»',real:contactos,nec:nCon,c:'#D4863A',tasa:'contacto',det:`${guias} piden la guía · ${agenda} «Agendar»`},
+    {ico:'✨',l:'Hacen una sesión',s:'cargada con el código del flyer',real:ses,nec:nSes,c:'#C9A84C',tasa:'sesion'},
+    {ico:'🎓',l:'Hacen la clase',s:'se vuelven alumnos',real:null,nec:e.meta_alu,c:'#3DAA6A',tasa:'clase',det:'se estima: todavía no se marca el origen del alumno'}
+  ];
+  const max=Math.max(...etapas.map(x=>Math.max(x.real||0,x.nec||0)),1);
+  const ritmo=x=>x.real==null?null:Math.round(x.real/semPas*10)/10,necSem=x=>Math.max(0,Math.ceil(((x.nec||0)-(x.real||0))/semRest));
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="font-size:12.5px;color:var(--muted);flex:1;min-width:240px">Campaña del <b style="color:var(--text)">${fd(e.desde)}</b> al <b style="color:var(--text)">${fd(e.hasta)}</b> · vamos por el <b style="color:var(--text)">${pctTiempo}%</b> del tiempo · quedan <b style="color:var(--text)">${semRest} semanas</b>.
+        Meta: <b style="color:var(--gl)">+${e.meta_ses} sesiones</b> y <b style="color:var(--gl)">+${e.meta_alu} alumnos</b> que vienen de flyers y stickers.</div>
+      <button class="btn btn-s btn-sm" onclick="_embEditar()">✏️ Ajustar meta y tasas</button>
+    </div>
+    <div style="display:grid;gap:8px">
+      ${etapas.map((x,i)=>{const w=[100,84,68,54,42][i]||40,wr=x.real!=null&&x.nec?Math.min(100,(x.real/x.nec*100)):0;
+        const pct=x.nec?Math.min(100,Math.round((x.real||0)/x.nec*100)):0,tr=x.tasa?(T[x.tasa]!=null?T[x.tasa]:null):null;
+        return`<div style="display:grid;grid-template-columns:minmax(190px,240px) 1fr minmax(150px,190px);gap:12px;align-items:center;background:var(--card);border:1px solid var(--border);border-left:4px solid ${x.c};border-radius:10px;padding:10px 12px">
+          <div><div style="font-size:13px;font-weight:800">${x.ico} ${x.l}</div><div style="font-size:10.5px;color:var(--muted)">${x.s}${x.det?' · '+x.det:''}</div>
+            ${x.tasa?`<div style="font-size:10.5px;margin-top:3px;color:${tr!=null?'var(--gl)':'var(--muted)'}">${tr!=null?'tasa real '+tr.toFixed(1)+'%':'tasa estimada '+e.tasas[x.tasa]+'%'} desde el paso anterior</div>`:''}</div>
+          <div style="height:30px;display:flex;justify-content:center">
+            <div title="Necesario: ${N(x.nec)} · Real: ${x.real!=null?N(x.real):'—'}" style="position:relative;width:${w}%;height:100%;border:1.5px dashed ${x.c};border-radius:8px;overflow:hidden;background:rgba(255,255,255,.02)">
+              ${x.real!=null?`<div style="position:absolute;left:0;top:0;bottom:0;width:${wr}%;min-width:${x.real?4:0}px;background:${x.c};opacity:.9"></div>`:''}
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--text);text-shadow:0 1px 2px #000">${x.real!=null?Math.round(wr)+'% de lo necesario':'sin dato todavía'}</div>
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div style="line-height:1"><span style="font-size:22px;font-weight:800">${x.real!=null?N(x.real):'—'}</span><span style="font-size:13px;color:var(--muted);font-weight:700"> / ${N(x.nec)}</span></div>
+            <div style="font-size:10.5px;color:var(--muted);margin-top:3px">${x.real!=null?pct+'% · ':''}faltan ~${N(necSem(x))}/semana${ritmo(x)!=null?' · hoy '+ritmo(x)+'/sem':''}</div>
+          </div></div>`;}).join('')}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:11px;color:var(--muted);margin-top:10px">
+      <span>Cada franja es lo <b style="color:var(--text)">necesario</b> para la meta de la temporada; el relleno es lo que ya se logró.</span>
+      <span>· 📍 stickers encontrados: <b style="color:var(--text)">${stk}</b> de ${stkTot}</span>
+      <span>· las tasas pasan a ser reales cuando hay suficientes datos (30 escaneos / 30 giros / 10 contactos)</span>
+    </div>`;
 }
 
 </script>
@@ -15979,7 +16107,7 @@ function _pzcHtml(){
         <div style="line-height:1;margin-top:6px"><span style="font-size:40px;font-weight:800">${pub}</span><span style="font-size:18px;font-weight:700;color:var(--muted)"> / 264</span></div></div>
       <div style="flex:1;min-width:240px">
         <div style="font-size:12px;color:var(--muted);line-height:1.5">24 carruseles (4 por tipo, uno por sección, de 5 preguntas con la guía) + 120 reels en español + 120 en portugués</div>
-        <div style="height:8px;background:var(--card);border-radius:4px;overflow:hidden;margin:8px 0 4px"><div style="height:100%;width:${pct}%;background:#E4405F;border-radius:4px"></div></div>
+        <div style="height:8px;background:var(--card);border-radius:4px;overflow:hidden;margin:8px 0 4px"><div style="height:100%;width:${pct}%;background:#D03E8C;border-radius:4px"></div></div>
         <div style="font-size:11.5px;color:var(--muted)">✅ ${pub} publicadas · 📅 ${plan} planificadas · ⚪ ${est.length-pub-plan} sin planificar</div></div>
     </div>
     <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${PZC_TIPOS.map(chipT).join('')}<button class="tab-btn${!f.tipo?' active':''}" onclick="_pzcF.tipo='';renderMktContenido()">Todos</button></div>
