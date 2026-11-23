@@ -897,6 +897,7 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <div id="sec-crm" class="sec">
       <div class="tab-bar mkt-bar-copia" data-activa="crm" style="margin-bottom:18px"></div>
+      <div id="crmGuias"></div>
       <div id="crmContainer"></div>
     </div>
 
@@ -2248,7 +2249,15 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg" style="flex:0 0 90px"><label>Ícono</label><input id="rgIcono" placeholder="🎁" style="text-align:center;font-size:20px"></div>
    <div class="fg"><label>Descripción breve</label><input id="rgDesc" placeholder="Una frase que describa el regalo"></div>
   </div>
-  <div class="fg"><label>URL del PDF *</label><input id="rgPdf" placeholder="https://drive.google.com/... o link de Supabase Storage"></div>
+  <div class="fg"><label>URL del PDF (español) *</label><input id="rgPdf" placeholder="https://drive.google.com/... o link de Supabase Storage"></div>
+  <div class="fg-row">
+   <div class="fg"><label>PDF en portugués (opcional)</label><input id="rgPdfPt" placeholder="https://..."></div>
+   <div class="fg"><label>PDF en inglés (opcional)</label><input id="rgPdfEn" placeholder="https://..."></div>
+  </div>
+  <div class="fg"><label>Guía de 20 preguntas · área</label>
+   <select id="rgArea"><option value="">— No es una guía de 20 preguntas —</option><option value="Consciencia">Consciencia</option><option value="Recibir">Recibir</option><option value="Cuerpo">Cuerpo</option><option value="Vínculos">Vínculos</option><option value="Propósito">Propósito</option><option value="Identidad">Identidad</option></select>
+   <div style="font-size:11px;color:var(--muted);margin-top:4px">Si elegís un área, la portada de juancruzconsciencia.lat la entrega cuando alguien toca ese botón, en el idioma de la persona (si falta ese idioma, va la de español). Marca/Portal tiene que ser Juancruz Consciencia o Ambos.</div>
+  </div>
   <div class="fg">
    <label>Mensaje WhatsApp</label>
    <textarea id="rgMsgWA" style="min-height:100px" placeholder="Hola {nombre}! Te mando tu regalo..."></textarea>
@@ -11518,6 +11527,8 @@ function _renderRgLista(){
                 <span class="bdg ${activo?'b-gr':'b-gy'}" style="font-size:9px">${activo?'Activo':'Inactivo'}</span>
                 ${r.marca?`<span style="font-size:9px;padding:1px 7px;border-radius:10px;background:rgba(201,168,76,.12);color:var(--gold);font-weight:700">${MARCA_L[r.marca]||r.marca}</span>`:''}
                 ${!r.pdfUrl?`<span style="font-size:9px;color:var(--red);font-weight:700">⚠️ Sin PDF</span>`:''}
+                ${r.area?`<span style="font-size:9px;padding:1px 7px;border-radius:10px;background:rgba(193,122,72,.15);color:#E8A87C;font-weight:700">20 preguntas · ${r.area}</span>`:''}
+                ${r.area?`<span style="font-size:9px;color:var(--muted)">${['es','pt','en'].map(l=>(l==='es'?r.pdfUrl:r['pdfUrl_'+l])?l.toUpperCase():'<s>'+l.toUpperCase()+'</s>').join(' · ')}</span>`:''}
               </div>
             </div>
             <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
@@ -11545,6 +11556,9 @@ function openRegaloModal(id){
   document.getElementById('rgIcono').value=r?.icono||'🎁';
   document.getElementById('rgDesc').value=r?.descripcion||'';
   document.getElementById('rgPdf').value=r?.pdfUrl||'';
+  document.getElementById('rgPdfPt').value=r?.pdfUrl_pt||'';
+  document.getElementById('rgPdfEn').value=r?.pdfUrl_en||'';
+  document.getElementById('rgArea').value=r?.area||'';
   document.getElementById('rgMsgWA').value=r?.mensajeWA||'Hola {nombre}! ✨\n\nTe comparto este regalo especial de La Casa del Profit:\n\n📄 *{nombre_regalo}*\n\nDescargalo acá: {pdfUrl}\n\n¡Que lo disfrutes! 🌀\nJuan Cruz';
   document.getElementById('rgEmailAsunto').value=r?.emailAsunto||'Tu regalo: {nombre_regalo} ✨';
   document.getElementById('rgMsgEmail').value=r?.mensajeEmail||'Hola {nombre},\n\nTe comparto este regalo especial de La Casa del Profit:\n\n📄 {nombre_regalo}\n\nDescargalo acá: {pdfUrl}\n\n¡Que lo disfrutes!\n\n✨ Juan Cruz\nLa Casa del Profit';
@@ -11563,6 +11577,9 @@ function saveRegalo(){
     icono:document.getElementById('rgIcono').value.trim()||'🎁',
     descripcion:document.getElementById('rgDesc').value.trim(),
     pdfUrl,
+    pdfUrl_pt:document.getElementById('rgPdfPt').value.trim(),
+    pdfUrl_en:document.getElementById('rgPdfEn').value.trim(),
+    area:document.getElementById('rgArea').value,
     mensajeWA:document.getElementById('rgMsgWA').value.trim(),
     emailAsunto:document.getElementById('rgEmailAsunto').value.trim(),
     mensajeEmail:document.getElementById('rgMsgEmail').value.trim(),
@@ -15082,5 +15099,67 @@ async function renderContTiktok(sinRecargar){
 }
 </script>
 
+<script>
+/* ══════════ CRM · Guías pedidas (tabla regalo_pedidos — ver 4_BASE_DE_DATOS/42_regalo_pedidos.sql) ══════════
+   Cada persona que descarga una guía de 20 preguntas desde la portada aparece acá para contactarla en el día. */
+let _gpRows=[],_gpVerTodas=false;
+const _gpE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const _GP_AREA={pt:{Consciencia:'Consciência',Recibir:'Receber',Cuerpo:'Corpo',Vínculos:'Vínculos',Propósito:'Propósito',Identidad:'Identidade'},en:{Consciencia:'Consciousness',Recibir:'Receiving',Cuerpo:'Body',Vínculos:'Bonds',Propósito:'Purpose',Identidad:'Identity'}};
+function _gpMsg(d){
+  const n=(d.nombre||'').split(' ')[0],l=d.idioma||'es',a=(_GP_AREA[l]&&_GP_AREA[l][d.area])||d.area||'';
+  if(l==='pt')return {wa:`Oi ${n}! Aqui é o Juan Cruz 🌿 Você conseguiu ver o guia de 20 perguntas de ${a}? Qual pergunta mais ressoou em você?`,asunto:`Seu guia de 20 perguntas de ${a}`};
+  if(l==='en')return {wa:`Hi ${n}! It's Juan Cruz 🌿 Did you get to look at the 20-question guide on ${a}? Which question resonated with you the most?`,asunto:`Your 20-question guide on ${a}`};
+  return {wa:`Hola ${n}! Soy Juan Cruz 🌿 ¿Pudiste ver la guía de 20 preguntas de ${a}? ¿Qué pregunta te resonó más?`,asunto:`Tu guía de 20 preguntas de ${a}`};
+}
+function _gpHace(ts){
+  const m=Math.round((Date.now()-new Date(ts).getTime())/60000);
+  if(m<60)return `hace ${Math.max(m,1)} min`;const h=Math.round(m/60);if(h<24)return `hace ${h} h`;const d=Math.round(h/24);return `hace ${d} día${d>1?'s':''}`;
+}
+async function renderCrmGuias(){
+  const box=document.getElementById('crmGuias');if(!box)return;
+  const {data,error}=await _sb.from('regalo_pedidos').select('id,data,created_at').order('created_at',{ascending:false}).limit(300);
+  if(error){box.innerHTML='';return;}   // tabla todavía no creada
+  _gpRows=(data||[]).map(r=>({id:r.id,...(r.data||{}),ts:(r.data&&r.data.ts)||r.created_at}));
+  _gpPintar();
+}
+function _gpPintar(){
+  const box=document.getElementById('crmGuias');if(!box)return;
+  const hoy=new Date().toISOString().slice(0,10);
+  const pend=_gpRows.filter(r=>!r.contactado);
+  const deHoy=_gpRows.filter(r=>(r.ts||'').slice(0,10)===hoy);
+  const lista=_gpVerTodas?_gpRows:pend;
+  const FL={es:'🇦🇷 ES',pt:'🇧🇷 PT',en:'🇺🇸 EN'};
+  box.innerHTML=`<div style="background:linear-gradient(135deg,rgba(193,122,72,.10),rgba(193,122,72,.03));border:1px solid rgba(193,122,72,.35);border-radius:16px;padding:16px 18px;margin-bottom:20px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:${lista.length?'12px':'0'}">
+      <div style="font-size:14px;font-weight:700;color:#E8A87C">🎁 Guías pedidas</div>
+      <span class="bdg ${pend.length?'b-or':'b-gr'}">${pend.length} por contactar</span>
+      <span style="font-size:11px;color:var(--muted)">${deHoy.length} hoy · ${_gpRows.length} en total</span>
+      <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="_gpVerTodas=!_gpVerTodas;_gpPintar()">${_gpVerTodas?'Ver solo por contactar':'Ver todas'}</button>
+    </div>
+    ${!lista.length?(_gpRows.length?'<div style="font-size:12px;color:var(--muted);margin-top:8px">✓ Ya contactaste a todos.</div>':''):`<div style="display:flex;flex-direction:column;gap:6px">${lista.map(r=>{
+      const m=_gpMsg(r);const cel=(r.celular||'').replace(/\D/g,'');
+      const esHoy=(r.ts||'').slice(0,10)===hoy;
+      return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-left:3px solid ${r.contactado?'var(--green)':(esHoy?'#E8A87C':'var(--muted)')};border-radius:10px;padding:9px 12px;opacity:${r.contactado?'.6':'1'}">
+        <div style="flex:1;min-width:180px">
+          <div style="font-size:13px;font-weight:700">${_gpE(r.nombre)} <span style="font-weight:400;color:var(--muted);font-size:11px">· ${_gpHace(r.ts)}</span></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Guía de <b style="color:var(--gl)">${_gpE(r.area)}</b> · ${FL[r.idioma]||r.idioma||''}${r.entregado?'':' · <span style="color:var(--or)">⚠️ sin PDF cargado: mandásela vos</span>'}${cel?' · 📱 '+_gpE(r.celular):''}${r.email?' · ✉️ '+_gpE(r.email):''}</div>
+        </div>
+        ${cel?`<a class="btn btn-s btn-sm" href="https://wa.me/${cel}?text=${encodeURIComponent(m.wa)}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}
+        ${r.email?`<a class="btn btn-s btn-sm" href="mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent(m.asunto)}&body=${encodeURIComponent(m.wa)}">✉️ Mail</a>`:''}
+        <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer;white-space:nowrap"><input type="checkbox" ${r.contactado?'checked':''} onchange="_gpMarcar('${_gpE(r.id)}',this.checked)" style="accent-color:var(--green)"> Contactada</label>
+      </div>`;}).join('')}</div>`}
+  </div>`;
+}
+async function _gpMarcar(id,val){
+  const r=_gpRows.find(x=>x.id===id);if(!r)return;
+  const {id:_i,...d}=r;const data={...d,contactado:val,contactadoTs:val?new Date().toISOString():null};
+  const {error}=await _sb.from('regalo_pedidos').update({data}).eq('id',id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  Object.assign(r,{contactado:val,contactadoTs:data.contactadoTs});_gpPintar();
+  toast(val?'✓ Marcada como contactada':'Vuelve a «por contactar»');
+}
+/* se dibuja junto con el CRM */
+if(typeof renderCRM==='function'){const _renderCRMbase=renderCRM;renderCRM=function(){const r=_renderCRMbase.apply(this,arguments);renderCrmGuias();return r;};}
+</script>
 </body>
 </html>
