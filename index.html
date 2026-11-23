@@ -60,6 +60,8 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .nl{font-size:9px;color:var(--gd);font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0 8px;margin:12px 0 5px;}
 .ni{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;cursor:pointer;font-size:13px;color:var(--muted);transition:all .15s;margin-bottom:1px;}
 .ni:hover{background:rgba(201,168,76,.08);color:var(--gl);}
+.ni-sub{padding:7px 10px 7px 30px;font-size:12.5px;}
+.ni-sub .ico{font-size:13px;}
 .ni.active{background:rgba(201,168,76,.12);color:var(--gl);border:1px solid rgba(201,168,76,.2);}
 .ni .ico{font-size:16px;width:20px;text-align:center;}
 .s-foot{padding:14px;border-top:1px solid #1E1C10;}
@@ -351,6 +353,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
     <div class="ni" id="niMarketing" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span><span id="crmBadge" title="Prospectos nuevos en el CRM" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
+    <div class="ni ni-sub" id="niTesoro" onclick="irTesoro()"><span class="ico">🗺️</span><span>Búsqueda del tesoro</span></div>
     <!-- Contenido y CRM ahora viven dentro de Marketing (pestañas). Se dejan ocultos porque otras funciones los buscan. -->
     <div class="ni" style="display:none" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
     <div class="ni" style="display:none" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
@@ -860,7 +863,6 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
-      <button class="tab-btn" id="mktTabFlyers" onclick="setMktTab('flyers')">📱 Flyers</button>
       <button class="tab-btn" id="mktTabTesoro" onclick="setMktTab('tesoro')">🗺️ Búsqueda del Tesoro</button>
       <button class="tab-btn" onclick="irMkt('contenido')">📱 Contenido</button>
       <button class="tab-btn" onclick="irMkt('crm')">👥 CRM<span class="mkt-crm-badge"></span></button>
@@ -9063,7 +9065,13 @@ function doImport(){
 let mktTab='resumen';
 /* Contenido y CRM se abren como pestañas de Marketing (sus secciones siguen siendo sec-contenido / sec-crm).
    irMkt: ir a cualquier pestaña de Marketing desde donde estés. */
+function irTesoro(sub){
+  if(sub)_tesoroSubTab=sub;
+  irMkt('tesoro');
+  const nt=document.getElementById('niTesoro');if(nt)nt.classList.add('active');
+}
 function irMkt(t){
+  if(t==='flyers'){_tesoroSubTab='flyers';t='tesoro';}
   const ni=document.getElementById('niMarketing');
   if(t==='contenido'||t==='crm'){nav(t,ni);return;}
   if(curSec!=='marketing')nav('marketing',ni);
@@ -9081,6 +9089,7 @@ function _mktPintarCopias(activa){
 }
 function setMktTab(t){
   mktTab=t;
+  {const nt=document.getElementById('niTesoro');if(nt)nt.classList.toggle('active',t==='tesoro');}
   ['resumen','pub','conv','ret','meta','regalos','stats','flyers','tesoro'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
@@ -10594,7 +10603,7 @@ let _flyerDias=30,_flyerEvs=null,_flyerCargadoDias=null;
 
 function setFlyerDias(d){_flyerDias=d;renderMktFlyers();}
 async function renderMktFlyers(){
-  const el=document.getElementById('mktFlyers');if(!el)return;
+  const el=document.getElementById('tzFlyers')||document.getElementById('mktFlyers');if(!el)return;
   if(_flyerCargadoDias!==_flyerDias){
     el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Cargando resultados…</div>';
     const desde=_flyerDias?new Date(Date.now()-_flyerDias*864e5).toISOString():null;
@@ -10651,7 +10660,7 @@ async function renderMktFlyers(){
   const totIdi=Object.values(idiomas).reduce((a,b)=>a+b,0);
   const totDim=Object.values(dims).reduce((a,b)=>a+b,0);
   const otrosList=Object.entries(otros).sort((a,b)=>b[1].esc-a[1].esc);
-  document.getElementById('mktFlyers').innerHTML=`
+  el.innerHTML=`
     <div class="tab-bar" style="margin-bottom:14px">${periodo}</div>
     <div class="kpi-grid">
       <div class="kc go"><div class="ki">📱</div><div class="kl">Escaneos de flyers</div><div class="kv">${tot.esc}</div><div class="ks">${conEsc.length} de ${FLYER_CODIGOS.length} flyers con escaneos</div></div>
@@ -10711,7 +10720,7 @@ function copiarLinkFlyer(k){
    directo a Supabase y se refresca al toque, sin pasar por el estado global. */
 let _tesoroPremios=[];
 let _tesoroRuleta=[];
-let _tesoroSubTab='stickers';
+let _tesoroSubTab='flyers';
 let _tzMap=null, _tzMarker=null, _tzLat=null, _tzLng=null;
 const TESORO_CAT_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 const TESORO_URL_BASE='https://juancruzconsciencia.lat/tesoro.html?id=';
@@ -10742,17 +10751,20 @@ function setTesoroSubTab(t){
 function _renderTesoroTab(){
   const el=document.getElementById('mktTesoro');
   if(!el)return;
-  const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px">
+  const subTabBar=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px">
+    <button class="tab-btn ${_tesoroSubTab==='flyers'?'active':''}" onclick="setTesoroSubTab('flyers')">📱 Flyers</button>
     <button class="tab-btn ${_tesoroSubTab==='stickers'?'active':''}" onclick="setTesoroSubTab('stickers')">📍 Stickers</button>
     <button class="tab-btn ${_tesoroSubTab==='ruleta'?'active':''}" onclick="setTesoroSubTab('ruleta')">🎡 Ruleta de premios</button>
     <button class="tab-btn ${_tesoroSubTab==='historial'?'active':''}" onclick="setTesoroSubTab('historial')">🏆 Historial</button>
     <button class="tab-btn ${_tesoroSubTab==='mapa'?'active':''}" onclick="setTesoroSubTab('mapa')">🗺️ Mapa</button>
   </div>`;
-  const body = _tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab()
+  const body = _tesoroSubTab==='flyers' ? '<div id="tzFlyers"></div>'
+    : _tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab()
     : _tesoroSubTab==='historial' ? _renderTesoroHistorialTab()
     : _tesoroSubTab==='mapa' ? _renderTesoroMapaTab()
     : _renderTesoroStickersTab();
   el.innerHTML = subTabBar + body;
+  if(_tesoroSubTab==='flyers') renderMktFlyers();
   if(_tesoroSubTab==='stickers') setTimeout(_tzInitMap, 0);
   if(_tesoroSubTab==='mapa') setTimeout(_tzInitMapaGeneral, 0);
 }
