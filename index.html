@@ -349,7 +349,6 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('programas',this)"><span class="ico">📚</span><span>Programas</span></div>
     <!-- Biblioteca ahora es una pestaña de Herramientas. Se deja oculto porque otras funciones lo buscan. -->
     <div class="ni" style="display:none" onclick="nav('biblioteca',this)"><span class="ico">📖</span><span>Biblioteca</span></div>
-    <div class="ni" onclick="nav('fidelidad',this)"><span class="ico">🎡</span><span>Ruleta Fidelidad</span></div>
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
     <div class="ni" id="niMarketing" onclick="irMkt('contenido')"><span class="ico">📣</span><span>Marketing</span><span id="crmBadge" title="Prospectos nuevos en el CRM" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
@@ -725,6 +724,8 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- RULETA FIDELIDAD -->
     <div id="sec-fidelidad" class="sec">
+     <!-- La Ruleta de fidelidad es una pestaña de Búsqueda del tesoro: acá se pinta la misma barra de pestañas -->
+     <div id="tzBarFid"></div>
      <div style="display:flex;gap:6px;margin-bottom:18px">
       <button class="tab-btn active" id="fidTabPool" onclick="setFidTab('pool')">🎡 Premios</button>
       <button class="tab-btn" id="fidTabGiros" onclick="setFidTab('giros')">🏆 Giros realizados</button>
@@ -856,6 +857,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div id="sec-marketing" class="sec">
      <div class="tab-bar" style="margin-bottom:18px">
       <button class="tab-btn" onclick="irMkt('contenido')">📱 Redes sociales</button>
+      <button class="tab-btn" id="mktTabEstrategia" onclick="setMktTab('estrategia')">🧭 Estrategia</button>
       <button class="tab-btn active" id="mktTabResumen" onclick="setMktTab('resumen')">📊 Resumen</button>
       <button class="tab-btn" id="mktTabPub" onclick="setMktTab('pub')">📢 Publicidades</button>
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
@@ -866,6 +868,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" onclick="irMkt('crm')">👥 CRM<span class="mkt-crm-badge"></span></button>
      </div>
      <div id="mktResumen"></div>
+     <div id="mktEstrategia" style="display:none"></div>
      <!-- Números de campañas: vienen de Publicidades, por eso se muestran solo en esa pestaña -->
      <div id="mktKPIs" class="kpi-grid" style="margin-bottom:18px;display:none"></div>
      <div id="mktPub" style="display:none"></div>
@@ -3006,7 +3009,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={encuentros:'🤝 Encuentros',tesoro:'🗺️ Búsqueda del tesoro',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Redes sociales',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',tesoro:'🗺️ Búsqueda del tesoro',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🗺️ Búsqueda del tesoro · 💛 Ruleta de fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Redes sociales',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -9102,13 +9105,14 @@ function setMktTab(t){
   if(t==='tesoro'||t==='flyers'){irTesoro(t==='flyers'?'flyers':undefined);return;}
   mktTab=t;
   {const k=document.getElementById('mktKPIs');if(k)k.style.display=t==='pub'?'':'none';}
-  ['resumen','pub','conv','ret','meta','regalos','stats','flyers','tesoro'].forEach(x=>{
+  ['resumen','estrategia','pub','conv','ret','meta','regalos','stats','flyers','tesoro'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
     if(document.getElementById(tabId))document.getElementById(tabId).classList.toggle('active',x===t);
     if(document.getElementById(contentId))document.getElementById(contentId).style.display=x===t?'':'none';
   });
   if(t==='resumen')renderMktResumen();
+  else if(t==='estrategia')renderMktEstrategia();
   else if(t==='pub')renderMktPub();
   else if(t==='conv')renderMktConv();
   else if(t==='ret')renderMktRet();
@@ -10753,6 +10757,19 @@ async function renderMktTesoro(){
   _renderTesoroTab();
 }
 
+/* Barra de pestañas de Búsqueda del tesoro. fuera=true: se dibuja en otra sección (Ruleta de fidelidad) */
+function _tzBarra(activa,fuera){
+  const b=(t,l)=>`<button class="tab-btn ${activa===t?'active':''}" onclick="${fuera?`irTesoro('${t}')`:`setTesoroSubTab('${t}')`}">${l}</button>`;
+  return `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px">
+    ${b('resumen','📊 Resumen')}${b('flyers','📱 Flyers')}${b('stickers','📍 Stickers')}${b('ruleta','🎡 Ruleta de premios')}
+    ${b('historial','🏆 Historial')}${b('mapa','🗺️ Mapa')}${b('albumcat','📖 Álbum de preguntas')}${b('album','🙋 Álbum en el portal del ser')}
+    <button class="tab-btn ${activa==='fidelidad'?'active':''}" onclick="irFidelidad()">💛 Ruleta de fidelidad</button>
+  </div>`;
+}
+function irFidelidad(){
+  nav('fidelidad',document.getElementById('niTesoro'));
+  const b=document.getElementById('tzBarFid');if(b)b.innerHTML=_tzBarra('fidelidad',true);
+}
 function setTesoroSubTab(t){
   _tesoroSubTab=t;
   _renderTesoroTab();
@@ -10761,16 +10778,7 @@ function setTesoroSubTab(t){
 function _renderTesoroTab(){
   const el=document.getElementById('mktTesoro');
   if(!el)return;
-  const subTabBar=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px">
-    <button class="tab-btn ${_tesoroSubTab==='resumen'?'active':''}" onclick="setTesoroSubTab('resumen')">📊 Resumen</button>
-    <button class="tab-btn ${_tesoroSubTab==='flyers'?'active':''}" onclick="setTesoroSubTab('flyers')">📱 Flyers</button>
-    <button class="tab-btn ${_tesoroSubTab==='stickers'?'active':''}" onclick="setTesoroSubTab('stickers')">📍 Stickers</button>
-    <button class="tab-btn ${_tesoroSubTab==='ruleta'?'active':''}" onclick="setTesoroSubTab('ruleta')">🎡 Ruleta de premios</button>
-    <button class="tab-btn ${_tesoroSubTab==='historial'?'active':''}" onclick="setTesoroSubTab('historial')">🏆 Historial</button>
-    <button class="tab-btn ${_tesoroSubTab==='mapa'?'active':''}" onclick="setTesoroSubTab('mapa')">🗺️ Mapa</button>
-    <button class="tab-btn ${_tesoroSubTab==='albumcat'?'active':''}" onclick="setTesoroSubTab('albumcat')">📖 Álbum de preguntas</button>
-    <button class="tab-btn ${_tesoroSubTab==='album'?'active':''}" onclick="setTesoroSubTab('album')">🙋 Álbum en el portal del ser</button>
-  </div>`;
+  const subTabBar=_tzBarra(_tesoroSubTab,false);
   const body = _tesoroSubTab==='resumen' ? '<div id="tzResumen"></div>'
     : _tesoroSubTab==='flyers' ? '<div id="tzFlyers"></div>'
     : _tesoroSubTab==='albumcat' ? '<div id="tzAlbumCat"></div>'
@@ -15372,6 +15380,67 @@ async function _albEditarFig(n){
   const {error}=await _sb.from('album_figuritas').upsert({id:r?.id||id,data});
   if(error){toast('⚠️ '+error.message,'err');return;}
   toast(t.trim()?'✓ Pregunta guardada':'Pregunta oculta');_renderAlbumCatalogo();
+}
+</script>
+<script>
+/* ══════════ MARKETING · 🧭 Estrategia de verano (Búzios · Arraial do Cabo · Cabo Frío) ══════════
+   Texto editable desde el admin. Se guarda en la tabla configuracion (id 'cfg_estrategia_verano'),
+   así se ve igual en todos los dispositivos. En cada bloque: una línea que empieza con "- " es un punto de la lista. */
+const EST_ID='cfg_estrategia_verano';
+const EST_DEF={
+  titulo:'Verano 2026–2027 · Búzios, Arraial do Cabo y Cabo Frío',
+  periodo:'Diciembre 2026 → marzo 2027',
+  bloques:[
+    {k:'objetivo',ico:'🎯',t:'Objetivo del verano',x:'Aprovechar la temporada alta para que más personas (turistas y locales) conozcan Barras de Access y se lleven herramientas energéticas para toda su vida.\n- Llenar la agenda de sesiones de Barras\n- Sumar alumnos a las clases para aprender Barras\n- Hacer crecer las 2 comunidades: Barras en Búzios y Consciencia en Búzios\n- Crecer en redes con contenido de cada ciudad'},
+    {k:'buzios',ico:'🏝️',t:'Búzios · la base',x:'- 10 flyers con QR (BUZ-01 a BUZ-10) → ruleta, guías de regalo y búsqueda del tesoro\n- Stickers de la búsqueda del tesoro en lugares clave\n- Encuentros de Consciencia en Búzios (abiertos y gratuitos)\n- Encuentro mensual de Barras en Búzios\n- Clase de Barras: sáb 12/12 en Posada Luz y Brillo\n- Sesiones presenciales + gift card como regalo\n- Aliados: posadas y hostels (20% para cada parte, sesión de regalo, flyer con QR)'},
+    {k:'arraial',ico:'🐠',t:'Arraial do Cabo',x:'- 5 flyers con QR (ARR-01 a ARR-05)\n- Sumar 2–3 posadas o hostels aliados\n- Sesiones presenciales (definir lugar y días fijos)\n- Contenido mostrando Arraial: playas, trekking, la experiencia de vivir acá\n- A definir: encuentros en Arraial'},
+    {k:'cabofrio',ico:'🌊',t:'Cabo Frío',x:'- 5 flyers con QR (CAB-01 a CAB-05)\n- Buscar 1–2 aliados para empezar (posada, centro de bienestar o yoga)\n- A definir: días de sesiones en Cabo Frío\n- Medir qué flyers funcionan antes de invertir más'},
+    {k:'redes',ico:'📱',t:'Redes sociales',x:'- 3 publicaciones por día en Instagram y 3 en TikTok\n- Cada encuentro y cada clase con su contenido 1–2 semanas antes\n- Mostrar las 3 ciudades: cada una con su propio contenido\n- Medir todo en Marketing → Redes sociales (se actualiza solo)'},
+    {k:'calendario',ico:'📅',t:'Calendario',x:'- Diciembre: clase de Barras 12/12 · flyers y stickers en las 3 ciudades · primeros aliados\n- Enero (temporada alta): máxima presencia en la calle y en redes · encuentros todas las semanas\n- Febrero (carnaval): propuestas especiales para turistas · gift cards\n- Marzo: cierre del verano · medir resultados · planificar el invierno'},
+    {k:'medir',ico:'📊',t:'Cómo lo voy a medir',x:'- Escaneos y giros de cada flyer, por ciudad (Búsqueda del tesoro → Flyers)\n- Sesiones agendadas y su origen\n- Inscriptos a las clases\n- Seguidores, vistas e interacciones (Redes sociales → Resumen)\n- Guías de regalo pedidas y aliados nuevos (resumen diario de Telegram)'}
+  ]
+};
+let _est=null,_estEditando=false;
+async function renderMktEstrategia(){
+  const el=document.getElementById('mktEstrategia');if(!el)return;
+  if(!_est){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando estrategia…</div>';
+    try{const {data}=await _sb.from('configuracion').select('data').eq('id',EST_ID).maybeSingle();_est=data?.data?.bloques?data.data:JSON.parse(JSON.stringify(EST_DEF));_est._guardada=!!data?.data?.bloques;}
+    catch(e){_est=JSON.parse(JSON.stringify(EST_DEF));}
+  }
+  const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const texto=x=>{const ls=String(x||'').split('\n');let h='',ul=false;
+    ls.forEach(l=>{const t=l.trim();if(!t){if(ul){h+='</ul>';ul=false;}return;}
+      if(/^[-•]\s+/.test(t)){if(!ul){h+='<ul style="margin:6px 0 0 18px;padding:0">';ul=true;}h+=`<li style="margin:3px 0">${E(t.replace(/^[-•]\s+/,''))}</li>`;}
+      else{if(ul){h+='</ul>';ul=false;}h+=`<p style="margin:4px 0">${E(t)}</p>`;}});
+    return h+(ul?'</ul>':'');};
+  const cab=_estEditando
+    ?`<div class="fg" style="margin:0 0 10px"><label>Título</label><input id="estTit" value="${E(_est.titulo)}"></div><div class="fg" style="margin:0"><label>Período</label><input id="estPer" value="${E(_est.periodo)}"></div>`
+    :`<div style="font-size:18px;font-weight:800;color:var(--gl)">${E(_est.titulo)}</div><div style="font-size:12px;color:var(--muted);margin-top:2px">🗓 ${E(_est.periodo)}</div>`;
+  el.innerHTML=`
+    <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+      <div style="flex:1;min-width:240px">${cab}</div>
+      ${_estEditando
+        ?`<button class="btn btn-s btn-sm" onclick="_estEditando=false;_est=null;renderMktEstrategia()">Cancelar</button><button class="btn btn-p btn-sm" onclick="guardarEstrategia()">💾 Guardar</button>`
+        :`<button class="btn btn-s btn-sm" onclick="_estEditando=true;renderMktEstrategia()">✏️ Editar</button>`}
+    </div>
+    ${!_est._guardada&&!_estEditando?`<div style="background:rgba(201,168,76,.08);border:1px dashed rgba(201,168,76,.35);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12.5px;color:var(--muted)">💡 Esto es un <b style="color:var(--gold)">borrador</b> armado con lo que ya está en marcha (flyers, stickers, aliados, encuentros, clase, redes). Tocá <b>✏️ Editar</b> para ajustarlo a tu plan y guardarlo.</div>`:''}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px">
+      ${_est.bloques.map((b,i)=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;${b.k==='objetivo'?'grid-column:1/-1;border-color:rgba(201,168,76,.35)':''}">
+        <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px">${b.ico} ${_estEditando?`<input id="estT${i}" value="${E(b.t)}" style="width:auto;display:inline-block;font-weight:700">`:E(b.t)}</div>
+        ${_estEditando?`<textarea id="estX${i}" rows="${Math.max(4,String(b.x).split('\n').length+1)}" style="width:100%;font-size:12.5px;line-height:1.5">${E(b.x)}</textarea><div style="font-size:10.5px;color:var(--muted)">Cada línea que empieza con "- " es un punto de la lista.</div>`
+          :`<div style="font-size:12.5px;line-height:1.55;color:var(--text)">${texto(b.x)}</div>`}
+      </div>`).join('')}
+    </div>
+    ${_est.actualizado&&!_estEditando?`<div style="font-size:11px;color:var(--muted);margin-top:12px">Última edición: ${new Date(_est.actualizado).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'})}</div>`:''}`;
+}
+async function guardarEstrategia(){
+  const $=id=>document.getElementById(id);
+  const data={titulo:$('estTit').value.trim()||EST_DEF.titulo,periodo:$('estPer').value.trim(),
+    bloques:_est.bloques.map((b,i)=>({k:b.k,ico:b.ico,t:$('estT'+i).value.trim()||b.t,x:$('estX'+i).value})),actualizado:new Date().toISOString()};
+  const {error}=await _sb.from('configuracion').upsert({id:EST_ID,data,updated_at:data.actualizado});
+  if(error){toast('⚠️ No se pudo guardar: '+error.message,'err');return;}
+  _est={...data,_guardada:true};_estEditando=false;renderMktEstrategia();toast('✓ Estrategia guardada');
 }
 </script>
 </body>
