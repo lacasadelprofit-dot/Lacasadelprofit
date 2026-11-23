@@ -8269,7 +8269,7 @@ function saveSes(){
 }
 // Ocupa en la agenda de la web (tabla turnos) los horarios que pisa una sesión de Juan Cruz.
 // Mismos horarios que AGENDA.horas de la landing y HORAS de agenda.html.
-const AGENDA_HORAS=['08:00','09:20','10:40'];
+const AGENDA_HORAS=['08:00','09:20','10:40','18:30','19:50'];
 async function syncTurnoWeb(ses,borrar){
   try{
     await _sb.from('turnos').delete().eq('estado','bloqueado').eq('data->>sesId',String(ses.id));
@@ -12579,15 +12579,85 @@ function editStartPoint(plat,label){
   saveStartPoint(plat,f,v);
 }
 
+/* ⚙️ Metas del mes: panel con lo que va del mes, el mes anterior y sugerencias de un toque */
+function _mmDatosMes(mes){
+  const mesDe=f=>{const d=new Date(f);return isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');};
+  const ig=(_ig.posts||[]).filter(p=>mesDe(p.fecha)===mes),tt=(_tt.posts||[]).filter(p=>mesDe(p.fecha)===mes);
+  const su=(a,k)=>a.reduce((s,p)=>s+(+p[k]||0),0);
+  return {posts:ig.length+tt.length,posts_ig:ig.length,posts_tt:tt.length,alcance:su(ig,'alcance'),vistas_tt:su(tt,'vistas')};
+}
+function _mmMesAnt(mes){const d=new Date(mes+'-15');d.setMonth(d.getMonth()-1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
 function editMetasMes(){
-  const g=getMonthGoals(_resumenMes);
-  const mesLabel=new Date(_resumenMes+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
-  const p=prompt(`Meta de posts para ${mesLabel}:`,g.posts_mes||'');
-  if(p===null)return;
-  const a=prompt(`Meta de alcance para ${mesLabel}:`,g.alcance_mes||'');
-  if(a===null)return;
-  saveMonthGoals(_resumenMes,{...g,posts_mes:parseInt(p)||0,alcance_mes:parseInt(a)||0});
-  renderContResumen();
+  const mes=_resumenMes,ant=_mmMesAnt(mes),g=getMonthGoals(mes),gAnt=getMonthGoals(ant);
+  const hoy=_mmDatosMes(mes),prev=_mmDatosMes(ant),fol=getFollowers(mes);
+  const lbl=m=>new Date(m+'-15').toLocaleDateString('es-AR',{month:'long',year:'numeric'});
+  const dias=new Date(+mes.slice(0,4),+mes.slice(5,7),0).getDate();
+  const N=n=>Math.round(n||0).toLocaleString('es-AR');
+  const red=n=>n>=1000?Math.round(n/100)*100:n>=100?Math.round(n/10)*10:Math.round(n);
+  const chip=(id,v,t)=>v>0?`<button type="button" class="btn btn-s btn-sm" style="padding:3px 9px;font-size:11px" onclick="document.getElementById('${id}').value=${v};_mmPreview()">${t}</button>`:'';
+  const fila=(id,ico,l,k,ayuda,vHoy,vAnt,extra='')=>`
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:190px"><div style="font-size:13.5px;font-weight:800">${ico} ${l}</div><div style="font-size:11px;color:var(--muted)">${ayuda}</div></div>
+        <input type="number" min="0" id="${id}" value="${g[k]||''}" placeholder="sin meta" oninput="_mmPreview()" style="width:120px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:18px;font-weight:800;text-align:right;padding:6px 10px">
+      </div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--muted);margin:8px 0 6px">
+        <span>Este mes vas: <b style="color:var(--text)">${N(vHoy)}</b> <span id="${id}_pct"></span></span>
+        <span>${lbl(ant)}: <b style="color:var(--text)">${N(vAnt)}</b>${gAnt[k]?` (meta ${N(gAnt[k])})`:''}</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"><span style="font-size:11px;color:var(--muted)">Sugerencias:</span>
+        ${extra}${chip(id,red(vAnt),'= mes anterior')}${chip(id,red(vAnt*1.1),'+10% ('+N(red(vAnt*1.1))+')')}${chip(id,red(vAnt*1.2),'+20% ('+N(red(vAnt*1.2))+')')}${chip(id,red(vAnt*1.5),'+50% ('+N(red(vAnt*1.5))+')')}
+        ${g[k]?`<button type="button" class="btn btn-s btn-sm" style="padding:3px 9px;font-size:11px" onclick="document.getElementById('${id}').value='';_mmPreview()">✕ sin meta</button>`:''}</div>
+    </div>`;
+  const cab=(t,c)=>`<div style="font-size:12px;font-weight:800;color:var(--text);margin:14px 0 8px;padding-left:9px;border-left:4px solid ${c}">${t}</div>`;
+  let mo=document.getElementById('moMetasMes');
+  if(!mo){mo=document.createElement('div');mo.className='mo';mo.id='moMetasMes';mo.onclick=e=>{if(e.target===mo)mo.classList.remove('open');};document.body.appendChild(mo);}
+  window._mmHoy=hoy;
+  mo.innerHTML=`<div class="mb" style="width:640px">
+    <h2 style="margin-bottom:4px">⚙️ Metas de <span style="text-transform:capitalize">${lbl(mes)}</span></h2>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Escribí el número o tocá una sugerencia. Instagram y TikTok se miden solos; abajo cargás lo que no se puede traer automático.</div>
+    ${gAnt.posts_ig_mes||gAnt.posts_tt_mes||gAnt.alcance_mes||gAnt.vistas_tt_mes?`<button type="button" class="btn btn-s btn-sm" style="margin-bottom:12px" onclick="_mmCopiarAnt()">📋 Copiar las metas de ${lbl(ant)}</button>`:''}
+    ${cab('📸 Instagram','#D03E8C')}
+    ${fila('mmPig','📋','Publicaciones','posts_ig_mes','posts, carruseles y reels',hoy.posts_ig,prev.posts_ig,chip('mmPig',dias*3,'3 por día ('+dias*3+')')+chip('mmPig',dias*2,'2 por día ('+dias*2+')'))}
+    ${fila('mmAlc','👁','Alcance','alcance_mes','cuentas alcanzadas en el mes',hoy.alcance,prev.alcance)}
+    ${cab('🎵 TikTok','#21A0B8')}
+    ${fila('mmPtt','📋','Publicaciones','posts_tt_mes','videos subidos',hoy.posts_tt,prev.posts_tt,chip('mmPtt',dias*3,'3 por día ('+dias*3+')')+chip('mmPtt',dias*2,'2 por día ('+dias*2+')'))}
+    ${fila('mmVtt','▶️','Visualizaciones','vistas_tt_mes','vistas de los videos publicados en el mes',hoy.vistas_tt,prev.vistas_tt)}
+    <div id="mmTotal" style="font-size:12px;color:var(--muted);margin:2px 0 6px"></div>
+    <div style="font-size:12px;font-weight:800;color:var(--text);margin:16px 0 8px;padding-left:9px;border-left:4px solid var(--gold)">✍️ YouTube Shorts y LinkedIn · seguidores al cierre del mes (se cargan a mano)</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      ${[['youtube','▶️ YouTube Shorts'],['linkedin','💼 LinkedIn']].map(([k,l])=>{const a=getFollowers(ant)[k];return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 12px">
+        <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">${l}</div>
+        <input type="number" min="0" id="mmF_${k}" value="${fol[k]||''}" placeholder="seguidores" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;font-weight:800;padding:6px 10px">
+        <div style="font-size:10.5px;color:var(--muted);margin-top:4px">${a?lbl(ant)+': '+N(a):'sin dato del mes anterior'}</div></div>`;}).join('')}
+    </div>
+    <div class="mf"><button class="btn btn-s" onclick="document.getElementById('moMetasMes').classList.remove('open')">Cancelar</button><button class="btn btn-p" onclick="_mmGuardar()">💾 Guardar</button></div>
+  </div>`;
+  mo.classList.add('open');_mmPreview();
+}
+function _mmPreview(){
+  const h=window._mmHoy||{};
+  const t=(parseInt(document.getElementById('mmPig')?.value)||0)+(parseInt(document.getElementById('mmPtt')?.value)||0),tt=document.getElementById('mmTotal');
+  if(tt)tt.innerHTML=t?`📋 Total de publicaciones del mes: <b style="color:var(--text)">${t}</b> · van ${h.posts||0}`:'';
+  [['mmPig','posts_ig'],['mmPtt','posts_tt'],['mmAlc','alcance'],['mmVtt','vistas_tt']].forEach(([id,k])=>{
+    const v=parseInt(document.getElementById(id)?.value)||0,o=document.getElementById(id+'_pct');if(!o)return;
+    if(!v){o.innerHTML='';return;}const pc=Math.round((h[k]||0)/v*100);
+    o.innerHTML=`· <b style="color:${pc>=80?'var(--green)':pc>=50?'var(--gold)':'var(--red)'}">${pc}% de la meta</b>`;
+  });
+}
+function _mmCopiarAnt(){
+  const g=getMonthGoals(_mmMesAnt(_resumenMes));
+  [['mmPig','posts_ig_mes'],['mmPtt','posts_tt_mes'],['mmAlc','alcance_mes'],['mmVtt','vistas_tt_mes']].forEach(([id,k])=>{if(g[k])document.getElementById(id).value=g[k];});
+  _mmPreview();
+}
+function _mmGuardar(){
+  const mes=_resumenMes,g=getMonthGoals(mes),v=id=>parseInt(document.getElementById(id).value)||0;
+  const pig=v('mmPig'),ptt=v('mmPtt');
+  saveMonthGoals(mes,{...g,posts_ig_mes:pig,posts_tt_mes:ptt,posts_mes:pig+ptt||g.posts_mes||0,alcance_mes:v('mmAlc'),vistas_tt_mes:v('mmVtt')});
+  try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');all[mes]=all[mes]||{};
+    ['youtube','linkedin'].forEach(k=>{const x=document.getElementById('mmF_'+k).value;if(x==='')delete all[mes][k];else all[mes][k]=parseInt(x)||0;});
+    localStorage.setItem('lcp_followers',JSON.stringify(all));cfgPush('lcp_followers');}catch(e){}
+  document.getElementById('moMetasMes').classList.remove('open');
+  toast('✓ Metas guardadas');renderContResumen();
 }
 
 async function renderContResumen(){
@@ -12600,6 +12670,7 @@ async function renderContResumen(){
   const goals=getMonthGoals(_resumenMes);
   const metaPosts=goals.posts_mes||0;
   const metaAlcance=goals.alcance_mes||0;
+  const metaVtt=goals.vistas_tt_mes||0;
   const mesActual=new Date().toISOString().slice(0,7);
   const esFuturo=_resumenMes>mesActual;
   const mesDe=f=>{const d=new Date(f);return isNaN(d)?'':d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}; // mes en hora local
@@ -12684,7 +12755,7 @@ async function renderContResumen(){
   <div style="font-size:11px;color:var(--muted);margin-bottom:20px">🔄 Datos automáticos de Instagram y TikTok${ultAct?' · última actualización '+new Date(ultAct).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):''} · se actualizan solos todos los días a las 6:00</div>
 
   ${sinConexion?`<div style="background:rgba(224,85,85,.08);border:1px solid rgba(224,85,85,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px">⚠️ Todavía no hay datos de las redes. Andá a <b>Instagram</b> o <b>TikTok</b> y tocá <b>🔄 Actualizar ahora</b>.</div>`:''}
-  ${metaPosts===0&&metaAlcance===0?`<div style="background:rgba(201,168,76,.07);border:1px dashed rgba(201,168,76,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">
+  ${metaPosts===0&&metaAlcance===0&&!metaVtt?`<div style="background:rgba(201,168,76,.07);border:1px dashed rgba(201,168,76,.3);border-radius:12px;padding:14px 18px;margin-bottom:20px;font-size:13px;color:var(--muted)">
     💡 Todavía no configuraste tus metas mensuales. Hacé clic en <strong style="color:var(--gold)">⚙️ Editar metas</strong> para medir tu progreso.</div>`:''}
 
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px">
@@ -12694,7 +12765,7 @@ async function renderContResumen(){
         <span style="font-size:32px;font-weight:800;color:var(--green)">${pubs.length}</span>
         ${metaPosts>0?`<span style="font-size:14px;color:var(--muted)">/ ${metaPosts}</span>`:''}
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">📸 ${pIg.length} Instagram · 🎵 ${pTt.length} TikTok</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">📸 ${pIg.length}${goals.posts_ig_mes?'/'+goals.posts_ig_mes:''} Instagram · 🎵 ${pTt.length}${goals.posts_tt_mes?'/'+goals.posts_tt_mes:''} TikTok</div>
       ${metaPosts>0?`<div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden"><div style="height:100%;background:${barCol(postsPct)};width:${postsPct}%;border-radius:3px"></div></div>
       <div style="font-size:11px;color:${pctCol(postsPct)};font-weight:700">${postsPct}% de la meta${postsPct>=100?' ✅':''}</div>`:''}
     </div>
@@ -12710,8 +12781,13 @@ async function renderContResumen(){
     </div>
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🎵 Visualizaciones TikTok</div>
-      <div style="font-size:32px;font-weight:800;color:#21A0B8;margin-bottom:6px">${K(vistasTt)}</div>
-      <div style="font-size:11px;color:var(--muted)">${pTt.length} video${pTt.length===1?'':'s'} · ${pTt.length?K(vistasTt/pTt.length):0} promedio por video</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
+        <span style="font-size:32px;font-weight:800;color:#21A0B8">${K(vistasTt)}</span>
+        ${metaVtt>0?`<span style="font-size:14px;color:var(--muted)">/ ${K(metaVtt)}</span>`:''}
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${pTt.length} video${pTt.length===1?'':'s'} · ${pTt.length?K(vistasTt/pTt.length):0} promedio por video</div>
+      ${metaVtt>0?(()=>{const pc=Math.min(100,Math.round(vistasTt/metaVtt*100));return`<div style="height:6px;background:var(--card);border-radius:3px;margin-bottom:6px;overflow:hidden"><div style="height:100%;background:${barCol(pc)};width:${pc}%;border-radius:3px"></div></div>
+      <div style="font-size:11px;color:${pctCol(pc)};font-weight:700">${pc}% de la meta${pc>=100?' ✅':''}</div>`;})():''}
     </div>
     <div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:18px 20px">
       <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">🔖 Tasa de guardados</div>
