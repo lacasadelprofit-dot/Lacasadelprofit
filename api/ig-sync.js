@@ -142,7 +142,7 @@ module.exports = async function handler(req, res) {
       if (Date.now() - inicio > 8000) break;
       const lote = medias.slice(i, i + 8);
       const ins = await Promise.all(lote.map(insightsDe));
-      lote.forEach((m, k) => filas.push({
+      lote.forEach((m, k) => { const st = ins[k] || {}; filas.push({
         id: 'post-' + m.id,
         data: {
           ig_id: m.id,
@@ -153,17 +153,17 @@ module.exports = async function handler(req, res) {
           miniatura: m.thumbnail_url || (m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM' ? m.media_url : ''),
           likes: m.like_count || 0,
           comentarios: m.comments_count || 0,
-          alcance: ins.reach ?? null,
-          vistas: ins.views ?? null,
-          guardados: ins.saved ?? null,
-          compartidos: ins.shares ?? null,
-          interacciones: ins.total_interactions ?? null,
-          seguidores_ganados: ins.follows ?? null,
-          visitas_perfil: ins.profile_visits ?? null,
-          tiempo_promedio_ms: ins.ig_reels_avg_watch_time ?? null,
+          alcance: st.reach ?? null,
+          vistas: st.views ?? null,
+          guardados: st.saved ?? null,
+          compartidos: st.shares ?? null,
+          interacciones: st.total_interactions ?? null,
+          seguidores_ganados: st.follows ?? null,
+          visitas_perfil: st.profile_visits ?? null,
+          tiempo_promedio_ms: st.ig_reels_avg_watch_time ?? null,
           actualizado: new Date().toISOString()
         }
-      }));
+      }); });
     }
 
     const nPosts = filas.length;
