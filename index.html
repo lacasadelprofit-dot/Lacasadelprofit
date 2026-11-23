@@ -10198,6 +10198,102 @@ function _paginaStatsBar(){
   </div>`;
 }
 
+/* ══════════ STATS LANDING · 🔎 Google (Search Console) ══════════
+   Lee GET /api/gsc?dias=N  (header Authorization: Bearer <access_token de Supabase>) y espera este JSON:
+   { sitio, desde:'AAAA-MM-DD', hasta:'AAAA-MM-DD',
+     total:{clics,impresiones,ctr,posicion}, anterior:{clics,impresiones,ctr,posicion},   // ctr en 0–1
+     porDia:[{fecha,clics,impresiones,ctr,posicion}],
+     consultas:[{k,clics,impresiones,ctr,posicion}], paginas:[{k,…}], paises:[{k:'arg',…}], dispositivos:[{k:'MOBILE',…}],
+     sitemaps:[{path,enviado,leido,pendiente,errores,avisos,contenido:[{tipo,enviados,indexados}]}] }
+   Si algo falta, esa parte simplemente no se muestra. */
+let _gscDias=28,_gscCache={},_gscCh={},_gscBusq='';
+const GSC_PAISES={arg:'🇦🇷 Argentina',bra:'🇧🇷 Brasil',ury:'🇺🇾 Uruguay',chl:'🇨🇱 Chile',par:'🇵🇾 Paraguay',pry:'🇵🇾 Paraguay',esp:'🇪🇸 España',usa:'🇺🇸 Estados Unidos',mex:'🇲🇽 México',col:'🇨🇴 Colombia',per:'🇵🇪 Perú',prt:'🇵🇹 Portugal',ita:'🇮🇹 Italia',fra:'🇫🇷 Francia',deu:'🇩🇪 Alemania',gbr:'🇬🇧 Reino Unido',can:'🇨🇦 Canadá',ven:'🇻🇪 Venezuela',bol:'🇧🇴 Bolivia',ecu:'🇪🇨 Ecuador'};
+const GSC_DISP={MOBILE:'📱 Celular',DESKTOP:'💻 Computadora',TABLET:'📲 Tablet'};
+async function _gscCargar(dias,forzar){
+  if(!forzar&&_gscCache[dias])return _gscCache[dias];
+  const {data:{session}}=await _sb.auth.getSession();
+  const r=await fetch('/api/gsc?dias='+dias,{headers:{'Authorization':'Bearer '+(session?.access_token||'')}});
+  let j={};try{j=await r.json();}catch(e){j={error:r.status===404?'todavía no existe /api/gsc':'respuesta inválida ('+r.status+')'};}
+  if(!r.ok||j.error){const e=new Error(j.error||('HTTP '+r.status));e.status=r.status;throw e;}
+  _gscCache[dias]=j;return j;
+}
+async function _renderStatsGoogle(cont){
+  const E=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const N=n=>Math.round(n||0).toLocaleString('es-AR'),P=x=>((x||0)*100).toFixed(1)+'%',Pos=x=>x?(+x).toFixed(1):'—';
+  const chips=`<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:16px">
+    ${[[7,'7 días'],[28,'28 días'],[90,'3 meses'],[180,'6 meses'],[365,'12 meses']].map(([d,l])=>`<button onclick="_gscDias=${d};renderMktStats()" style="padding:5px 14px;border-radius:20px;border:1.5px solid ${d===_gscDias?'var(--gl)':'var(--border)'};background:${d===_gscDias?'rgba(201,168,76,.15)':'none'};color:${d===_gscDias?'var(--gl)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer">${l}</button>`).join('')}
+    <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="_gscCache={};renderMktStats()">🔄 Actualizar</button></div>`;
+  cont.innerHTML=chips+'<div class="es"><div class="ei">⏳</div><p>Trayendo los datos de Google…</p></div>';
+  let d;
+  try{d=await _gscCargar(_gscDias);}
+  catch(e){
+    cont.innerHTML=chips+`<div style="background:var(--card2);border:1px dashed rgba(201,168,76,.4);border-radius:14px;padding:18px 20px;font-size:13px;line-height:1.7">
+      🔎 <b>Search Console todavía no está conectado.</b><br>
+      <span style="color:var(--muted)">Detalle: ${E(e.message)}</span><br>
+      <span style="color:var(--muted)">Cuando la conexión esté lista, acá vas a ver los clics, las búsquedas y el estado del sitemap de juancruzconsciencia.lat.</span><br>
+      <a href="https://search.google.com/search-console/performance/search-analytics?resource_id=https%3A%2F%2Fwww.juancruzconsciencia.lat%2F" target="_blank" rel="noopener" style="color:var(--gl)">Abrir Search Console →</a></div>`;
+    return;
+  }
+  const T=d.total||{},A=d.anterior||{};
+  const delta=(a,b,inv,fmt)=>{if(b==null||!b)return'<span style="color:var(--muted)">sin período anterior</span>';const v=a-b,mej=inv?v<0:v>0,c=v===0?'var(--muted)':mej?'var(--green)':'var(--red)';
+    return `<span style="color:${c};font-weight:700">${v>0?'↑':v<0?'↓':'='} ${fmt?fmt(Math.abs(v)):Math.round(Math.abs(v)/b*100)+'%'}</span> <span style="color:var(--muted)">vs ${_gscDias} días anteriores</span>`;};
+  const kpi=(ico,l,v,dl,sub)=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:16px 18px">
+    <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">${ico} ${l}</div>
+    <div style="font-size:30px;font-weight:800;color:var(--text);line-height:1.1">${v}</div>
+    <div style="font-size:11px;margin-top:6px">${dl}</div>${sub?`<div style="font-size:10.5px;color:var(--muted);margin-top:3px">${sub}</div>`:''}</div>`;
+  const fd2=f=>f?new Date(f+'T12:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'}):'';
+  // oportunidades: búsquedas con muchas impresiones en posiciones 4–20 (cerca de la primera página / del top 3)
+  const C=d.consultas||[];
+  const ctrBajo=C.filter(q=>q.posicion<=5&&q.impresiones>=20&&q.ctr<.03).slice(0,3);
+  const opo=C.filter(q=>q.posicion>=4&&q.posicion<=20&&q.impresiones>=5&&!ctrBajo.includes(q)).sort((a,b)=>b.impresiones-a.impresiones).slice(0,5);
+  const tabla=(rows,col1,fmt1)=>rows.length?`<div style="overflow-x:auto"><table><thead><tr><th>${col1}</th><th style="text-align:right">Clics</th><th style="text-align:right">Impresiones</th><th style="text-align:right">CTR</th><th style="text-align:right">Posición</th></tr></thead><tbody>
+    ${rows.map(r=>`<tr><td style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${fmt1(r.k)}</td><td style="text-align:right;font-weight:700">${N(r.clics)}</td><td style="text-align:right">${N(r.impresiones)}</td><td style="text-align:right">${P(r.ctr)}</td><td style="text-align:right;color:${r.posicion<=3?'var(--green)':r.posicion<=10?'var(--gl)':'var(--muted)'}">${Pos(r.posicion)}</td></tr>`).join('')}</tbody></table></div>`
+    :'<div style="font-size:12px;color:var(--muted)">Sin datos en este período</div>';
+  const card=(t,h,extra='')=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:16px 18px;${extra}"><div style="font-size:13px;font-weight:800;margin-bottom:10px">${t}</div>${h}</div>`;
+  const cq=C.filter(q=>!_gscBusq||q.k.toLowerCase().includes(_gscBusq.toLowerCase()));
+  const pag=u=>{let t=u;try{const x=new URL(u);t=x.pathname==='/'?'🏠 Inicio':x.pathname;}catch(e){}return `<a href="${E(u)}" target="_blank" rel="noopener" style="color:var(--text)">${E(t)}</a>`;};
+  const SM=d.sitemaps||[];
+  cont.innerHTML=chips+`
+    <div style="font-size:11.5px;color:var(--muted);margin:-6px 0 14px">🔎 Búsquedas en Google de <b style="color:var(--text)">${E((d.sitio||'juancruzconsciencia.lat').replace(/^https?:\/\//,'').replace(/\/$/,''))}</b> · del ${fd2(d.desde)} al ${fd2(d.hasta)} · Google tarda 2–3 días en mostrar los datos</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:16px">
+      ${kpi('👆','Clics',N(T.clics),delta(T.clics||0,A.clics),'personas que entraron desde Google')}
+      ${kpi('👁','Impresiones',N(T.impresiones),delta(T.impresiones||0,A.impresiones),'veces que apareciste en resultados')}
+      ${kpi('🎯','CTR',P(T.ctr),delta(T.ctr||0,A.ctr,false,v=>(v*100).toFixed(1)+' pts'),'de cada 100 que te ven, cuántos entran')}
+      ${kpi('📍','Posición media',Pos(T.posicion),delta(T.posicion||0,A.posicion,true,v=>v.toFixed(1)+' lugares'),'más bajo es mejor · 1 = primer resultado')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:14px">
+      ${card('👆 Clics por día','<div style="position:relative;height:190px"><canvas id="gscChClics"></canvas></div>')}
+      ${card('👁 Impresiones por día','<div style="position:relative;height:190px"><canvas id="gscChImp"></canvas></div>')}
+    </div>
+    ${opo.length||ctrBajo.length?card('💡 Oportunidades',`${opo.map(q=>`<div style="font-size:12.5px;line-height:1.6;padding:3px 0">📈 <b>«${E(q.k)}»</b>: apareciste ${N(q.impresiones)} veces en la posición ${Pos(q.posicion)}. ${q.posicion<=10?'Estás en la primera página: mejorá el título y el texto de esa sección para subir al top 3.':'Estás cerca de la primera página: sumá contenido o una guía sobre ese tema.'}</div>`).join('')}
+      ${ctrBajo.map(q=>`<div style="font-size:12.5px;line-height:1.6;padding:3px 0">🎯 <b>«${E(q.k)}»</b>: estás arriba (posición ${Pos(q.posicion)}) pero solo entra el ${P(q.ctr)}. Probá un título más atractivo para esa búsqueda.</div>`).join('')}`,'margin-bottom:14px;border-color:rgba(201,168,76,.35)'):''}
+    ${card(`🔍 Qué buscan para encontrarte <span style="font-weight:400;font-size:11px;color:var(--muted)">· ${C.length} búsquedas</span>`,
+      `<input type="text" placeholder="Filtrar búsquedas…" value="${E(_gscBusq)}" oninput="_gscBusq=this.value;clearTimeout(window._gscT);window._gscT=setTimeout(renderMktStats,350)" style="width:100%;max-width:320px;margin-bottom:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:7px 10px">
+      ${tabla(cq.slice(0,25),'Búsqueda',k=>E(k))}`,'margin-bottom:14px')}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px;margin-bottom:14px">
+      ${card('📄 Páginas que más aparecen',tabla((d.paginas||[]).slice(0,10),'Página',pag))}
+      <div style="display:grid;gap:14px">
+        ${card('🌎 Países',tabla((d.paises||[]).slice(0,6),'País',k=>GSC_PAISES[(k||'').toLowerCase()]||E((k||'').toUpperCase())))}
+        ${card('📱 Dispositivos',tabla(d.dispositivos||[],'Dispositivo',k=>GSC_DISP[k]||E(k)))}
+      </div>
+    </div>
+    ${card('🗺️ Sitemaps',SM.length?SM.map(s=>{const ok=!s.errores&&!s.pendiente;const env=(s.contenido||[]).reduce((a,c)=>a+(c.enviados||0),0),idx=(s.contenido||[]).reduce((a,c)=>a+(c.indexados||0),0),hayIdx=(s.contenido||[]).some(c=>c.indexados!=null);
+      return `<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;padding:8px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:12px;font-weight:700;padding:2px 9px;border-radius:12px;background:${s.errores?'rgba(224,85,85,.15)':s.pendiente?'rgba(201,168,76,.15)':'rgba(61,170,106,.15)'};color:${s.errores?'var(--red)':s.pendiente?'var(--gold)':'var(--green)'}">${s.errores?'⚠️ '+s.errores+' error'+(s.errores===1?'':'es'):s.pendiente?'⏳ Pendiente':'✓ Correcto'}</span>
+        <a href="${E(s.path)}" target="_blank" rel="noopener" style="color:var(--text);font-size:12.5px;flex:1;min-width:200px;overflow:hidden;text-overflow:ellipsis">${E(s.path)}</a>
+        <span style="font-size:11.5px;color:var(--muted)">${N(env)} URLs enviadas${hayIdx?' · '+N(idx)+' indexadas':''}${s.avisos?' · '+s.avisos+' avisos':''}</span>
+        <span style="font-size:11px;color:var(--muted)">${s.leido?'leído por Google el '+new Date(s.leido).toLocaleDateString('es-AR'):'todavía no lo leyó'}</span></div>`;}).join('')
+      :'<div style="font-size:12px;color:var(--muted)">No hay sitemaps enviados.</div>')}`;
+  // gráficos (una serie por gráfico: clics e impresiones tienen escalas distintas)
+  const L=(d.porDia||[]).map(x=>x.fecha),tinta=getComputedStyle(document.documentElement).getPropertyValue('--muted').trim()||'#7A7260';
+  const graf=(id,tipo,campo,col,nombre)=>{const cv=document.getElementById(id);if(!cv||typeof Chart==='undefined')return;
+    if(_gscCh[id]){try{_gscCh[id].destroy();}catch(e){}}
+    _gscCh[id]=new Chart(cv,{type:tipo,data:{labels:L.map(fd2),datasets:[{label:nombre,data:(d.porDia||[]).map(x=>x[campo]||0),backgroundColor:col,borderColor:col,borderWidth:2,borderRadius:3,maxBarThickness:16,pointRadius:L.length>40?0:3,pointHoverRadius:5,tension:.25,fill:false}]},
+      options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+Math.round(c.parsed.y).toLocaleString('es-AR')+' '+nombre}}},
+        scales:{x:{ticks:{color:tinta,font:{size:10},maxRotation:0,autoSkip:true,maxTicksLimit:8},grid:{display:false}},y:{beginAtZero:true,ticks:{color:tinta,font:{size:10},precision:0},grid:{color:'rgba(255,255,255,.06)'},border:{display:false}}}}});};
+  graf('gscChClics','bar','clics','#4A8FE7','clics');
+  graf('gscChImp','line','impresiones','#C27A2C','impresiones');
+}
 async function renderMktStats(){
   const el=document.getElementById('mktStats');
   if(!el)return;
@@ -10213,7 +10309,7 @@ async function renderMktStats(){
     const all=(data||[]).map(r=>r.data||{}).filter(e=>!e.pagina||e.pagina==='landing_jcc');
 
     const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px">
-      ${[['resumen','📊 Resumen'],['mes','📅 Por mes']].map(([t,l])=>`<button onclick="_statsSubTab='${t}';renderMktStats()"
+      ${[['resumen','📊 Resumen'],['mes','📅 Por mes'],['google','🔎 Google']].map(([t,l])=>`<button onclick="_statsSubTab='${t}';renderMktStats()"
         style="padding:6px 16px;border-radius:20px;border:1.5px solid ${t===_statsSubTab?'var(--gl)':'var(--border)'};
         background:${t===_statsSubTab?'rgba(201,168,76,.15)':'none'};
         color:${t===_statsSubTab?'var(--gl)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer">${l}</button>`).join('')}
@@ -10221,6 +10317,11 @@ async function renderMktStats(){
 
     if(_statsSubTab==='mes'){
       el.innerHTML=_paginaStatsBar()+subTabBar+_renderStatsPorMes(all);
+      return;
+    }
+    if(_statsSubTab==='google'){
+      el.innerHTML=_paginaStatsBar()+subTabBar+'<div id="gscCont"></div>';
+      await _renderStatsGoogle(document.getElementById('gscCont'));
       return;
     }
 
