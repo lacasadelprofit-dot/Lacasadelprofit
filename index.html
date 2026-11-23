@@ -353,11 +353,11 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
     <div class="ni" id="niMarketing" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span><span id="crmBadge" title="Prospectos nuevos en el CRM" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
-    <div class="ni ni-sub" id="niTesoro" onclick="irTesoro()"><span class="ico">🗺️</span><span>Búsqueda del tesoro</span></div>
     <!-- Contenido y CRM ahora viven dentro de Marketing (pestañas). Se dejan ocultos porque otras funciones los buscan. -->
     <div class="ni" style="display:none" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
     <div class="ni" style="display:none" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
     <div class="ni" onclick="nav('encuentros',this)"><span class="ico">🤝</span><span>Encuentros</span></div>
+    <div class="ni" id="niTesoro" onclick="irTesoro()"><span class="ico">🗺️</span><span>Búsqueda del tesoro</span></div>
     <div class="nl">Inteligencia</div>
     <div class="ni" onclick="nav('profit',this)"><span class="ico">🧠</span><span>Profit IA</span></div>
     <div class="nl">Portales</div>
@@ -764,6 +764,23 @@ th{background:rgba(28,26,46,.88)!important;}
     <div id="sec-contenido" class="sec">
      <div class="tab-bar mkt-bar-copia" data-activa="contenido" style="margin-bottom:18px"></div>
 
+      <div class="tab-bar" style="margin-bottom:18px">
+        <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
+        <button class="tab-btn"        id="contTabInstagram" onclick="setContSection('instagram')">📸 Instagram · Qué funciona</button>
+        <button class="tab-btn"        id="contTabTiktok"    onclick="setContSection('tiktok')">🎵 TikTok · Qué funciona</button>
+        <button class="tab-btn"        id="contTabRitmo"     onclick="setContSection('ritmo')">📅 Ritmo semanal</button>
+        <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
+        <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
+        <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
+      </div>
+      <!-- Sub-tab: Resumen -->
+      <div id="contResumen"></div>
+      <!-- Sub-tab: Instagram automático (api/ig-sync + tabla redes_metricas) -->
+      <div id="contInstagram" style="display:none"></div>
+      <!-- Sub-tab: TikTok automático (api/tiktok + tabla redes_metricas) -->
+      <div id="contTiktok" style="display:none"></div>
+      <!-- Sub-tab: Ritmo de contenido semanal -->
+      <div id="contRitmo" style="display:none">
      <!-- RITMO DE CONTENIDO -->
      <div style="background:linear-gradient(135deg,rgba(201,168,76,.07) 0%,rgba(201,168,76,.03) 100%);border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:18px 20px;margin-bottom:20px;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
@@ -829,21 +846,7 @@ th{background:rgba(28,26,46,.88)!important;}
        </div>
       </div>
      </div>
-
-      <div class="tab-bar" style="margin-bottom:18px">
-        <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
-        <button class="tab-btn"        id="contTabInstagram" onclick="setContSection('instagram')">📸 Instagram · Qué funciona</button>
-        <button class="tab-btn"        id="contTabTiktok"    onclick="setContSection('tiktok')">🎵 TikTok · Qué funciona</button>
-        <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
-        <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
-        <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
       </div>
-      <!-- Sub-tab: Resumen -->
-      <div id="contResumen"></div>
-      <!-- Sub-tab: Instagram automático (api/ig-sync + tabla redes_metricas) -->
-      <div id="contInstagram" style="display:none"></div>
-      <!-- Sub-tab: TikTok automático (api/tiktok + tabla redes_metricas) -->
-      <div id="contTiktok" style="display:none"></div>
       <!-- Sub-tab: Redes Sociales -->
       <div id="contRedes" style="display:none"></div>
       <!-- Sub-tab: Manual de Marca -->
@@ -863,7 +866,6 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
-      <button class="tab-btn" id="mktTabTesoro" onclick="setMktTab('tesoro')">🗺️ Búsqueda del Tesoro</button>
       <button class="tab-btn" onclick="irMkt('contenido')">📱 Contenido</button>
       <button class="tab-btn" onclick="irMkt('crm')">👥 CRM<span class="mkt-crm-badge"></span></button>
      </div>
@@ -875,10 +877,12 @@ th{background:rgba(28,26,46,.88)!important;}
      <div id="mktRegalos" style="display:none"></div>
      <div id="mktStats" style="display:none"></div>
      <div id="mktFlyers" style="display:none"></div>
-     <div id="mktTesoro" style="display:none"></div>
     </div>
 
     <!-- CRM -->
+    <!-- BÚSQUEDA DEL TESORO (sección propia, fuera de Marketing) -->
+    <div id="sec-tesoro" class="sec"><div id="mktTesoro"></div></div>
+
     <div id="sec-encuentros" class="sec">
      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:16px">
       <button class="btn btn-s btn-sm enc-f" data-f="todos" onclick="setEncFiltro('todos')">Todos</button>
@@ -2995,7 +2999,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Contenido',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',tesoro:'🗺️ Búsqueda del tesoro',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Contenido',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -3042,7 +3046,7 @@ function nav(name,el){
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
-  const fn={encuentros:renderEnc,dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
+  const fn={encuentros:renderEnc,tesoro:renderMktTesoro,dashboard:renderDash,sesiones:renderSes,calendario:renderCal,facturacion:renderFin,facilitadores:renderFacs,seres:renderSeres,herramientas:renderHerr,practicas:renderPracticas,programas:renderProg,biblioteca:renderBiblioteca,fidelidad:renderFidelidad,journey:renderJourneyAdmin,marketing:renderMkt,contenido:renderContenido,crm:renderCRM,profit:renderProfit};
   if(fn[name])fn[name]();
   closeSidebar(); // auto-close on mobile after navigating
 }
@@ -9067,11 +9071,11 @@ let mktTab='resumen';
    irMkt: ir a cualquier pestaña de Marketing desde donde estés. */
 function irTesoro(sub){
   if(sub)_tesoroSubTab=sub;
-  irMkt('tesoro');
-  const nt=document.getElementById('niTesoro');if(nt)nt.classList.add('active');
+  nav('tesoro',document.getElementById('niTesoro'));
 }
 function irMkt(t){
-  if(t==='flyers'){_tesoroSubTab='flyers';t='tesoro';}
+  if(t==='flyers'){irTesoro('flyers');return;}
+  if(t==='tesoro'){irTesoro();return;}
   const ni=document.getElementById('niMarketing');
   if(t==='contenido'||t==='crm'){nav(t,ni);return;}
   if(curSec!=='marketing')nav('marketing',ni);
@@ -9088,8 +9092,8 @@ function _mktPintarCopias(activa){
   });
 }
 function setMktTab(t){
+  if(t==='tesoro'||t==='flyers'){irTesoro(t==='flyers'?'flyers':undefined);return;}
   mktTab=t;
-  {const nt=document.getElementById('niTesoro');if(nt)nt.classList.toggle('active',t==='tesoro');}
   ['resumen','pub','conv','ret','meta','regalos','stats','flyers','tesoro'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
@@ -10720,7 +10724,7 @@ function copiarLinkFlyer(k){
    directo a Supabase y se refresca al toque, sin pasar por el estado global. */
 let _tesoroPremios=[];
 let _tesoroRuleta=[];
-let _tesoroSubTab='flyers';
+let _tesoroSubTab='resumen';
 let _tzMap=null, _tzMarker=null, _tzLat=null, _tzLng=null;
 const TESORO_CAT_ICO={Identidad:'🪞',Dinero:'💰',Cuerpo:'🌿',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
 const TESORO_URL_BASE='https://juancruzconsciencia.lat/tesoro.html?id=';
@@ -10752,21 +10756,27 @@ function _renderTesoroTab(){
   const el=document.getElementById('mktTesoro');
   if(!el)return;
   const subTabBar=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:18px">
+    <button class="tab-btn ${_tesoroSubTab==='resumen'?'active':''}" onclick="setTesoroSubTab('resumen')">📊 Resumen</button>
     <button class="tab-btn ${_tesoroSubTab==='flyers'?'active':''}" onclick="setTesoroSubTab('flyers')">📱 Flyers</button>
     <button class="tab-btn ${_tesoroSubTab==='stickers'?'active':''}" onclick="setTesoroSubTab('stickers')">📍 Stickers</button>
     <button class="tab-btn ${_tesoroSubTab==='ruleta'?'active':''}" onclick="setTesoroSubTab('ruleta')">🎡 Ruleta de premios</button>
     <button class="tab-btn ${_tesoroSubTab==='historial'?'active':''}" onclick="setTesoroSubTab('historial')">🏆 Historial</button>
     <button class="tab-btn ${_tesoroSubTab==='mapa'?'active':''}" onclick="setTesoroSubTab('mapa')">🗺️ Mapa</button>
-    <button class="tab-btn ${_tesoroSubTab==='album'?'active':''}" onclick="setTesoroSubTab('album')">📖 Álbum de preguntas</button>
+    <button class="tab-btn ${_tesoroSubTab==='albumcat'?'active':''}" onclick="setTesoroSubTab('albumcat')">📖 Álbum de preguntas</button>
+    <button class="tab-btn ${_tesoroSubTab==='album'?'active':''}" onclick="setTesoroSubTab('album')">🙋 Álbum en el portal del ser</button>
   </div>`;
-  const body = _tesoroSubTab==='flyers' ? '<div id="tzFlyers"></div>'
+  const body = _tesoroSubTab==='resumen' ? '<div id="tzResumen"></div>'
+    : _tesoroSubTab==='flyers' ? '<div id="tzFlyers"></div>'
+    : _tesoroSubTab==='albumcat' ? '<div id="tzAlbumCat"></div>'
     : _tesoroSubTab==='album' ? '<div id="tzAlbum"></div>'
     : _tesoroSubTab==='ruleta' ? _renderTesoroRuletaTab()
     : _tesoroSubTab==='historial' ? _renderTesoroHistorialTab()
     : _tesoroSubTab==='mapa' ? _renderTesoroMapaTab()
     : _renderTesoroStickersTab();
   el.innerHTML = subTabBar + body;
+  if(_tesoroSubTab==='resumen') _renderTesoroResumen();
   if(_tesoroSubTab==='flyers') renderMktFlyers();
+  if(_tesoroSubTab==='albumcat') _renderAlbumCatalogo();
   if(_tesoroSubTab==='album') _renderAlbumAdmin();
   if(_tesoroSubTab==='stickers') setTimeout(_tzInitMap, 0);
   if(_tesoroSubTab==='mapa') setTimeout(_tzInitMapaGeneral, 0);
@@ -12143,7 +12153,7 @@ async function delComunidad(id){
 let _contSection='resumen';
 function setContSection(tab){
   _contSection=tab;
-  ['resumen','instagram','tiktok','redes','manual','comunidad','generador'].forEach(t=>{
+  ['resumen','instagram','tiktok','ritmo','redes','manual','comunidad','generador'].forEach(t=>{
     const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
     const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl)tabEl.classList.toggle('active',t===tab);
@@ -15257,6 +15267,104 @@ async function _albEntregado(id){
   const {error}=await _sb.from('album_logros').update({entregado:true}).eq('id',id);
   if(error){toast('⚠️ '+error.message,'err');return;}
   toast('✓ Premio marcado como entregado');_renderAlbumAdmin();
+}
+</script>
+<script>
+/* ══════════ BÚSQUEDA DEL TESORO · 📊 Resumen (pestaña por defecto) ══════════
+   Junta en una vista lo más importante de cada pestaña: flyers (últimos 30 días), stickers, ruleta y álbum. */
+async function _renderTesoroResumen(){
+  const el=document.getElementById('tzResumen');if(!el)return;
+  const P=_tesoroPremios||[],R=_tesoroRuleta||[];
+  const recl=P.filter(p=>p.data?.reclamado);
+  const ult=recl.slice().sort((a,b)=>new Date(b.data.ganador_fecha||0)-new Date(a.data.ganador_fecha||0))[0];
+  const hace30=new Date(Date.now()-30*864e5).toISOString();
+  const kc=(ico,lbl,val,sub,tab,id)=>`<div class="kc" style="cursor:pointer" onclick="setTesoroSubTab('${tab}')" title="Ver ${lbl}"><div class="ki">${ico}</div><div class="kl">${lbl}</div><div class="kv"${id?` id="${id}"`:''}>${val}</div><div class="ks"${id?` id="${id}S"`:''}>${sub}</div></div>`;
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:18px">
+      ${kc('📲','Escaneos de flyers','…','últimos 30 días','flyers','tzrEsc')}
+      ${kc('🎡','Giros en la ruleta','…','últimos 30 días','flyers','tzrGir')}
+      ${kc('📍','Stickers',P.length,`${P.length-recl.length} sin encontrar · ${recl.length} encontrados`,'stickers')}
+      ${kc('🎁','Premios en la ruleta',R.filter(r=>r.data?.activo!==false).length,`${R.length} cargados en total`,'ruleta')}
+      ${kc('📖','Álbum de preguntas','…','personas jugando','album','tzrAlb')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px">
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">🏆 Último sticker encontrado</div>
+        ${ult?`<div style="font-size:14px;font-weight:700">${_tzEsc(ult.data.ganador_instagram||'Sin Instagram')}</div>
+          <div style="font-size:12px;color:var(--muted);margin-top:3px">${_tzEsc(ult.data.premio_ganado||'')}${ult.data.edicion?' · '+_tzEsc(ult.data.edicion):''}${ult.data.ganador_fecha?' · '+new Date(ult.data.ganador_fecha).toLocaleDateString('es-AR'):''}</div>`
+          :'<div style="font-size:13px;color:var(--muted)">Todavía nadie encontró un sticker.</div>'}
+        <button class="btn btn-s btn-sm" style="margin-top:10px" onclick="setTesoroSubTab('historial')">Ver historial →</button>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📱 Flyers más escaneados (30 días)</div>
+        <div id="tzrTop" style="font-size:13px;color:var(--muted)">Cargando…</div>
+        <button class="btn btn-s btn-sm" style="margin-top:10px" onclick="setTesoroSubTab('flyers')">Ver flyers →</button>
+      </div>
+    </div>`;
+  const set=(id,v)=>{const x=document.getElementById(id);if(x)x.textContent=v;};
+  // datos que se cargan aparte (sin trabar la vista)
+  try{
+    const evs=[];
+    for(let i=0;i<20000;i+=1000){
+      const {data,error}=await _sb.from('regalo_eventos').select('data').filter('data->>pagina','eq','ruleta').gte('created_at',hace30).range(i,i+999);
+      if(error)break;(data||[]).forEach(r=>evs.push(r.data||{}));if(!data||data.length<1000)break;
+    }
+    const esc=evs.filter(e=>e.tipo==='page_view'),gir=evs.filter(e=>e.tipo==='ruleta_girar'||e.tipo==='ruleta_girar_otra');
+    set('tzrEsc',esc.length.toLocaleString('es-AR'));set('tzrGir',gir.length.toLocaleString('es-AR'));
+    const por={};esc.forEach(e=>{if(e.flyer)por[e.flyer]=(por[e.flyer]||0)+1;});
+    const top=Object.entries(por).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    const t=document.getElementById('tzrTop');
+    if(t)t.innerHTML=top.length?top.map(([k,n])=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--text)">${_tzEsc(k)}</span><b style="color:var(--gl)">${n}</b></div>`).join(''):'Sin escaneos en los últimos 30 días.';
+  }catch(e){console.warn('resumen tesoro flyers:',e);}
+  try{
+    const [g,f]=await Promise.all([_sb.from('album_giros').select('ser_id').limit(20000),_sb.from('album_figuritas').select('id',{count:'exact',head:true})]);
+    if(g.error){set('tzrAlb','—');set('tzrAlbS','todavía no activado');}
+    else{set('tzrAlb',new Set((g.data||[]).map(r=>r.ser_id)).size);set('tzrAlbS',`personas jugando · ${f.count||0} de 120 preguntas cargadas`);}
+  }catch(e){}
+}
+
+/* ══════════ BÚSQUEDA DEL TESORO · 📖 Álbum de preguntas (el catálogo) ══════════
+   Las 120 preguntas (6 temas × 20). Es el MISMO álbum que el de la pestaña «Álbum en el portal del ser»:
+   acá se cargan y editan las preguntas; allá se ve cómo lo va completando cada persona. */
+const ALB_AREAS=['Consciencia','Recibir','Cuerpo','Vínculos','Propósito','Identidad'];
+const ALB_COL={Consciencia:'#C9A84C',Recibir:'#C4895A',Cuerpo:'#3DAA6A',Vínculos:'#C46A8E',Propósito:'#5B9BD5',Identidad:'#9B82D4'};
+let _albCat=[],_albCatArea='Consciencia';
+const _albSlug=a=>a.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+async function _renderAlbumCatalogo(recargar=true){
+  const el=document.getElementById('tzAlbumCat');if(!el)return;
+  if(recargar){
+    el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando preguntas…</div>';
+    const {data,error}=await _sb.from('album_figuritas').select('id,data');
+    if(error){el.innerHTML=`<div class="es"><div class="ei">📖</div><p>El álbum todavía no está activado.<br><span style="font-size:12px;color:var(--muted)">Se activa corriendo <b>45_album_preguntas.sql</b> en Supabase.</span></p></div>`;return;}
+    _albCat=data||[];
+  }
+  const de=a=>_albCat.filter(r=>r.data?.area===a);
+  const total=_albCat.length;
+  const lista=de(_albCatArea),porNum={};lista.forEach(r=>porNum[+r.data.numero]=r);
+  el.innerHTML=`
+    <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">Las preguntas del álbum: <b style="color:var(--text)">6 temas × 20 = 120 figuritas</b>, las mismas de las guías de 20 preguntas.
+      Es el mismo álbum que <a href="#" onclick="setTesoroSubTab('album');return false" style="color:var(--gold)">🙋 Álbum en el portal del ser</a>: acá se cargan las preguntas, allá se ve cómo lo va completando cada persona.</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px">
+      ${ALB_AREAS.map(a=>{const n=de(a).length;return`<button class="tab-btn${a===_albCatArea?' active':''}" onclick="_albCatArea='${a}';_renderAlbumCatalogo(false)" style="border-left:3px solid ${ALB_COL[a]}">${a} <span style="font-size:10px;color:${n>=20?'var(--green)':'var(--muted)'}">${n}/20</span></button>`;}).join('')}
+      <span style="margin-left:auto;font-size:12px;color:var(--muted);align-self:center">${total} de 120 cargadas</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:8px">
+      ${Array.from({length:20},(_,i)=>i+1).map(n=>{const r=porNum[n],d=r?.data||{};
+        return`<div onclick="_albEditarFig(${n})" style="cursor:pointer;background:var(--card2);border:1px solid ${r?'var(--border)':'rgba(255,255,255,.06)'};border-left:3px solid ${r?ALB_COL[_albCatArea]:'transparent'};border-radius:10px;padding:10px 12px;min-height:58px;${r&&d.activo===false?'opacity:.5':''}">
+          <div style="font-size:10px;font-weight:700;color:${ALB_COL[_albCatArea]}">#${n}${r&&d.activo===false?' · oculta':''}</div>
+          <div style="font-size:12.5px;line-height:1.4;margin-top:3px;color:${r?'var(--text)':'var(--muted)'}">${r?_tzEsc(d.texto||'(sin texto)'):'+ Cargar pregunta'}</div>
+        </div>`;}).join('')}
+    </div>`;
+}
+async function _albEditarFig(n){
+  const a=_albCatArea,id='fig-'+_albSlug(a)+'-'+String(n).padStart(2,'0');
+  const r=_albCat.find(x=>x.data?.area===a&&+x.data.numero===n);
+  const t=prompt(`${a} · pregunta #${n}\n(dejala vacía para ocultarla)`,r?.data?.texto||'');
+  if(t===null)return;
+  const data={...(r?.data||{}),area:a,numero:n,texto:t.trim(),activo:!!t.trim()};
+  const {error}=await _sb.from('album_figuritas').upsert({id:r?.id||id,data});
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast(t.trim()?'✓ Pregunta guardada':'Pregunta oculta');_renderAlbumCatalogo();
 }
 </script>
 </body>
