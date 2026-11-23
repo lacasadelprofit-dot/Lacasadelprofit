@@ -352,16 +352,14 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('fidelidad',this)"><span class="ico">🎡</span><span>Ruleta Fidelidad</span></div>
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
-    <div class="ni" id="niMarketing" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span><span id="crmBadge" title="Prospectos nuevos en el CRM" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
+    <div class="ni" id="niMarketing" onclick="irMkt('contenido')"><span class="ico">📣</span><span>Marketing</span><span id="crmBadge" title="Prospectos nuevos en el CRM" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
     <!-- Contenido y CRM ahora viven dentro de Marketing (pestañas). Se dejan ocultos porque otras funciones los buscan. -->
     <div class="ni" style="display:none" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
     <div class="ni" style="display:none" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
     <div class="ni" onclick="nav('encuentros',this)"><span class="ico">🤝</span><span>Encuentros</span></div>
     <div class="ni" id="niTesoro" onclick="irTesoro()"><span class="ico">🗺️</span><span>Búsqueda del tesoro</span></div>
-    <div class="nl">Inteligencia</div>
-    <div class="ni" onclick="nav('profit',this)"><span class="ico">🧠</span><span>Profit IA</span></div>
     <div class="nl">Portales</div>
-    <div class="ni" onclick="nav('accesos',this)"><span class="ico">🔗</span><span>Accesos Rápidos</span></div>
+    <div class="ni" id="niAccesos" onclick="nav('accesos',this)"><span class="ico">🔗</span><span>Accesos Rápidos</span></div>
    </div>
    <div class="s-foot">
     <div class="uinfo">
@@ -766,10 +764,9 @@ th{background:rgba(28,26,46,.88)!important;}
 
       <div class="tab-bar" style="margin-bottom:18px">
         <button class="tab-btn active" id="contTabResumen"   onclick="setContSection('resumen')">📊 Resumen</button>
-        <button class="tab-btn"        id="contTabInstagram" onclick="setContSection('instagram')">📸 Instagram · Qué funciona</button>
-        <button class="tab-btn"        id="contTabTiktok"    onclick="setContSection('tiktok')">🎵 TikTok · Qué funciona</button>
-        <button class="tab-btn"        id="contTabRitmo"     onclick="setContSection('ritmo')">📅 Ritmo semanal</button>
-        <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">📱 Redes Sociales</button>
+        <button class="tab-btn"        id="contTabInstagram" onclick="setContSection('instagram')">📸 Instagram</button>
+        <button class="tab-btn"        id="contTabTiktok"    onclick="setContSection('tiktok')">🎵 TikTok</button>
+        <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">🗓 Planificador</button>
         <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
         <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
       </div>
@@ -779,7 +776,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <div id="contInstagram" style="display:none"></div>
       <!-- Sub-tab: TikTok automático (api/tiktok + tabla redes_metricas) -->
       <div id="contTiktok" style="display:none"></div>
-      <!-- Sub-tab: Ritmo de contenido semanal -->
+      <!-- Planificador: Ritmo semanal (arriba) + ideas y calendario (contRedes) -->
       <div id="contRitmo" style="display:none">
      <!-- RITMO DE CONTENIDO -->
      <div style="background:linear-gradient(135deg,rgba(201,168,76,.07) 0%,rgba(201,168,76,.03) 100%);border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:18px 20px;margin-bottom:20px;">
@@ -858,7 +855,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <!-- MARKETING -->
     <div id="sec-marketing" class="sec">
      <div class="tab-bar" style="margin-bottom:18px">
-      <button class="tab-btn" onclick="irMkt('contenido')">📱 Contenido</button>
+      <button class="tab-btn" onclick="irMkt('contenido')">📱 Redes sociales</button>
       <button class="tab-btn active" id="mktTabResumen" onclick="setMktTab('resumen')">📊 Resumen</button>
       <button class="tab-btn" id="mktTabPub" onclick="setMktTab('pub')">📢 Publicidades</button>
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
@@ -1216,6 +1213,15 @@ th{background:rgba(28,26,46,.88)!important;}
     <!-- ACCESOS RÁPIDOS -->
     <div id="sec-accesos" class="sec">
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;max-width:900px">
+
+        <a href="#" onclick="nav('profit',document.getElementById('niAccesos'));return false" class="acceso-card" style="text-decoration:none">
+          <div class="acceso-ico">🧠</div>
+          <div class="acceso-info">
+            <div class="acceso-titulo">Profit IA</div>
+            <div class="acceso-desc">Tu asistente con inteligencia artificial, dentro del sistema</div>
+          </div>
+          <span class="acceso-ext">→</span>
+        </a>
 
         <a href="/portal_ser.html" target="_blank" class="acceso-card" style="text-decoration:none">
           <div class="acceso-ico">💫</div>
@@ -3000,7 +3006,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={encuentros:'🤝 Encuentros',tesoro:'🗺️ Búsqueda del tesoro',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Contenido',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',tesoro:'🗺️ Búsqueda del tesoro',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Redes sociales',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -9628,80 +9634,78 @@ function _ideaToPost(id){
 }
 
 /* ── Vista principal ── */
+/* ── 🗓 PLANIFICADOR (pestaña de Contenido) ──
+   Ideas y calendario de lo que vas a publicar. Las métricas NO se cargan acá:
+   llegan solas a Resumen / Instagram / TikTok. Usa la misma lista contenidoRedes y el mismo modal. */
+const _plHoy=()=>new Date().toLocaleDateString('sv-SE');
+const _plE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function renderMktContenido(){
   const el=document.getElementById('contRedes');if(!el)return;
-  const hoy=new Date().toISOString().slice(0,10);
-  const mes=hoy.slice(0,7);
-  const publicados=contenidoRedes.filter(c=>c.tipo==='publicado');
-  const ideas=contenidoRedes.filter(c=>c.tipo==='idea');
-  const planificados=contenidoRedes.filter(c=>c.tipo==='planificado');
-  const esteMes=publicados.filter(c=>c.fecha?.startsWith(mes));
-  const alcTotal=esteMes.reduce((a,c)=>a+_mainReach(c),0);
-  const leadsTotal=esteMes.reduce((a,c)=>a+(c.leads_generados||0),0);
-
-  const goals=getContGoals();
-  const metaPosts=goals.posts_mes||0;
-  const metaAlcance=goals.alcance_mes||0;
-  const postsPct=metaPosts>0?Math.min(100,Math.round(esteMes.length/metaPosts*100)):null;
-  const alcPct=metaAlcance>0?Math.min(100,Math.round(alcTotal/metaAlcance*100)):null;
-
-  // KPI strip
-  const kpis=`<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:${metaPosts||metaAlcance?'12px':'20px'}">
-    ${[
-      {l:'Posts publicados',v:esteMes.length,s:'este mes',c:'var(--green)',i:'✅'},
-      {l:'Alcance total',v:alcTotal>=1000?(alcTotal/1000).toFixed(1)+'K':alcTotal,s:'acumulado mes',c:'var(--blue)',i:'👁'},
-      {l:'Ideas en cola',v:ideas.length,s:'esperando ser creadas',c:'var(--gold)',i:'💡'},
-      {l:'Leads de contenido',v:leadsTotal,s:'generados este mes',c:'var(--purple)',i:'✨'},
-    ].map(k=>`<div class="cc" style="padding:14px 16px">
-      <div style="font-size:18px;margin-bottom:6px">${k.i}</div>
-      <div style="font-size:22px;font-weight:800;color:${k.c};line-height:1">${k.v}</div>
-      <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:4px">${k.l}</div>
-      <div style="font-size:10px;color:var(--muted)">${k.s}</div>
-    </div>`).join('')}
-  </div>
-  <!-- Metas mensuales -->
-  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
-    ${[
-      {k:'posts_mes',l:'Posts/mes',val:esteMes.length,meta:metaPosts,pct:postsPct,col:'var(--green)'},
-      {k:'alcance_mes',l:'Alcance meta',val:alcTotal,meta:metaAlcance,pct:alcPct,col:'var(--blue)'},
-    ].map(g=>`<div style="flex:1;min-width:180px;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;cursor:pointer" onclick="editGoal('${g.k}','${g.l}',${g.meta})" title="Click para editar meta">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
-        <span style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${g.l}</span>
-        <span style="font-size:10px;color:var(--muted)">${g.meta>0?`Meta: ${g.meta>=1000?(g.meta/1000).toFixed(0)+'K':g.meta}`:'+  Fijar meta'}</span>
+  const hoy=_plHoy();
+  const ideas=contenidoRedes.filter(c=>c.tipo==='idea').sort((a,b)=>(b.createdAt||'').localeCompare(a.createdAt||''));
+  const plan=contenidoRedes.filter(c=>c.tipo==='planificado').sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||''));
+  const hechos=contenidoRedes.filter(c=>c.tipo==='publicado').sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).slice(0,8);
+  const atrasados=plan.filter(c=>c.fecha&&c.fecha<hoy);
+  // calendario: 2 semanas desde el lunes de esta semana
+  const lun=new Date(hoy+'T12:00');lun.setDate(lun.getDate()-((lun.getDay()+6)%7));
+  const dias=Array.from({length:14},(_,i)=>{const d=new Date(lun);d.setDate(d.getDate()+i);return d.toLocaleDateString('sv-SE');});
+  const DS=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+  const chip=c=>`<div onclick="event.stopPropagation();openContenidoModal('${c.id}')" title="${_plE(c.titulo||'')}" style="font-size:10.5px;line-height:1.3;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:4px 6px;margin-top:4px;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${PLAT_CONT_ICO[c.plataforma]||'📱'} ${_plE(c.titulo||c.formato||'Sin título')}</div>`;
+  const tarjeta=(c,acciones)=>`<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-bottom:8px">
+      <div onclick="openContenidoModal('${c.id}')" style="cursor:pointer">
+        <div style="font-size:10.5px;color:var(--muted)">${PLAT_CONT_ICO[c.plataforma]||'📱'} ${_plE(c.plataforma||'')} · ${_plE(c.formato||'')}${c.fecha&&c.tipo!=='idea'?` · <span style="color:${c.tipo==='planificado'&&c.fecha<hoy?'var(--red)':'var(--gl)'}">${fd(c.fecha)}${c.tipo==='planificado'&&c.fecha<hoy?' · atrasado':''}</span>`:''}</div>
+        <div style="font-size:13px;font-weight:700;margin-top:3px">${_plE(c.titulo||'Sin título')}</div>
+        ${c.hook?`<div style="font-size:11.5px;font-style:italic;color:var(--gl);margin-top:2px">“${_plE(c.hook)}”</div>`:''}
       </div>
-      ${g.meta>0?`
-        <div style="display:flex;align-items:baseline;gap:6px;margin-bottom:6px">
-          <span style="font-size:20px;font-weight:800;color:${g.pct>=100?'var(--green)':g.pct>=60?g.col:'var(--or)'}">${g.pct}%</span>
-          <span style="font-size:11px;color:var(--muted)">${g.val>=1000?(g.val/1000).toFixed(1)+'K':g.val} / ${g.meta>=1000?(g.meta/1000).toFixed(0)+'K':g.meta}</span>
-        </div>
-        <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
-          <div style="height:100%;background:${g.pct>=100?'var(--green)':g.pct>=60?g.col:'var(--or)'};width:${g.pct}%;border-radius:3px;transition:width .5s"></div>
-        </div>
-        ${g.pct>=100?`<div style="font-size:10px;color:var(--green);margin-top:4px;font-weight:700">🎉 ¡Meta alcanzada!</div>`:''}`
-      :`<div style="font-size:11px;color:var(--muted)">Sin meta — tocá para fijar una</div>`}
-    </div>`).join('')}
-  </div>`;
-
-  // Tabs + acciones
-  const nav=`<div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-    ${[['posts','📋 Contenido'],['calendario','📅 Calendario'],['insights','📊 Insights']].map(([k,l])=>`
-      <button onclick="_contTab='${k}';renderMktContenido()" style="padding:7px 16px;border-radius:20px;font-size:12px;font-weight:700;cursor:pointer;border:1.5px solid ${_contTab===k?'var(--gold)':'var(--border)'};background:${_contTab===k?'rgba(201,168,76,.15)':'transparent'};color:${_contTab===k?'var(--gold)':'var(--muted)'};transition:all .2s">${l}</button>`).join('')}
-    <div style="margin-left:auto;display:flex;gap:6px">
-      <button onclick="openContenidoModal(null,'idea')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(201,168,76,.4);background:rgba(201,168,76,.1);color:var(--gold)">💡 Idea</button>
-      <button onclick="openContenidoModal(null,'planificado')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid rgba(91,155,213,.4);background:rgba(91,155,213,.1);color:var(--blue)">📅 Planificar</button>
-      <button onclick="openContenidoModal(null,'publicado')" style="padding:7px 14px;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;background:var(--gold);border:none;color:#050401">✅ Registrar</button>
+      <div style="display:flex;gap:6px;margin-top:8px">${acciones}</div>
+    </div>`;
+  el.innerHTML=`
+  <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+    <div style="font-size:12px;color:var(--muted);flex:1;min-width:220px">Ideas y calendario de lo que vas a publicar. Las métricas no se cargan acá: llegan solas a <b>📊 Resumen</b>, <b>📸 Instagram</b> y <b>🎵 TikTok</b>.</div>
+    <button class="btn btn-s btn-sm" onclick="openContenidoModal(null,'idea')">💡 Nueva idea</button>
+    <button class="btn btn-p btn-sm" onclick="openContenidoModal(null,'planificado','${hoy}')">📅 Planificar publicación</button>
+  </div>
+  ${atrasados.length?`<div style="background:rgba(224,85,85,.08);border:1px solid rgba(224,85,85,.3);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12.5px">⚠️ ${atrasados.length} publicaci${atrasados.length===1?'ón planificada quedó':'ones planificadas quedaron'} atrasada${atrasados.length===1?'':'s'}: marcala${atrasados.length===1?'':'s'} como publicada${atrasados.length===1?'':'s'} o cambiale${atrasados.length===1?'':'s'} la fecha.</div>`:''}
+  <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px">
+    <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">📅 Próximas 2 semanas · tocá un día para planificar</div>
+    <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">
+      ${dias.map((f,i)=>{const its=plan.filter(c=>c.fecha===f).concat(contenidoRedes.filter(c=>c.tipo==='publicado'&&c.fecha===f));const esHoy=f===hoy,pasado=f<hoy;
+        return`<div onclick="openContenidoModal(null,'planificado','${f}')" style="cursor:pointer;min-height:78px;background:${esHoy?'rgba(201,168,76,.10)':'var(--card)'};border:1px solid ${esHoy?'rgba(201,168,76,.45)':'var(--border)'};border-radius:10px;padding:6px;${pasado?'opacity:.55':''}">
+          <div style="font-size:9.5px;font-weight:700;color:${esHoy?'var(--gl)':'var(--muted)'}">${DS[i%7]} ${f.slice(8)}/${f.slice(5,7)}</div>
+          ${its.map(c=>c.tipo==='publicado'?chip({...c,titulo:'✅ '+(c.titulo||'')}):chip(c)).join('')}
+        </div>`;}).join('')}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💡 Ideas (${ideas.length})</div>
+      ${ideas.length?ideas.map(c=>tarjeta(c,`<button class="btn btn-s btn-sm" onclick="contPlanificar('${c.id}')">📅 Planificar</button><button class="btn btn-s btn-sm" style="margin-left:auto" onclick="delContenido('${c.id}')">🗑</button>`)).join('')
+        :'<div style="font-size:12.5px;color:var(--muted);padding:10px 0">Todavía no hay ideas. Anotá acá lo que se te ocurra para no perderlo.</div>'}
+    </div>
+    <div>
+      <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📅 Planificado (${plan.length})</div>
+      ${plan.length?plan.map(c=>tarjeta(c,`<button class="btn btn-p btn-sm" onclick="contHecho('${c.id}')">✅ Publicado</button><button class="btn btn-s btn-sm" onclick="contPlanificar('${c.id}')">Cambiar fecha</button><button class="btn btn-s btn-sm" style="margin-left:auto" onclick="delContenido('${c.id}')">🗑</button>`)).join('')
+        :'<div style="font-size:12.5px;color:var(--muted);padding:10px 0">Nada planificado. Pasá una idea a 📅 o tocá un día del calendario.</div>'}
+      ${hechos.length?`<div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 8px">✅ Publicado hace poco</div>
+        ${hechos.map(c=>`<div onclick="openContenidoModal('${c.id}')" style="cursor:pointer;font-size:12px;color:var(--muted);padding:5px 0;border-bottom:1px solid var(--border)">${fd(c.fecha)} · ${PLAT_CONT_ICO[c.plataforma]||'📱'} ${_plE(c.titulo||'Sin título')}</div>`).join('')}`:''}
     </div>
   </div>`;
-
-  let body='';
-  if(_contTab==='posts')           body=_renderContLista(contenidoRedes,hoy,publicados);
-  else if(_contTab==='calendario') body=_renderContCalendario(contenidoRedes,hoy);
-  else if(_contTab==='insights')   body=_renderContInsights(publicados,mes);
-
-  el.innerHTML=kpis+nav+body;
+}
+function contPlanificar(id){
+  const c=contenidoRedes.find(x=>x.id===id);if(!c)return;
+  const f=prompt('¿Qué día lo publicás? (AAAA-MM-DD)',c.tipo==='planificado'&&c.fecha?c.fecha:_plHoy());
+  if(f===null)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f.trim())){toast('⚠️ Escribí la fecha así: 2026-11-30','err');return;}
+  c.tipo='planificado';c.fecha=f.trim();
+  contenidoRedes.sort((a,b)=>(b.fecha||b.createdAt||'').localeCompare(a.fecha||a.createdAt||''));
+  save();renderMktContenido();toast('📅 Planificado para el '+fd(c.fecha));
+}
+function contHecho(id){
+  const c=contenidoRedes.find(x=>x.id===id);if(!c)return;
+  c.tipo='publicado';if(!c.fecha||c.fecha>_plHoy())c.fecha=_plHoy();
+  save();renderMktContenido();toast('✅ Marcado como publicado · las métricas llegan solas a Instagram / TikTok');
 }
 
-/* ── POSTS: grid de cards estilo social ── */
 function _renderContPosts(publicados,planificados,hoy){
   const todos=[...publicados,...planificados].sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
   const fmts=[...new Set(todos.map(c=>c.formato).filter(Boolean))];
@@ -12155,13 +12159,14 @@ async function delComunidad(id){
 let _contSection='resumen';
 function setContSection(tab){
   _contSection=tab;
-  ['resumen','instagram','tiktok','ritmo','redes','manual','comunidad','generador'].forEach(t=>{
+  ['resumen','instagram','tiktok','redes','manual','comunidad','generador'].forEach(t=>{
     const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
     const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl)tabEl.classList.toggle('active',t===tab);
     if(contEl)contEl.style.display=t===tab?'':'none';
   });
   if(tab==='resumen')renderContResumen();
+  {const r=document.getElementById('contRitmo');if(r)r.style.display=tab==='redes'?'':'none';} // el Ritmo semanal va arriba del Planificador
   if(tab==='redes')renderMktContenido();
   if(tab==='instagram')renderContInstagram();
   if(tab==='tiktok')renderContTiktok();
