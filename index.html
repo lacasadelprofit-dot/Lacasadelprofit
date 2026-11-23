@@ -349,9 +349,10 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="ni" onclick="nav('fidelidad',this)"><span class="ico">🎡</span><span>Ruleta Fidelidad</span></div>
     <div class="ni" onclick="nav('facturacion',this)"><span class="ico">💰</span><span>Finanzas</span></div>
     <div class="nl">Comunicación</div>
-    <div class="ni" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span></div>
-    <div class="ni" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
-    <div class="ni" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span><span id="crmBadge" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
+    <div class="ni" id="niMarketing" onclick="nav('marketing',this)"><span class="ico">📣</span><span>Marketing</span><span id="crmBadge" title="Prospectos nuevos en el CRM" style="display:none;background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:auto;line-height:16px;min-width:16px;text-align:center;"></span></div>
+    <!-- Contenido y CRM ahora viven dentro de Marketing (pestañas). Se dejan ocultos porque otras funciones los buscan. -->
+    <div class="ni" style="display:none" onclick="nav('contenido',this)"><span class="ico">📱</span><span>Contenido</span></div>
+    <div class="ni" style="display:none" onclick="nav('crm',this)"><span class="ico">👥</span><span>CRM</span></div>
     <div class="ni" onclick="nav('encuentros',this)"><span class="ico">🤝</span><span>Encuentros</span></div>
     <div class="nl">Inteligencia</div>
     <div class="ni" onclick="nav('profit',this)"><span class="ico">🧠</span><span>Profit IA</span></div>
@@ -755,6 +756,7 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- CONTENIDO -->
     <div id="sec-contenido" class="sec">
+     <div class="tab-bar mkt-bar-copia" data-activa="contenido" style="margin-bottom:18px"></div>
 
      <!-- RITMO DE CONTENIDO -->
      <div style="background:linear-gradient(135deg,rgba(201,168,76,.07) 0%,rgba(201,168,76,.03) 100%);border:1px solid rgba(201,168,76,.2);border-radius:16px;padding:18px 20px;margin-bottom:20px;">
@@ -851,7 +853,8 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
       <button class="tab-btn" id="mktTabFlyers" onclick="setMktTab('flyers')">📱 Flyers</button>
       <button class="tab-btn" id="mktTabTesoro" onclick="setMktTab('tesoro')">🗺️ Búsqueda del Tesoro</button>
-      <button class="tab-btn" onclick="navCRM()" style="border-color:rgba(201,168,76,.3);color:var(--gold)">👥 Ir a CRM →</button>
+      <button class="tab-btn" onclick="irMkt('contenido')">📱 Contenido</button>
+      <button class="tab-btn" onclick="irMkt('crm')">👥 CRM<span class="mkt-crm-badge"></span></button>
      </div>
      <div id="mktResumen"></div>
      <div id="mktPub" style="display:none"></div>
@@ -873,14 +876,8 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="abrirEncPersonas()">👥 Facilitadores · Instagram</button>
       <button class="btn btn-s btn-sm" onclick="abrirEncGaleria()">📷 Fotos del mosaico (Consciencia)</button>
      </div>
-     <!-- Ficha interna de Consciencia en Búzios (solo visible con el filtro Consciencia) -->
-     <div id="encVistas" class="tab-bar" style="display:none;margin-bottom:16px">
-      <button class="tab-btn enc-v" data-v="lista" onclick="setEncVista('lista')">📋 Encuentros</button>
-      <button class="tab-btn enc-v" data-v="vision" onclick="setEncVista('vision')">🧭 Visión</button>
-      <button class="tab-btn enc-v" data-v="datos" onclick="setEncVista('datos')">📊 Datos</button>
-      <button class="tab-btn enc-v" data-v="plan" onclick="setEncVista('plan')">🗓 Planificación</button>
-      <button class="tab-btn enc-v" data-v="hilo" onclick="setEncVista('hilo')">🧵 Hilo</button>
-     </div>
+     <!-- Ficha interna de cada comunidad (pestañas: se dibujan desde ENC_VISTAS) -->
+     <div id="encVistas" class="tab-bar" style="display:none;margin-bottom:16px"></div>
      <div id="encPanelLista">
       <div id="encStats" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:16px"></div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Los encuentros con fecha futura aparecen en la web como <b>Próximo encuentro</b>. Cuando pasa la fecha, se mueven solos a los encuentros ya compartidos. Cargá los participantes después de cada encuentro. Los que están en <b>Idea</b> o <b>En armado</b> no se ven en la web.</div>
@@ -890,6 +887,7 @@ th{background:rgba(28,26,46,.88)!important;}
     </div>
 
     <div id="sec-crm" class="sec">
+      <div class="tab-bar mkt-bar-copia" data-activa="crm" style="margin-bottom:18px"></div>
       <div id="crmContainer"></div>
     </div>
 
@@ -1409,6 +1407,72 @@ th{background:rgba(28,26,46,.88)!important;}
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
    <button class="btn btn-s" onclick="closeModal('moEncGal')">Cancelar</button>
    <button class="btn btn-p" id="gGuardarBtn" onclick="guardarEncGaleria()">Guardar</button>
+  </div>
+ </div>
+</div>
+
+<!-- CAJA DE LA COMUNIDAD: movimiento -->
+<div class="mo" id="moMov">
+ <div class="mb" style="width:560px">
+  <h2 id="moMovTitle">💰 Movimiento</h2>
+  <input type="hidden" id="mId"><input type="hidden" id="mCom">
+  <div class="fg-row">
+   <div class="fg"><label>Tipo *</label><select id="mTipo" onchange="_cajaCatOpciones()"><option value="ingreso">⬆️ Ingreso (entra plata)</option><option value="egreso">⬇️ Egreso (sale plata)</option></select></div>
+   <div class="fg"><label>Fecha *</label><input type="date" id="mFecha"></div>
+  </div>
+  <div class="fg-row">
+   <div class="fg"><label>Monto *</label><input type="number" id="mMonto" min="0" step="0.01" placeholder="108"></div>
+   <div class="fg"><label>Moneda</label><select id="mMoneda"><option value="BRL">R$ · Reales</option><option value="ARS">$ · Pesos</option><option value="USD">US$ · Dólares</option></select></div>
+  </div>
+  <div class="fg"><label>Concepto *</label><input type="text" id="mConcepto" placeholder="Flyers para el encuentro · Aporte a la gorra…"></div>
+  <div class="fg-row">
+   <div class="fg"><label>Categoría</label><input type="text" id="mCat" list="mCatList"><datalist id="mCatList"></datalist></div>
+   <div class="fg"><label>Medio</label><select id="mMedio"><option>Pix</option><option>Efectivo</option><option>Transferencia</option><option>Otro</option></select></div>
+  </div>
+  <div class="fg-row">
+   <div class="fg"><label>Encuentro (opcional)</label><select id="mEnc"></select></div>
+   <div class="fg"><label id="mQuienLbl">Quién</label><input type="text" id="mQuien" placeholder="Opcional"></div>
+  </div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+   <button class="btn btn-s" onclick="closeModal('moMov')">Cancelar</button>
+   <button class="btn btn-p" id="mGuardarBtn" onclick="guardarMov()">Guardar</button>
+  </div>
+ </div>
+</div>
+
+<!-- CAJA: resumen para mandar al grupo -->
+<div class="mo" id="moCajaRes">
+ <div class="mb" style="width:540px">
+  <h2>📲 Resumen para el grupo</h2>
+  <input type="hidden" id="crCom">
+  <div class="fg"><label>Período</label><select id="crPeriodo" onchange="_cajaResPintar()"></select></div>
+  <div class="fg"><label>Texto <span style="font-weight:400;color:var(--muted);font-size:11px">— podés editarlo antes de mandarlo. No incluye nombres de quién aportó.</span></label><textarea id="crTexto" rows="15" style="font-family:inherit"></textarea></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px;flex-wrap:wrap">
+   <button class="btn btn-s" onclick="closeModal('moCajaRes')">Cerrar</button>
+   <button class="btn btn-s" onclick="cajaResCopiar()">📋 Copiar</button>
+   <button class="btn btn-p" onclick="cajaResWhatsapp()">💬 Abrir en WhatsApp</button>
+  </div>
+ </div>
+</div>
+
+<!-- BARRAS EN BÚZIOS: persona que se hace Barras -->
+<div class="mo" id="moBarPer">
+ <div class="mb" style="width:640px">
+  <h2 id="moBarPerTitle">👥 Persona</h2>
+  <input type="hidden" id="bpId">
+  <div class="fg-row">
+   <div class="fg"><label>Nombre * <span style="font-weight:400;color:var(--muted);font-size:11px">— si ya está en Seres, elegila de la lista</span></label><input type="text" id="bpNombre" list="bpSeresList" oninput="_bpBuscarSer()"><datalist id="bpSeresList"></datalist></div>
+   <div class="fg"><label>WhatsApp</label><input type="text" id="bpWa" placeholder="+55 22 9…"></div>
+  </div>
+  <div id="bpSerInfo" style="font-size:11.5px;color:var(--muted);margin:-4px 0 10px"></div>
+  <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12.5px;margin-bottom:12px"><input type="checkbox" id="bpClase" style="accent-color:var(--gold)"> 🎓 Hizo la clase de Barras (puede dar y recibir)</label>
+  <div class="fg"><label>Notas</label><textarea id="bpNotas" rows="2" placeholder="Cómo llegó, qué le pasó, si quiere hacer la clase…"></textarea></div>
+  <div style="margin-bottom:14px"><div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Encuentros a los que fue <span style="font-weight:400;text-transform:none;letter-spacing:0">— si aportó, poné el monto: entra solo en la caja de Barras</span></div>
+   <div id="bpAsis" style="display:flex;flex-direction:column;gap:6px;max-height:40vh;overflow-y:auto"></div></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+   <button class="btn btn-d" id="bpBorrarBtn" style="margin-right:auto" onclick="borrarBarPer()">🗑 Borrar</button>
+   <button class="btn btn-s" onclick="closeModal('moBarPer')">Cancelar</button>
+   <button class="btn btn-p" id="bpGuardarBtn" onclick="guardarBarPer()">Guardar</button>
   </div>
  </div>
 </div>
@@ -2911,7 +2975,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📱 Contenido',crm:'👥 CRM — Prospectos',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'📖 Biblioteca',fidelidad:'🎡 Ruleta Fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Contenido',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -2938,6 +3002,12 @@ function nav(name,el){
   if(secJ&&name!=='programas')secJ.style.display='none';
   document.getElementById('sec-'+name).classList.add('active');
   if(el)el.classList.add('active');
+  // Contenido y CRM son pestañas de Marketing: se marca Marketing en el menú y se dibuja la barra de pestañas
+  if(name==='contenido'||name==='crm'){
+    document.querySelectorAll('.ni').forEach(n=>n.classList.remove('active'));
+    document.getElementById('niMarketing')?.classList.add('active');
+    _mktPintarCopias(name);
+  }
   curSec=name;
   document.getElementById('pgTitle').textContent=TITLES[name]||name;
   document.getElementById('pgActs').innerHTML=BTNS[name]||'';
@@ -3143,6 +3213,8 @@ function updateCrmBadge(){
   if(!el)return;
   if(n>0){el.textContent=n>9?'9+':n;el.style.display='inline-block';}
   else el.style.display='none';
+  // el mismo número en la pestaña CRM de Marketing
+  document.querySelectorAll('.mkt-crm-badge').forEach(b=>{b.textContent=n>0?(n>9?'9+':n):'';b.style.cssText=n>0?'background:#E05555;color:#fff;font-size:9px;font-weight:800;padding:1px 5px;border-radius:20px;margin-left:5px':'';});
 }
 
 function renderNuevosProspectos(){
@@ -8953,6 +9025,24 @@ function doImport(){
 
 /* MARKETING */
 let mktTab='resumen';
+/* Contenido y CRM se abren como pestañas de Marketing (sus secciones siguen siendo sec-contenido / sec-crm).
+   irMkt: ir a cualquier pestaña de Marketing desde donde estés. */
+function irMkt(t){
+  const ni=document.getElementById('niMarketing');
+  if(t==='contenido'||t==='crm'){nav(t,ni);return;}
+  if(curSec!=='marketing')nav('marketing',ni);
+  setMktTab(t);
+}
+function _mktPintarCopias(activa){
+  const orig=document.querySelector('#sec-marketing .tab-bar');if(!orig)return;
+  document.querySelectorAll('.mkt-bar-copia').forEach(c=>{
+    c.innerHTML=[...orig.querySelectorAll('button')].map(b=>{
+      const m=/setMktTab\('(\w+)'\)/.exec(b.getAttribute('onclick')||'')||/irMkt\('(\w+)'\)/.exec(b.getAttribute('onclick')||'');
+      const t=m?m[1]:'';
+      return `<button class="tab-btn${t===activa?' active':''}" onclick="irMkt('${t}')">${b.innerHTML}</button>`;
+    }).join('');
+  });
+}
 function setMktTab(t){
   mktTab=t;
   ['resumen','pub','conv','ret','meta','regalos','stats','flyers','tesoro'].forEach(x=>{
@@ -13923,7 +14013,11 @@ async function _encCargar(){
   _encs=(data||[]).map(r=>({id:r.id,...(r.data||{})}));
   return true;
 }
-function setEncFiltro(f){_encFiltro=f;if(f!=='consciencia')_encVista='lista';renderEnc(true);}
+const ENC_VISTAS={
+  consciencia:[['lista','📋 Encuentros'],['vision','🧭 Visión'],['datos','📊 Datos'],['plan','🗓 Planificación'],['hilo','🧵 Hilo'],['caja','💰 Caja']],
+  barras:[['lista','📋 Encuentros'],['caja','💰 Caja'],['personas','👥 Personas']]
+};
+function setEncFiltro(f){_encFiltro=f;if(!(ENC_VISTAS[f]||[]).some(([v])=>v===_encVista))_encVista='lista';renderEnc(true);}
 function setEncVista(v){_encVista=v;renderEnc(true);}
 
 async function renderEnc(sinRecargar){
@@ -13933,11 +14027,12 @@ async function renderEnc(sinRecargar){
     box.innerHTML='<div style="color:var(--muted);padding:20px">Cargando…</div>';
     if(!await _encCargar()){box.innerHTML='<div style="color:var(--red);padding:20px">No se pudieron cargar los encuentros. ¿Ya corriste <b>39_encuentros.sql</b> en Supabase?</div>';return;}
   }
-  // ficha interna de Consciencia en Búzios
-  const esConsc=_encFiltro==='consciencia';
-  document.getElementById('encVistas').style.display=esConsc?'':'none';
-  document.querySelectorAll('.enc-v').forEach(b=>b.classList.toggle('active',b.dataset.v===_encVista));
-  const enFicha=esConsc&&_encVista!=='lista';
+  // ficha interna de cada comunidad (pestañas)
+  const vistas=ENC_VISTAS[_encFiltro];
+  const barra=document.getElementById('encVistas');
+  barra.style.display=vistas?'':'none';
+  barra.innerHTML=(vistas||[]).map(([v,l])=>`<button class="tab-btn enc-v${v===_encVista?' active':''}" onclick="setEncVista('${v}')">${l}</button>`).join('');
+  const enFicha=!!vistas&&_encVista!=='lista';
   document.getElementById('encPanelLista').style.display=enFicha?'none':'';
   document.getElementById('encPanelConsc').style.display=enFicha?'':'none';
   if(enFicha){_encRenderConsc();return;}
@@ -14191,7 +14286,7 @@ function _encAddTag(t){const i=document.getElementById('eTags');const a=_encTags
 function _encRenderConsc(){
   const el=document.getElementById('encPanelConsc');
   const v=_encVista;
-  el.innerHTML=v==='vision'?_encVistaVision():v==='datos'?_encVistaDatos():v==='plan'?_encVistaPlan():(_encEtiquetando?_encVistaEtiquetar():_encVistaHilo());
+  el.innerHTML=v==='caja'?_encVistaCaja(_encFiltro):v==='personas'?_encVistaPersonas():v==='vision'?_encVistaVision():v==='datos'?_encVistaDatos():v==='plan'?_encVistaPlan():(_encEtiquetando?_encVistaEtiquetar():_encVistaHilo());
 }
 
 function _encVistaVision(){
@@ -14355,6 +14450,7 @@ function _encVistaHilo(){
         ${prev?`<div style="font-size:12px;margin-top:6px">↩️ Retoma <b>${_encE(_encNom(prev))}</b>${m.conecta_nota?' — '+_encE(m.conecta_nota):''}</div>`:(m.conecta_nota?`<div style="font-size:12px;margin-top:6px">↩️ ${_encE(m.conecta_nota)}</div>`:'')}
         ${desp.length?`<div style="font-size:12px;margin-top:4px;color:var(--muted)">↪️ Continúa en ${desp.map(d=>'<b>'+_encE(_encNom(d))+'</b>').join(', ')}</div>`:''}
         ${m.notas?`<div style="font-size:12px;margin-top:4px;color:var(--muted)">📝 ${_encE(m.notas)}</div>`:''}
+        ${_cajaDeEnc(r.id)}
         <button class="btn btn-s btn-sm" style="margin-top:6px;padding:1px 8px;font-size:11px" onclick="abrirEnc('${_encE(r.id)}')">✏️ Etiquetas y conexión</button>
       </div></div>`;}).join('');
   return `<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
@@ -14392,6 +14488,283 @@ async function guardarEncEtiquetas(){
     await _encGuardarPriv(p=>{vals.forEach(([id,t])=>{const m={...(p.meta[id]||{}),tags:t};if(!t.length&&!m.conecta&&!m.conecta_nota&&!m.notas)delete p.meta[id];else p.meta[id]=m;});});
     toast('✓ Etiquetas guardadas');_encEtiquetando=false;_encRenderConsc();
   }catch(e){btn.disabled=false;toast('⚠️ '+(e.message||e),'err');}
+}
+
+/* ══════════ CAJA DE CADA COMUNIDAD (Consciencia y Barras, separadas) ══════════
+   Filas tipo "mov" en la tabla encuentros, SIEMPRE activo:false (la web no las lee).
+   data: {tipo:'mov',comunidad,mov:'ingreso'|'egreso',fecha,monto,moneda,concepto,categoria,medio,enc,quien,persona?,auto?}
+   Los aportes registrados en 👥 Personas (Barras) crean movimientos auto con id mov-bp-{persona}-{encuentro}. */
+const CAJA_CAT={
+  ingreso:['Aporte de encuentro','Aporte voluntario / gorra','Donación','Actividad especial','Otro ingreso'],
+  egreso:['Difusión y promoción','Materiales','Comida y bebida','Lugar / alquiler','Transporte','Otro gasto']
+};
+const CAJA_NOM={consciencia:'Consciencia en Búzios',barras:'Barras en Búzios'};
+const CAJA_MESES=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+let _cajaMes='';
+const _cajaMon=(n,m='BRL')=>({BRL:'R$ ',USD:'US$ ',ARS:'$ '}[m]||'')+(Math.round((+n||0)*100)/100).toLocaleString('es-AR',{maximumFractionDigits:2});
+const _cajaMesNom=ym=>{const [y,m]=ym.split('-');return CAJA_MESES[+m-1]+' '+y;};
+const _cajaMovs=com=>_encs.filter(r=>r.tipo==='mov'&&r.comunidad===com).sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')||String(b.id).localeCompare(String(a.id)));
+/* suma por moneda → {BRL:100,...}; signo: ingresos +, egresos − (si con=true) */
+const _cajaSuma=(movs,filtro)=>{const o={};movs.filter(filtro||(()=>true)).forEach(m=>{const k=m.moneda||'BRL';o[k]=(o[k]||0)+(+m.monto||0)*(filtro?1:(m.mov==='egreso'?-1:1));});return o;};
+const _cajaTxt=(o,signo)=>{const e=Object.entries(o).filter(([,v])=>v||Object.keys(o).length===1);if(!e.length)return _cajaMon(0);return e.map(([k,v])=>(signo&&v>0?'+':'')+(v<0?'−':'')+_cajaMon(Math.abs(v),k)).join(' · ');};
+function _cajaDeEnc(encId){
+  const ms=_encs.filter(r=>r.tipo==='mov'&&r.enc===encId);if(!ms.length)return '';
+  const i=_cajaSuma(ms,m=>m.mov!=='egreso'),e=_cajaSuma(ms,m=>m.mov==='egreso');
+  return `<div style="font-size:12px;margin-top:4px">💰 Entró ${_cajaTxt(i)}${Object.keys(e).length?' · salió '+_cajaTxt(e):''}</div>`;
+}
+
+function _encVistaCaja(com){
+  const movs=_cajaMovs(com),mesHoy=_encHoy().slice(0,7);
+  const meses=[...new Set(movs.map(m=>(m.fecha||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  if(_cajaMes&&!meses.includes(_cajaMes))_cajaMes='';
+  const lista=_cajaMes?movs.filter(m=>(m.fecha||'').startsWith(_cajaMes)):movs;
+  const delMes=movs.filter(m=>(m.fecha||'').startsWith(mesHoy));
+  const encs=new Map(_encs.filter(r=>(r.tipo||'encuentro')==='encuentro').map(r=>[r.id,r]));
+  const pers=new Map(_encs.filter(r=>r.tipo==='persona_barras').map(r=>[r.id,r]));
+  const filas=lista.map(m=>{
+    const eg=m.mov==='egreso',en=encs.get(m.enc),p=m.persona&&pers.get(m.persona);
+    return `<tr>
+      <td style="white-space:nowrap">${fd(m.fecha)}</td>
+      <td><span class="bdg ${eg?'b-rd':'b-gr'}">${eg?'⬇️ Egreso':'⬆️ Ingreso'}</span></td>
+      <td>${_encE(m.concepto||'')}${m.quien&&!p?`<div style="font-size:10.5px;color:var(--muted)">${_encE(m.quien)}</div>`:''}${p?`<div style="font-size:10.5px;color:var(--muted)">🔗 desde 👥 Personas</div>`:''}</td>
+      <td style="color:var(--muted)">${_encE(m.categoria||'')}</td>
+      <td style="white-space:nowrap">${en?_encE('N° '+(en.numero||'?')+' · '+fd(en.fecha)):''}</td>
+      <td style="color:var(--muted)">${_encE(m.medio||'')}</td>
+      <td style="text-align:right;white-space:nowrap;font-weight:700;color:${eg?'#E07070':'#5DD89A'}">${eg?'−':'+'}${_cajaMon(m.monto,m.moneda)}</td>
+      <td style="white-space:nowrap">${m.auto&&m.persona?`<button class="btn btn-s btn-sm" title="Se edita desde la persona" onclick="abrirBarPer('${_encE(m.persona)}')">👥</button>`:`<button class="btn btn-s btn-sm" onclick="abrirMov('${com}','${_encE(m.id)}')">✏️</button> <button class="btn btn-d btn-sm" onclick="borrarMov('${_encE(m.id)}')">🗑</button>`}</td>
+    </tr>`;}).join('');
+  // por encuentro y por categoría (del período elegido)
+  const porEnc=new Map();lista.filter(m=>m.enc).forEach(m=>{if(!porEnc.has(m.enc))porEnc.set(m.enc,[]);porEnc.get(m.enc).push(m);});
+  const encHtml=[...porEnc].map(([id,ms])=>[encs.get(id),ms]).filter(([e])=>e).sort((a,b)=>(b[0].fecha||'').localeCompare(a[0].fecha||''))
+    .map(([e,ms])=>`<tr><td>${_encE(_encNom(e))}<div style="font-size:10.5px;color:var(--muted)">${fd(e.fecha)}</div></td><td style="color:#5DD89A">${_cajaTxt(_cajaSuma(ms,m=>m.mov!=='egreso'))}</td><td style="color:#E07070">${_cajaTxt(_cajaSuma(ms,m=>m.mov==='egreso'))}</td><td style="font-weight:700">${_cajaTxt(_cajaSuma(ms),true)}</td></tr>`).join('');
+  const porCat=new Map();lista.forEach(m=>{const k=(m.mov==='egreso'?'⬇️ ':'⬆️ ')+(m.categoria||'Sin categoría');if(!porCat.has(k))porCat.set(k,[]);porCat.get(k).push(m);});
+  const catHtml=[...porCat].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,ms])=>`<div style="display:flex;justify-content:space-between;gap:8px;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)"><span>${_encE(k)} <span style="color:var(--muted);font-size:11px">(${ms.length})</span></span><b>${_cajaTxt(_cajaSuma(ms,()=>true))}</b></div>`).join('');
+  const per=`<select class="fi" onchange="_cajaMes=this.value;_encRenderConsc()"><option value="">Todos los movimientos</option>${meses.map(m=>`<option value="${m}"${m===_cajaMes?' selected':''}>${_cajaMesNom(m)}</option>`).join('')}</select>`;
+  return `<div style="font-size:12px;color:var(--muted);margin-bottom:12px">🔒 Caja de <b>${CAJA_NOM[com]}</b> · es plata de la comunidad, separada de tus Finanzas. No se ve en la web.${com==='barras'?' Los aportes que cargás en <b>👥 Personas</b> entran acá solos.':''}</div>
+    <div class="kpi-grid">
+      <div class="kc go"><div class="ki">🏦</div><div class="kl">Saldo en caja</div><div class="kv" style="font-size:${Object.keys(_cajaSuma(movs)).length>1?'18':'26'}px">${_cajaTxt(_cajaSuma(movs))}</div><div class="ks">${movs.length} movimiento${movs.length===1?'':'s'} en total</div></div>
+      <div class="kc gr"><div class="ki">⬆️</div><div class="kl">Entró este mes</div><div class="kv" style="font-size:22px">${_cajaTxt(_cajaSuma(delMes,m=>m.mov!=='egreso'))}</div><div class="ks">${_cajaMesNom(mesHoy)}</div></div>
+      <div class="kc pu"><div class="ki">⬇️</div><div class="kl">Salió este mes</div><div class="kv" style="font-size:22px">${_cajaTxt(_cajaSuma(delMes,m=>m.mov==='egreso'))}</div><div class="ks">${_cajaMesNom(mesHoy)}</div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px">
+      <button class="btn btn-p btn-sm" onclick="abrirMov('${com}',null,'ingreso')">⬆️ + Ingreso</button>
+      <button class="btn btn-s btn-sm" onclick="abrirMov('${com}',null,'egreso')">⬇️ + Egreso</button>
+      <button class="btn btn-s btn-sm" onclick="abrirCajaResumen('${com}')">📲 Resumen para el grupo</button>
+      <div style="margin-left:auto">${per}</div>
+    </div>
+    ${lista.length?`<div style="overflow-x:auto;margin-bottom:16px"><table><thead><tr><th>Fecha</th><th>Tipo</th><th>Concepto</th><th>Categoría</th><th>Encuentro</th><th>Medio</th><th style="text-align:right">Monto</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>`
+      :`<div style="color:var(--muted);padding:20px 0">Todavía no hay movimientos${_cajaMes?' en este mes':''}. Cargá el primero con «+ Ingreso» o «+ Egreso».${com==='barras'?' Los aportes de cada persona se cargan más fácil desde 👥 Personas.':''}</div>`}
+    ${lista.length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
+      ${_encCard('Por encuentro',encHtml?`<div style="overflow-x:auto"><table><thead><tr><th>Encuentro</th><th>Entró</th><th>Salió</th><th>Resultado</th></tr></thead><tbody>${encHtml}</tbody></table></div>`:'<div style="font-size:12px;color:var(--muted)">Ningún movimiento asociado a un encuentro.</div>')}
+      ${_encCard('Por categoría',catHtml)}
+    </div>`:''}`;
+}
+
+function _cajaCatOpciones(){
+  const t=document.getElementById('mTipo').value;
+  document.getElementById('mCatList').innerHTML=CAJA_CAT[t].map(c=>`<option value="${_encE(c)}">`).join('');
+  document.getElementById('mQuienLbl').textContent=t==='egreso'?'A quién se pagó':'Quién aportó';
+}
+function abrirMov(com,id,tipo){
+  const m=id?_encs.find(r=>r.id===id):null,$=k=>document.getElementById(k);
+  $('moMovTitle').textContent=(m?'✏️ Editar movimiento':'💰 Nuevo movimiento')+' · '+CAJA_NOM[com];
+  $('mId').value=m?m.id:'mov-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  $('mCom').value=com;
+  $('mTipo').value=m?.mov||tipo||'ingreso';
+  $('mFecha').value=m?.fecha||_encHoy();
+  $('mMonto').value=m?.monto??'';
+  $('mMoneda').value=m?.moneda||'BRL';
+  $('mConcepto').value=m?.concepto||'';
+  $('mMedio').value=m?.medio||'Pix';
+  $('mQuien').value=m?.quien||'';
+  _cajaCatOpciones();
+  $('mCat').value=m?.categoria||CAJA_CAT[$('mTipo').value][0];
+  const ops=_encs.filter(r=>(r.tipo||'encuentro')==='encuentro'&&r.comunidad===com&&r.fecha).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  $('mEnc').innerHTML='<option value="">— Ninguno —</option>'+ops.map(r=>`<option value="${_encE(r.id)}">${_encE(_encNom(r))} (${fd(r.fecha)})</option>`).join('');
+  $('mEnc').value=m?.enc||'';
+  $('moMov').classList.add('open');
+}
+async function guardarMov(){
+  const $=k=>document.getElementById(k);
+  const monto=parseFloat($('mMonto').value),fecha=$('mFecha').value,concepto=$('mConcepto').value.trim();
+  if(!fecha||!(monto>0)||!concepto){toast('⚠️ Completá fecha, monto y concepto','err');return;}
+  const id=$('mId').value,prev=_encs.find(r=>r.id===id)||{};
+  const data={tipo:'mov',comunidad:$('mCom').value,activo:false,mov:$('mTipo').value,fecha,monto,moneda:$('mMoneda').value,
+    concepto,categoria:$('mCat').value.trim(),medio:$('mMedio').value,enc:$('mEnc').value,quien:$('mQuien').value.trim(),
+    creado:prev.creado||new Date().toISOString()};
+  const btn=$('mGuardarBtn');btn.disabled=true;
+  const {error}=await _sb.from('encuentros').upsert({id,data});
+  btn.disabled=false;
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast(data.mov==='egreso'?'⬇️ Egreso guardado':'⬆️ Ingreso guardado');
+  closeModal('moMov');renderEnc();
+}
+async function borrarMov(id){
+  const m=_encs.find(r=>r.id===id);if(!m)return;
+  if(!confirm(`¿Borrar el ${m.mov==='egreso'?'egreso':'ingreso'} «${m.concepto}» de ${_cajaMon(m.monto,m.moneda)} del ${fd(m.fecha)}?`))return;
+  const {error}=await _sb.from('encuentros').delete().eq('id',id);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('🗑 Movimiento borrado');renderEnc();
+}
+
+/* ── resumen claro para mandar al grupo de WhatsApp (sin nombres de quién aportó) ── */
+function abrirCajaResumen(com){
+  const movs=_cajaMovs(com);
+  const meses=[...new Set(movs.map(m=>(m.fecha||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  const mesHoy=_encHoy().slice(0,7);if(!meses.includes(mesHoy))meses.unshift(mesHoy);
+  document.getElementById('crCom').value=com;
+  document.getElementById('crPeriodo').innerHTML=meses.map(m=>`<option value="${m}">${_cajaMesNom(m)}</option>`).join('')+'<option value="">Desde el principio</option>';
+  document.getElementById('crPeriodo').value=_cajaMes||mesHoy;
+  _cajaResPintar();
+  document.getElementById('moCajaRes').classList.add('open');
+}
+function _cajaResumenTexto(com,mes){
+  const movs=_cajaMovs(com).slice().reverse();
+  const per=mes?movs.filter(m=>(m.fecha||'').startsWith(mes)):movs;
+  const hasta=mes?movs.filter(m=>(m.fecha||'').slice(0,7)<=mes):movs;
+  const ing=per.filter(m=>m.mov!=='egreso'),egr=per.filter(m=>m.mov==='egreso');
+  const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
+  const L=[`💰 *Caja de ${CAJA_NOM[com]}*`,`📅 ${mes?cap(_cajaMesNom(mes)):'Desde el principio'}`,''];
+  L.push(`⬆️ *Entró: ${_cajaTxt(_cajaSuma(ing,()=>true))}*`);
+  const cats=new Map();ing.forEach(m=>{const k=m.categoria||'Otros ingresos';if(!cats.has(k))cats.set(k,[]);cats.get(k).push(m);});
+  if(!ing.length)L.push('• Sin ingresos');
+  cats.forEach((ms,k)=>L.push(`• ${k}: ${_cajaTxt(_cajaSuma(ms,()=>true))}${ms.length>1?` (${ms.length})`:''}`));
+  L.push('');
+  L.push(`⬇️ *Salió: ${_cajaTxt(_cajaSuma(egr,()=>true))}*`);
+  if(!egr.length)L.push('• Sin gastos');
+  egr.forEach(m=>L.push(`• ${fd(m.fecha).slice(0,5)} ${m.concepto}: ${_cajaMon(m.monto,m.moneda)}`));
+  L.push('');
+  L.push(`📊 ${mes?'Resultado del mes':'Resultado'}: ${_cajaTxt(_cajaSuma(per),true)}`);
+  L.push(`🏦 *Saldo en caja${mes?' al cierre de '+_cajaMesNom(mes):' hoy'}: ${_cajaTxt(_cajaSuma(hasta))}*`);
+  L.push('');
+  L.push('Esta plata es de la comunidad y se usa para promocionar y sostener los encuentros. Cualquier duda, me preguntan 🙏');
+  return L.join('\n');
+}
+function _cajaResPintar(){
+  document.getElementById('crTexto').value=_cajaResumenTexto(document.getElementById('crCom').value,document.getElementById('crPeriodo').value);
+}
+function cajaResCopiar(){
+  const t=document.getElementById('crTexto').value;
+  (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('📋 Resumen copiado: pegalo en el grupo')).catch(()=>{const a=document.getElementById('crTexto');a.select();document.execCommand('copy');toast('📋 Resumen copiado');});
+}
+function cajaResWhatsapp(){
+  window.open('https://wa.me/?text='+encodeURIComponent(document.getElementById('crTexto').value),'_blank');
+}
+
+/* ══════════ BARRAS EN BÚZIOS · PERSONAS QUE SE HACEN BARRAS ══════════
+   Filas tipo "persona_barras" (activo:false, privadas): {nombre,whatsapp,ser_id,hizo_clase,notas,asis:{[encId]:{rol,pago,medio}}}
+   Cada aporte (pago>0) se refleja como ingreso en la caja de Barras (mov-bp-{persona}-{encuentro}). */
+const BP_ROL={recibio:'🙌 Recibió',dio:'🤲 Dio y recibió'};
+const _bpEncs=()=>_encs.filter(r=>(r.tipo||'encuentro')==='encuentro'&&r.comunidad==='barras'&&_encConf(r)&&r.fecha).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+const _bpAporteDef=e=>{const n=parseFloat(String(e?.aporte||'').replace(/[^\d,.]/g,'').replace(',','.'));return n>0?n:'';};
+const _bpSeres=()=>typeof seres!=='undefined'&&Array.isArray(seres)?seres:[];
+
+function _encVistaPersonas(){
+  const P=_encs.filter(r=>r.tipo==='persona_barras').sort((a,b)=>(a.nombre||'').localeCompare(b.nombre||''));
+  const E=_bpEncs(),hoy=_encHoy();
+  const encMap=new Map(E.map(e=>[e.id,e]));
+  const aporto=p=>Object.values(p.asis||{}).reduce((t,a)=>t+(+a.pago||0),0);
+  const visitas=p=>Object.keys(p.asis||{}).filter(id=>encMap.has(id));
+  const volvieron=P.filter(p=>visitas(p).length>1).length,clase=P.filter(p=>p.hizo_clase).length;
+  const totAp=P.reduce((t,p)=>t+aporto(p),0);
+  // control por encuentro: participantes cargados vs personas registradas
+  const control=E.filter(e=>e.fecha<hoy).map(e=>{const n=P.filter(p=>(p.asis||{})[e.id]).length;const falta=(+e.participantes||0)-n;
+    return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;padding:4px 0;border-bottom:1px solid var(--border)"><span>${_encE(_encNom(e))} · ${fd(e.fecha)}</span><span style="color:${falta>0?'var(--or)':'var(--muted)'}">${n} de ${e.participantes||'?'} registradas</span></div>`;}).join('');
+  const filas=P.map(p=>{
+    const v=visitas(p).map(id=>encMap.get(id)).sort((a,b)=>a.fecha.localeCompare(b.fecha));
+    const ult=v.length?v[v.length-1].fecha:'';
+    const wa=(p.whatsapp||'').replace(/[^\d]/g,'');
+    return `<tr>
+      <td style="font-weight:600">${_encE(p.nombre)}${p.ser_id?' <span class="bdg b-bl" title="Está en Seres">Seres</span>':''}${p.hizo_clase?' <span class="bdg b-or">🎓 Clase</span>':''}</td>
+      <td>${wa?`<a href="https://wa.me/${wa}" target="_blank" rel="noopener" style="color:var(--gl)">${_encE(p.whatsapp)}</a>`:'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${v.map(e=>`<span class="bdg b-gy" title="${_encE(BP_ROL[(p.asis[e.id]||{}).rol]||'')}" style="margin:1px">N° ${_encE(e.numero||'?')} ${(p.asis[e.id]||{}).rol==='dio'?'🤲':'🙌'}</span>`).join('')||'<span style="color:var(--muted)">—</span>'}</td>
+      <td>${aporto(p)?_cajaMon(aporto(p)):'<span style="color:var(--muted)">—</span>'}</td>
+      <td style="white-space:nowrap">${ult?fd(ult):''}</td>
+      <td><button class="btn btn-s btn-sm" onclick="abrirBarPer('${_encE(p.id)}')">✏️</button></td></tr>`;}).join('');
+  return `<div style="font-size:12px;color:var(--muted);margin-bottom:12px">🔒 Registro privado de quiénes se hacen Barras en los encuentros. Si la persona ya está en <b>Seres</b>, elegila de la lista y queda vinculada. Lo que aportó cada una entra solo en <b>💰 Caja</b>.</div>
+    <div class="kpi-grid">
+      <div class="kc go"><div class="ki">👥</div><div class="kl">Personas</div><div class="kv">${P.length}</div><div class="ks">registradas</div></div>
+      <div class="kc bl"><div class="ki">🔁</div><div class="kl">Volvieron</div><div class="kv">${volvieron}</div><div class="ks">fueron a más de un encuentro</div></div>
+      <div class="kc pu"><div class="ki">🎓</div><div class="kl">Hicieron la clase</div><div class="kv">${clase}</div><div class="ks">pueden dar y recibir</div></div>
+      <div class="kc gr"><div class="ki">💰</div><div class="kl">Aportaron</div><div class="kv" style="font-size:22px">${_cajaMon(totAp)}</div><div class="ks">en total</div></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px"><button class="btn btn-p btn-sm" onclick="abrirBarPer(null)">+ Persona</button></div>
+    ${P.length?`<div style="overflow-x:auto;margin-bottom:16px"><table><thead><tr><th>Nombre</th><th>WhatsApp</th><th>Encuentros</th><th>Aportó</th><th>Última vez</th><th></th></tr></thead><tbody>${filas}</tbody></table></div>`
+      :'<div style="color:var(--muted);padding:12px 0 20px">Todavía no hay personas registradas. Tocá «+ Persona».</div>'}
+    ${control?_encCard('Control por encuentro',control+'<div style="font-size:11px;color:var(--muted);margin-top:8px">«Participantes» es el número que cargaste en cada encuentro.</div>'):''}`;
+}
+
+function abrirBarPer(id){
+  const p=id?_encs.find(r=>r.id===id):null,$=k=>document.getElementById(k);
+  $('moBarPerTitle').textContent=p?'✏️ '+p.nombre:'👥 Nueva persona · Barras en Búzios';
+  $('bpId').value=p?p.id:'bp-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+  $('bpId').dataset.ser=p?.ser_id||'';
+  $('bpNombre').value=p?.nombre||'';
+  $('bpWa').value=p?.whatsapp||'';
+  $('bpClase').checked=!!p?.hizo_clase;
+  $('bpNotas').value=p?.notas||'';
+  $('bpBorrarBtn').style.display=p?'':'none';
+  $('bpSeresList').innerHTML=_bpSeres().filter(s=>s&&s.nombre).map(s=>`<option value="${_encE(s.nombre)}">`).join('');
+  _bpBuscarSer(true);
+  const asis=p?.asis||{};
+  const E=_bpEncs();
+  $('bpAsis').innerHTML=E.length?E.map(e=>{const a=asis[e.id];return `
+    <div class="bp-row" data-enc="${_encE(e.id)}" style="display:grid;grid-template-columns:minmax(0,1.6fr) 1fr 90px 100px;gap:6px;align-items:center;background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:6px 10px">
+      <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;cursor:pointer;margin:0"><input type="checkbox" class="bp-fue" ${a?'checked':''} style="accent-color:var(--gold)" onchange="_bpFue(this)"> N° ${_encE(e.numero||'?')} · ${fd(e.fecha)}${e.lugar?' · '+_encE(e.lugar):''}</label>
+      <select class="fi bp-rol" style="font-size:12px"><option value="recibio"${a?.rol!=='dio'?' selected':''}>🙌 Recibió</option><option value="dio"${a?.rol==='dio'?' selected':''}>🤲 Dio y recibió</option></select>
+      <input type="number" class="bp-pago" style="width:100%;padding:7px 10px;background:var(--card);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px" min="0" step="0.01" placeholder="R$" value="${a?(a.pago??''):''}" data-def="${_bpAporteDef(e)}" title="Aporte en R$">
+      <select class="fi bp-medio" style="font-size:12px"><option${a?.medio==='Efectivo'?'':' selected'}>Pix</option><option${a?.medio==='Efectivo'?' selected':''}>Efectivo</option><option${a?.medio==='Transferencia'?' selected':''}>Transferencia</option></select>
+    </div>`;}).join(''):'<div style="font-size:12px;color:var(--muted)">No hay encuentros de Barras cargados.</div>';
+  $('moBarPer').classList.add('open');
+}
+function _bpFue(cb){ // al tildar, propone el aporte del encuentro (ej. R$ 108)
+  const row=cb.closest('.bp-row'),i=row.querySelector('.bp-pago');
+  if(cb.checked&&i.value===''&&i.dataset.def)i.value=i.dataset.def;
+  if(!cb.checked)i.value='';
+}
+function _bpBuscarSer(soloInfo){
+  const $=k=>document.getElementById(k),n=$('bpNombre').value.trim().toLowerCase();
+  let s=_bpSeres().find(x=>x&&x.nombre&&x.nombre.trim().toLowerCase()===n);
+  if(!s&&soloInfo&&$('bpId').dataset.ser)s=_bpSeres().find(x=>String(x.id)===String($('bpId').dataset.ser));
+  $('bpId').dataset.ser=s?String(s.id):'';
+  if(s&&!soloInfo&&!$('bpWa').value&&s.celular)$('bpWa').value=s.celular;
+  $('bpSerInfo').innerHTML=s?`🔗 Vinculada a <b>Seres</b>${s.origen?' · llegó por: '+_encE(s.origen):''}${s.celular?' · '+_encE(s.celular):''}`:'';
+}
+async function guardarBarPer(){
+  const $=k=>document.getElementById(k);
+  const nombre=$('bpNombre').value.trim();
+  if(!nombre){toast('⚠️ Poné el nombre','err');return;}
+  const id=$('bpId').value;
+  const asis={};
+  document.querySelectorAll('#bpAsis .bp-row').forEach(row=>{
+    if(!row.querySelector('.bp-fue').checked)return;
+    const pago=parseFloat(row.querySelector('.bp-pago').value);
+    asis[row.dataset.enc]={rol:row.querySelector('.bp-rol').value,pago:pago>0?pago:null,medio:row.querySelector('.bp-medio').value};
+  });
+  const data={tipo:'persona_barras',comunidad:'barras',activo:false,nombre,whatsapp:$('bpWa').value.trim(),ser_id:$('bpId').dataset.ser||'',
+    hizo_clase:$('bpClase').checked,notas:$('bpNotas').value.trim(),asis};
+  // movimientos de caja que corresponden a sus aportes
+  const encMap=new Map(_bpEncs().map(e=>[e.id,e]));
+  const movs=Object.entries(asis).filter(([eid,a])=>a.pago>0&&encMap.has(eid)).map(([eid,a])=>{const e=encMap.get(eid);return {id:`mov-bp-${id}-${eid}`,data:{
+    tipo:'mov',comunidad:'barras',activo:false,mov:'ingreso',fecha:e.fecha,monto:a.pago,moneda:'BRL',concepto:'Aporte · '+nombre,
+    categoria:'Aporte de encuentro',medio:a.medio,enc:eid,quien:nombre,persona:id,auto:true}};});
+  const quedan=new Set(movs.map(m=>m.id));
+  const borrar=_encs.filter(r=>r.tipo==='mov'&&r.persona===id&&r.auto&&!quedan.has(r.id)).map(r=>r.id);
+  const btn=$('bpGuardarBtn');btn.disabled=true;
+  const {error}=await _sb.from('encuentros').upsert([{id,data},...movs]);
+  if(!error&&borrar.length){const r=await _sb.from('encuentros').delete().in('id',borrar);if(r.error){btn.disabled=false;toast('⚠️ '+r.error.message,'err');return;}}
+  btn.disabled=false;
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast(`✓ ${nombre} guardada${movs.length?' · '+movs.length+' aporte'+(movs.length>1?'s':'')+' en la caja':''}`);
+  closeModal('moBarPer');renderEnc();
+}
+async function borrarBarPer(){
+  const id=document.getElementById('bpId').value,p=_encs.find(r=>r.id===id);if(!p)return;
+  const movs=_encs.filter(r=>r.tipo==='mov'&&r.persona===id&&r.auto).map(r=>r.id);
+  if(!confirm(`¿Borrar a ${p.nombre} del registro?${movs.length?`\nTambién se borran sus ${movs.length} aporte(s) de la caja de Barras.`:''}`))return;
+  const {error}=await _sb.from('encuentros').delete().in('id',[id,...movs]);
+  if(error){toast('⚠️ '+error.message,'err');return;}
+  toast('🗑 Persona borrada');closeModal('moBarPer');renderEnc();
 }
 
 /* ── Facilitadores de la comunidad + Instagram (filas tipo "persona" en la tabla encuentros) ── */
