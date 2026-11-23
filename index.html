@@ -857,8 +857,8 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- MARKETING -->
     <div id="sec-marketing" class="sec">
-     <div id="mktKPIs" class="kpi-grid" style="margin-bottom:18px"></div>
      <div class="tab-bar" style="margin-bottom:18px">
+      <button class="tab-btn" onclick="irMkt('contenido')">📱 Contenido</button>
       <button class="tab-btn active" id="mktTabResumen" onclick="setMktTab('resumen')">📊 Resumen</button>
       <button class="tab-btn" id="mktTabPub" onclick="setMktTab('pub')">📢 Publicidades</button>
       <button class="tab-btn" id="mktTabConv" onclick="setMktTab('conv')">🎯 Conversión</button>
@@ -866,10 +866,11 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="tab-btn" id="mktTabMeta" onclick="setMktTab('meta')">🔵 Meta Ads</button>
       <button class="tab-btn" id="mktTabRegalos" onclick="setMktTab('regalos')">🎁 Regalos</button>
       <button class="tab-btn" id="mktTabStats" onclick="setMktTab('stats')">📊 Stats Landing</button>
-      <button class="tab-btn" onclick="irMkt('contenido')">📱 Contenido</button>
       <button class="tab-btn" onclick="irMkt('crm')">👥 CRM<span class="mkt-crm-badge"></span></button>
      </div>
      <div id="mktResumen"></div>
+     <!-- Números de campañas: vienen de Publicidades, por eso se muestran solo en esa pestaña -->
+     <div id="mktKPIs" class="kpi-grid" style="margin-bottom:18px;display:none"></div>
      <div id="mktPub" style="display:none"></div>
      <div id="mktConv" style="display:none"></div>
      <div id="mktRet" style="display:none"></div>
@@ -9094,6 +9095,7 @@ function _mktPintarCopias(activa){
 function setMktTab(t){
   if(t==='tesoro'||t==='flyers'){irTesoro(t==='flyers'?'flyers':undefined);return;}
   mktTab=t;
+  {const k=document.getElementById('mktKPIs');if(k)k.style.display=t==='pub'?'':'none';}
   ['resumen','pub','conv','ret','meta','regalos','stats','flyers','tesoro'].forEach(x=>{
     const tabId='mktTab'+x.charAt(0).toUpperCase()+x.slice(1);
     const contentId='mkt'+x.charAt(0).toUpperCase()+x.slice(1);
