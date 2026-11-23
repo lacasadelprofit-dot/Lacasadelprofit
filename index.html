@@ -12554,6 +12554,8 @@ function navResumenMes(dir){
 }
 
 /* ── Seguidores por mes ── */
+/* LinkedIn: 4 cuentas; 'linkedin' guarda la suma para el gráfico y la tarjeta */
+const LI_CUENTAS=[['linkedin_general','👤 General','seguidores propios'],['linkedin_das','⚗️ Digital Alchemy Solution',''],['linkedin_lcp','🏡 La Casa del Profit',''],['linkedin_primula','🧵 Prímula','']];
 function getFollowers(mes){
   try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');return all[mes]||{};}catch{return{};}
 }
@@ -12608,6 +12610,11 @@ function editMetasMes(){
         ${extra}${chip(id,red(vAnt),'= mes anterior')}${chip(id,red(vAnt*1.1),'+10% ('+N(red(vAnt*1.1))+')')}${chip(id,red(vAnt*1.2),'+20% ('+N(red(vAnt*1.2))+')')}${chip(id,red(vAnt*1.5),'+50% ('+N(red(vAnt*1.5))+')')}
         ${g[k]?`<button type="button" class="btn btn-s btn-sm" style="padding:3px 9px;font-size:11px" onclick="document.getElementById('${id}').value='';_mmPreview()">✕ sin meta</button>`:''}</div>
     </div>`;
+  const rango=r=>{const rg=_diaRango(g,r,mes)||['',''],ist='width:64px;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;font-weight:800;text-align:center;padding:5px 6px';
+    return `<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 14px;margin-bottom:10px">
+      <div style="flex:1;min-width:190px"><div style="font-size:13.5px;font-weight:800">📅 Por día</div><div style="font-size:11px;color:var(--muted)">rango para el tablero diario · si completás el mes, publicaciones = mínimo × días</div></div>
+      <input type="number" min="0" id="mmD_${r}_min" value="${rg[0]}" style="${ist}"><span style="color:var(--muted)">a</span><input type="number" min="0" id="mmD_${r}_max" value="${rg[1]}" style="${ist}"><span style="font-size:12px;color:var(--muted)">por día</span>
+      <button type="button" class="btn btn-s btn-sm" style="padding:3px 9px;font-size:11px" onclick="const a=+document.getElementById('mmD_${r}_min').value||0;if(a){document.getElementById('${r==='ig'?'mmPig':'mmPtt'}').value=a*${dias};_mmPreview();}">→ publicaciones = mín × ${dias}</button></div>`;};
   const cab=(t,c)=>`<div style="font-size:12px;font-weight:800;color:var(--text);margin:14px 0 8px;padding-left:9px;border-left:4px solid ${c}">${t}</div>`;
   let mo=document.getElementById('moMetasMes');
   if(!mo){mo=document.createElement('div');mo.className='mo';mo.id='moMetasMes';mo.onclick=e=>{if(e.target===mo)mo.classList.remove('open');};document.body.appendChild(mo);}
@@ -12618,23 +12625,33 @@ function editMetasMes(){
     ${gAnt.posts_ig_mes||gAnt.posts_tt_mes||gAnt.alcance_mes||gAnt.vistas_tt_mes?`<button type="button" class="btn btn-s btn-sm" style="margin-bottom:12px" onclick="_mmCopiarAnt()">📋 Copiar las metas de ${lbl(ant)}</button>`:''}
     ${cab('📸 Instagram','#D03E8C')}
     ${fila('mmPig','📋','Publicaciones','posts_ig_mes','posts, carruseles y reels',hoy.posts_ig,prev.posts_ig,chip('mmPig',dias*3,'3 por día ('+dias*3+')')+chip('mmPig',dias*2,'2 por día ('+dias*2+')'))}
+    ${rango('ig')}
     ${fila('mmAlc','👁','Alcance','alcance_mes','cuentas alcanzadas en el mes',hoy.alcance,prev.alcance)}
     ${cab('🎵 TikTok','#21A0B8')}
     ${fila('mmPtt','📋','Publicaciones','posts_tt_mes','videos subidos',hoy.posts_tt,prev.posts_tt,chip('mmPtt',dias*3,'3 por día ('+dias*3+')')+chip('mmPtt',dias*2,'2 por día ('+dias*2+')'))}
+    ${rango('tt')}
     ${fila('mmVtt','▶️','Visualizaciones','vistas_tt_mes','vistas de los videos publicados en el mes',hoy.vistas_tt,prev.vistas_tt)}
     <div id="mmTotal" style="font-size:12px;color:var(--muted);margin:2px 0 6px"></div>
-    <div style="font-size:12px;font-weight:800;color:var(--text);margin:16px 0 8px;padding-left:9px;border-left:4px solid var(--gold)">✍️ YouTube Shorts y LinkedIn · seguidores al cierre del mes (se cargan a mano)</div>
+    <div style="font-size:12px;font-weight:800;color:var(--text);margin:16px 0 8px;padding-left:9px;border-left:4px solid var(--gold)">✍️ Seguidores al cierre del mes · se cargan a mano</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      ${[['youtube','▶️ YouTube Shorts'],['linkedin','💼 LinkedIn']].map(([k,l])=>{const a=getFollowers(ant)[k];return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 12px">
-        <div style="font-size:12.5px;font-weight:700;margin-bottom:6px">${l}</div>
-        <input type="number" min="0" id="mmF_${k}" value="${fol[k]||''}" placeholder="seguidores" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;font-weight:800;padding:6px 10px">
-        <div style="font-size:10.5px;color:var(--muted);margin-top:4px">${a?lbl(ant)+': '+N(a):'sin dato del mes anterior'}</div></div>`;}).join('')}
+      ${(()=>{const fa=getFollowers(ant),caja=(id,l,sub,v,va)=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:10px 12px">
+        <div style="font-size:12.5px;font-weight:700">${l}</div><div style="font-size:10.5px;color:var(--muted);margin-bottom:6px;min-height:13px">${sub}</div>
+        <input type="number" min="0" id="${id}" value="${v||''}" placeholder="seguidores" oninput="_mmLiTotal()" style="width:100%;background:var(--card);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:16px;font-weight:800;padding:6px 10px">
+        <div style="font-size:10.5px;color:var(--muted);margin-top:4px">${va?lbl(ant)+': '+N(va):'sin dato del mes anterior'}</div></div>`;
+      return caja('mmF_youtube','▶️ YouTube Shorts','',fol.youtube,fa.youtube)+`</div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin:12px 0 8px"><span style="font-size:12.5px;font-weight:800">💼 LinkedIn</span><span id="mmLiTot" style="font-size:12px;color:var(--muted)"></span></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">`+LI_CUENTAS.map(([k,l,sub])=>caja('mmF_'+k,l,sub,fol[k],fa[k])).join('');})()}
     </div>
     <div class="mf"><button class="btn btn-s" onclick="document.getElementById('moMetasMes').classList.remove('open')">Cancelar</button><button class="btn btn-p" onclick="_mmGuardar()">💾 Guardar</button></div>
   </div>`;
   mo.classList.add('open');_mmPreview();
 }
-function _mmPreview(){
+function _mmLiTotal(){
+  const o=document.getElementById('mmLiTot');if(!o)return;
+  const v=LI_CUENTAS.map(c=>document.getElementById('mmF_'+c[0])?.value).filter(x=>x!==''&&x!=null);
+  o.innerHTML=v.length?'total <b style="color:var(--text)">'+v.reduce((a,b)=>a+(parseInt(b)||0),0).toLocaleString('es-AR')+'</b> seguidores entre las '+v.length+' cuenta'+(v.length===1?'':'s'):'4 cuentas · el total se suma solo';
+}
+function _mmPreview(){_mmLiTotal();
   const h=window._mmHoy||{};
   const t=(parseInt(document.getElementById('mmPig')?.value)||0)+(parseInt(document.getElementById('mmPtt')?.value)||0),tt=document.getElementById('mmTotal');
   if(tt)tt.innerHTML=t?`📋 Total de publicaciones del mes: <b style="color:var(--text)">${t}</b> · van ${h.posts||0}`:'';
@@ -12652,14 +12669,67 @@ function _mmCopiarAnt(){
 function _mmGuardar(){
   const mes=_resumenMes,g=getMonthGoals(mes),v=id=>parseInt(document.getElementById(id).value)||0;
   const pig=v('mmPig'),ptt=v('mmPtt');
+  ['ig','tt'].forEach(r=>{const a=parseInt(document.getElementById('mmD_'+r+'_min').value),b=parseInt(document.getElementById('mmD_'+r+'_max').value);
+    g['dia_'+r+'_min']=a||0;g['dia_'+r+'_max']=Math.max(b||0,a||0);});
   saveMonthGoals(mes,{...g,posts_ig_mes:pig,posts_tt_mes:ptt,posts_mes:pig+ptt||g.posts_mes||0,alcance_mes:v('mmAlc'),vistas_tt_mes:v('mmVtt')});
   try{const all=JSON.parse(localStorage.getItem('lcp_followers')||'{}');all[mes]=all[mes]||{};
-    ['youtube','linkedin'].forEach(k=>{const x=document.getElementById('mmF_'+k).value;if(x==='')delete all[mes][k];else all[mes][k]=parseInt(x)||0;});
+    ['youtube',...LI_CUENTAS.map(c=>c[0])].forEach(k=>{const x=document.getElementById('mmF_'+k).value;if(x==='')delete all[mes][k];else all[mes][k]=parseInt(x)||0;});
+    const li=LI_CUENTAS.map(c=>all[mes][c[0]]).filter(v=>v!=null);if(li.length)all[mes].linkedin=li.reduce((a,b)=>a+b,0);else delete all[mes].linkedin;
     localStorage.setItem('lcp_followers',JSON.stringify(all));cfgPush('lcp_followers');}catch(e){}
   document.getElementById('moMetasMes').classList.remove('open');
   toast('✓ Metas guardadas');renderContResumen();
 }
 
+/* 📅 Tablero diario: cuánto se publicó cada día del mes en cada red, contra el rango por día (mín–máx) */
+const DIA_DEF={tt:[3,5],ig:[1,2]}; // vale desde noviembre 2026; cada mes se puede cambiar en ⚙️ Editar metas
+function _diaRango(goals,red,mes){
+  const a=goals['dia_'+red+'_min'],b=goals['dia_'+red+'_max'];
+  if(a||b)return [a||0,b||a||0];
+  return mes>='2026-11'?DIA_DEF[red]:null;
+}
+function _resDiarioHtml(mes,goals,pIg,pTt){
+  const dias=new Date(+mes.slice(0,4),+mes.slice(5,7),0).getDate();
+  const hoyS=new Date().toLocaleDateString('sv-SE');
+  const diaDe=f=>{const d=new Date(f);return isNaN(d)?0:d.getDate();};
+  const redes=[{k:'tt',l:'🎵 TikTok',col:'#21A0B8',P:pTt},{k:'ig',l:'📸 Instagram',col:'#D03E8C',P:pIg}];
+  const ST={bajo:'#E05555',ok:'#3DAA6A',mas:'#C9A84C'};
+  const head=Array.from({length:dias},(_,i)=>{const f=mes+'-'+String(i+1).padStart(2,'0'),d=new Date(f+'T12:00');
+    return `<th style="padding:4px 0;text-align:center;font-size:9.5px;font-weight:600;color:${f===hoyS?'var(--gl)':'var(--muted)'};min-width:26px">${'DLMMJVS'[d.getDay()]}<br><span style="font-size:11px;font-weight:800">${i+1}</span></th>`;}).join('');
+  const filas=redes.map(r=>{
+    const c=Array(dias+1).fill(0);r.P.forEach(p=>{const d=diaDe(p.fecha);if(d)c[d]++;});
+    const rg=_diaRango(goals,r.k,mes);let cumpl=0,pasados=0,racha=0,rachaMax=0;
+    const celdas=Array.from({length:dias},(_,i)=>{
+      const f=mes+'-'+String(i+1).padStart(2,'0'),n=c[i+1],fut=f>hoyS,hoy=f===hoyS;
+      let est=null;if(rg&&!fut){est=n<rg[0]?'bajo':n>rg[1]?'mas':'ok';}
+      if(!fut&&!hoy){pasados++;if(est!=='bajo'&&rg){cumpl++;racha++;rachaMax=Math.max(rachaMax,racha);}else racha=0;}
+      if(hoy&&est!=='bajo'&&rg){cumpl++;pasados++;racha++;rachaMax=Math.max(rachaMax,racha);}
+      const bg=fut?'transparent':est?ST[est]+(est==='ok'?'':'')+'':n?r.col:'rgba(255,255,255,.04)';
+      const op=fut?1:est==='bajo'?.32:est?.85:.8;
+      const tit=`${new Date(f+'T12:00').toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'})}: ${n} publicaci${n===1?'ón':'ones'}${rg?` · objetivo ${rg[0]}–${rg[1]}`:''}${hoy?' · hoy (todavía en curso)':''}`;
+      return `<td title="${tit}" style="padding:2px"><div style="position:relative;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;
+        ${fut?'border:1px dashed var(--border);color:var(--muted)':'color:var(--text)'};${hoy?'outline:2px solid var(--gl);outline-offset:-1px;':''}">
+        ${fut?'':`<div style="position:absolute;inset:0;border-radius:6px;background:${bg};opacity:${op}"></div>`}<span style="position:relative">${fut?'':n}</span></div></td>`;}).join('');
+    const tot=r.P.length,diasCont=Math.max(1,pasados),prom=(tot/diasCont).toFixed(1);
+    return `<tr><td style="padding:4px 10px 4px 0;white-space:nowrap;position:sticky;left:0;background:var(--card2);z-index:1">
+        <div style="font-size:12.5px;font-weight:800">${r.l}</div>
+        <div style="font-size:10.5px;color:var(--muted)">${rg?`objetivo ${rg[0]}–${rg[1]} por día`:'sin objetivo diario'}</div></td>${celdas}
+      <td style="padding:4px 0 4px 12px;white-space:nowrap;font-size:11px;color:var(--muted);line-height:1.5">
+        <b style="color:var(--text);font-size:13px">${tot}</b> en el mes · <b style="color:var(--text)">${prom}</b>/día<br>
+        ${rg?`<b style="color:${cumpl>=pasados*.8?'var(--green)':cumpl>=pasados*.5?'var(--gold)':'var(--red)'}">${cumpl}/${pasados}</b> días cumplidos · mejor racha <b style="color:var(--text)">${rachaMax}</b>`:''}</td></tr>`;
+  }).join('');
+  const sw=(c,o,t)=>`<span style="display:inline-flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;background:${c};opacity:${o}"></span>${t}</span>`;
+  return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:16px;padding:16px 18px;margin-bottom:24px">
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="font-size:14px;font-weight:800;color:var(--gl)">📅 Publicaciones por día</div>
+      <div style="font-size:11.5px;color:var(--muted)">cuánto subiste cada día del mes en cada red · el número es la cantidad · pasá el mouse para ver el detalle</div>
+      <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="editMetasMes()">🎯 Cambiar objetivo por día</button></div>
+    <div style="overflow-x:auto"><table style="border-collapse:separate;border-spacing:0;width:100%"><thead><tr><th></th>${head}<th></th></tr></thead><tbody>${filas}</tbody></table></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:11px;color:var(--muted);margin-top:10px">
+      ${sw(ST.ok,.85,'en el objetivo')}${sw(ST.mas,.85,'por encima del máximo')}${sw(ST.bajo,.32,'por debajo del mínimo')}
+      <span style="display:inline-flex;align-items:center;gap:5px"><span style="width:12px;height:12px;border-radius:3px;outline:2px solid var(--gl);outline-offset:-2px"></span>hoy (en curso)</span>
+      <span>· el día de hoy cuenta como cumplido solo si ya llegaste al mínimo</span></div>
+  </div>`;
+}
 async function renderContResumen(){
   const el=document.getElementById('contResumen');if(!el)return;
   // Datos automáticos de las 2 redes (tabla redes_metricas, la llenan /api/ig-sync y /api/tiktok todos los días)
@@ -12802,6 +12872,7 @@ async function renderContResumen(){
     </div>
   </div>
 
+  ${_resDiarioHtml(_resumenMes,goals,pIg,pTt)}
   <div style="font-size:13px;font-weight:800;color:var(--gl);margin:4px 0 12px">📊 Evolución <span style="font-size:11px;font-weight:400;color:var(--muted)">· 12 meses hasta ${mesLabel} · pasá el mouse para ver cada valor</span></div>
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:14px;margin-bottom:24px">
     ${[['resChSeg','👥 Seguidores','foto diaria de cada cuenta (empezó el 23/11/2026) + lo cargado a mano antes'],
@@ -12831,11 +12902,12 @@ async function renderContResumen(){
         const spark=vals.map((v,i)=>`<div style="flex:1;background:${i===vals.length-1?p.col:'rgba(255,255,255,.15)'};border-radius:2px 2px 0 0;height:${v>0?Math.max(4,Math.round(v/maxV*28)):2}px;align-self:flex-end"></div>`).join('');
         return`<div style="background:var(--card);border:1px solid var(--border);border-top:2px solid ${p.col};border-radius:12px;padding:14px">
           <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px"><span style="font-size:16px">${p.ico}</span><span style="font-size:11px;font-weight:700;color:var(--muted)">${p.l}</span></div>
-          ${p.manual?`<input type="number" value="${cur?cur.v:''}" placeholder="cargar" onchange="saveFollower('${_resumenMes}','${p.k}',this.value)" title="Seguidores al cierre del mes" style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:20px;font-weight:800;text-align:center;margin-bottom:4px">`
+          ${p.k==='linkedin'?`<div onclick="editMetasMes()" title="Cargar en ⚙️ Editar metas del mes" style="cursor:pointer;font-size:24px;font-weight:800;text-align:center;margin-bottom:4px">${cur?cur.v.toLocaleString('es-AR'):'—'}</div>`
+            :p.manual?`<input type="number" value=""${cur?cur.v:''}" placeholder="cargar" onchange="saveFollower('${_resumenMes}','${p.k}',this.value)" title="Seguidores al cierre del mes" style="width:100%;padding:6px 8px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:20px;font-weight:800;text-align:center;margin-bottom:4px">`
             :`<div style="font-size:24px;font-weight:800;text-align:center;margin-bottom:4px">${cur?cur.v.toLocaleString('es-AR'):'—'}</div>`}
           ${diff!==null?`<div style="font-size:11px;font-weight:700;color:${diffCol};text-align:center">${diff>0?'↑':diff<0?'↓':'='} ${Math.abs(diff).toLocaleString('es-AR')} vs mes anterior ${pct?`(${diff>0?'+':''}${pct}%)`:''}</div>`
           :`<div style="font-size:10px;color:var(--muted);text-align:center">${cur?'La variación aparece cuando haya datos del mes anterior':'Sin datos de este mes'}</div>`}
-          <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">${p.manual?'se carga a mano · total al cierre del mes':p.n+' publicaciones · '+p.extra}</div>
+          <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:4px">${p.k==='linkedin'?(()=>{const f=getFollowers(_resumenMes);const d=LI_CUENTAS.filter(c=>f[c[0]]!=null);return d.length?d.map(c=>c[1].split(' ').slice(1).join(' ')+' '+f[c[0]].toLocaleString('es-AR')).join(' · '):'suma de 4 cuentas · cargalas en ⚙️ Editar metas';})():p.manual?'se carga a mano · total al cierre del mes':p.n+' publicaciones · '+p.extra}</div>
           <div style="display:flex;align-items:flex-end;gap:2px;height:32px;margin-top:10px">${spark}</div>
         </div>`;
       }).join('')}
