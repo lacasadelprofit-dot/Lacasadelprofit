@@ -15133,7 +15133,7 @@ function _gpPintar(){
     <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:${lista.length?'12px':'0'}">
       <div style="font-size:14px;font-weight:700;color:#E8A87C">🎁 Guías pedidas</div>
       <span class="bdg ${pend.length?'b-or':'b-gr'}">${pend.length} por contactar</span>
-      <span style="font-size:11px;color:var(--muted)">${deHoy.length} hoy · ${_gpRows.length} en total</span>
+      <span style="font-size:11px;color:var(--muted)">${deHoy.length} hoy · ${_gpRows.length} en total · 🌐 ${_gpRows.filter(r=>r.origen!=='ruleta').length} portada · 🎡 ${_gpRows.filter(r=>r.origen==='ruleta').length} ruleta</span>
       <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="_gpVerTodas=!_gpVerTodas;_gpPintar()">${_gpVerTodas?'Ver solo por contactar':'Ver todas'}</button>
     </div>
     ${!lista.length?(_gpRows.length?'<div style="font-size:12px;color:var(--muted);margin-top:8px">✓ Ya contactaste a todos.</div>':''):`<div style="display:flex;flex-direction:column;gap:6px">${lista.map(r=>{
@@ -15142,7 +15142,7 @@ function _gpPintar(){
       return `<div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-left:3px solid ${r.contactado?'var(--green)':(esHoy?'#E8A87C':'var(--muted)')};border-radius:10px;padding:9px 12px;opacity:${r.contactado?'.6':'1'}">
         <div style="flex:1;min-width:180px">
           <div style="font-size:13px;font-weight:700">${_gpE(r.nombre)} <span style="font-weight:400;color:var(--muted);font-size:11px">· ${_gpHace(r.ts)}</span></div>
-          <div style="font-size:11px;color:var(--muted);margin-top:2px">Guía de <b style="color:var(--gl)">${_gpE(r.area)}</b> · ${FL[r.idioma]||r.idioma||''}${r.entregado?'':' · <span style="color:var(--or)">⚠️ sin PDF cargado: mandásela vos</span>'}${cel?' · 📱 '+_gpE(r.celular):''}${r.email?' · ✉️ '+_gpE(r.email):''}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">${r.origen==='ruleta'?`<span class="bdg b-pu" style="font-size:9px">🎡 Ruleta${r.flyer?' · flyer '+_gpE(r.flyer):''}${r.ciudad?' · '+_gpE(r.ciudad):''}</span>`:'<span class="bdg b-bl" style="font-size:9px">🌐 Portada</span>'} Guía de <b style="color:var(--gl)">${_gpE(r.area)}</b> · ${FL[r.idioma]||r.idioma||''}${r.entregado?'':' · <span style="color:var(--or)">⚠️ sin PDF cargado: mandásela vos</span>'}${cel?' · 📱 '+_gpE(r.celular):''}${r.email?' · ✉️ '+_gpE(r.email):''}</div>
         </div>
         ${cel?`<a class="btn btn-s btn-sm" href="https://wa.me/${cel}?text=${encodeURIComponent(m.wa)}" target="_blank" rel="noopener">💬 WhatsApp</a>`:''}
         ${r.email?`<a class="btn btn-s btn-sm" href="mailto:${encodeURIComponent(r.email)}?subject=${encodeURIComponent(m.asunto)}&body=${encodeURIComponent(m.wa)}">✉️ Mail</a>`:''}
