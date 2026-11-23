@@ -37,6 +37,18 @@ async function usuarioValido(req) {
   return r.ok;
 }
 
+async function guardadas() {
+  const m = new Map();
+  try {
+    const r = await fetch(SUPABASE_URL + '/rest/v1/redes_metricas?select=id,data&id=like.post-*&limit=5000', {
+      headers: { apikey: SUPABASE_SERVICE_KEY, Authorization: 'Bearer ' + SUPABASE_SERVICE_KEY }
+    });
+    const j = await r.json();
+    if (Array.isArray(j)) j.forEach(x => m.set(x.id, x.data || {}));
+  } catch (e) { /* si falla, se actualiza igual */ }
+  return m;
+}
+
 async function guardar(filas) {
   if (!filas.length) return;
   const r = await fetch(SUPABASE_URL + '/rest/v1/redes_metricas?on_conflict=id', {
@@ -116,7 +128,7 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ ok: false, error: 'No se pudo validar la sesión: ' + e.message });
   }
 
-  const cantidad = Math.min(150, Math.max(5, parseInt((req.query && req.query.cantidad) || '50', 10) || 50));
+  const cantidad = Math.min(2000, Math.max(5, parseInt((req.query && req.query.cantidad) || '2000', 10) || 2000)); // por defecto: todo el historial
   const inicio = Date.now();
   try {
     const igId = await buscarCuentaIg();
@@ -136,41 +148,60 @@ module.exports = async function handler(req, res) {
       if (!after) break;
     }
 
-    // métricas de cada una, de a 8 en paralelo (cortando antes del límite de tiempo de Vercel)
-    const filas = [];
-    for (let i = 0; i < medias.length; i += 8) {
-      if (Date.now() - inicio > 8000) break;
-      const lote = medias.slice(i, i + 8);
+    // Qué hay guardado: para no pisar métricas viejas y para refrescar primero lo más desactualizado
+    const previas = await guardadas();
+    const fila = (m, st) => ({
+      id: 'post-' + m.id,
+      data: {
+        ig_id: m.id,
+        fecha: m.timestamp,
+        tipo: m.media_product_type === 'REELS' ? 'Reel' : m.media_type === 'CAROUSEL_ALBUM' ? 'Carrusel' : m.media_type === 'VIDEO' ? 'Video' : 'Foto',
+        texto: (m.caption || '').slice(0, 600),
+        link: m.permalink,
+        miniatura: m.thumbnail_url || (m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM' ? m.media_url : ''),
+        likes: m.like_count || 0,
+        comentarios: m.comments_count || 0,
+        alcance: st.reach ?? null,
+        vistas: st.views ?? null,
+        guardados: st.saved ?? null,
+        compartidos: st.shares ?? null,
+        interacciones: st.total_interactions ?? null,
+        seguidores_ganados: st.follows ?? null,
+        visitas_perfil: st.profile_visits ?? null,
+        tiempo_promedio_ms: st.ig_reels_avg_watch_time ?? null,
+        actualizado: new Date().toISOString()
+      }
+    });
+    // Orden: las 30 más nuevas siempre (sus números cambian), después las que nunca tuvieron métricas
+    // y las más desactualizadas. Lo que no entra en el tiempo se completa en las próximas corridas.
+    const nuevas = medias.slice(0, 30);
+    const resto = medias.slice(30).sort((a, b) => {
+      const pa = previas.get('post-' + a.id), pb = previas.get('post-' + b.id);
+      const ka = pa && pa.alcance != null ? (pa.actualizado || '') : '';
+      const kb = pb && pb.alcance != null ? (pb.actualizado || '') : '';
+      return ka.localeCompare(kb);
+    });
+    const orden = [...nuevas, ...resto];
+    const filas = [], hechas = new Set();
+    for (let i = 0; i < orden.length; i += 8) {
+      if (Date.now() - inicio > 45000) break; // Vercel corta a los 60 s
+      const lote = orden.slice(i, i + 8);
       const ins = await Promise.all(lote.map(insightsDe));
-      lote.forEach((m, k) => { const st = ins[k] || {}; filas.push({
-        id: 'post-' + m.id,
-        data: {
-          ig_id: m.id,
-          fecha: m.timestamp,
-          tipo: m.media_product_type === 'REELS' ? 'Reel' : m.media_type === 'CAROUSEL_ALBUM' ? 'Carrusel' : m.media_type === 'VIDEO' ? 'Video' : 'Foto',
-          texto: (m.caption || '').slice(0, 600),
-          link: m.permalink,
-          miniatura: m.thumbnail_url || (m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM' ? m.media_url : ''),
-          likes: m.like_count || 0,
-          comentarios: m.comments_count || 0,
-          alcance: st.reach ?? null,
-          vistas: st.views ?? null,
-          guardados: st.saved ?? null,
-          compartidos: st.shares ?? null,
-          interacciones: st.total_interactions ?? null,
-          seguidores_ganados: st.follows ?? null,
-          visitas_perfil: st.profile_visits ?? null,
-          tiempo_promedio_ms: st.ig_reels_avg_watch_time ?? null,
-          actualizado: new Date().toISOString()
-        }
-      }); });
+      lote.forEach((m, k) => { filas.push(fila(m, ins[k] || {})); hechas.add(m.id); });
     }
+    // las que no llegaron a tener métricas en esta corrida: se guardan solo si son nuevas (sin pisar las previas)
+    medias.forEach(m => {
+      if (hechas.has(m.id)) return;
+      const prev = previas.get('post-' + m.id);
+      if (!prev) filas.push(fila(m, {}));
+      else filas.push({ id: 'post-' + m.id, data: { ...prev, likes: m.like_count || 0, comentarios: m.comments_count || 0, texto: (m.caption || '').slice(0, 600) } });
+    });
 
     const nPosts = filas.length;
     const hoy = new Date().toISOString().slice(0, 10);
     filas.push({ id: 'cuenta-' + hoy, data: { fecha: hoy, usuario: cuenta.username, seguidores: cuenta.followers_count, siguiendo: cuenta.follows_count, publicaciones: cuenta.media_count } });
     const permisos = await permisosDelToken();
-    const conMetricas = filas.filter(f => f.data.alcance != null).length;
+    const conMetricas = filas.filter(f => f.id.startsWith('post-') && f.data.alcance != null).length;
     filas.push({ id: 'sync', data: { cuando: new Date().toISOString(), ok: true, posts: nPosts, con_metricas: conMetricas, usuario: cuenta.username, permisos, error_metricas: errorInsights || null } });
     await guardar(filas);
     return res.status(200).json({ ok: true, usuario: cuenta.username, seguidores: cuenta.followers_count, posts: nPosts, de: medias.length, con_metricas: conMetricas, permisos, error_metricas: errorInsights || null });

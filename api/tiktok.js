@@ -127,7 +127,7 @@ module.exports = async function handler(req, res) {
       const u = (await tt('/user/info/?fields=open_id,display_name,username,follower_count,following_count,likes_count,video_count', token)).user || {};
       const videos = [];
       let cursor = 0, mas = true;
-      while (mas && videos.length < 100 && Date.now() - inicio < 7000) {
+      while (mas && videos.length < 2000 && Date.now() - inicio < 45000) { // todo el historial (Vercel corta a los 60 s)
         const d = await tt('/video/list/?fields=id,title,video_description,create_time,cover_image_url,share_url,duration,view_count,like_count,comment_count,share_count', token,
           { method: 'POST', body: JSON.stringify({ max_count: 20, ...(cursor ? { cursor } : {}) }) });
         videos.push(...(d.videos || []));
