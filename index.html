@@ -9680,6 +9680,7 @@ function renderMktContenido(){
         </div>`;}).join('')}
     </div>
   </div>
+  ${typeof _pzcHtml==='function'?_pzcHtml():''}
   <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px">
     <div>
       <div style="font-size:11px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">💡 Ideas (${ideas.length})</div>
@@ -15935,7 +15936,8 @@ async function renderPlanNumeros(){
   const el=document.getElementById('estPiezas');if(!el)return;
   await _pzCargar();
   const E=_estE,h=_pz.hechos,nT=PZ_TIPOS.length;
-  const hecho=(t,p)=>h[t+'.'+p]||0;
+  const AUTO=['post','reel_es','reel_pt'];
+  const hecho=(t,p)=>{if(AUTO.includes(p)&&typeof _pzcPublicadas==='function'){const tn=PZ_TIPOS.find(x=>x[0]===t)?.[1];const v=_pzcPublicadas(tn,p);if(v!=null)return v;}return h[t+'.'+p]||0;};
   const totP=p=>PZ_PIEZAS.find(x=>x.k===p).por*nT,hechoP=p=>PZ_TIPOS.reduce((s,[t])=>s+hecho(t,p),0);
   const grupo=g=>PZ_PIEZAS.filter(p=>p.g===g);
   const tot=g=>grupo(g).reduce((s,p)=>s+totP(p.k),0),hec=g=>grupo(g).reduce((s,p)=>s+hechoP(p.k),0);
@@ -15964,22 +15966,112 @@ async function renderPlanNumeros(){
     </div>
   </div>
 
-  <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📋 Avance por tipo · tocá + cuando terminás una pieza</div>
+  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px"><div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px">📋 Avance por tipo</div>
+    <div style="font-size:11.5px;color:var(--muted)">🔄 carruseles y reels se cuentan solos al marcarlos ✅ Publicado en el Planificador · lo demás, con + / −</div>
+    <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="irMkt('contenido');setTimeout(()=>setContSection('redes'),60)">🗓 Ir al Planificador →</button></div>
   <div style="overflow-x:auto;margin-bottom:10px"><table style="width:100%;min-width:900px">
     <thead><tr><th>Pieza</th>${PZ_TIPOS.map(([k,l,c,i])=>`<th style="text-align:center;border-bottom:2px solid ${c}">${i} ${l}</th>`).join('')}<th style="text-align:center">Total</th></tr></thead>
     <tbody>${PZ_PIEZAS.map(p=>`<tr>
       <td style="white-space:nowrap"><b>${p.ico} ${E(p.l)}</b><div style="font-size:10.5px;color:var(--muted)">${E(p.d)} · ${p.por} por tipo</div></td>
       ${PZ_TIPOS.map(([t,,c])=>{const v=hecho(t,p.k),ok=v>=p.por;return`<td style="text-align:center;${ok?'background:rgba(61,170,106,.12)':''}">
-        <div style="display:inline-flex;align-items:center;gap:6px">
+        ${AUTO.includes(p.k)?`<b style="font-size:13px;color:${ok?'var(--green)':'var(--text)'}" title="Se cuenta solo desde Redes sociales → Planificador">${v}/${p.por} <span style="font-size:10px;color:var(--muted);font-weight:400">🔄</span></b>`:`<div style="display:inline-flex;align-items:center;gap:6px">
           <button class="btn btn-s btn-sm" style="padding:1px 7px" onclick="_pzSumar('${t}','${p.k}',-1)">−</button>
           <b style="min-width:42px;font-size:13px;color:${ok?'var(--green)':'var(--text)'}">${v}/${p.por}</b>
-          <button class="btn btn-s btn-sm" style="padding:1px 7px" onclick="_pzSumar('${t}','${p.k}',1)">+</button></div>
+          <button class="btn btn-s btn-sm" style="padding:1px 7px" onclick="_pzSumar('${t}','${p.k}',1)">+</button></div>`}
         ${barra(v,p.por,c)}</td>`;}).join('')}
       <td style="text-align:center;font-weight:800">${hechoP(p.k)}/${totP(p.k)}</td></tr>`).join('')}
     </tbody></table></div>
   <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Hoy: al terminar cada sesión se regalan stickers de las preguntas. Los 6 tipos (Recibir, Cuerpo, Vínculos, Viajes, Emprender, Identidad) son los mismos para el contenido, las guías y los stickers.</div>`;
 }
 
+</script>
+<script>
+/* ══════════ PLANIFICADOR · 📱 Piezas de contenido (264) ══════════
+   Salen de las 120 preguntas de la temporada (comunidad_contenido, set 'temporada-2026'):
+   24 carruseles (1 por sección: 4 por tipo, 5 preguntas c/u) + 120 reels en español + 120 en portugués.
+   Cada pieza se planifica en el calendario (crea un ítem en contenidoRedes con pieza = su id) y se marca publicada.
+   Plan en números (Estrategia) cuenta solo estas piezas publicadas. */
+const PZC_TIPOS=['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'];
+const PZC_ICO={Recibir:'💰',Cuerpo:'🌿',Vínculos:'💛',Viajes:'✈️',Emprender:'🚀',Identidad:'🪞'};
+const _pzcSlug=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+let _pzcF={tipo:'Recibir',formato:'',estado:''};
+function _pzcPiezas(){
+  const P=(typeof comunidad!=='undefined'?comunidad:[]).filter(c=>c.set==='temporada-2026'&&c.tipo==='pregunta');
+  const out=[];
+  PZC_TIPOS.forEach(t=>{
+    const Q=P.filter(q=>q.matiz===t).sort((a,b)=>(+a.numero)-(+b.numero));
+    for(let n=1;n<=4;n++){const qs=Q.filter(q=>(+q.carrusel_n||Math.ceil(q.numero/5))===n);if(!qs.length)continue;
+      out.push({id:'car-'+_pzcSlug(t)+'-'+n,tipo:t,formato:'Carrusel',etq:'🖼️ Carrusel '+n,titulo:qs[0].seccion||('Carrusel '+n),preguntas:qs.map(q=>q.texto),hook:qs[0].texto});}
+    Q.forEach(q=>{
+      out.push({id:'reel-es-'+q.codigo,tipo:t,formato:'Reel',etq:'🎬 Reel ES #'+q.numero,titulo:q.texto,hook:q.texto});
+      out.push({id:'reel-pt-'+q.codigo,tipo:t,formato:'Reel',etq:'🇧🇷 Reel PT #'+q.numero,titulo:q.texto_pt||q.texto,hook:q.texto_pt||q.texto});
+    });
+  });
+  return out;
+}
+function _pzcEstado(id){const c=contenidoRedes.find(x=>x.pieza===id);return c?{e:c.tipo==='publicado'?'publicado':'planificado',c}:{e:'pendiente',c:null};}
+function _pzcHtml(){
+  const todas=_pzcPiezas(),E=_plE;
+  if(!todas.length)return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:16px;font-size:12.5px;color:var(--muted)">📱 Las piezas de contenido aparecen cuando estén cargadas las 120 preguntas de la temporada.</div>`;
+  const est=todas.map(p=>({...p,...(_pzcEstado(p.id))}));
+  const pub=est.filter(p=>p.e==='publicado').length,plan=est.filter(p=>p.e==='planificado').length;
+  const pct=Math.round(pub/est.length*100);
+  const f=_pzcF;
+  const L=est.filter(p=>(!f.tipo||p.tipo===f.tipo)&&(!f.formato||(f.formato==='car'?p.formato==='Carrusel':f.formato==='es'?p.id.startsWith('reel-es'):p.id.startsWith('reel-pt')))&&(!f.estado||p.e===f.estado));
+  const chipT=t=>{const de=est.filter(p=>p.tipo===t),h=de.filter(p=>p.e==='publicado').length;
+    return`<button class="tab-btn${f.tipo===t?' active':''}" onclick="_pzcF.tipo='${t}';renderMktContenido()">${PZC_ICO[t]} ${t} <span style="font-size:10px;color:${h===de.length?'var(--green)':'var(--muted)'}">${h}/${de.length}</span></button>`;};
+  const sel=(k,v,ops,todo)=>`<select onchange="_pzcF.${k}=this.value;renderMktContenido()" style="height:30px;padding:0 8px;font-size:12px;width:auto;background:${v?'rgba(201,168,76,.15)':'var(--card)'};color:var(--text);border:1px solid ${v?'var(--gold)':'var(--border)'};border-radius:8px"><option value="">${todo}</option>${ops.map(([a,b])=>`<option value="${a}" ${v===a?'selected':''}>${b}</option>`).join('')}</select>`;
+  const EST={pendiente:['⚪','Pendiente','var(--muted)'],planificado:['📅','Planificado','var(--gl)'],publicado:['✅','Publicado','var(--green)']};
+  return`<div style="background:var(--card2);border:1px solid rgba(201,168,76,.35);border-radius:16px;padding:16px 18px;margin-bottom:16px">
+    <div style="display:flex;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:12px">
+      <div><div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">📱 Piezas de contenido</div>
+        <div style="line-height:1;margin-top:6px"><span style="font-size:40px;font-weight:800">${pub}</span><span style="font-size:18px;font-weight:700;color:var(--muted)"> / 264</span></div></div>
+      <div style="flex:1;min-width:240px">
+        <div style="font-size:12px;color:var(--muted);line-height:1.5">24 carruseles (4 por tipo, uno por sección, de 5 preguntas con la guía) + 120 reels en español + 120 en portugués</div>
+        <div style="height:8px;background:var(--card);border-radius:4px;overflow:hidden;margin:8px 0 4px"><div style="height:100%;width:${pct}%;background:#E4405F;border-radius:4px"></div></div>
+        <div style="font-size:11.5px;color:var(--muted)">✅ ${pub} publicadas · 📅 ${plan} planificadas · ⚪ ${est.length-pub-plan} sin planificar</div></div>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px">${PZC_TIPOS.map(chipT).join('')}<button class="tab-btn${!f.tipo?' active':''}" onclick="_pzcF.tipo='';renderMktContenido()">Todos</button></div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:10px">
+      ${sel('formato',f.formato,[['car','🖼️ Carruseles'],['es','🎬 Reels en español'],['pt','🇧🇷 Reels en portugués']],'Todos los formatos')}
+      ${sel('estado',f.estado,[['pendiente','⚪ Sin planificar'],['planificado','📅 Planificadas'],['publicado','✅ Publicadas']],'Todos los estados')}
+      <span style="font-size:12px;color:var(--muted);margin-left:auto">${L.length} pieza${L.length===1?'':'s'}</span>
+    </div>
+    <div style="max-height:460px;overflow:auto;border:1px solid var(--border);border-radius:10px">
+      <table style="width:100%;font-size:12.5px"><tbody>${L.map(p=>{const s=EST[p.e];return`<tr>
+        <td style="white-space:nowrap;color:var(--muted);width:120px">${PZC_ICO[p.tipo]} ${E(p.etq)}</td>
+        <td><b>${E(p.titulo)}</b>${p.preguntas?`<div style="font-size:11px;color:var(--muted);margin-top:2px">${p.preguntas.map(q=>E(q)).join(' · ')}</div>`:''}</td>
+        <td style="white-space:nowrap;color:${s[2]}">${s[0]} ${s[1]}${p.c?.fecha&&p.e!=='pendiente'?' · '+fd(p.c.fecha):''}</td>
+        <td style="white-space:nowrap;text-align:right">${p.e!=='publicado'?`<button class="btn btn-s btn-sm" onclick="_pzcPlanificar('${p.id}')">📅 ${p.e==='planificado'?'Cambiar fecha':'Planificar'}</button> <button class="btn btn-p btn-sm" onclick="_pzcHecho('${p.id}')">✅ Publicado</button>`:`<button class="btn btn-s btn-sm" title="Volver a planificado" onclick="_pzcDeshacer('${p.id}')">↩</button>`}</td>
+      </tr>`;}).join('')||'<tr><td style="padding:16px;color:var(--muted)">No hay piezas con esos filtros.</td></tr>'}</tbody></table>
+    </div></div>`;
+}
+function _pzcItem(id,crear){
+  let c=contenidoRedes.find(x=>x.pieza===id);
+  if(!c&&crear){const p=_pzcPiezas().find(x=>x.id===id);if(!p)return null;
+    c={id:'cont_'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),pieza:id,tipo:'planificado',plataforma:'Instagram',formato:p.formato,pilar:'barras',
+       titulo:`${p.tipo} · ${p.etq.replace(/^\S+\s/,'')} · ${p.titulo}`,hook:p.hook,grupo:'Temporada · '+p.tipo,fecha:_plHoy(),notas:p.preguntas?p.preguntas.join('\n'):'',createdAt:new Date().toISOString()};
+    contenidoRedes.unshift(c);}
+  return c;
+}
+function _pzcPlanificar(id){
+  const c0=contenidoRedes.find(x=>x.pieza===id);
+  const f=prompt('¿Qué día la publicás? (AAAA-MM-DD)',c0?.fecha||_plHoy());if(f===null)return;
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(f.trim())){toast('⚠️ Escribí la fecha así: 2026-12-01','err');return;}
+  const c=_pzcItem(id,true);if(!c)return;c.tipo='planificado';c.fecha=f.trim();
+  save();renderMktContenido();toast('📅 Planificada para el '+fd(c.fecha));
+}
+function _pzcHecho(id){
+  const c=_pzcItem(id,true);if(!c)return;c.tipo='publicado';if(!c.fecha||c.fecha>_plHoy())c.fecha=_plHoy();
+  save();renderMktContenido();toast('✅ Publicada · suma a las 264');
+}
+function _pzcDeshacer(id){const c=contenidoRedes.find(x=>x.pieza===id);if(!c)return;c.tipo='planificado';save();renderMktContenido();}
+/* Para Plan en números: piezas publicadas por tipo y formato */
+function _pzcPublicadas(tipo,k){
+  const s=_pzcSlug(tipo),pre=k==='post'?'car-'+s+'-':k==='reel_es'?'reel-es-p26-'+s+'-':k==='reel_pt'?'reel-pt-p26-'+s+'-':null;
+  if(!pre)return null;
+  return (typeof contenidoRedes!=='undefined'?contenidoRedes:[]).filter(c=>c.tipo==='publicado'&&(c.pieza||'').startsWith(pre)).length;
+}
 </script>
 </body>
 </html>
