@@ -14071,21 +14071,23 @@ async function abrirEncPersonas(){
   /* nombres: todos los que figuran en los encuentros + los que ya tienen Instagram guardado */
   const map=new Map();
   _encs.filter(r=>(r.tipo||'encuentro')==='encuentro').forEach(r=>_encFacs(r.facilitadores).forEach(n=>{
-    const k=n.toLowerCase();if(!map.has(k))map.set(k,{nombre:n,instagram:'',veces:0});map.get(k).veces++;
+    const k=n.toLowerCase();if(!map.has(k))map.set(k,{nombre:n,instagram:'',veces:0,barras:0,consciencia:0});
+    const p=map.get(k);p.veces++;if(r.comunidad==='barras')p.barras++;else p.consciencia++;
   }));
   _encs.filter(r=>r.tipo==='persona'&&r.nombre).forEach(r=>{
     const k=r.nombre.trim().toLowerCase();
-    if(!map.has(k))map.set(k,{nombre:r.nombre.trim(),instagram:'',veces:0});
+    if(!map.has(k))map.set(k,{nombre:r.nombre.trim(),instagram:'',veces:0,barras:0,consciencia:0});
     map.get(k).instagram=r.instagram||'';
   });
-  _encPer=[...map.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  /* primero los de Barras, después los de Consciencia; dentro de cada grupo, por nombre */
+  _encPer=[...map.values()].sort((a,b)=>(!!b.barras-!!a.barras)||a.nombre.localeCompare(b.nombre));
   _encPerPintar();
   document.getElementById('moEncPer').classList.add('open');
 }
 function _encPerPintar(){
   document.getElementById('pLista').innerHTML=_encPer.length?_encPer.map((p,i)=>`
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
-      <div style="font-size:13px;font-weight:600">${_encE(p.nombre)}<span style="display:block;font-size:10px;font-weight:400;color:var(--muted)">${p.veces?p.veces+' encuentro'+(p.veces>1?'s':''):'sin encuentros cargados'}</span></div>
+      <div style="font-size:13px;font-weight:600">${_encE(p.nombre)}<span style="display:flex;flex-wrap:wrap;gap:4px;margin-top:3px">${p.barras?`<span class="bdg b-or">💆 Barras · ${p.barras}</span>`:''}${p.consciencia?`<span class="bdg b-gr">🌿 Consciencia · ${p.consciencia}</span>`:''}${p.veces?'':'<span style="font-size:10px;font-weight:400;color:var(--muted)">sin encuentros cargados</span>'}</span></div>
       <input type="text" value="${_encE(p.instagram?'@'+p.instagram:'')}" placeholder="@instagram" oninput="_encPer[${i}].instagram=this.value">
     </div>`).join(''):'<div style="font-size:11px;color:var(--muted)">Todavía no hay facilitadores en los encuentros. Cargalos en cada encuentro y aparecen acá solos.</div>';
 }
