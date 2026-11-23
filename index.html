@@ -16013,10 +16013,12 @@ async function _embPintar(){
   try{const {data}=await _sb.from('regalo_pedidos').select('data').gte('created_at',e.desde);pedidas=(data||[]).filter(r=>r.data?.flyer||/ruleta|flyer/i.test(r.data?.origen||'')).length;}catch(x){}
   try{const {data}=await _sb.from('tesoro_premios').select('data');stkTot=(data||[]).length;stk=(data||[]).filter(r=>r.data?.reclamado).length;}catch(x){}
   const ses=(typeof sessions!=='undefined'?sessions:[]).filter(s=>s.flyer&&(s.fecha||'')>=e.desde&&(s.estado||'Completado')!=='Cancelado').length;
+  let alu=0,aluTot=0,claCon=0;
+  try{const {data}=await _sb.from('clase_fechas').select('data').gte('fecha',e.desde);(data||[]).forEach(c=>{const o=c.data?.origen;if(!o)return;claCon++;alu+=(+o.flyer||0);aluTot+=Object.values(o).reduce((a,b)=>a+(+b||0),0);});}catch(x){}
   const guias=guiaClick+pedidas,contactos=guias+agenda;
   // ── tasas: reales si hay base suficiente, si no las estimadas
   const real=(a,b,min)=>b>=min&&a>0?a/b*100:null;
-  const T={giro:real(gir,esc,30),contacto:real(contactos,gir,30),sesion:real(ses,contactos,10)};
+  const T={giro:real(gir,esc,30),contacto:real(contactos,gir,30),sesion:real(ses,contactos,10),clase:real(alu,ses,10)};
   const usar=k=>T[k]!=null?T[k]:e.tasas[k];
   // ── necesario para la meta (de atrás para adelante)
   const nSes=e.meta_ses,nCon=Math.ceil(nSes/(usar('sesion')/100)),nGir=Math.ceil(nCon/(usar('contacto')/100)),nEsc=Math.ceil(nGir/(usar('giro')/100));
@@ -16029,7 +16031,7 @@ async function _embPintar(){
     {ico:'🎡',l:'Giran la ruleta',s:'reciben su pregunta',real:gir,nec:nGir,c:'#5B9BD5',tasa:'giro'},
     {ico:'💬',l:'Te contactan',s:'piden la guía o tocan «Agendar»',real:contactos,nec:nCon,c:'#D4863A',tasa:'contacto',det:`${guias} piden la guía · ${agenda} «Agendar»`},
     {ico:'✨',l:'Hacen una sesión',s:'cargada con el código del flyer',real:ses,nec:nSes,c:'#C9A84C',tasa:'sesion'},
-    {ico:'🎓',l:'Hacen la clase',s:'se vuelven alumnos',real:null,nec:e.meta_alu,c:'#3DAA6A',tasa:'clase',det:'se estima: todavía no se marca el origen del alumno'}
+    {ico:'🎓',l:'Hacen la clase',s:'alumnos que llegaron por flyer o sticker',real:alu,nec:e.meta_alu,c:'#3DAA6A',tasa:'clase',det:claCon?`de ${aluTot} alumnos con origen cargado en ${claCon} clase${claCon===1?'':'s'}`:'se carga en Agenda → Clase → ¿Cómo llegaron?'}
   ];
   const max=Math.max(...etapas.map(x=>Math.max(x.real||0,x.nec||0)),1);
   const ritmo=x=>x.real==null?null:Math.round(x.real/semPas*10)/10,necSem=x=>Math.max(0,Math.ceil(((x.nec||0)-(x.real||0))/semRest));
@@ -16059,7 +16061,7 @@ async function _embPintar(){
     <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:11px;color:var(--muted);margin-top:10px">
       <span>Cada franja es lo <b style="color:var(--text)">necesario</b> para la meta de la temporada; el relleno es lo que ya se logró.</span>
       <span>· 📍 stickers encontrados: <b style="color:var(--text)">${stk}</b> de ${stkTot}</span>
-      <span>· las tasas pasan a ser reales cuando hay suficientes datos (30 escaneos / 30 giros / 10 contactos)</span>
+      <span>· las tasas pasan a ser reales cuando hay suficientes datos (30 escaneos / 30 giros / 10 contactos / 10 sesiones)</span>
     </div>`;
 }
 
