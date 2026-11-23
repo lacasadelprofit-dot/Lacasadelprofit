@@ -1364,12 +1364,8 @@ th{background:rgba(28,26,46,.88)!important;}
 <div class="mo" id="moEncPer">
  <div class="mb" style="width:560px">
   <h2>👥 Facilitadores · Instagram</h2>
-  <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Cargá cada persona una sola vez. En la web, su nombre se convierte en link a su Instagram en todos los encuentros donde aparece (Barras y Consciencia). El nombre tiene que estar escrito igual que en los encuentros. <b>Pediles permiso antes de poner su cuenta.</b></div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px">Acá aparecen solos todos los que facilitaron algún encuentro. Solo completá su Instagram: en la web, su nombre se convierte en link en todos sus encuentros (Barras y Consciencia). Si falta alguien, cargalo como facilitador en su encuentro. <b>Pediles permiso antes de poner su cuenta.</b></div>
   <div id="pLista" style="display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow-y:auto"></div>
-  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
-   <button type="button" class="btn btn-s btn-sm" onclick="_encPerAgregar()">+ Agregar persona</button>
-   <button type="button" class="btn btn-s btn-sm" onclick="_encPerTraer()">↓ Traer nombres de los encuentros</button>
-  </div>
   <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
    <button class="btn btn-s" onclick="closeModal('moEncPer')">Cancelar</button>
    <button class="btn btn-p" id="pGuardarBtn" onclick="guardarEncPersonas()">Guardar</button>
@@ -14071,39 +14067,38 @@ let _encPer=[];
 const _encSlug=t=>(t||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
 const _encIg=t=>(t||'').trim().replace(/^https?:\/\/(www\.)?instagram\.com\//i,'').replace(/^@/,'').replace(/[\/?#].*$/,'');
 async function abrirEncPersonas(){
-  if(!_encs.length)await _encCargar();
-  _encPer=_encs.filter(r=>r.tipo==='persona').map(r=>({id:r.id,nombre:r.nombre||'',instagram:r.instagram||''}))
-    .sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  await _encCargar();
+  /* nombres: todos los que figuran en los encuentros + los que ya tienen Instagram guardado */
+  const map=new Map();
+  _encs.filter(r=>(r.tipo||'encuentro')==='encuentro').forEach(r=>_encFacs(r.facilitadores).forEach(n=>{
+    const k=n.toLowerCase();if(!map.has(k))map.set(k,{nombre:n,instagram:'',veces:0});map.get(k).veces++;
+  }));
+  _encs.filter(r=>r.tipo==='persona'&&r.nombre).forEach(r=>{
+    const k=r.nombre.trim().toLowerCase();
+    if(!map.has(k))map.set(k,{nombre:r.nombre.trim(),instagram:'',veces:0});
+    map.get(k).instagram=r.instagram||'';
+  });
+  _encPer=[...map.values()].sort((a,b)=>a.nombre.localeCompare(b.nombre));
   _encPerPintar();
   document.getElementById('moEncPer').classList.add('open');
 }
 function _encPerPintar(){
   document.getElementById('pLista').innerHTML=_encPer.length?_encPer.map((p,i)=>`
-    <div style="display:flex;gap:6px;align-items:center">
-      <input type="text" value="${_encE(p.nombre)}" placeholder="Nombre (igual que en los encuentros)" oninput="_encPer[${i}].nombre=this.value" style="flex:1">
-      <input type="text" value="${_encE(p.instagram?'@'+p.instagram:'')}" placeholder="@instagram" oninput="_encPer[${i}].instagram=this.value" style="flex:1">
-      <button type="button" class="btn btn-d btn-sm" title="Quitar" onclick="_encPer.splice(${i},1);_encPerPintar()">✕</button>
-    </div>`).join(''):'<div style="font-size:11px;color:var(--muted)">Todavía no hay nadie. Tocá «Traer nombres de los encuentros».</div>';
-}
-function _encPerAgregar(){_encPer.push({nombre:'',instagram:''});_encPerPintar();}
-function _encPerTraer(){
-  const ya=new Set(_encPer.map(p=>p.nombre.trim().toLowerCase()));let n=0;
-  _encs.filter(r=>(r.tipo||'encuentro')==='encuentro').forEach(r=>_encFacs(r.facilitadores).forEach(nom=>{
-    if(!ya.has(nom.toLowerCase())){ya.add(nom.toLowerCase());_encPer.push({nombre:nom,instagram:''});n++;}
-  }));
-  _encPer.sort((a,b)=>a.nombre.localeCompare(b.nombre));_encPerPintar();
-  toast(n?`✓ ${n} nombre${n>1?'s':''} agregado${n>1?'s':''}. Completá los Instagram y tocá Guardar.`:'Ya están todos los nombres de los encuentros.');
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center">
+      <div style="font-size:13px;font-weight:600">${_encE(p.nombre)}<span style="display:block;font-size:10px;font-weight:400;color:var(--muted)">${p.veces?p.veces+' encuentro'+(p.veces>1?'s':''):'sin encuentros cargados'}</span></div>
+      <input type="text" value="${_encE(p.instagram?'@'+p.instagram:'')}" placeholder="@instagram" oninput="_encPer[${i}].instagram=this.value">
+    </div>`).join(''):'<div style="font-size:11px;color:var(--muted)">Todavía no hay facilitadores en los encuentros. Cargalos en cada encuentro y aparecen acá solos.</div>';
 }
 async function guardarEncPersonas(){
-  const lista=_encPer.map(p=>({nombre:p.nombre.trim(),instagram:_encIg(p.instagram)})).filter(p=>p.nombre);
-  const filas=lista.map(p=>({id:'per-'+_encSlug(p.nombre),data:{tipo:'persona',nombre:p.nombre,instagram:p.instagram,activo:true}}));
-  const nuevos=new Set(filas.map(f=>f.id));
-  const borrar=_encs.filter(r=>r.tipo==='persona'&&!nuevos.has(r.id)).map(r=>r.id);
+  const con=_encPer.map(p=>({nombre:p.nombre.trim(),instagram:_encIg(p.instagram)})).filter(p=>p.nombre&&p.instagram);
+  const filas=con.map(p=>({id:'per-'+_encSlug(p.nombre),data:{tipo:'persona',nombre:p.nombre,instagram:p.instagram,activo:true}}));
+  const quedan=new Set(filas.map(f=>f.id));
+  const borrar=_encs.filter(r=>r.tipo==='persona'&&!quedan.has(r.id)).map(r=>r.id);
   const btn=document.getElementById('pGuardarBtn');btn.disabled=true;
   if(filas.length){const {error}=await _sb.from('encuentros').upsert(filas);if(error){btn.disabled=false;toast('⚠️ '+error.message,'err');return;}}
   if(borrar.length){const {error}=await _sb.from('encuentros').delete().in('id',borrar);if(error){btn.disabled=false;toast('⚠️ '+error.message,'err');return;}}
   btn.disabled=false;
-  toast(`✓ ${filas.filter(f=>f.data.instagram).length} Instagram guardados · ya están en la web`);
+  toast(`✓ ${filas.length} Instagram guardado${filas.length===1?'':'s'} · ya están en la web`);
   closeModal('moEncPer');renderEnc();
 }
 </script>
