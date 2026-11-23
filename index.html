@@ -15694,7 +15694,7 @@ async function _aliSet(id,campo,val){
    el flujo de información de los flyers, la rutina (día, semana, 21 días, mes) y lo que el sistema hace solo. */
 const _fjIr={
   redes:()=>irMkt('contenido'),planif:()=>{irMkt('contenido');setTimeout(()=>setContSection('redes'),50);},
-  flyers:()=>irTesoro('flyers'),historial:()=>irTesoro('historial'),tesoro:()=>irTesoro('resumen'),album:()=>irTesoro('album'),
+  flyers:()=>irTesoro('flyers'),historial:()=>irTesoro('historial'),stickers:()=>irTesoro('stickers'),ruletaP:()=>irTesoro('ruleta'),tesoro:()=>irTesoro('resumen'),album:()=>irTesoro('album'),
   crm:()=>irMkt('crm'),regalos:()=>irMkt('regalos'),sesiones:()=>nav('sesiones',null),calendario:()=>nav('calendario',null),
   encuentros:()=>nav('encuentros',null),aliados:()=>{_estSub='aliados';renderMktEstrategia();},metas:()=>{_estSub='vision';renderMktEstrategia();},
   seres:()=>nav('seres',null),stats:()=>irMkt('stats')
@@ -15785,40 +15785,63 @@ const FJM_LINKS=[
   ['escribo','sesion'],['escribo','clase'],['cargo','sesion'],['sena','sesion'],['premio','comu'],['decido','flyer'],
   ['sesion','clase'],['clase','comu'],['comu','metas'],['sesion','metas']
 ];
+const FJM_GENERAL={id:'fjm',cols:FJM_COLS,links:FJM_LINKS,nota:'la línea punteada vuelve atrás: la decisión semanal mejora los flyers'};
+
+/* Mapa de la Búsqueda del tesoro (va en Búsqueda del tesoro → Resumen) */
+const FJM_TESORO={id:'tzm',nota:'la línea punteada vuelve atrás: cada historia publicada hace que más gente salga a buscar',
+  cols:[
+    {t:'1 · Dónde está el QR',s:'lo que la gente encuentra en la calle',c:'#7A7260',n:[['stk','📍 Stickers pegados','escondidos en Búzios, Arraial y Cabo Frío','stickers'],['fol','📄 Folletos con QR','BUZ · ARR · CAB','flyers'],['ali','🏨 Aliados','QR en recepción'],['red','📱 Redes','«hay stickers escondidos»']]},
+    {t:'2 · Qué abre',s:'al escanear',c:'#5B9BD5',n:[['preg','❓ La pregunta del sticker','cada sticker trae su pregunta'],['rul','🎡 Ruleta de preguntas','gira y recibe una pregunta'],['pag','🗺️ Página del tesoro','premios escondidos, mapa y ganadores']]},
+    {t:'3 · Qué hace la persona',s:'para ganar o seguir',c:'#D4863A',n:[['hist','📸 Sube su historia','etiqueta a @juancruzconsciencia'],['recl','🎟️ Gira y reclama','con su usuario de Instagram'],['guia','🎁 Pide la guía','deja nombre y WhatsApp'],['wa','💬 Agenda por WhatsApp','el mensaje lleva el código']]},
+    {t:'4 · Lo que hago yo',s:'y dónde lo veo',c:'#C9A84C',n:[['verif','🔍 Verificar la historia','Historial del tesoro','historial'],['prem','🎁 Entregar el premio','Ruleta de premios','ruletaP'],['repo','📍 Pegar stickers nuevos','y ubicarlos en el mapa','stickers'],['escr','✍️ Escribir el mismo día','Guías pedidas','crm'],['dec','🧭 Decisión semanal','dónde poner más folletos','flyers']]},
+    {t:'5 · Resultado',s:'lo que buscamos',c:'#3DAA6A',n:[['dif','📣 Difusión','su historia la ven sus amigos'],['ses','✨ Sesión','puerta de entrada','sesiones'],['comu','🤝 Comunidad','encuentros y portal del ser','encuentros']]}
+  ],
+  links:[['stk','preg'],['stk','pag'],['fol','rul'],['ali','rul'],['ali','pag'],['red','pag'],
+    ['preg','hist'],['preg','recl'],['pag','recl'],['rul','guia'],['rul','wa'],['pag','wa'],
+    ['hist','verif'],['recl','verif'],['recl','prem'],['guia','escr'],['wa','escr'],
+    ['verif','prem'],['prem','dif'],['prem','ses'],['escr','ses'],
+    ['ses','comu'],['dif','red']]};
 let _fjmRO=null;
-function _fjMapaHtml(){
+function _fjMapaHtml(cfg){
+  cfg=cfg||FJM_GENERAL;const P=cfg.id;
   const E=_estE;
-  return `<div id="fjMapa" style="position:relative;overflow-x:auto;padding:6px 2px 10px">
-    <div id="fjMapaIn" style="position:relative;min-width:1060px;display:grid;grid-template-columns:repeat(5,1fr);column-gap:52px">
-      <svg id="fjMapaSvg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible"></svg>
-      ${FJM_COLS.map((col,ci)=>`<div style="display:flex;flex-direction:column;gap:12px;position:relative;z-index:1">
+  return `<div style="position:relative;overflow-x:auto;padding:6px 2px 10px">
+    <div id="${P}In" style="position:relative;min-width:1060px;display:grid;grid-template-columns:repeat(${cfg.cols.length},1fr);column-gap:52px">
+      <svg id="${P}Svg" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible"></svg>
+      ${cfg.cols.map((col,ci)=>`<div style="display:flex;flex-direction:column;gap:12px;position:relative;z-index:1">
         <div style="border-bottom:2px solid ${col.c};padding-bottom:6px;margin-bottom:2px"><div style="font-size:12.5px;font-weight:800;color:var(--text)">${col.t}</div><div style="font-size:10.5px;color:var(--muted)">${col.s}</div></div>
         <div style="display:flex;flex-direction:column;justify-content:space-around;gap:12px;flex:1">
-        ${col.n.map(([id,t,s,ir])=>`<div id="fjm-${id}" ${ir?`onclick="_fjIr['${ir}']()" title="Ir"`:''} style="${ir?'cursor:pointer;':''}background:var(--card);border:1px solid var(--border);border-left:4px solid ${col.c};border-radius:10px;padding:9px 11px">
+ ${col.n.map(([id,t,s,ir])=>`<div id="${P}-${id}" ${ir?`onclick="_fjIr['${ir}']()" title="Ir"`:''} style="${ir?'cursor:pointer;':''}background:var(--card);border:1px solid var(--border);border-left:4px solid ${col.c};border-radius:10px;padding:9px 11px">
           <div style="font-size:12.5px;font-weight:700">${t}${ir?' <span style="color:var(--muted);font-weight:400">→</span>':''}</div><div style="font-size:10.5px;color:var(--muted);margin-top:2px">${E(s)}</div></div>`).join('')}
         </div></div>`).join('')}
     </div></div>
     <div style="display:flex;flex-wrap:wrap;gap:16px;font-size:11px;color:var(--muted);margin-top:6px">
-      ${FJM_COLS.map(c=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c.c};vertical-align:middle"></span> ${c.t.replace(/^\d · /,'')}</span>`).join('')}
-      <span>· la línea punteada vuelve atrás: la decisión semanal mejora los flyers</span>
+      ${cfg.cols.map(c=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:${c.c};vertical-align:middle"></span> ${c.t.replace(/^\d · /,'')}</span>`).join('')}
+      ${cfg.nota?`<span>· ${cfg.nota}</span>`:''}
     </div>`;
 }
-function _fjMapaLineas(){
-  const inn=document.getElementById('fjMapaIn'),svg=document.getElementById('fjMapaSvg');if(!inn||!svg)return;
-  const R=inn.getBoundingClientRect(),col={};FJM_COLS.forEach((c,ci)=>c.n.forEach(n=>col[n[0]]={ci,c:c.c}));
+function _fjMapaLineas(cfg){
+  cfg=cfg||FJM_GENERAL;const P=cfg.id;
+  const inn=document.getElementById(P+'In'),svg=document.getElementById(P+'Svg');if(!inn||!svg)return;
+  const R=inn.getBoundingClientRect(),col={};cfg.cols.forEach((c,ci)=>c.n.forEach(n=>col[n[0]]={ci,c:c.c}));
   let h='';
-  FJM_LINKS.forEach(([a,b])=>{
-    const ea=document.getElementById('fjm-'+a),eb=document.getElementById('fjm-'+b);if(!ea||!eb)return;
+  cfg.links.forEach(([a,b])=>{
+    const ea=document.getElementById(P+'-'+a),eb=document.getElementById(P+'-'+b);if(!ea||!eb)return;
     const ra=ea.getBoundingClientRect(),rb=eb.getBoundingClientRect(),atras=col[b].ci<col[a].ci,mismo=col[b].ci===col[a].ci;
     let d,dash='';
     if(mismo){const x=ra.right-R.left,y1=ra.top+ra.height/2-R.top,y2=rb.top+rb.height/2-R.top;d=`M${x} ${y1} C${x+26} ${y1},${x+26} ${y2},${x} ${y2}`;}
     else if(atras){const x1=ra.left-R.left,y1=ra.bottom-R.top-4,x2=rb.left+rb.width/2-R.left,y2=rb.bottom-R.top,yb=R.height+14;d=`M${x1+20} ${y1} C${x1} ${yb},${x2} ${yb},${x2} ${y2}`;dash='5 4';}
     else{const x1=ra.right-R.left,y1=ra.top+ra.height/2-R.top,x2=rb.left-R.left,y2=rb.top+rb.height/2-R.top,m=(x2-x1)/2;d=`M${x1} ${y1} C${x1+m} ${y1},${x2-m} ${y2},${x2-4} ${y2}`;}
-    h+=`<path d="${d}" fill="none" stroke="${col[a].c}" stroke-opacity=".55" stroke-width="1.6" ${dash?`stroke-dasharray="${dash}"`:''} marker-end="url(#fjFlecha)"/>`;
+    h+=`<path d="${d}" fill="none" stroke="${col[a].c}" stroke-opacity=".55" stroke-width="1.6" ${dash?`stroke-dasharray="${dash}"`:''} marker-end="url(#${P}Flecha)"/>`;
   });
-  svg.innerHTML=`<defs><marker id="fjFlecha" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#9a907a"/></marker></defs>`+h;
+  svg.innerHTML=`<defs><marker id="${P}Flecha" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#9a907a"/></marker></defs>`+h;
 }
 
+function _fjMapaResize(){
+  if(window._fjmRes)return;window._fjmRes=true;
+  window.addEventListener('resize',()=>{clearTimeout(window._fjmT);window._fjmT=setTimeout(()=>{
+    if(document.getElementById('fjmIn'))_fjMapaLineas(FJM_GENERAL);if(document.getElementById('tzmIn'))_fjMapaLineas(FJM_TESORO);},120);});
+}
 function renderFlujoTrabajo(){
   const el=document.getElementById('estFlujo');if(!el)return;
   const E=_estE;
@@ -15831,7 +15854,12 @@ function renderFlujoTrabajo(){
 
   <div style="background:var(--card2);border:1px solid rgba(201,168,76,.35);border-radius:16px;padding:16px 18px;margin-bottom:24px">
     <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px"><div style="font-size:15px;font-weight:800;color:var(--gl)">🗺️ Mapa general</div><div style="font-size:12px;color:var(--muted)">todo el sistema de un vistazo · las cajas con → te llevan a esa parte del admin</div></div>
-    ${_fjMapaHtml()}
+    ${_fjMapaHtml(FJM_GENERAL)}
+  </div>
+
+  <div style="background:var(--card2);border:1px solid rgba(201,168,76,.35);border-radius:16px;padding:16px 18px;margin-bottom:24px">
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px"><div style="font-size:15px;font-weight:800;color:var(--gl)">🗺️ Cómo funciona la búsqueda del tesoro</div><div style="font-size:12px;color:var(--muted)">stickers, folletos, aliados y los QR con preguntas · las cajas con → te llevan a esa pestaña</div></div>
+    ${_fjMapaHtml(FJM_TESORO)}
   </div>
 
   <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">1 · El recorrido de una persona</div>
@@ -15860,8 +15888,8 @@ function renderFlujoTrabajo(){
   <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-size:12.5px;line-height:1.7">
     ${FJ_AUTO.map(a=>`<div>⚙️ ${E(a)}</div>`).join('')}
   </div>`;
-  setTimeout(_fjMapaLineas,30);
-  if(!window._fjmRes){window._fjmRes=true;window.addEventListener('resize',()=>{clearTimeout(window._fjmT);window._fjmT=setTimeout(_fjMapaLineas,120);});}
+  setTimeout(()=>{_fjMapaLineas(FJM_GENERAL);_fjMapaLineas(FJM_TESORO);},30);
+  _fjMapaResize();
 }
 
 </script>
