@@ -15395,10 +15395,11 @@ const EST_DEF={
     {k:'alumnos',l:'Alumnos formados',obj:100,act:0,ico:'🎓'},
     {k:'clases_g',l:'Clases grandes',obj:10,act:0,ico:'🏫',nota:'2 por mes, diciembre a abril'},
     {k:'clases_p',l:'Clases particulares',obj:10,act:0,ico:'👥',nota:'mínimo 4 personas'},
-    {k:'sesiones',l:'Sesiones realizadas',obj:340,act:67,ico:'✨',nota:'67 al 19/11'},
-    {k:'intercambios',l:'Asistencias a intercambios',obj:100,act:0,ico:'🤝',nota:'cada 21 días ≈ 9 en la temporada'},
+    {k:'sesiones',l:'Sesiones realizadas',obj:340,act:0,ico:'✨',nota:'desde el 24/6 (llegada a Brasil)',auto:true},
+    {k:'intercambios',l:'Asistencias a intercambios de Barras',obj:100,act:0,ico:'🤝',nota:'cada 21 días',auto:true},
+    {k:'consciencia',l:'Asistencias a encuentros de Consciencia',obj:500,act:0,ico:'🌿',nota:'una vez por semana',auto:true},
     {k:'resenas',l:'Reseñas en Google Maps',obj:100,act:0,ico:'⭐'},
-    {k:'aliados',l:'Aliados activos',obj:30,act:0,ico:'🏨',nota:'que recomiendan o venden'}
+    {k:'aliados',l:'Aliados activos',obj:30,act:0,ico:'🏨',nota:'en estado «Aliado activo» en la pestaña Aliados',auto:true}
   ],
   bloques:[
     {k:'intencion',ico:'🎯',t:'La intención',x:'Ser la persona con quien se aprende Barras y las herramientas de Access en Búzios, Cabo Frío y Arraial do Cabo, y quien armó y sostiene la comunidad que se forma alrededor.\nNo se trata de ser "uno más que hace Barras", sino el referente. Y el referente es el que enseña. Las sesiones, los aliados y el contenido sirven a ese objetivo.'},
@@ -15412,32 +15413,56 @@ const EST_DEF={
     {k:'abiertas',ico:'❓',t:'Preguntas abiertas',x:'- Herramientas de Access que puedo enseñar: hoy, solo Barras.\n- Quién coordina la comunidad entre junio y octubre: pendiente.\n- Meta de ingresos de la temporada: pendiente (alumnos × precio fijo de la clase + sesiones).\n- Propuesta para aliados: definir comisión por sesión (%), monto por alumno derivado (R$), WhatsApp y traducción al portugués.\n- Medir de dónde llegan los alumnos (sesiones, aliados, redes, boca a boca) desde la primera clase.'}
   ]
 };
-let _est=null,_estEditando=false;
+let _est=null,_estEditando=false,_estSub='vision',_estMetasAuto=null;
+/* Metas que se calculan solas: sesiones (desde el 24/6), asistencias a intercambios de Barras y a encuentros de
+   Consciencia (participantes cargados en Encuentros) y aliados activos (pestaña Aliados). */
+async function _estCalcAuto(){
+  if(_estMetasAuto)return _estMetasAuto;
+  const hoy=new Date().toLocaleDateString('sv-SE');
+  const ses=(typeof sessions!=='undefined'?sessions:[]).filter(s=>s.fecha&&s.fecha>='2026-06-24'&&s.fecha<=hoy&&(s.estado||'Completado')==='Completado').length;
+  let barras=0,consc=0,nB=0,nC=0;
+  try{const {data}=await _sb.from('encuentros').select('data');
+    (data||[]).forEach(r=>{const d=r.data||{};if((d.tipo||'encuentro')!=='encuentro')return;const p=parseInt(d.participantes)||0;if(!p)return;
+      if(d.comunidad==='barras'){barras+=p;nB++;}else if(d.comunidad==='consciencia'){consc+=p;nC++;}});}catch(e){}
+  let aliados=0;try{aliados=(await _aliCargar()).filter(a=>a.estado==='aliado').length;}catch(e){}
+  _estMetasAuto={sesiones:ses,intercambios:barras,consciencia:consc,aliados,nB,nC};
+  return _estMetasAuto;
+}
 const _estE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 async function renderMktEstrategia(){
-  const el=document.getElementById('mktEstrategia');if(!el)return;
+  const cont=document.getElementById('mktEstrategia');if(!cont)return;
+  cont.innerHTML=`<div style="display:flex;gap:6px;margin-bottom:16px">
+      <button class="tab-btn ${_estSub==='vision'?'active':''}" onclick="_estSub='vision';renderMktEstrategia()">🧭 Visión y metas</button>
+      <button class="tab-btn ${_estSub==='flujo'?'active':''}" onclick="_estSub='flujo';renderMktEstrategia()">🔄 Flujo de trabajo</button>
+      <button class="tab-btn ${_estSub==='aliados'?'active':''}" onclick="_estSub='aliados';renderMktEstrategia()">🏨 Aliados · ruta y mapa</button>
+    </div><div id="estVision"></div><div id="estFlujo"></div><div id="estAliados"></div>`;
+  if(_estSub==='aliados'){renderAliadosRuta();return;}
+  if(_estSub==='flujo'){renderFlujoTrabajo();return;}
+  const el=document.getElementById('estVision');
   if(!_est){
     el.innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px">Cargando estrategia…</div>';
     try{const {data}=await _sb.from('configuracion').select('data').eq('id',EST_ID).maybeSingle();
       _est=data?.data?.bloques?data.data:JSON.parse(JSON.stringify(EST_DEF));_est._guardada=!!data?.data?.bloques;}
     catch(e){_est=JSON.parse(JSON.stringify(EST_DEF));}
     if(!_est.metas)_est.metas=JSON.parse(JSON.stringify(EST_DEF.metas));
+    EST_DEF.metas.forEach(d=>{const m=_est.metas.find(x=>x.k===d.k);if(!m)_est.metas.push(JSON.parse(JSON.stringify(d)));else{m.auto=d.auto;if(d.auto){m.l=d.l;m.nota=d.nota;}}});
+    _est.metas.sort((a,b)=>EST_DEF.metas.findIndex(x=>x.k===a.k)-EST_DEF.metas.findIndex(x=>x.k===b.k));
   }
+  const auto=await _estCalcAuto();
+  _est.metas.forEach(m=>{if(m.auto&&auto[m.k]!=null)m.act=auto[m.k];});
   const E=_estE,ed=_estEditando;
   const texto=x=>{const ls=String(x||'').split('\n');let h='',ul=false;
     ls.forEach(l=>{const t=l.trim();if(!t){if(ul){h+='</ul>';ul=false;}return;}
       if(/^[-•]\s+/.test(t)){if(!ul){h+='<ul style="margin:6px 0 0 18px;padding:0">';ul=true;}h+=`<li style="margin:4px 0">${E(t.replace(/^[-•]\s+/,''))}</li>`;}
       else{if(ul){h+='</ul>';ul=false;}h+=`<p style="margin:6px 0 2px">${E(t)}</p>`;}});
     return h+(ul?'</ul>':'');};
-  // sesiones completadas registradas en el sistema desde el 1/11 (referencia para actualizar la meta)
-  const sesSis=(typeof sessions!=='undefined'?sessions:[]).filter(s=>s.estado==='completada'&&(s.fecha||'')>='2026-11-01').length;
   const metaCard=(m,i)=>{const pct=m.obj?Math.min(100,Math.round(m.act/m.obj*100)):0,col=pct>=80?'var(--green)':pct>=40?'var(--gold)':'var(--blue)';
     return`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
       <div style="font-size:11px;font-weight:700;color:var(--muted)">${m.ico} ${E(m.l)}</div>
-      ${ed?`<div style="display:flex;gap:6px;align-items:center;margin-top:6px"><input id="estMa${i}" type="number" value="${m.act}" style="width:80px;padding:4px 6px"> / <input id="estMo${i}" type="number" value="${m.obj}" style="width:80px;padding:4px 6px"></div>`
+      ${ed?`<div style="display:flex;gap:6px;align-items:center;margin-top:6px">${m.auto?`<b title="Se calcula solo">${m.act}</b><input id="estMa${i}" type="hidden" value="${m.act}">`:`<input id="estMa${i}" type="number" value="${m.act}" style="width:80px;padding:4px 6px">`} / <input id="estMo${i}" type="number" value="${m.obj}" style="width:80px;padding:4px 6px"></div>${m.auto?'<div style="font-size:10px;color:var(--muted)">🔄 se calcula solo</div>':''}`
         :`<div style="margin-top:4px"><span style="font-size:24px;font-weight:800;color:var(--text)">${m.act.toLocaleString('es-AR')}</span><span style="font-size:13px;color:var(--muted)"> / ${m.obj.toLocaleString('es-AR')}</span></div>
           <div style="height:6px;background:var(--card);border-radius:3px;margin:6px 0 4px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${col};border-radius:3px"></div></div>
-          <div style="font-size:10.5px;color:var(--muted)">${pct}%${m.nota?' · '+E(m.nota):''}${m.k==='sesiones'?` · en el sistema: ${sesSis} completadas desde el 1/11`:''}</div>`}
+          <div style="font-size:10.5px;color:var(--muted)">${pct}%${m.nota?' · '+E(m.nota):''}${m.k==='intercambios'&&auto.nB?` · ${auto.nB} intercambios`:''}${m.k==='consciencia'&&auto.nC?` · ${auto.nC} encuentros`:''}${m.auto?' · 🔄 automático':''}</div>`}
     </div>`;};
   el.innerHTML=`
     <div style="display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:12px">
@@ -15449,7 +15474,7 @@ async function renderMktEstrategia(){
           :`<button class="btn btn-s btn-sm" onclick="_estEditando=true;renderMktEstrategia()">✏️ Editar / actualizar metas</button>`}
     </div>
     <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin:6px 0 8px">📈 Metas de la temporada · mirarlas cada mes</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:10px;margin-bottom:18px">${_est.metas.map(metaCard).join('')}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:10px;margin-bottom:18px">${_est.metas.map(metaCard).join('')}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px">
       ${_est.bloques.map((b,i)=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;${['intencion','recorrido','ciclos'].includes(b.k)?'grid-column:1/-1;':''}${b.k==='intencion'?'border-color:rgba(201,168,76,.35)':''}">
         <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:6px">${b.ico} ${ed?`<input id="estT${i}" value="${E(b.t)}" style="width:auto;display:inline-block;font-weight:700">`:E(b.t)}</div>
@@ -15467,8 +15492,199 @@ async function guardarEstrategia(){
     bloques:_est.bloques.map((b,i)=>({k:b.k,ico:b.ico,t:$('estT'+i).value.trim()||b.t,x:$('estX'+i).value})),actualizado:new Date().toISOString()};
   const {error}=await _sb.from('configuracion').upsert({id:EST_ID,data,updated_at:data.actualizado});
   if(error){toast('⚠️ No se pudo guardar: '+error.message,'err');return;}
-  _est={...data,_guardada:true};_estEditando=false;renderMktEstrategia();toast('✓ Estrategia guardada');
+  _est={...data,_guardada:true};_estEditando=false;_estMetasAuto=null;renderMktEstrategia();toast('✓ Estrategia guardada');
 }
+
+/* ══════════ ESTRATEGIA · 🏨 Aliados (ruta de los 60 lugares) ══════════
+   Base de la visión (13/11/2026): ciudad, barrio, estrellas, contacto, nivel buscado y estado de la visita.
+   Se guarda en configuracion id 'cfg_aliados_ruta'. Ubicaciones: las "aprox." están en el centro del barrio;
+   con «📍 Ubicar» y un clic en el mapa se deja el punto exacto. */
+const ALI_ID='cfg_aliados_ruta';
+const ALI_DEF=[{"id":"al01","ciudad":"Arraial do Cabo","estrellas":4,"nombre":"Spa Plena (Pousada Vista Turquesa)","barrio":"Pontal do Atalaia","tel":"preguntar en la pousada","ig":"","web":"spaplena.com (no verif.)","nivel":"anfitrion","nota":"La única pousada de Arraial con spa propio. Sin teléfono: preguntar en recepción por la persona del spa.","ruta":"5 · cierre","estado":"pendiente","lat":-22.983335,"lng":-42.014863,"aprox":true},{"id":"al02","ciudad":"Arraial do Cabo","estrellas":3,"nombre":"Spa Urbano Nosso Quintal","barrio":"Praia dos Anjos","tel":"","ig":"@nossoquintalterapias (no verif.)","web":"","nivel":"anfitrion","nota":"Spa n.º 1 de Arraial en TripAdvisor; abre de 9 a 19 h. Barras en su carta, junto a la aromaterapia.","ruta":"1 · 9:00","estado":"pendiente","lat":-22.972985,"lng":-42.020626,"aprox":true},{"id":"al03","ciudad":"Arraial do Cabo","estrellas":3,"nombre":"Hotel Orlanova Boutique","barrio":"Praia dos Anjos","tel":"(22) 99206-7901","ig":"","web":"","nivel":"anfitrion","nota":"Ya ofrece masajes a sus huéspedes.","ruta":"","estado":"pendiente","lat":-22.972985,"lng":-42.020626,"aprox":true},{"id":"al04","ciudad":"Arraial do Cabo","estrellas":3,"nombre":"Arraial Concept Hotel & Spa","barrio":"Vila Canaã","tel":"22 99214-8953","ig":"","web":"","nivel":"anfitrion","nota":"61 habitaciones y \"Spa\" en el nombre, con un espacio que no siempre funciona. Anfitrión o sede.","ruta":"3 · 10:15","estado":"pendiente","lat":-22.930728,"lng":-42.187853,"aprox":true},{"id":"al05","ciudad":"Arraial do Cabo","estrellas":3,"nombre":"Capitão n'Areia Pousada","barrio":"Praia dos Anjos","tel":"(22) 2622-2720","ig":"","web":"","nivel":"anfitrion","nota":"31 habitaciones, sauna, jacuzzi y gimnasio, sin terapeuta.","ruta":"2 · 9:45","estado":"pendiente","lat":-22.972985,"lng":-42.020626,"aprox":true},{"id":"al06","ciudad":"Arraial do Cabo","estrellas":3,"nombre":"Pousada Caminho do Sol","barrio":"Praia Grande","tel":"+55 22 2622-2029","ig":"","web":"caminhodosol.com.br","nivel":"recomendador","nota":"Mucho movimiento (9,0 con +2.000 reseñas), sauna y sala para eventos. Posible sede de una clase.","ruta":"4 · después del almuerzo","estado":"pendiente","lat":-22.970699,"lng":-42.033255,"aprox":true},{"id":"al07","ciudad":"Arraial do Cabo","estrellas":2,"nombre":"Pousada da Prainha","barrio":"Prainha","tel":"(22) 2622-2512","ig":"@pousadadaprainha","web":"pousadadaprainha.com","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.958743,"lng":-42.025394,"aprox":true},{"id":"al08","ciudad":"Arraial do Cabo","estrellas":2,"nombre":"Pousada Xerxes","barrio":"Prainha","tel":"","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.958743,"lng":-42.025394,"aprox":true},{"id":"al09","ciudad":"Arraial do Cabo","estrellas":2,"nombre":"Estetika","barrio":"Centro","tel":"(22) 2622-2922 (puede estar desactualizado)","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.964198,"lng":-42.027295,"aprox":true},{"id":"al10","ciudad":"Arraial do Cabo","estrellas":2,"nombre":"Estética Avançada Isabela Peres","barrio":"Centro","tel":"WA (22) 98817-4914","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.964198,"lng":-42.027295,"aprox":true},{"id":"al11","ciudad":"Arraial do Cabo","estrellas":2,"nombre":"Rotina do Bem Viver","barrio":"","tel":"","ig":"","web":"","nivel":"sede","nota":"Centro holístico. Sin dirección publicada.","ruta":"","estado":"pendiente","lat":-22.930728,"lng":-42.187853,"aprox":true},{"id":"al12","ciudad":"Arraial do Cabo","estrellas":1,"nombre":"Espaço da Estética Cláudia Borges","barrio":"Centro","tel":"","ig":"(solo Facebook)","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.964198,"lng":-42.027295,"aprox":true},{"id":"al13","ciudad":"Arraial do Cabo","estrellas":1,"nombre":"Tamiris Alves","barrio":"Praia Grande","tel":"WA (22) 99751-1634","ig":"","web":"","nivel":"intercambio","nota":"Masoterapeuta.","ruta":"","estado":"pendiente","lat":-22.970699,"lng":-42.033255,"aprox":true},{"id":"al14","ciudad":"Arraial do Cabo","estrellas":1,"nombre":"Massoterapeuta Isabelly","barrio":"Praia Grande","tel":"WA (22) 99966-2204","ig":"","web":"","nivel":"intercambio","nota":"","ruta":"","estado":"pendiente","lat":-22.970699,"lng":-42.033255,"aprox":true},{"id":"al15","ciudad":"Búzios","estrellas":5,"nombre":"Zendaya Resort – W Spa","barrio":"Manguinhos","tel":"WA (22) 2623-1196 · (21) 2038-7383","ig":"@zendayaresort","web":"zendayaresort.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.772309,"lng":-41.917779,"aprox":true},{"id":"al16","ciudad":"Búzios","estrellas":5,"nombre":"Insólito Boutique Hotel & Spa","barrio":"Ferradura","tel":"+55 22 99207-7666","ig":"@insolitohotel","web":"insolitohotel.com","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.768242,"lng":-41.890374,"aprox":true},{"id":"al17","ciudad":"Búzios","estrellas":5,"nombre":"Pedra da Laguna – Ananda Spa","barrio":"Ferradura","tel":"WA (22) 98142-6131 · (22) 2623-1965","ig":"@pedradalaguna","web":"pedradalaguna.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.769921,"lng":-41.879339,"aprox":false},{"id":"al18","ciudad":"Búzios","estrellas":5,"nombre":"Casas Brancas Boutique Hotel & Spa","barrio":"Orla Bardot","tel":"(22) 2623-1458 · WA (22) 99933-8862 (no verif.)","ig":"@casas_brancas_hotel","web":"casasbrancas.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.759781,"lng":-41.887527,"aprox":true},{"id":"al19","ciudad":"Búzios","estrellas":5,"nombre":"La Pedrera Small Hotel & Spa","barrio":"João Fernandes","tel":"Spa WA (22) 99749-9772 · (22) 2623-4694","ig":"@lapedrerabuzios","web":"lapedrerabuzios.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.742791,"lng":-41.874756,"aprox":true},{"id":"al20","ciudad":"Búzios","estrellas":5,"nombre":"Vila da Santa Hotel Boutique & SPA","barrio":"Praia dos Ossos","tel":"WA (22) 98830-5770 · (22) 2623-5770","ig":"@hotelviladasanta","web":"viladasanta.com","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.746015,"lng":-41.88141,"aprox":true},{"id":"al21","ciudad":"Búzios","estrellas":5,"nombre":"PortoBay Búzios","barrio":"","tel":"+55 22 98844-5501 · +55 21 2391-1800","ig":"","web":"portobay.com","nivel":"anfitrion","nota":"Dirección a confirmar.","ruta":"","estado":"pendiente","lat":-22.754171,"lng":-41.879633,"aprox":false},{"id":"al22","ciudad":"Búzios","estrellas":5,"nombre":"Le Relais La Borie – Spa Rêverie Tropicale","barrio":"Geribá","tel":"WA (22) 98173-9138 · (22) 2620-8504","ig":"@hotel_laborie","web":"laborie.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.778735,"lng":-41.911786,"aprox":false},{"id":"al23","ciudad":"Búzios","estrellas":4,"nombre":"Pousada & Spa Villa Mercedes","barrio":"João Fernandes","tel":"WA +55 22 99804-4688 · +55 21 3900-7020","ig":"@pousadaespavillamercedes (no verif.)","web":"latitudhoteles.com","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.742791,"lng":-41.874756,"aprox":true},{"id":"al24","ciudad":"Búzios","estrellas":4,"nombre":"Bahiamarela Boutique Hotel & Spa","barrio":"João Fernandes","tel":"WA (22) 99616-8284 · (22) 2623-5452","ig":"@pousada_bahiamarela","web":"bahiamarela.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.742791,"lng":-41.874756,"aprox":true},{"id":"al25","ciudad":"Búzios","estrellas":4,"nombre":"Villa Rasa – Spa da Villa","barrio":"Praia Rasa","tel":"WA (22) 99834-8776 · (22) 3095-9300","ig":"@villa_rasa","web":"villarasa.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.721286,"lng":-41.982715,"aprox":true},{"id":"al26","ciudad":"Búzios","estrellas":4,"nombre":"Maravista Hotel & Spa","barrio":"Geribá","tel":"WA (22) 98822-2131 · (22) 2623-2130","ig":"@maravistabuzios","web":"maravista.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.778455,"lng":-41.914626,"aprox":true},{"id":"al27","ciudad":"Búzios","estrellas":4,"nombre":"Hotel Ilha Branca Inn – Ilha Branca SPA","barrio":"João Fernandes","tel":"WA +55 22 99614-4509 · central WA +55 22 99783-6714","ig":"@hotel.ilhabrancainn","web":"hotelilhabranca.com","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.744306,"lng":-41.877093,"aprox":false},{"id":"al28","ciudad":"Búzios","estrellas":4,"nombre":"Búzios Beach Resort","barrio":"Tucuns","tel":"0800 021 2023","ig":"","web":"buziosresort.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.791077,"lng":-41.926102,"aprox":false},{"id":"al29","ciudad":"Búzios","estrellas":4,"nombre":"Ferradura Resort","barrio":"Ferradura","tel":"WA (22) 99989-1912 · reservas WA (22) 99899-5902","ig":"@ferradurahotel","web":"ferradurahotel.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.768242,"lng":-41.890374,"aprox":true},{"id":"al30","ciudad":"Búzios","estrellas":4,"nombre":"Búzios Espiritualidade / BE Portal de Luz","barrio":"Caravelas","tel":"WA +55 22 99701-9286","ig":"@buziosespiritualidade","web":"beportaldeluz.com","nivel":"sede","nota":"Centro holístico.","ruta":"","estado":"pendiente","lat":-22.804977,"lng":-41.972707,"aprox":true},{"id":"al31","ciudad":"Búzios","estrellas":4,"nombre":"Spa Zen & Estética","barrio":"João Fernandes","tel":"(22) 99749-1604","ig":"@spazeneestetica","web":"spazeneestetica.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.742791,"lng":-41.874756,"aprox":true},{"id":"al32","ciudad":"Búzios","estrellas":3,"nombre":"Spa Vita Geribá","barrio":"Geribá","tel":"(22) 99857-1916","ig":"@spavitageriba","web":"spavitageriba.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.778455,"lng":-41.914626,"aprox":true},{"id":"al33","ciudad":"Búzios","estrellas":3,"nombre":"Búzios Spa – Centro","barrio":"Centro","tel":"(22) 99850-1852 (no verif.)","ig":"","web":"","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.755873,"lng":-41.887163,"aprox":true},{"id":"al34","ciudad":"Búzios","estrellas":3,"nombre":"Spazio Búzios Guesthouse","barrio":"Praia Rasa","tel":"+55 22 99866-9543","ig":"@spaziobuzios","web":"spaziobuzios.com","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.721286,"lng":-41.982715,"aprox":true},{"id":"al35","ciudad":"Búzios","estrellas":3,"nombre":"Mar Yoga em Búzios","barrio":"Geribá / Manguinhos","tel":"+55 22 99808-9412","ig":"@maryogabuzios","web":"maryogabuzios.com","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.778455,"lng":-41.914626,"aprox":true},{"id":"al36","ciudad":"Búzios","estrellas":3,"nombre":"Oasis Estética Búzios","barrio":"Portal da Ferradura","tel":"WA (22) 99903-0671","ig":"(solo Facebook)","web":"linktr.ee/oasisesteticabuzios","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.773376,"lng":-41.904707,"aprox":true},{"id":"al37","ciudad":"Búzios","estrellas":2,"nombre":"Hotel Aretê","barrio":"Baía Formosa","tel":"+55 22 2008-0155","ig":"","web":"hotelarete.com.br","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.74919,"lng":-41.956232,"aprox":false},{"id":"al38","ciudad":"Búzios","estrellas":2,"nombre":"Spa Josefina Massagens","barrio":"Ferradura (Tawa)","tel":"","ig":"","web":"","nivel":"intercambio","nota":"","ruta":"","estado":"pendiente","lat":-22.768242,"lng":-41.890374,"aprox":true},{"id":"al39","ciudad":"Búzios","estrellas":2,"nombre":"Studio de Pilates Cecília Moraes","barrio":"Manguinhos","tel":"(22) 99866-4225","ig":"(solo Facebook)","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.772309,"lng":-41.917779,"aprox":true},{"id":"al40","ciudad":"Búzios","estrellas":2,"nombre":"Pilates Búzios – Daniel Viana","barrio":"Centro","tel":"(22) 9843-8173 (confirmar)","ig":"@pilates_buzios","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.755873,"lng":-41.887163,"aprox":true},{"id":"al41","ciudad":"Búzios","estrellas":2,"nombre":"Corpus Pilates","barrio":"Centro","tel":"(22) 2623-7184","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.755873,"lng":-41.887163,"aprox":true},{"id":"al42","ciudad":"Cabo Frio","estrellas":4,"nombre":"Oásis Cabo Frio Hotel – Oásis Spa","barrio":"Braga","tel":"WA +55 22 98846-9809 · (22) 2648-9101","ig":"@oasiscabofriohotel","web":"oasiscabofriohotel.com.br","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.896259,"lng":-42.027254,"aprox":true},{"id":"al43","ciudad":"Cabo Frio","estrellas":4,"nombre":"Passagem Concept Hotel e Spa","barrio":"Passagem","tel":"","ig":"","web":"","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.87694,"lng":-42.010099,"aprox":true},{"id":"al44","ciudad":"Cabo Frio","estrellas":4,"nombre":"Paradiso Peró Praia Hotel","barrio":"Peró","tel":"","ig":"@paradisopero","web":"","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.858649,"lng":-41.991627,"aprox":true},{"id":"al45","ciudad":"Cabo Frio","estrellas":3,"nombre":"Hotel Solar do Arco","barrio":"Passagem","tel":"","ig":"","web":"solardoarco.com.br (no verif.)","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.87694,"lng":-42.010099,"aprox":true},{"id":"al46","ciudad":"Cabo Frio","estrellas":3,"nombre":"Paradiso Corporate","barrio":"Centro","tel":"+55 22 2020-0263","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.890723,"lng":-42.033715,"aprox":false},{"id":"al47","ciudad":"Cabo Frio","estrellas":3,"nombre":"EstéticaMil","barrio":"Braga","tel":"(22) 99103-3113","ig":"@esteticamil2","web":"esteticamil.com","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.896259,"lng":-42.027254,"aprox":true},{"id":"al48","ciudad":"Cabo Frio","estrellas":3,"nombre":"Studio de Massoterapia – Leonardo Freitas","barrio":"Centro","tel":"(21) 98112-4329","ig":"","web":"stanti.com.br/leonardofreitasthstudioholistico","nivel":"sede","nota":"Centro holístico.","ruta":"","estado":"pendiente","lat":-22.882056,"lng":-42.015619,"aprox":true},{"id":"al49","ciudad":"Cabo Frio","estrellas":3,"nombre":"Spa Urbano – Gisele Siqueira","barrio":"Jardim Excelsior","tel":"WA (22) 99219-3685","ig":"@esteticaebemestar.cabofrio","web":"spaurbano.site","nivel":"anfitrion","nota":"","ruta":"","estado":"pendiente","lat":-22.737831,"lng":-42.024087,"aprox":true},{"id":"al50","ciudad":"Cabo Frio","estrellas":2,"nombre":"Native Yoga","barrio":"Passagem","tel":"(22) 99232-4970","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.87694,"lng":-42.010099,"aprox":true},{"id":"al51","ciudad":"Cabo Frio","estrellas":2,"nombre":"Dharma Yoga","barrio":"Braga","tel":"(22) 98182-2728","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.896259,"lng":-42.027254,"aprox":true},{"id":"al52","ciudad":"Cabo Frio","estrellas":2,"nombre":"Studio Bendito Pilates","barrio":"Portinho","tel":"+55 22 99876-6073","ig":"@studiobenditopilates","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.737831,"lng":-42.024087,"aprox":true},{"id":"al53","ciudad":"Cabo Frio","estrellas":2,"nombre":"Clínica Dayana Antunes","barrio":"Passagem","tel":"+55 22 98146-0646","ig":"@dayantunes_pilates","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.87694,"lng":-42.010099,"aprox":true},{"id":"al54","ciudad":"Cabo Frio","estrellas":2,"nombre":"LaBelle Concept","barrio":"Jardim Caiçara","tel":"(22) 99716-0491","ig":"@espacolabellecf","web":"trinks.com/espaco-la-belle-cf","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.737831,"lng":-42.024087,"aprox":true},{"id":"al55","ciudad":"Cabo Frio","estrellas":2,"nombre":"Clínica Taiana Freitas","barrio":"Jardim Flamboyant","tel":"WA (22) 99754-4677","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.737831,"lng":-42.024087,"aprox":true},{"id":"al56","ciudad":"Cabo Frio","estrellas":2,"nombre":"Lótus Flora Terapias Integrativas","barrio":"Jardim Flamboyant","tel":"WA (22) 99252-9003","ig":"","web":"","nivel":"sede","nota":"Centro holístico.","ruta":"","estado":"pendiente","lat":-22.737831,"lng":-42.024087,"aprox":true},{"id":"al57","ciudad":"Cabo Frio","estrellas":2,"nombre":"InterCorpo","barrio":"Centro","tel":"(22) 98803-8954","ig":"@inter.corpo","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.882056,"lng":-42.015619,"aprox":true},{"id":"al58","ciudad":"Cabo Frio","estrellas":2,"nombre":"Daniela Oliveira","barrio":"Vila Nova","tel":"WA (22) 99821-0164","ig":"","web":"fisiodanielaoliveira.com.br","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.886174,"lng":-42.024365,"aprox":true},{"id":"al59","ciudad":"Cabo Frio","estrellas":1,"nombre":"Alexa Massoterapeuta Integral","barrio":"Jardim Flamboyant","tel":"WA (22) 99609-4978","ig":"","web":"","nivel":"intercambio","nota":"","ruta":"","estado":"pendiente","lat":-22.737831,"lng":-42.024087,"aprox":true},{"id":"al60","ciudad":"Cabo Frio","estrellas":1,"nombre":"A Flor de Alecrim","barrio":"Centro (Leste Shopping)","tel":"WA (22) 99986-6879","ig":"","web":"","nivel":"recomendador","nota":"","ruta":"","estado":"pendiente","lat":-22.882056,"lng":-42.015619,"aprox":true}];
+const ALI_NIVEL={anfitrion:{l:'Anfitrión',c:'#C9A84C'},sede:{l:'Sede',c:'#9B82D4'},recomendador:{l:'Recomendador',c:'#5B9BD5'},intercambio:{l:'Intercambio',c:'#3DAA6A'}};
+const ALI_ESTADO={pendiente:{l:'Pendiente',c:'#7A7260',i:'⚪'},visitado:{l:'Visitado',c:'#5B9BD5',i:'🔵'},conversacion:{l:'En conversación',c:'#D4863A',i:'🟠'},aliado:{l:'Aliado activo',c:'#3DAA6A',i:'🟢'},descartado:{l:'Descartado',c:'#E05555',i:'🔴'}};
+let _ali=null,_aliF={ciudad:'',nivel:'',estado:'',q:''},_aliMap=null,_aliCapa=null,_aliUbicando=null;
+async function _aliCargar(){
+  if(_ali)return _ali;
+  try{const {data}=await _sb.from('configuracion').select('data').eq('id',ALI_ID).maybeSingle();
+    _ali=data?.data?.lugares?data.data.lugares:JSON.parse(JSON.stringify(ALI_DEF));}
+  catch(e){_ali=JSON.parse(JSON.stringify(ALI_DEF));}
+  return _ali;
+}
+async function _aliGuardar(msg){
+  const {error}=await _sb.from('configuracion').upsert({id:ALI_ID,data:{lugares:_ali,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+  if(error){toast('⚠️ No se pudo guardar: '+error.message,'err');return false;}
+  if(msg)toast(msg);return true;
+}
+async function renderAliadosRuta(){
+  const el=document.getElementById('estAliados');if(!el)return;
+  await _aliCargar();
+  const E=_estE,f=_aliF;
+  const L=_ali.filter(a=>(!f.ciudad||a.ciudad===f.ciudad)&&(!f.nivel||a.nivel===f.nivel)&&(!f.estado||a.estado===f.estado)
+    &&(!f.q||(a.nombre+' '+a.barrio).toLowerCase().includes(f.q.toLowerCase()))).sort((a,b)=>a.ciudad.localeCompare(b.ciudad)||b.estrellas-a.estrellas);
+  const cnt=k=>_ali.filter(a=>a.estado===k).length;
+  const sel=(id,val,ops,todo)=>`<select onchange="_aliF.${id}=this.value;renderAliadosRuta()" style="padding:5px 8px;font-size:12px;width:auto"><option value="">${todo}</option>${ops.map(([v,l])=>`<option value="${v}" ${val===v?'selected':''}>${l}</option>`).join('')}</select>`;
+  const wa=t=>{const m=String(t||'').match(/\(?(\d{2})\)?\s*(9?\d{4})-?(\d{4})/);return m?'https://wa.me/55'+m[1]+m[2]+m[3]:'';};
+  const igUrl=ig=>{const m=String(ig||'').match(/@([\w.]+)/);return m?'https://instagram.com/'+m[1]:'';};
+  const gm=a=>'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(a.nombre.replace(/\s*[–(].*$/,'')+' '+a.ciudad);
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,120px),1fr));gap:8px;margin-bottom:12px">
+      ${Object.entries(ALI_ESTADO).map(([k,v])=>`<div class="kc" style="cursor:pointer;${f.estado===k?'outline:1px solid '+v.c:''}" onclick="_aliF.estado=_aliF.estado==='${k}'?'':'${k}';renderAliadosRuta()"><div class="kl">${v.i} ${v.l}</div><div class="kv">${cnt(k)}</div></div>`).join('')}
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:10px">
+      ${sel('ciudad',f.ciudad,[['Búzios','Búzios'],['Cabo Frio','Cabo Frío'],['Arraial do Cabo','Arraial do Cabo']],'Todas las ciudades')}
+      ${sel('nivel',f.nivel,Object.entries(ALI_NIVEL).map(([k,v])=>[k,v.l]),'Todos los niveles')}
+      ${sel('estado',f.estado,Object.entries(ALI_ESTADO).map(([k,v])=>[k,v.l]),'Todos los estados')}
+      <input placeholder="Buscar lugar o barrio…" value="${E(f.q)}" oninput="_aliF.q=this.value;clearTimeout(window._aliT);window._aliT=setTimeout(renderAliadosRuta,300)" style="padding:5px 8px;font-size:12px;width:180px">
+      <span style="margin-left:auto;font-size:12px;color:var(--muted)">${L.length} de ${_ali.length} lugares</span>
+    </div>
+    ${_aliUbicando?`<div style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.4);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12.5px">📍 Tocá en el mapa dónde está <b>${E(_ali.find(a=>a.id===_aliUbicando)?.nombre||'')}</b> · <a href="#" onclick="_aliUbicando=null;renderAliadosRuta();return false" style="color:var(--gold)">cancelar</a></div>`:''}
+    <div id="aliMapa" style="height:420px;border-radius:12px;border:1px solid var(--border);margin-bottom:6px;${_aliUbicando?'cursor:crosshair':''}"></div>
+    <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-bottom:14px">
+      ${Object.entries(ALI_ESTADO).map(([k,v])=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.c};vertical-align:middle"></span> ${v.l}</span>`).join('')}
+      <span>· borde punteado = ubicación aproximada (centro del barrio)</span>
+    </div>
+    <div style="overflow-x:auto"><table>
+      <thead><tr><th>★</th><th>Lugar</th><th>Ciudad · barrio</th><th>Nivel</th><th>Contacto</th><th>Estado</th><th>Notas</th><th></th></tr></thead>
+      <tbody>${L.map(a=>{const w=wa(a.tel),ig=igUrl(a.ig);return`<tr>
+        <td style="white-space:nowrap;color:var(--gold)">${'★'.repeat(a.estrellas)}</td>
+        <td style="min-width:180px"><b style="cursor:pointer" onclick="_aliCentrar('${a.id}')">${E(a.nombre)}</b>${a.ruta?`<div style="font-size:10.5px;color:var(--gl)">🚶 Ruta 19/11: ${E(a.ruta)}</div>`:''}${a.nota?`<div style="font-size:10.5px;color:var(--muted)">${E(a.nota)}</div>`:''}</td>
+        <td style="font-size:12px">${E(a.ciudad)}<div style="font-size:11px;color:var(--muted)">${E(a.barrio||'—')}${a.aprox?' · 📍 aprox.':''}</div></td>
+        <td><span style="font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid ${ALI_NIVEL[a.nivel]?.c};color:${ALI_NIVEL[a.nivel]?.c}">${ALI_NIVEL[a.nivel]?.l||a.nivel}</span></td>
+        <td style="font-size:11.5px;white-space:nowrap">${a.tel?E(a.tel).slice(0,32):'—'}<div style="display:flex;gap:6px;margin-top:3px">${w?`<a href="${w}" target="_blank" title="WhatsApp">💬</a>`:''}${ig?`<a href="${ig}" target="_blank" title="Instagram">📸</a>`:''}${a.web?`<a href="https://${E(a.web.replace(/\s.*$/,''))}" target="_blank" title="Web">🌐</a>`:''}<a href="${gm(a)}" target="_blank" title="Buscar en Google Maps">🗺️</a></div></td>
+        <td><select onchange="_aliSet('${a.id}','estado',this.value)" style="padding:4px 6px;font-size:12px;width:auto;border-color:${ALI_ESTADO[a.estado]?.c}">${Object.entries(ALI_ESTADO).map(([k,v])=>`<option value="${k}" ${a.estado===k?'selected':''}>${v.i} ${v.l}</option>`).join('')}</select></td>
+        <td><input value="${E(a.notas||'')}" placeholder="Notas de la visita…" onchange="_aliSet('${a.id}','notas',this.value)" style="padding:4px 6px;font-size:12px;min-width:160px"></td>
+        <td><button class="btn btn-s btn-sm" title="Ubicar en el mapa" onclick="_aliUbicando='${a.id}';renderAliadosRuta()">📍</button></td>
+      </tr>`;}).join('')}</tbody></table></div>`;
+  setTimeout(()=>_aliPintarMapa(L),0);
+}
+function _aliPintarMapa(L){
+  const box=document.getElementById('aliMapa');if(!box||typeof window.L==='undefined')return;
+  const Lf=window.L;
+  if(_aliMap){try{_aliMap.remove();}catch(e){}_aliMap=null;}
+  _aliMap=Lf.map(box,{scrollWheelZoom:false}).setView([-22.82,-41.98],11);
+  Lf.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(_aliMap);
+  // separar un poco los puntos que caen en el mismo lugar (centro de barrio)
+  const vistos={};
+  const pts=L.map(a=>{const k=a.lat.toFixed(4)+','+a.lng.toFixed(4),n=vistos[k]=(vistos[k]||0)+1;
+    const ang=n*2.4,r=n>1?0.0011*Math.sqrt(n):0;return{a,lat:a.lat+r*Math.sin(ang),lng:a.lng+r*Math.cos(ang)};});
+  const capa=Lf.featureGroup().addTo(_aliMap);
+  pts.forEach(({a,lat,lng})=>{
+    const e=ALI_ESTADO[a.estado]||ALI_ESTADO.pendiente;
+    Lf.circleMarker([lat,lng],{radius:6+a.estrellas,color:a.aprox?'#EDE5C8':'#06060A',weight:a.aprox?1.5:2,dashArray:a.aprox?'3 3':null,fillColor:e.c,fillOpacity:.9})
+      .bindPopup(`<b>${_estE(a.nombre)}</b><br>${'★'.repeat(a.estrellas)} · ${_estE(ALI_NIVEL[a.nivel]?.l||'')}<br>${_estE(a.ciudad)} · ${_estE(a.barrio||'')}${a.aprox?' (aprox.)':''}<br>${e.i} ${e.l}${a.notas?'<br><i>'+_estE(a.notas)+'</i>':''}`)
+      .addTo(capa)._aliId=a.id;
+  });
+  _aliCapa=capa;
+  if(pts.length)_aliMap.fitBounds(capa.getBounds().pad(0.15),{maxZoom:15});
+  _aliMap.on('click',async ev=>{
+    if(!_aliUbicando)return;
+    const a=_ali.find(x=>x.id===_aliUbicando);_aliUbicando=null;if(!a)return;
+    a.lat=+ev.latlng.lat.toFixed(6);a.lng=+ev.latlng.lng.toFixed(6);a.aprox=false;
+    await _aliGuardar('📍 Ubicación guardada: '+a.nombre);renderAliadosRuta();
+  });
+}
+function _aliCentrar(id){
+  const a=_ali.find(x=>x.id===id);if(!a||!_aliMap)return;
+  document.getElementById('aliMapa')?.scrollIntoView({behavior:'smooth',block:'center'});
+  _aliMap.setView([a.lat,a.lng],16);
+  _aliCapa?.eachLayer(m=>{if(m._aliId===id)m.openPopup();});
+}
+async function _aliSet(id,campo,val){
+  const a=_ali.find(x=>x.id===id);if(!a)return;
+  a[campo]=val;if(campo==='estado')a.estado_fecha=new Date().toISOString().slice(0,10);
+  await _aliGuardar(campo==='estado'?`${ALI_ESTADO[val]?.i} ${a.nombre}: ${ALI_ESTADO[val]?.l}`:'✓ Nota guardada');
+  if(campo==='estado'){renderAliadosRuta();_estMetasAuto=null;}
+}
+
+/* ══════════ ESTRATEGIA · 🔄 Flujo de trabajo ══════════
+   Todo el circuito en un solo lugar: el recorrido de una persona (qué hago yo / qué hace el sistema / dónde lo veo),
+   el flujo de información de los flyers, la rutina (día, semana, 21 días, mes) y lo que el sistema hace solo. */
+const _fjIr={
+  redes:()=>irMkt('contenido'),planif:()=>{irMkt('contenido');setTimeout(()=>setContSection('redes'),50);},
+  flyers:()=>irTesoro('flyers'),tesoro:()=>irTesoro('resumen'),album:()=>irTesoro('album'),
+  crm:()=>irMkt('crm'),regalos:()=>irMkt('regalos'),sesiones:()=>nav('sesiones',null),calendario:()=>nav('calendario',null),
+  encuentros:()=>nav('encuentros',null),aliados:()=>{_estSub='aliados';renderMktEstrategia();},metas:()=>{_estSub='vision';renderMktEstrategia();},
+  seres:()=>nav('seres',null),stats:()=>irMkt('stats')
+};
+const FJ_PASOS=[
+  {n:1,t:'Me conoce',ico:'👀',yo:'- 3 publicaciones por día en Instagram y 3 en TikTok\n- Flyers con QR en las 3 ciudades\n- Visitas a aliados (spas, hoteles, posadas)\n- Encuentros y boca a boca',sis:'- Trae solo las métricas de Instagram y TikTok (6:00)\n- Cuenta cada escaneo de flyer por código',ir:[['📱 Redes sociales','redes'],['📱 Flyers','flyers'],['🏨 Aliados','aliados']]},
+  {n:2,t:'Primer contacto',ico:'🎡',yo:'- Nada: la web hace el trabajo',sis:'- Ruleta de preguntas, guía de 20 preguntas, búsqueda del tesoro y landing\n- Guarda cada giro y clic (anónimo)\n- Avisa por Telegram cuando alguien pide una guía o quiere ser aliado',ir:[['🗺️ Búsqueda del tesoro','tesoro'],['📊 Stats Landing','stats']]},
+  {n:3,t:'Seguimiento el mismo día',ico:'💬',yo:'- Responder por WhatsApp a quien pidió la guía o escribió\n- Ofrecer la sesión o la próxima clase',sis:'- Lista de guías pedidas con su origen (portada o ruleta · flyer)\n- Prospectos en el CRM',ir:[['👥 CRM · Guías pedidas','crm'],['🎁 Regalos','regalos']]},
+  {n:4,t:'Sesión (puerta de entrada)',ico:'✨',yo:'- Dar la sesión (unas 15 por semana, por la mañana)\n- Cargar en la sesión el código del flyer de origen (único paso manual)\n- Pedir la reseña en Google Maps',sis:'- Turnos y señas desde la agenda web\n- Aviso por Telegram de cada turno\n- Suma sola a la meta de sesiones',ir:[['✨ Sesiones','sesiones'],['📅 Calendario','calendario']]},
+  {n:5,t:'Clase de Barras (el motor)',ico:'🎓',yo:'- Clase grande con fecha fija (2 por mes en temporada)\n- Clase particular a demanda (mínimo 4 personas)\n- Invitar a cada persona de sesión a la clase',sis:'- Inscripciones a la clase desde la web\n- El resumen de las 8:00 muestra las clases del mes y los inscriptos',ir:[['📈 Metas','metas']]},
+  {n:6,t:'Comunidad',ico:'🤝',yo:'- Intercambio de Barras cada 21 días\n- Encuentro de Consciencia cada semana\n- Cargar los participantes después de cada encuentro',sis:'- Las asistencias suman solas a las metas\n- Portal del ser y álbum de preguntas para que vuelvan',ir:[['🤝 Encuentros','encuentros'],['🙋 Álbum','album']]},
+  {n:7,t:'Multiplica',ico:'🌱',yo:'- Reseñas, testimonios y contenido con la comunidad\n- Alumnos que coordinan intercambios cuando no estoy\n- Aliados que derivan a la clase',sis:'- Metas de la temporada actualizadas\n- Seres con su historial completo',ir:[['💫 Seres','seres'],['📈 Metas','metas']]}
+];
+const FJ_RUTINA=[
+  {t:'Cada día',ico:'☀️',x:'- 8:00 · leer el resumen de Telegram (turnos, clases, encuentros, guías, aliados, redes)\n- Mañana · sesiones (hasta 3)\n- Responder el mismo día las guías pedidas y los mensajes\n- 3 publicaciones en Instagram y 3 en TikTok\n- Visitar 1–2 aliados y anotar el estado en Aliados'},
+  {t:'Cada semana',ico:'📆',x:'- Planificar el contenido de la semana en el Planificador\n- Encuentro de Consciencia → cargar participantes\n- Decisión semanal de flyers: mover, redistribuir o enfocar según el panel\n- Seguimiento de los aliados «en conversación»'},
+  {t:'Cada 21 días',ico:'🔁',x:'- Intercambio de Barras → cargar participantes\n- Invitar a los alumnos nuevos'},
+  {t:'Cada mes',ico:'🗓️',x:'- Clase grande (en enero y febrero, cada 15 días)\n- Actualizar las metas manuales: alumnos, clases y reseñas\n- Mirar el Resumen de redes y las metas de la temporada\n- Ajustar la estrategia si algo no está funcionando'}
+];
+const FJ_AUTO=['06:00 · Instagram y TikTok se actualizan solos','06:00 · Copia de seguridad diaria','08:00 · Resumen diario por Telegram','Al instante · aviso por Telegram de cada turno, guía pedida y aliado nuevo','Siempre · las metas automáticas (sesiones, intercambios, encuentros, aliados)'];
+function renderFlujoTrabajo(){
+  const el=document.getElementById('estFlujo');if(!el)return;
+  const E=_estE;
+  const lista=x=>'<ul style="margin:4px 0 0 16px;padding:0">'+String(x).split('\n').map(l=>`<li style="margin:3px 0">${E(l.replace(/^[-•]\s+/,''))}</li>`).join('')+'</ul>';
+  const btn=([l,k])=>`<button class="btn btn-s btn-sm" style="font-size:11px;padding:3px 8px" onclick="_fjIr['${k}']()">${l} →</button>`;
+  const caja=(t,s,bg,bd,col)=>`<div style="flex:1;min-width:130px;background:${bg};border:1px solid ${bd};border-radius:12px;padding:12px 10px;text-align:center;display:flex;flex-direction:column;justify-content:center"><div style="font-size:13px;font-weight:800;color:${col}">${t}</div><div style="font-size:11.5px;color:${col};opacity:.85;margin-top:3px">${s}</div></div>`;
+  const fl='<div style="align-self:center;color:var(--muted);font-size:18px">→</div>';
+  el.innerHTML=`
+  <div style="font-size:12.5px;color:var(--muted);line-height:1.6;margin-bottom:14px">Todo el circuito en un solo lugar: cómo llega una persona, qué hago yo en cada paso, qué hace el sistema solo y dónde lo veo en el admin.</div>
+
+  <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">1 · El recorrido de una persona</div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:12px">
+    ${FJ_PASOS.map((p,i)=>`<span style="font-size:12px;padding:4px 10px;border-radius:14px;background:var(--card2);border:1px solid var(--border)">${p.ico} ${E(p.t)}</span>${i<FJ_PASOS.length-1?'<span style="color:var(--muted)">→</span>':''}`).join('')}
+  </div>
+  <div style="display:grid;gap:10px;margin-bottom:24px">
+    ${FJ_PASOS.map(p=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr));gap:14px;align-items:start">
+      <div><div style="font-size:11px;color:var(--gold);font-weight:800">PASO ${p.n}</div><div style="font-size:14px;font-weight:800;margin-top:2px">${p.ico} ${E(p.t)}</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px">${p.ir.map(btn).join('')}</div></div>
+      <div style="font-size:12.5px;line-height:1.5"><div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase">🙋 Qué hago yo</div>${lista(p.yo)}</div>
+      <div style="font-size:12.5px;line-height:1.5"><div style="font-size:10.5px;font-weight:800;color:var(--muted);text-transform:uppercase">⚙️ Qué hace el sistema</div>${lista(p.sis)}</div>
+    </div>`).join('')}
+  </div>
+
+  <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">2 · Flujo de información de los flyers</div>
+  <div style="font-size:12.5px;color:var(--muted);margin-bottom:10px">Cada flyer se mide desde el escaneo hasta la sesión.</div>
+  <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:12px">
+    <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:stretch">
+      ${caja('20 flyers con QR','Búzios 10 · Arraial 5 · Cabo Frío 5','var(--card)','var(--border)','var(--text)')}${fl}
+      ${caja('Landing','Gira, comparte, pide la guía','var(--card)','var(--border)','var(--text)')}${fl}
+      <div style="flex:1.2;min-width:150px;display:flex;flex-direction:column;gap:6px">
+        ${caja('Supabase','Eventos anónimos','rgba(91,155,213,.18)','rgba(91,155,213,.55)','#9CC3E8')}
+        ${caja('Tu WhatsApp','Contactos y conversaciones','rgba(212,134,58,.18)','rgba(212,134,58,.55)','#E8A87C')}
+      </div>${fl}
+      ${caja('Panel de resultados','Por flyer, ciudad e idioma','var(--card)','var(--border)','var(--text)')}${fl}
+      ${caja('Decisión semanal','Mover, redistribuir, enfocar','rgba(201,168,76,.12)','rgba(201,168,76,.45)','var(--gl)')}
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px;margin-bottom:24px">
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 16px">
+      <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:6px">Códigos por ciudad</div>
+      <table style="width:100%;font-size:12.5px"><thead><tr><th>Ciudad</th><th>Flyers</th><th>Códigos</th></tr></thead><tbody>
+        <tr><td>Búzios</td><td>10</td><td>BUZ-01 a BUZ-10</td></tr><tr><td>Arraial do Cabo</td><td>5</td><td>ARR-01 a ARR-05</td></tr><tr><td>Cabo Frío</td><td>5</td><td>CAB-01 a CAB-05</td></tr></tbody></table>
+      <div style="margin-top:8px">${btn(['📱 Ver el panel de flyers','flyers'])}</div>
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-size:12.5px;line-height:1.6">
+      <div><b style="color:#9CC3E8">🔵 Azul, anónimo:</b> escaneo, giro, categoría, compartir y clics, con el código del flyer.</div>
+      <div style="margin-top:6px"><b style="color:#E8A87C">🟠 Durazno, personal:</b> nombre, número y conversación. Solo vive en WhatsApp.</div>
+      <div style="margin-top:6px"><b style="color:var(--gl)">✍️ Único paso manual:</b> marcar cada sesión agendada con el código del flyer de origen.</div>
+    </div>
+  </div>
+
+  <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">3 · Mi rutina</div>
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:12px;margin-bottom:24px">
+    ${FJ_RUTINA.map(r=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-size:12.5px;line-height:1.5"><div style="font-size:13px;font-weight:800">${r.ico} ${E(r.t)}</div>${lista(r.x)}</div>`).join('')}
+  </div>
+
+  <div style="font-size:12px;font-weight:800;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">4 · Lo que el sistema hace solo</div>
+  <div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:12px 16px;font-size:12.5px;line-height:1.7">
+    ${FJ_AUTO.map(a=>`<div>⚙️ ${E(a)}</div>`).join('')}
+  </div>`;
+}
+
 </script>
 </body>
 </html>
