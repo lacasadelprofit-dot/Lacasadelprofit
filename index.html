@@ -14874,7 +14874,16 @@ async function guardarEncPersonas(){
 /* ══════════ CONTENIDO · 📸 INSTAGRAM AUTOMÁTICO + QUÉ FUNCIONA ══════════
    Datos: tabla redes_metricas (4_BASE_DE_DATOS/41_redes_metricas.sql), la llena /api/ig-sync.
    Se actualiza con el botón o sola al abrir si pasaron más de 12 h. */
-let _ig={posts:[],cuenta:[],sync:null,cargado:false,sincronizando:false},_igDias=90,_igOrden='fecha';
+let _ig={posts:[],cuenta:[],sync:null,cargado:false,sincronizando:false},_igDias=90,_igOrden='fecha',_igRango=null;
+/* Período de las métricas de redes: botones rápidos (30/90/365/Todo) o rango personalizado Desde–Hasta */
+const _redPeriodo=(dias,rango)=>{
+  if(rango&&(rango.d||rango.h))return {desde:rango.d?rango.d+'T00:00:00':'',hasta:rango.h?rango.h+'T23:59:59.999':'',txt:(rango.d?fd(rango.d):'el inicio')+' → '+(rango.h?fd(rango.h):'hoy')};
+  return {desde:dias?new Date(Date.now()-dias*864e5).toISOString():'',hasta:'',txt:dias?'últimos '+dias+' días':'en total'};
+};
+const _redEnRango=(f,per)=>(!per.desde||new Date(f||0)>=new Date(per.desde))&&(!per.hasta||new Date(f||0)<=new Date(per.hasta));
+const _redRangoHtml=(pre,dias,rango)=>`<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--muted)">
+    <input type="date" id="${pre}Desde" value="${rango?.d||''}" style="padding:4px 6px;font-size:11px;width:auto">–<input type="date" id="${pre}Hasta" value="${rango?.h||''}" style="padding:4px 6px;font-size:11px;width:auto">
+    <button class="tab-btn${rango?' active':''}" onclick="${pre==='ig'?'setIgRango':'setTtRango'}()">📅 Aplicar</button></span>`;
 const _igE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const _igN=n=>n==null?'—':Math.round(n).toLocaleString('es-AR');
 const IG_DIAS=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
@@ -14896,7 +14905,7 @@ async function igSincronizar(silencioso){
   _ig.sincronizando=true;if(!silencioso)renderContInstagram(true);
   try{
     const {data:{session}}=await _sb.auth.getSession();
-    const r=await fetch('/api/ig-sync?cantidad=60',{method:'POST',headers:{'Authorization':'Bearer '+(session?.access_token||'')}});
+    const r=await fetch('/api/ig-sync',{method:'POST',headers:{'Authorization':'Bearer '+(session?.access_token||'')}});
     const j=await r.json().catch(()=>({ok:false,error:'Respuesta inválida del servidor ('+r.status+')'}));
     if(!j.ok)throw new Error(j.error||'Error');
     if(!silencioso)toast(`📸 Instagram actualizado · ${j.posts} publicaciones · ${_igN(j.seguidores)} seguidores`);
@@ -14904,7 +14913,8 @@ async function igSincronizar(silencioso){
   _ig.sincronizando=false;
   await _igCargar();renderContInstagram(true);
 }
-function setIgDias(d){_igDias=d;renderContInstagram(true);}
+function setIgDias(d){_igDias=d;_igRango=null;renderContInstagram(true);}
+function setIgRango(){const d=document.getElementById('igDesde')?.value||'',h=document.getElementById('igHasta')?.value||'';if(!d&&!h){toast('⚠️ Elegí al menos una fecha','err');return;}if(d&&h&&d>h){toast('⚠️ La fecha «Desde» es posterior a «Hasta»','err');return;}_igRango={d,h};renderContInstagram(true);}
 function setIgOrden(o){_igOrden=o;renderContInstagram(true);}
 
 async function renderContInstagram(sinRecargar){
@@ -14919,7 +14929,8 @@ async function renderContInstagram(sinRecargar){
   const sync=_ig.sync;
   const cab=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
       <div style="font-size:12px;color:var(--muted);flex:1;min-width:220px">📸 <b style="color:var(--text)">@${_igE(sync?.usuario||'juancruzconsciencia')}</b> · ${sync?(sync.ok?'Última actualización: '+new Date(sync.cuando).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):'<span style="color:var(--red)">La última actualización falló: '+_igE(sync.error||'')+'</span>'):'Todavía no se conectó.'}</div>
-      ${[[30,'30 días'],[90,'90 días'],[365,'1 año'],[0,'Todo']].map(([d,l])=>`<button class="tab-btn${_igDias===d?' active':''}" onclick="setIgDias(${d})">${l}</button>`).join('')}
+      ${[[30,'30 días'],[90,'90 días'],[365,'1 año'],[0,'Todo']].map(([d,l])=>`<button class="tab-btn${!_igRango&&_igDias===d?' active':''}" onclick="setIgDias(${d})">${l}</button>`).join('')}
+      ${_redRangoHtml('ig',_igDias,_igRango)}
       <button class="btn btn-p btn-sm" onclick="igSincronizar()" ${_ig.sincronizando?'disabled':''}>${_ig.sincronizando?'⏳ Actualizando…':'🔄 Actualizar ahora'}</button>
     </div>`;
   if(_ig.error){
@@ -14935,13 +14946,13 @@ async function renderContInstagram(sinRecargar){
       ${_ig.errSync?`<div style="color:var(--red);margin-top:8px">Último intento: ${_igE(_ig.errSync)}</div>`:''}</div>`;
     return;
   }
-  const desde=_igDias?new Date(Date.now()-_igDias*864e5).toISOString():'';
-  const P=_ig.posts.filter(p=>!desde||(p.fecha||'')>=desde).map(p=>({...p,valor:_igValor(p),d:new Date(p.fecha)}));
+  const per=_redPeriodo(_igDias,_igRango),desde=per.desde;
+  const P=_ig.posts.filter(p=>_redEnRango(p.fecha,per)).map(p=>({...p,valor:_igValor(p),d:new Date(p.fecha)}));
   const conAl=P.filter(p=>p.alcance);
   const prom=(a,k)=>{const v=a.map(p=>p[k]).filter(x=>x!=null);return v.length?v.reduce((s,x)=>s+(+x),0)/v.length:null;};
   const suma=(a,k)=>a.reduce((s,p)=>s+(+p[k]||0),0);
   // seguidores: último dato y variación en el período
-  const C=_ig.cuenta,ultC=C[C.length-1];
+  const C=_ig.cuenta,Ch=per.hasta?C.filter(c=>c.fecha<=per.hasta.slice(0,10)):C,ultC=Ch[Ch.length-1];
   const baseC=desde?C.find(c=>c.fecha>=desde.slice(0,10)):C[0];
   const difSeg=ultC&&baseC&&baseC!==ultC?ultC.seguidores-baseC.seguidores:null;
   const ganados=suma(P,'seguidores_ganados');
@@ -14984,7 +14995,7 @@ async function renderContInstagram(sinRecargar){
   el.innerHTML=cab+`
     <div class="kpi-grid">
       <div class="kc go"><div class="ki">👥</div><div class="kl">Seguidores</div><div class="kv">${_igN(ultC?.seguidores)}</div><div class="ks">${difSeg!=null?(difSeg>=0?'+':'')+difSeg+' en el período':ganados?'+'+ganados+' desde publicaciones':'se mide desde que se conectó'}</div></div>
-      <div class="kc bl"><div class="ki">🗂</div><div class="kl">Publicaciones</div><div class="kv">${P.length}</div><div class="ks">${_igDias?'últimos '+_igDias+' días':'en total'}</div></div>
+      <div class="kc bl"><div class="ki">🗂</div><div class="kl">Publicaciones</div><div class="kv">${P.length}</div><div class="ks">${per.txt}</div></div>
       <div class="kc pu"><div class="ki">👁</div><div class="kl">Alcance promedio</div><div class="kv">${_igN(prom(conAl,'alcance'))}</div><div class="ks">personas por publicación</div></div>
       <div class="kc gr"><div class="ki">🔖</div><div class="kl">Guardados + compartidos</div><div class="kv">${_igN(suma(P,'guardados')+suma(P,'compartidos'))}</div><div class="ks">lo que más impulsa el algoritmo</div></div>
     </div>
@@ -15007,7 +15018,7 @@ async function renderContInstagram(sinRecargar){
 
 /* ── 🎵 TikTok (api/tiktok: conectar con OAuth una vez, después sync) ──
    TikTok da vistas, likes, comentarios y compartidos por video (no da alcance ni guardados). */
-let _tt={posts:[],cuenta:[],sync:null,cargado:false,sinc:false},_ttDias=90,_ttOrden='fecha';
+let _tt={posts:[],cuenta:[],sync:null,cargado:false,sinc:false},_ttDias=90,_ttOrden='fecha',_ttRango=null;
 const _ttValor=p=>p.vistas?((+p.compartidos||0)*3+(+p.comentarios||0)*2+(+p.likes||0))*100/p.vistas:null;
 async function _ttCargar(){
   const {data,error}=await _sb.from('redes_metricas').select('id,data').like('id','tt-%');
@@ -15034,7 +15045,8 @@ async function ttSincronizar(silencioso){
   catch(e){if(!silencioso)toast('⚠️ TikTok: '+e.message,'err');}
   _tt.sinc=false;await _ttCargar();renderContTiktok(true);
 }
-function setTtDias(d){_ttDias=d;renderContTiktok(true);}
+function setTtDias(d){_ttDias=d;_ttRango=null;renderContTiktok(true);}
+function setTtRango(){const d=document.getElementById('ttDesde')?.value||'',h=document.getElementById('ttHasta')?.value||'';if(!d&&!h){toast('⚠️ Elegí al menos una fecha','err');return;}if(d&&h&&d>h){toast('⚠️ La fecha «Desde» es posterior a «Hasta»','err');return;}_ttRango={d,h};renderContTiktok(true);}
 function setTtOrden(o){_ttOrden=o;renderContTiktok(true);}
 async function renderContTiktok(sinRecargar){
   const el=document.getElementById('contTiktok');if(!el)return;
@@ -15047,7 +15059,8 @@ async function renderContTiktok(sinRecargar){
   const s=_tt.sync;
   const cab=`<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px">
       <div style="font-size:12px;color:var(--muted);flex:1;min-width:220px">🎵 <b style="color:var(--text)">@${_igE(s?.usuario||'juancruzconsciencia')}</b> · ${s?(s.ok?'Última actualización: '+new Date(s.cuando).toLocaleString('es-AR',{dateStyle:'short',timeStyle:'short'}):'<span style="color:var(--red)">Falló: '+_igE(s.error||'')+'</span>'):'Todavía no se conectó.'}</div>
-      ${[[30,'30 días'],[90,'90 días'],[365,'1 año'],[0,'Todo']].map(([d,l])=>`<button class="tab-btn${_ttDias===d?' active':''}" onclick="setTtDias(${d})">${l}</button>`).join('')}
+      ${[[30,'30 días'],[90,'90 días'],[365,'1 año'],[0,'Todo']].map(([d,l])=>`<button class="tab-btn${!_ttRango&&_ttDias===d?' active':''}" onclick="setTtDias(${d})">${l}</button>`).join('')}
+      ${_redRangoHtml('tt',_ttDias,_ttRango)}
       <button class="btn btn-s btn-sm" onclick="ttConectar()">🔗 Conectar TikTok</button>
       <button class="btn btn-p btn-sm" onclick="ttSincronizar()" ${_tt.sinc?'disabled':''}>${_tt.sinc?'⏳ Actualizando…':'🔄 Actualizar ahora'}</button>
     </div>`;
@@ -15059,12 +15072,12 @@ async function renderContTiktok(sinRecargar){
       2. Subir <b>api/tiktok.js</b> al repo del admin.<br>
       3. Tocar <b>🔗 Conectar TikTok</b>, autorizar tu cuenta y después <b>🔄 Actualizar ahora</b>.</div>`;return;
   }
-  const desde=_ttDias?new Date(Date.now()-_ttDias*864e5).toISOString():'';
-  const P=_tt.posts.filter(p=>!desde||(p.fecha||'')>=desde).map(p=>({...p,valor:_ttValor(p),d:new Date(p.fecha)}));
+  const per=_redPeriodo(_ttDias,_ttRango),desde=per.desde;
+  const P=_tt.posts.filter(p=>_redEnRango(p.fecha,per)).map(p=>({...p,valor:_ttValor(p),d:new Date(p.fecha)}));
   const conV=P.filter(p=>p.vistas);
   const prom=(a,k)=>{const v=a.map(p=>p[k]).filter(x=>x!=null);return v.length?v.reduce((x,y)=>x+(+y),0)/v.length:null;};
   const suma=(a,k)=>a.reduce((x,p)=>x+(+p[k]||0),0);
-  const C=_tt.cuenta,ult=C[C.length-1],base=desde?C.find(c=>c.fecha>=desde.slice(0,10)):C[0];
+  const C=_tt.cuenta,Ch=per.hasta?C.filter(c=>c.fecha<=per.hasta.slice(0,10)):C,ult=Ch[Ch.length-1],base=desde?C.find(c=>c.fecha>=desde.slice(0,10)):C[0];
   const dif=ult&&base&&base!==ult?ult.seguidores-base.seguidores:null;
   const agrupar=fn=>{const m=new Map();conV.forEach(p=>{const k=fn(p);if(!m.has(k))m.set(k,[]);m.get(k).push(p);});
     return [...m].map(([k,a])=>({k,n:a.length,vistas:prom(a,'vistas'),valor:prom(a,'valor')})).sort((a,b)=>b.vistas-a.vistas);};
@@ -15096,7 +15109,7 @@ async function renderContTiktok(sinRecargar){
   el.innerHTML=cab+`
     <div class="kpi-grid">
       <div class="kc go"><div class="ki">👥</div><div class="kl">Seguidores</div><div class="kv">${_igN(ult?.seguidores)}</div><div class="ks">${dif!=null?(dif>=0?'+':'')+dif+' en el período':'se mide desde que se conectó'}</div></div>
-      <div class="kc bl"><div class="ki">🎬</div><div class="kl">Videos</div><div class="kv">${P.length}</div><div class="ks">${_ttDias?'últimos '+_ttDias+' días':'en total'}</div></div>
+      <div class="kc bl"><div class="ki">🎬</div><div class="kl">Videos</div><div class="kv">${P.length}</div><div class="ks">${per.txt}</div></div>
       <div class="kc pu"><div class="ki">▶️</div><div class="kl">Vistas promedio</div><div class="kv">${_igN(prom(conV,'vistas'))}</div><div class="ks">por video</div></div>
       <div class="kc gr"><div class="ki">↗️</div><div class="kl">Compartidos</div><div class="kv">${_igN(suma(P,'compartidos'))}</div><div class="ks">lo que más empuja en TikTok</div></div>
     </div>

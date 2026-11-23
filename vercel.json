@@ -52,5 +52,13 @@
       "path": "/api/tiktok",
       "schedule": "10 9 * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/ig-sync.js": {
+      "maxDuration": 60
+    },
+    "api/tiktok.js": {
+      "maxDuration": 60
+    }
+  }
 }
