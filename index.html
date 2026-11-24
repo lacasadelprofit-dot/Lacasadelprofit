@@ -610,12 +610,12 @@ th{background:rgba(28,26,46,.88)!important;}
                <span style="font-size:11px;color:var(--muted)">Aplicar área a todas:</span>
                <select id="pregMasivaAreaGlobal" style="padding:5px 10px;background:var(--card2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:12px;outline:none">
                  <option value="">— Sin área —</option>
-                 <option value="Recibir">💰 Recibir</option>
-                 <option value="Cuerpo">🌿 Cuerpo</option>
-                 <option value="Vínculos">💛 Vínculos</option>
-                 <option value="Viajes">✈️ Viajes</option>
+                 <option value="Ser Infinito">∞ Ser Infinito</option>
+                 <option value="Propósito">🔥 Propósito</option>
+                 <option value="Vínculos">❤️ Vínculos</option>
+                 <option value="Cuerpo">🧘 Cuerpo</option>
                  <option value="Emprender">🚀 Emprender</option>
-                 <option value="Identidad">🪞 Identidad</option>
+                 <option value="Viajes">✈️ Viajes</option>
                </select>
                <button class="btn btn-s btn-sm" onclick="aplicarAreaATodas()">Aplicar</button>
                <button class="btn btn-s btn-sm" onclick="addPregRow()">+ Fila</button>
@@ -2091,7 +2091,7 @@ th{background:rgba(28,26,46,.88)!important;}
    <label>Matiz / Categoría</label>
    <input id="cmMatiz" list="dlMatiz" placeholder="Ej: Identidad, Propósito, Emociones...">
    <datalist id="dlMatiz">
-    <option value="Identidad"></option>
+    <option value="Ser Infinito"></option>
     <option value="Propósito"></option>
     <option value="Emociones"></option>
     <option value="Relaciones"></option>
@@ -2198,7 +2198,7 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg"><label>PDF en inglés (opcional)</label><input id="rgPdfEn" placeholder="https://..."></div>
   </div>
   <div class="fg"><label>Guía de 20 preguntas · área</label>
-   <select id="rgArea"><option value="">— No es una guía de 20 preguntas —</option><option value="Recibir">Recibir</option><option value="Cuerpo">Cuerpo</option><option value="Vínculos">Vínculos</option><option value="Viajes">Viajes</option><option value="Emprender">Emprender</option><option value="Identidad">Identidad</option></select>
+   <select id="rgArea"><option value="">— No es una guía de 20 preguntas —</option><option value="Ser Infinito">Ser Infinito</option><option value="Propósito">Propósito</option><option value="Vínculos">Vínculos</option><option value="Cuerpo">Cuerpo</option><option value="Emprender">Emprender</option><option value="Viajes">Viajes</option></select>
    <div style="font-size:11px;color:var(--muted);margin-top:4px">Si elegís un área, la portada de juancruzconsciencia.lat la entrega cuando alguien toca ese botón, en el idioma de la persona (si falta ese idioma, va la de español). Marca/Portal tiene que ser Juancruz Consciencia o Ambos.</div>
   </div>
   <div class="fg">
@@ -10641,7 +10641,7 @@ async function renderMktRegalos(){
 const FLYER_CIUDADES={BUZ:{nombre:'Búzios',n:10},ARR:{nombre:'Arraial do Cabo',n:5},CAB:{nombre:'Cabo Frío',n:5}};
 const FLYER_CODIGOS=Object.entries(FLYER_CIUDADES).flatMap(([k,c])=>Array.from({length:c.n},(_,i)=>`${k}-${String(i+1).padStart(2,'0')}`));
 const FLYER_URL='https://www.juancruzconsciencia.lat/ruleta.html?f=';
-const FLYER_DIM_LBL={Recibir:'Recibir',Cuerpo:'Cuerpo',Vínculos:'Vínculos',Viajes:'Viajes',Emprender:'Emprender',Identidad:'Identidad',Consciencia:'Consciencia (anterior)',Dinero:'Recibir',Relaciones:'Vínculos',Propósito:'Propósito (anterior)'};
+const FLYER_DIM_LBL={'Ser Infinito':'Ser Infinito',Propósito:'Propósito',Vínculos:'Vínculos',Cuerpo:'Cuerpo',Emprender:'Emprender',Viajes:'Viajes',Recibir:'Recibir (anterior)',Identidad:'Ser Infinito',Consciencia:'Consciencia (anterior)',Dinero:'Recibir (anterior)',Relaciones:'Vínculos'};
 let _flyerDias=30,_flyerEvs=null,_flyerCargadoDias=null;
 
 function setFlyerDias(d){_flyerDias=d;renderMktFlyers();}
@@ -10765,7 +10765,7 @@ let _tesoroPremios=[];
 let _tesoroRuleta=[];
 let _tesoroSubTab='resumen';
 let _tzMap=null, _tzMarker=null, _tzLat=null, _tzLng=null;
-const TESORO_CAT_ICO={Recibir:'💰',Cuerpo:'🌿',Vínculos:'💛',Viajes:'✈️',Emprender:'🚀',Identidad:'🪞',Dinero:'💰',Relaciones:'💛',Propósito:'🌅',Consciencia:'✦'};
+const TESORO_CAT_ICO={'Ser Infinito':'∞',Propósito:'🔥',Vínculos:'❤️',Cuerpo:'🧘',Emprender:'🚀',Viajes:'✈️',Recibir:'💰',Identidad:'∞',Dinero:'💰',Relaciones:'❤️',Consciencia:'✦'};
 const TESORO_URL_BASE='https://juancruzconsciencia.lat/tesoro.html?id=';
 const TESORO_MAP_DEFAULT=[-22.7469,-41.8817]; // Búzios, Brasil
 function _tzEsc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
@@ -10942,7 +10942,7 @@ function _renderTesoroStickersTab(){
         <div class="fg" style="margin:0"><label>Categoría</label>
           <select id="tzCategoria">
             <option value="">Sin categoría</option>
-            ${['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'].map(c=>`<option>${c}</option>`).join('')}
+            ${['Ser Infinito','Propósito','Vínculos','Cuerpo','Emprender','Viajes'].map(c=>`<option>${c}</option>`).join('')}
           </select></div>
       </div>
       <div class="fg" style="margin:0 0 12px"><label>Pregunta</label>
@@ -11734,7 +11734,7 @@ function initPregMasiva(){
     _renumPregRows();
   });
 }
-const _PREG_MATIZ_OPTS=[{v:'',l:'— Sin área —'},{v:'Recibir',l:'💰 Recibir'},{v:'Cuerpo',l:'🌿 Cuerpo'},{v:'Vínculos',l:'💛 Vínculos'},{v:'Viajes',l:'✈️ Viajes'},{v:'Emprender',l:'🚀 Emprender'},{v:'Identidad',l:'🪞 Identidad'}];
+const _PREG_MATIZ_OPTS=[{v:'',l:'— Sin área —'},{v:'Ser Infinito',l:'∞ Ser Infinito'},{v:'Propósito',l:'🔥 Propósito'},{v:'Vínculos',l:'❤️ Vínculos'},{v:'Cuerpo',l:'🧘 Cuerpo'},{v:'Emprender',l:'🚀 Emprender'},{v:'Viajes',l:'✈️ Viajes'}];
 /* Las 120 preguntas de la temporada tienen set 'temporada-2026'; las anteriores quedan en su propia pestaña */
 function _comEnMatiz(c,m){return m==='anteriores'?c.set!=='temporada-2026':(c.set==='temporada-2026'&&c.matiz===m);}
 function _pregMatizSelect(val){
@@ -11888,8 +11888,8 @@ function _renderComList(){
   // Sub-tabs de matiz — solo cuando estamos en "Preguntas"
   let matizBar='';
   if(_comTab==='pregunta'){
-    const MATICES=['todos','Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad','anteriores'];
-    const MATIZ_ICO={Recibir:'💰',Cuerpo:'🌿',Vínculos:'💛',Viajes:'✈️',Emprender:'🚀',Identidad:'🪞',anteriores:'📦'};
+    const MATICES=['todos','Ser Infinito','Propósito','Vínculos','Cuerpo','Emprender','Viajes','anteriores'];
+    const MATIZ_ICO={'Ser Infinito':'∞',Propósito:'🔥',Vínculos:'❤️',Cuerpo:'🧘',Emprender:'🚀',Viajes:'✈️',anteriores:'📦'};
     matizBar=`<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
       ${MATICES.map(m=>{
         const activo=_comMatizTab===m;
@@ -15367,7 +15367,7 @@ async function renderContTiktok(sinRecargar){
    Cada persona que descarga una guía de 20 preguntas desde la portada aparece acá para contactarla en el día. */
 let _gpRows=[],_gpVerTodas=false;
 const _gpE=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const _GP_AREA={pt:{Recibir:'Receber',Cuerpo:'Corpo',Vínculos:'Vínculos',Viajes:'Viagens',Emprender:'Empreender',Identidad:'Identidade',Consciencia:'Consciência',Propósito:'Propósito'},en:{Recibir:'Receiving',Cuerpo:'Body',Vínculos:'Bonds',Viajes:'Travel',Emprender:'Business',Identidad:'Identity',Consciencia:'Consciousness',Propósito:'Purpose'}};
+const _GP_AREA={pt:{'Ser Infinito':'Ser Infinito',Propósito:'Propósito',Vínculos:'Vínculos',Cuerpo:'Corpo',Emprender:'Empreender',Viajes:'Viagens',Recibir:'Receber',Identidad:'Ser Infinito',Consciencia:'Consciência'},en:{'Ser Infinito':'Infinite Being',Propósito:'Purpose',Vínculos:'Bonds',Cuerpo:'Body',Emprender:'Business',Viajes:'Travel',Recibir:'Receiving',Identidad:'Infinite Being',Consciencia:'Consciousness'}};
 function _gpMsg(d){
   const n=(d.nombre||'').split(' ')[0],l=d.idioma||'es',a=(_GP_AREA[l]&&_GP_AREA[l][d.area])||d.area||'';
   if(l==='pt')return {wa:`Oi ${n}! Aqui é o Juan Cruz 🌿 Você conseguiu ver o guia de 20 perguntas de ${a}? Qual pergunta mais ressoou em você?`,asunto:`Seu guia de 20 perguntas de ${a}`};
@@ -15564,9 +15564,9 @@ async function _renderTesoroResumen(){
 /* ══════════ BÚSQUEDA DEL TESORO · 📖 Álbum de preguntas (el catálogo) ══════════
    Las 120 preguntas (6 temas × 20). Es el MISMO álbum que el de la pestaña «Álbum en el portal del ser»:
    acá se cargan y editan las preguntas; allá se ve cómo lo va completando cada persona. */
-const ALB_AREAS=['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'];
-const ALB_COL={Recibir:'#C4895A',Cuerpo:'#3DAA6A',Vínculos:'#C46A8E',Viajes:'#5B9BD5',Emprender:'#D4863A',Identidad:'#9B82D4'};
-let _albCat=[],_albCatArea='Recibir';
+const ALB_AREAS=['Ser Infinito','Propósito','Vínculos','Cuerpo','Emprender','Viajes'];
+const ALB_COL={'Ser Infinito':'#9B82D4',Propósito:'#C9503C',Vínculos:'#C46A8E',Cuerpo:'#3DAA6A',Emprender:'#D4863A',Viajes:'#5B9BD5'};
+let _albCat=[],_albCatArea='Ser Infinito';
 const _albSlug=a=>a.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
 async function _renderAlbumCatalogo(recargar=true){
   const el=document.getElementById('tzAlbumCat');if(!el)return;
@@ -16144,7 +16144,7 @@ function renderFlujoTrabajo(){
    3 PDF (guía en ES/PT/EN) y 60 stickers (20 para la búsqueda + 40 para pegar o regalar en sesiones).
    El avance se carga con +/− y se guarda en configuracion id 'cfg_piezas'. */
 const PZ_ID='cfg_piezas';
-const PZ_TIPOS=[['recibir','Recibir','#C4895A','💰'],['cuerpo','Cuerpo','#3DAA6A','🌿'],['vinculos','Vínculos','#C46A8E','💛'],['viajes','Viajes','#5B9BD5','✈️'],['emprender','Emprender','#D4863A','🚀'],['identidad','Identidad','#9B82D4','🪞']];
+const PZ_TIPOS=[['identidad','Ser Infinito','#9B82D4','∞'],['proposito','Propósito','#C9503C','🔥'],['vinculos','Vínculos','#C46A8E','❤️'],['cuerpo','Cuerpo','#3DAA6A','🧘'],['emprender','Emprender','#D4863A','🚀'],['viajes','Viajes','#5B9BD5','✈️']];
 const PZ_PIEZAS=[
   {k:'preg',l:'Preguntas',ico:'❓',por:20,g:'base',d:'la base de todo'},
   {k:'post',l:'Carruseles (5 preguntas + pedir la guía)',ico:'🖼️',por:4,g:'contenido',d:'1 por sección: 4 secciones de 5'},
@@ -16217,7 +16217,7 @@ async function renderPlanNumeros(){
         ${barra(v,p.por,c)}</td>`;}).join('')}
       <td style="text-align:center;font-weight:800">${hechoP(p.k)}/${totP(p.k)}</td></tr>`).join('')}
     </tbody></table></div>
-  <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Hoy: al terminar cada sesión se regalan stickers de las preguntas. Los 6 tipos (Recibir, Cuerpo, Vínculos, Viajes, Emprender, Identidad) son los mismos para el contenido, las guías y los stickers.</div>`;
+  <div style="font-size:11.5px;color:var(--muted);line-height:1.6">Hoy: al terminar cada sesión se regalan stickers de las preguntas. Las 6 áreas (Ser Infinito, Propósito, Vínculos, Cuerpo, Emprender, Viajes) son las mismas para el contenido, las guías y los stickers.</div>`;
 }
 
 /* ══════════ ESTRATEGIA · Embudo en números de la búsqueda del tesoro ══════════
@@ -16321,10 +16321,10 @@ async function _embPintar(){
    24 carruseles (1 por sección: 4 por tipo, 5 preguntas c/u) + 120 reels en español + 120 en portugués.
    Cada pieza se planifica en el calendario (crea un ítem en contenidoRedes con pieza = su id) y se marca publicada.
    Plan en números (Estrategia) cuenta solo estas piezas publicadas. */
-const PZC_TIPOS=['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'];
-const PZC_ICO={Recibir:'💰',Cuerpo:'🌿',Vínculos:'💛',Viajes:'✈️',Emprender:'🚀',Identidad:'🪞'};
+const PZC_TIPOS=['Ser Infinito','Propósito','Vínculos','Cuerpo','Emprender','Viajes'];
+const PZC_ICO={'Ser Infinito':'∞',Propósito:'🔥',Vínculos:'❤️',Cuerpo:'🧘',Emprender:'🚀',Viajes:'✈️'};
 const _pzcSlug=t=>String(t||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
-let _pzcF={tipo:'Recibir',formato:'',estado:''};
+let _pzcF={tipo:'Ser Infinito',formato:'',estado:''};
 function _pzcPiezas(){
   const P=(typeof comunidad!=='undefined'?comunidad:[]).filter(c=>c.set==='temporada-2026'&&c.tipo==='pregunta');
   const out=[];

@@ -4,8 +4,8 @@
    Reglas: 1 giro por día + giros extra (sesiones, clase, a mano desde el admin), el tema no se elige,
    pueden salir repetidas, 120 figuritas (20 × 6 temas), premio al completar un tema y el álbum. */
 (function(){
-  const AREAS=['Recibir','Cuerpo','Vínculos','Viajes','Emprender','Identidad'];
-  const COL={Recibir:'#C4895A',Cuerpo:'#3DAA6A',Vínculos:'#C46A8E',Viajes:'#5B9BD5',Emprender:'#D4863A',Identidad:'#9B82D4'};
+  const AREAS=['Ser Infinito','Propósito','Vínculos','Cuerpo','Emprender','Viajes'];
+  const COL={'Ser Infinito':'#9B82D4',Propósito:'#C9503C',Vínculos:'#C46A8E',Cuerpo:'#3DAA6A',Emprender:'#D4863A',Viajes:'#5B9BD5'};
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   let est=null,girando=false,rot=0;
 
