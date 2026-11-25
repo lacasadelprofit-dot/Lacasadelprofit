@@ -133,7 +133,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
         <label>Tipo<select id="cTipo"><option value="grande">🏫 Clase grande · se publica en la web</option><option value="particular">👥 Particular / grupo chico · no se publica</option></select></label>
         <label>Fecha<input type="date" id="cFecha"></label>
         <label>Hora de inicio<input type="time" id="cHora" value="10:00"></label>
-        <label style="flex:1;min-width:200px">Lugar<input id="cLugar" value="Posada Luz y Brillo · Búzios"></label>
+        <label style="flex:1;min-width:200px">Lugar<input id="cLugar" value="Búzios"></label>
         <button class="btn btn-p" onclick="crearClase()">Agregar fecha</button>
       </div>
     </div>
@@ -160,7 +160,7 @@ if(EMBED){
 const HORAS=['08:00','09:20','10:40','18:30','19:50'];
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
 const SENIA={barras:'R$ 100 / USD 30 / $30.000 ARS',proceso_cuerpos:'R$ 150 / USD 35 / $45.000 ARS'};
-let turnos=[], clases=[], _tab='proximos';
+let turnos=[], clases=[], _tab='proximos', _editClase=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hoyBR=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
@@ -237,7 +237,7 @@ async function bloquear(){
   bMotivo.value='';toast('Bloqueado');cargar();
 }
 async function crearClase(){
-  const fecha=cFecha.value,hora=cHora.value||'10:00',lugar=cLugar.value.trim()||'Posada Luz y Brillo · Búzios';
+  const fecha=cFecha.value,hora=cHora.value||'10:00',lugar=cLugar.value.trim()||'Búzios';
   if(!fecha){toast('Elegí una fecha');return;}
   const tipo=(document.getElementById('cTipo')||{}).value||'grande';
   const {error}=await _sb.from('clase_fechas').insert({id:crypto.randomUUID(),fecha,hora,lugar,activo:tipo==='grande',data:{tipo}});
@@ -263,6 +263,42 @@ async function guardarOrigen(id,k,valor){
   const {error}=await _sb.from('clase_fechas').update({data}).eq('id',id);
   if(error){toast('Error: '+error.message);return;}
   toast('✓ Guardado');cargar();
+}
+/* Editar / eliminar una fecha de clase */
+function editarClase(id){_editClase=id;render();}
+function cancelarEdicionClase(){_editClase=null;render();}
+async function guardarClase(id){
+  const c=clases.find(x=>x.id===id);if(!c)return;
+  const fecha=document.getElementById('eFecha').value,hora=document.getElementById('eHora').value||c.hora;
+  const lugar=document.getElementById('eLugar').value.trim()||'Búzios';
+  const tipo=document.getElementById('eTipo').value;
+  if(!fecha){toast('Elegí una fecha');return;}
+  const upd={fecha,hora,lugar,data:{...(c.data||{}),tipo}};
+  // Al cambiar el tipo: grande se publica, particular se oculta
+  if(tipo!==((c.data?.tipo)||'grande'))upd.activo=tipo==='grande';
+  const {error}=await _sb.from('clase_fechas').update(upd).eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  // Los inscriptos guardan fecha y hora de la clase: se mueven con ella
+  if(fecha!==c.fecha||hora!==c.hora){
+    const r=await _sb.from('turnos').update({fecha,hora}).eq('servicio','clase_barras').eq('data->>claseId',id);
+    if(r.error){toast('Clase guardada, pero no se movieron los inscriptos: '+r.error.message);_editClase=null;cargar();return;}
+  }
+  _editClase=null;toast('✓ Clase actualizada');cargar();
+}
+async function eliminarClase(id){
+  const c=clases.find(x=>x.id===id);if(!c)return;
+  const ins=turnos.filter(t=>t.servicio==='clase_barras'&&t.estado!=='cancelado'&&t.data?.claseId===id);
+  let msg='¿Eliminar la clase del '+fmt(c.fecha)+'? Desaparece de la web y no se puede deshacer.';
+  if(ins.length)msg+='\n\nTiene '+ins.length+' inscripto'+(ins.length===1?'':'s')+': su inscripción queda cancelada (avisales por WhatsApp).';
+  if(c.data?.alumnos!=null||c.data?.origen)msg+='\n\nOjo: los alumnos y orígenes cargados dejan de sumar a las metas.';
+  if(!confirm(msg))return;
+  if(ins.length){
+    const r=await _sb.from('turnos').update({estado:'cancelado'}).eq('servicio','clase_barras').eq('data->>claseId',id);
+    if(r.error){toast('Error al cancelar inscriptos: '+r.error.message);return;}
+  }
+  const {error}=await _sb.from('clase_fechas').delete().eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  toast('Clase eliminada');cargar();
 }
 async function toggleClase(id,activo){
   const {error}=await _sb.from('clase_fechas').update({activo}).eq('id',id);
@@ -361,7 +397,16 @@ function render(){
     const pasada=c.fecha<hoy,part=(c.data?.tipo||'grande')==='particular',alu=c.data?.alumnos;
     return `<div class="card"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
       <h2 style="margin:0">${part?'👥 Particular':'🏫 Grande'} · ${fmt(c.fecha)} · ${esc(c.hora)}${pasada?' <span class="badge b-blq">Pasada</span>':c.activo?' <span class="badge b-ok">Visible en la web</span>':' <span class="badge b-blq">'+(part?'No se publica':'Oculta')+'</span>'}</h2>
-      ${pasada?'':`<button class="btn" onclick="toggleClase('${c.id}',${!c.activo})">${c.activo?'Ocultar de la web':'Mostrar en la web'}</button>`}</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">${pasada?'':`<button class="btn" onclick="toggleClase('${c.id}',${!c.activo})">${c.activo?'Ocultar de la web':'Mostrar en la web'}</button>`}
+        <button class="btn" onclick="editarClase('${c.id}')">✏️ Editar</button>
+        <button class="btn btn-x" onclick="eliminarClase('${c.id}')">🗑 Eliminar</button></div></div>
+      ${_editClase===c.id?`<div class="form" style="margin:0 0 12px;padding:12px;border:1px solid var(--gold);border-radius:12px">
+        <label>Tipo<select id="eTipo"><option value="grande"${part?'':' selected'}>🏫 Grande · se publica</option><option value="particular"${part?' selected':''}>👥 Particular · no se publica</option></select></label>
+        <label>Fecha<input type="date" id="eFecha" value="${esc(c.fecha)}"></label>
+        <label>Hora<input type="time" id="eHora" value="${esc(c.hora)}"></label>
+        <label style="flex:1;min-width:200px">Lugar<input id="eLugar" value="${esc(c.lugar)}"></label>
+        <button class="btn btn-p" onclick="guardarClase('${c.id}')">Guardar</button>
+        <button class="btn" onclick="cancelarEdicionClase()">Cancelar</button></div>`:''}
       <div class="det" style="margin:0 0 10px">📍 ${esc(c.lugar)} · ${ins.length} inscripto${ins.length===1?'':'s'}</div>
       <div class="det" style="margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">🎓 Alumnos que la hicieron:
         <input type="number" min="0" value="${alu??''}" placeholder="${ins.length}" style="width:70px" onchange="guardarAlumnos('${c.id}',this.value)">
