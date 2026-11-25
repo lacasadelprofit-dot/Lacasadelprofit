@@ -341,7 +341,7 @@ th{background:rgba(28,26,46,.88)!important;}
     <div class="nl">Principal</div>
     <div class="ni active" onclick="nav('dashboard',this)"><span class="ico">📊</span><span>Dashboard</span></div>
     <div class="ni" onclick="nav('sesiones',this)"><span class="ico">✨</span><span>Sesiones</span></div>
-    <div class="ni" onclick="nav('calendario',this)"><span class="ico">📅</span><span>Calendario</span></div>
+    <div class="ni" onclick="nav('calendario',this)"><span class="ico">📅</span><span>Agenda</span></div>
     <div class="nl">Gestión</div>
     <div class="ni" onclick="nav('seres',this)"><span class="ico">💫</span><span>Seres</span></div>
     <div class="ni" onclick="nav('herramientas',this)"><span class="ico">🔮</span><span>Sesiones / Facilitadores</span></div>
@@ -456,11 +456,11 @@ th{background:rgba(28,26,46,.88)!important;}
     <!-- CALENDARIO -->
     <div id="sec-calendario" class="sec">
      <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap">
-      <button class="tab-btn calTabBtn active" data-t="agenda" onclick="setCalTab('agenda')">📋 Agenda de turnos</button>
+      <button class="tab-btn calTabBtn active" data-t="agenda" onclick="setCalTab('agenda')">📋 Turnos</button>
       <button class="tab-btn calTabBtn" data-t="cal" onclick="setCalTab('cal')">📅 Calendario</button>
      </div>
      <div id="calTabAgenda">
-      <iframe id="agendaFrame" title="Agenda de turnos" style="width:100%;height:900px;border:0;display:block;background:transparent"></iframe>
+      <iframe id="agendaFrame" title="Turnos" style="width:100%;height:900px;border:0;display:block;background:transparent"></iframe>
      </div>
      <div id="calTabCal" style="display:none">
      <div class="kpi-grid" id="calKPIs" style="margin-bottom:16px"></div>
@@ -1212,7 +1212,7 @@ th{background:rgba(28,26,46,.88)!important;}
           <div class="acceso-ico">📅</div>
           <div class="acceso-info">
             <div class="acceso-titulo">Agenda de turnos</div>
-            <div class="acceso-desc">También en 📅 Calendario → 📋 Agenda de turnos</div>
+            <div class="acceso-desc">También en 📅 Agenda → 📋 Turnos</div>
           </div>
           <span class="acceso-ext">↗</span>
         </a>
@@ -2945,7 +2945,7 @@ function closeSidebar(){
 const PROG_LIST=['Mes Energético','Despertando la Consciencia','La Cascada','Viajando al 2° Nivel','Transformación Personal','Infinito al Cuadrado'];
 const PROG_COL={'Mes Energético':'#C9A84C','Despertando la Consciencia':'#8B5CF6','La Cascada':'#3B82F6','Viajando al 2° Nivel':'#10B981','Transformación Personal':'#EC4899','Infinito al Cuadrado':'#F97316'};
 const PROG_ICO={'Mes Energético':'🌙','Despertando la Consciencia':'🌅','La Cascada':'🌊','Viajando al 2° Nivel':'🚀','Transformación Personal':'🦋','Infinito al Cuadrado':'♾️'};
-const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Calendario',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'📣 Marketing · 🧭 Estrategia · 💛 Ruleta de fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Redes sociales',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
+const TITLES={encuentros:'🤝 Encuentros',dashboard:'🏠 Dashboard',sesiones:'✨ Sesiones',calendario:'📅 Agenda',facturacion:'💰 Finanzas',facilitadores:'🙋 Facilitadores',seres:'💫 Seres',herramientas:'🔮 Herramientas',practicas:'🌿 Herramientas',programas:'📚 Programas',biblioteca:'🌿 Herramientas · 📖 Biblioteca',fidelidad:'📣 Marketing · 🧭 Estrategia · 💛 Ruleta de fidelidad',journey:'🗺️ Journey',marketing:'📣 Marketing',contenido:'📣 Marketing · 📱 Redes sociales',crm:'📣 Marketing · 👥 CRM',profit:'🧠 Profit IA',accesos:'🔗 Accesos Rápidos'};
 const BTNS={
   encuentros:"<button class=\"btn btn-p\" onclick=\"abrirEnc(null)\">+ Nuevo encuentro</button>",
   dashboard:"<button class=\"btn btn-p\" onclick=\"openModal('ses')\">+ Nueva Sesión</button>",
@@ -4165,7 +4165,7 @@ function cobrarSaldo(id){
 }
 
 /* CALENDARIO */
-// Pestañas de Calendario: 📋 Agenda de turnos (agenda.html embebida, primera) y 📅 Calendario
+// Pestañas de la sección 📅 Agenda (id interno 'calendario'): 📋 Turnos (agenda.html embebida, primera) y 📅 Calendario
 let _calTab='agenda';
 function setCalTab(t){
   _calTab=t;
@@ -15977,7 +15977,7 @@ const FJ_PASOS=[
   {n:1,t:'Me conoce',ico:'👀',yo:'- 3 publicaciones por día en Instagram y 3 en TikTok\n- Flyers con QR en las 3 ciudades\n- Visitas a aliados (spas, hoteles, posadas)\n- Encuentros y boca a boca',sis:'- Trae solo las métricas de Instagram y TikTok (6:00)\n- Cuenta cada escaneo de flyer por código',ir:[['📱 Redes sociales','redes'],['📱 Flyers','flyers'],['🏨 Aliados','aliados']]},
   {n:2,t:'Primer contacto (lo hace la web)',ico:'🎡',yo:'- Nada: la web hace el trabajo',sis:'- Ruleta, guía de 20 preguntas, búsqueda del tesoro y agenda web\n- Cuenta escaneos y giros por flyer (sin datos personales)\n- Guarda los datos de quien pide la guía o reserva, y te avisa por Telegram',ir:[['🗺️ Búsqueda del tesoro','tesoro'],['📊 Stats Landing','stats']]},
   {n:3,t:'Seguimiento el mismo día (lo hacés vos)',ico:'💬',yo:'- Responder por WhatsApp a quien pidió la guía o escribió\n- Ofrecer la sesión o la próxima clase',sis:'- Lista de guías pedidas con su origen (portada o ruleta · flyer)\n- Prospectos en el CRM',ir:[['👥 CRM · Guías pedidas','crm'],['🎁 Regalos','regalos']]},
-  {n:4,t:'Sesión (puerta de entrada)',ico:'✨',yo:'- Dar la sesión (unas 15 por semana, por la mañana)\n- Cargar en la sesión el código del flyer de origen (único paso manual)\n- Pedir la reseña en Google Maps',sis:'- Turnos y señas desde la agenda web\n- Aviso por Telegram de cada turno\n- Suma sola a la meta de sesiones',ir:[['✨ Sesiones','sesiones'],['📅 Calendario','calendario']]},
+  {n:4,t:'Sesión (puerta de entrada)',ico:'✨',yo:'- Dar la sesión (unas 15 por semana, por la mañana)\n- Cargar en la sesión el código del flyer de origen (único paso manual)\n- Pedir la reseña en Google Maps',sis:'- Turnos y señas desde la agenda web\n- Aviso por Telegram de cada turno\n- Suma sola a la meta de sesiones',ir:[['✨ Sesiones','sesiones'],['📅 Agenda','calendario']]},
   {n:5,t:'Clase de Barras (el motor)',ico:'🎓',yo:'- Clase grande con fecha fija (2 por mes en temporada)\n- Clase particular a demanda (mínimo 4 personas)\n- Invitar a cada persona de sesión a la clase',sis:'- Inscripciones a la clase desde la web\n- El resumen de las 6:30 muestra las clases del mes y los inscriptos',ir:[['📈 Metas','metas']]},
   {n:6,t:'Comunidad',ico:'🤝',yo:'- Intercambio de Barras cada 21 días\n- Encuentro de Consciencia cada semana\n- Cargar los participantes después de cada encuentro',sis:'- Las asistencias suman solas a las metas\n- Portal del ser y álbum de preguntas para que vuelvan',ir:[['🤝 Encuentros','encuentros'],['🙋 Álbum','album']]},
   {n:7,t:'Multiplica',ico:'🌱',yo:'- Reseñas, testimonios y contenido con la comunidad\n- Alumnos que coordinan intercambios cuando no estoy\n- Aliados que derivan a la clase',sis:'- Metas de la temporada actualizadas\n- Seres con su historial completo',ir:[['💫 Seres','seres'],['📈 Metas','metas']]}
@@ -15997,7 +15997,7 @@ const FJ_CAMINOS=[
   {ico:'🎁',t:'Pide la guía de 20 preguntas',per:'Deja su nombre, WhatsApp e idioma (desde el flyer o la web)',tipo:'pers',dato:'Sus datos + de qué flyer o página vino',yo:'Escribirle el mismo día y ofrecerle sesión o clase',ver:['👥 Guías pedidas','crm'],tg:true},
   {ico:'📍',t:'Encuentra un sticker',per:'Sube su historia, etiqueta y reclama el premio',tipo:'pers',dato:'Su usuario de Instagram + el premio que ganó',yo:'Verificar la historia y entregar el premio',ver:['🏆 Historial','historial']},
   {ico:'💬',t:'Escribe por WhatsApp',per:'Toca «Agendar» y te escribe (el mensaje lleva el código del flyer)',tipo:'nada',dato:'Nada en el sistema: la conversación queda en tu WhatsApp',yo:'Cargar la sesión con el código del flyer (el único paso manual)',ver:['✨ Sesiones','sesiones']},
-  {ico:'📅',t:'Reserva en la agenda web',per:'Elige día y hora y deja sus datos',tipo:'pers',dato:'Sus datos + el turno',yo:'Confirmar la seña',ver:['📅 Calendario','calendario'],tg:true},
+  {ico:'📅',t:'Reserva en la agenda web',per:'Elige día y hora y deja sus datos',tipo:'pers',dato:'Sus datos + el turno',yo:'Confirmar la seña',ver:['📅 Agenda','calendario'],tg:true},
   {ico:'🏨',t:'Llega por un aliado',per:'El hotel o la posada le recomienda la sesión o la clase',tipo:'nada',dato:'Nada hasta que cargás la sesión',yo:'Cargar la sesión con el nombre del aliado (para la comisión)',ver:['🏨 Aliados','aliados']}
 ];
 const FJ_TIPO={anon:{l:'Sin datos personales',c:'#5B9BD5',bg:'rgba(91,155,213,.14)',i:'🔵'},pers:{l:'Con datos personales',c:'#D4863A',bg:'rgba(212,134,58,.14)',i:'🟠'},nada:{l:'No queda nada guardado',c:'#7A7260',bg:'rgba(122,114,96,.14)',i:'⚪'}};
@@ -16048,7 +16048,7 @@ function _fjCaminosHtml(){
 const FJM_COLS=[
   {t:'1 · Canales',s:'por dónde me conocen',c:'#7A7260',n:[['redes','📱 Redes sociales','3+3 por día'],['flyer','📄 Flyers con QR','BUZ · ARR · CAB'],['sticker','📍 Stickers del tesoro','escondidos en la ciudad'],['aliado','🏨 Aliados','spas, hoteles, posadas'],['boca','🗣️ Boca a boca','alumnos y comunidad']]},
   {t:'2 · Puertas',s:'lo que la persona hace',c:'#5B9BD5',n:[['ruleta','🎡 Gira la ruleta','recibe una pregunta'],['guia','🎁 Pide la guía','deja nombre y WhatsApp'],['tesoro','🏆 Reclama un premio','sube su historia'],['wa','💬 Te escribe','por WhatsApp'],['agenda','📅 Reserva','en la agenda web']]},
-  {t:'3 · Queda en el sistema',s:'y dónde lo ves',c:'#D4863A',n:[['pflyers','📊 Panel de flyers','escaneos y giros por código',"flyers"],['crm','👥 Guías pedidas','🔔 aviso Telegram',"crm"],['hist','🏆 Historial del tesoro','Instagram + premio',"historial"],['tuwa','📲 Tu WhatsApp','fuera del sistema'],['cal','📅 Calendario','🔔 aviso Telegram',"calendario"]]},
+  {t:'3 · Queda en el sistema',s:'y dónde lo ves',c:'#D4863A',n:[['pflyers','📊 Panel de flyers','escaneos y giros por código',"flyers"],['crm','👥 Guías pedidas','🔔 aviso Telegram',"crm"],['hist','🏆 Historial del tesoro','Instagram + premio',"historial"],['tuwa','📲 Tu WhatsApp','fuera del sistema'],['cal','📅 Agenda','🔔 aviso Telegram',"calendario"]]},
   {t:'4 · Lo que hago yo',s:'el trabajo manual',c:'#C9A84C',n:[['decido','🧭 Decisión semanal','mover / reforzar flyers'],['escribo','✍️ Escribir el mismo día','ofrecer sesión o clase'],['premio','🎁 Entregar el premio','verificar historia'],['cargo','📝 Cargar la sesión','con código de flyer o aliado',"sesiones"],['sena','✅ Confirmar la seña','del turno']]},
   {t:'5 · Resultado',s:'el recorrido que buscamos',c:'#3DAA6A',n:[['sesion','✨ Sesión','puerta de entrada',"sesiones"],['clase','🎓 Clase de Barras','el motor'],['comu','🤝 Comunidad','intercambios y encuentros',"encuentros"],['metas','📈 Metas de la temporada','se actualizan solas',"metas"]]}
 ];

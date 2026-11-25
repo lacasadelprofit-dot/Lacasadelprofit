@@ -160,7 +160,7 @@ if(EMBED){
 const HORAS=['08:00','09:20','10:40','18:30','19:50'];
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
 const SENIA={barras:'R$ 100 / USD 30 / $30.000 ARS',proceso_cuerpos:'R$ 150 / USD 35 / $45.000 ARS'};
-let turnos=[], clases=[], _tab='proximos', _editClase=null;
+let turnos=[], clases=[], _tab='proximos', _editClase=null, _editTurno=null;
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hoyBR=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
@@ -216,6 +216,40 @@ function prepararManual(fecha,hora){
   mFecha.value=fecha;mHora.value=hora;
   document.getElementById('formManual').scrollIntoView({behavior:'smooth'});
   setTimeout(()=>mNombre.focus(),300);
+}
+/* Editar un turno (sesión o inscripto a clase) */
+function editarTurno(id){_editTurno=id;render();}
+function cancelarEdicionTurno(){_editTurno=null;render();}
+function formEditarTurno(t){
+  const d=t.data||{},clase=t.servicio==='clase_barras';
+  const horas=HORAS.includes(t.hora)?HORAS:[t.hora,...HORAS];
+  return `<div class="row" style="border-color:var(--gold)"><div class="form" style="width:100%">
+    ${clase?`<div class="det" style="width:100%;margin:0 0 4px">📚 Inscripto a la clase del ${fmt(t.fecha)} · la fecha se cambia desde la clase</div>`:`
+    <label>Fecha<input type="date" id="tFecha" value="${esc(t.fecha)}"></label>
+    <label>Horario<select id="tHora">${horas.map(h=>`<option${h===t.hora?' selected':''}>${esc(h)}</option>`).join('')}</select></label>
+    <label>Sesión<select id="tServ"><option value="barras"${t.servicio==='barras'?' selected':''}>Barras de Access</option><option value="proceso_cuerpos"${t.servicio==='proceso_cuerpos'?' selected':''}>Proceso de Cuerpos</option></select></label>
+    <label>Seña<select id="tEstado"><option value="confirmado"${t.estado==='confirmado'?' selected':''}>Ya pagó la seña</option><option value="pendiente_senia"${t.estado==='pendiente_senia'?' selected':''}>Falta la seña</option></select></label>`}
+    <label style="flex:1;min-width:150px">Nombre<input id="tNombre" value="${esc(d.nombre||'')}"></label>
+    <label>WhatsApp<input id="tCel" type="tel" value="${esc(d.celular||'')}" style="width:170px"></label>
+    <label style="flex:1;min-width:150px">Nota<input id="tNota" value="${esc(d.mensaje||'')}"></label>
+    <button class="btn btn-p" onclick="guardarTurno('${t.id}')">Guardar</button>
+    <button class="btn" onclick="cancelarEdicionTurno()">Cancelar</button>
+  </div></div>`;
+}
+async function guardarTurno(id){
+  const t=turnos.find(x=>x.id===id);if(!t)return;
+  const nombre=document.getElementById('tNombre').value.trim(),celular=document.getElementById('tCel').value.replace(/\D/g,'');
+  if(nombre.length<2){toast('Poné el nombre');return;}
+  const upd={data:{...(t.data||{}),nombre,celular,mensaje:document.getElementById('tNota').value.trim()}};
+  if(t.servicio!=='clase_barras'){
+    const fecha=document.getElementById('tFecha').value,hora=document.getElementById('tHora').value;
+    if(!fecha){toast('Elegí una fecha');return;}
+    if((fecha!==t.fecha||hora!==t.hora)&&turnos.some(x=>x.fecha===fecha&&x.hora==='todo'&&x.estado!=='cancelado')){toast('Ese día está bloqueado. Desbloquealo primero.');return;}
+    Object.assign(upd,{fecha,hora,servicio:document.getElementById('tServ').value,estado:document.getElementById('tEstado').value});
+  }
+  const {error}=await _sb.from('turnos').update(upd).eq('id',id);
+  if(error){toast(error.code==='23505'?'Ese horario ya está ocupado':'Error: '+error.message);return;}
+  _editTurno=null;toast('✓ Turno actualizado');cargar();
 }
 async function agendarManual(){
   const fecha=mFecha.value,hora=mHora.value,nombre=mNombre.value.trim(),celular=mCel.value.replace(/\D/g,'');
@@ -321,7 +355,7 @@ function filaTurno(t,conAcciones=true){
   const d=t.data||{};
   const detalle=[d.mensaje&&('💬 '+d.mensaje),d.patron&&('🔁 '+d.patron),d.sintomas?.length&&('🌀 '+d.sintomas.join(', '))].filter(Boolean).join('\n');
   const fechaTxt=fmt(t.fecha);
-  const msgRecordatorio=`¡Hola ${d.nombre||''}! Te escribo por tu turno de ${(SERV[t.servicio]||'').replace(/^\S+ /,'')} el ${fechaTxt} a las ${t.hora} en Posada Luz y Brillo, Búzios.`;
+  const msgRecordatorio=`¡Hola ${d.nombre||''}! Te escribo por tu turno de ${(SERV[t.servicio]||'').replace(/^\S+ /,'')} el ${fechaTxt} a las ${t.hora}.`;
   let acc='';
   // Reservas de sesión que todavía no están en el historial del admin
   const pasable=(t.servicio==='barras'||t.servicio==='proceso_cuerpos')&&(t.estado==='pendiente_senia'||t.estado==='confirmado');
@@ -329,8 +363,10 @@ function filaTurno(t,conAcciones=true){
   if(conAcciones&&t.estado!=='realizado'){
     if(t.estado==='pendiente_senia')acc+=`<button class="btn btn-ok" onclick="confirmarSenia('${t.id}')">✓ Seña recibida</button>`;
     if(d.celular)acc+=`<a class="btn" style="text-decoration:none" target="_blank" href="${waLink(d.celular,msgRecordatorio)}">WhatsApp</a>`;
+    acc+=`<button class="btn" onclick="editarTurno('${t.id}')">✏️ Editar</button>`;
     acc+=`<button class="btn btn-x" onclick="cancelar('${t.id}')">Cancelar</button>`;
   }
+  if(_editTurno===t.id)return formEditarTurno(t);
   return `<div class="row">
     <div class="hora">${esc(t.hora)}</div>
     <div class="info">
