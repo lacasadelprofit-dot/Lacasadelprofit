@@ -455,6 +455,14 @@ th{background:rgba(28,26,46,.88)!important;}
 
     <!-- CALENDARIO -->
     <div id="sec-calendario" class="sec">
+     <div style="display:flex;gap:6px;margin-bottom:14px;border-bottom:1px solid var(--border);padding-bottom:8px;flex-wrap:wrap">
+      <button class="tab-btn calTabBtn active" data-t="agenda" onclick="setCalTab('agenda')">📋 Agenda de turnos</button>
+      <button class="tab-btn calTabBtn" data-t="cal" onclick="setCalTab('cal')">📅 Calendario</button>
+     </div>
+     <div id="calTabAgenda">
+      <iframe id="agendaFrame" title="Agenda de turnos" style="width:100%;height:900px;border:0;display:block;background:transparent"></iframe>
+     </div>
+     <div id="calTabCal" style="display:none">
      <div class="kpi-grid" id="calKPIs" style="margin-bottom:16px"></div>
      <div style="display:flex;gap:6px;margin-bottom:10px">
       <button class="tab-btn calViewBtn active" data-v="mes" onclick="setCalView('mes')">📅 Mensual</button>
@@ -467,6 +475,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="calToday()">Hoy</button>
      </div>
      <div class="cg" id="calGrid"></div>
+     </div>
     </div>
 
     <!-- FINANZAS (ex Facturación) -->
@@ -1203,7 +1212,7 @@ th{background:rgba(28,26,46,.88)!important;}
           <div class="acceso-ico">📅</div>
           <div class="acceso-info">
             <div class="acceso-titulo">Agenda de turnos</div>
-            <div class="acceso-desc">Turnos de la web, señas, bloqueos y fechas de clase</div>
+            <div class="acceso-desc">También en 📅 Calendario → 📋 Agenda de turnos</div>
           </div>
           <span class="acceso-ext">↗</span>
         </a>
@@ -4156,6 +4165,29 @@ function cobrarSaldo(id){
 }
 
 /* CALENDARIO */
+// Pestañas de Calendario: 📋 Agenda de turnos (agenda.html embebida, primera) y 📅 Calendario
+let _calTab='agenda';
+function setCalTab(t){
+  _calTab=t;
+  document.querySelectorAll('.calTabBtn').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
+  const ag=document.getElementById('calTabAgenda'),ca=document.getElementById('calTabCal');
+  if(ag)ag.style.display=t==='agenda'?'':'none';
+  if(ca)ca.style.display=t==='cal'?'':'none';
+  if(t==='agenda'){
+    const f=document.getElementById('agendaFrame');
+    if(f&&!f.getAttribute('src'))f.setAttribute('src','agenda.html?embed=1');
+  }else{
+    _turnosWebTs=0; // lo cambiado en la agenda se ve al volver al calendario
+    renderCal();
+  }
+}
+window.addEventListener('message',e=>{
+  if(e.origin!==location.origin||!e.data)return;
+  if(typeof e.data.agendaToast==='string'){toast(e.data.agendaToast);return;}
+  if(typeof e.data.agendaH!=='number')return;
+  const f=document.getElementById('agendaFrame');
+  if(f)f.style.height=Math.max(400,e.data.agendaH+20)+'px';
+});
 let calDate=new Date();
 let _calView='mes';
 function setCalView(v){
@@ -4233,6 +4265,7 @@ async function pasarASesion(id){
   _turnoAPasar={id:t.id,fecha:t.fecha};
 }
 function renderCal(){
+  if(_calTab==='agenda'){const f=document.getElementById('agendaFrame');if(f&&!f.getAttribute('src'))f.setAttribute('src','agenda.html?embed=1');}
   cargarTurnosWeb();
   _renderCalKPIs();
   if(_calView==='sem'){renderCalSemana();return;}

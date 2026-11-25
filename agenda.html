@@ -59,6 +59,10 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
 #loginErr{color:var(--red);font-size:12px;text-align:center;min-height:16px;}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card2);border:1px solid var(--gold);padding:10px 18px;border-radius:10px;display:none;z-index:9;}
 @media(max-width:640px){.kpis{grid-template-columns:repeat(2,1fr);}.row .acc{width:100%;}}
+/* Embebida dentro del admin (Calendario → Agenda de turnos) */
+body.embed .wrap{max-width:none;padding:0 0 20px;}
+body.embed header h1,body.embed .solo-suelta{display:none;}
+body.embed header{margin-bottom:12px;justify-content:flex-end;}
 </style>
 </head>
 <body>
@@ -73,10 +77,10 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
 
 <div id="app" class="wrap" style="display:none">
   <header>
-    <h1>📅 Agenda de Turnos<small>juancruzconsciencia.lat · Posada Luz y Brillo, Búzios · Lun a Vie 08:00 / 09:20 / 10:40 · 18:30 / 19:50 (1 h + 20 min de pausa)</small></h1>
+    <h1>📅 Agenda de Turnos<small>juancruzconsciencia.lat · Búzios y alrededores · Lun a Vie 08:00 / 09:20 / 10:40 · 18:30 / 19:50 (1 h + 20 min de pausa)</small></h1>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="cargar()">↻ Actualizar</button>
-      <a class="btn" href="index.html" style="text-decoration:none">← Admin</a>
+      <a class="btn solo-suelta" href="index.html" style="text-decoration:none">← Admin</a>
     </div>
   </header>
 
@@ -145,6 +149,14 @@ input,select{padding:9px 12px;border:1px solid var(--border);border-radius:10px;
 const SUPA_URL='https://vffmnyjjawvvctcqzkvj.supabase.co';
 const SUPA_KEY='sb_publishable_A1rJIiXHSg6TQYT2gKQHUw_UTwmS76t';
 const _sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+// Modo embebido: dentro del admin avisa su altura para que el iframe crezca sin doble scroll
+const EMBED=new URLSearchParams(location.search).has('embed')&&window.parent!==window;
+if(EMBED){
+  document.body.classList.add('embed');
+  const avisarAltura=()=>parent.postMessage({agendaH:document.documentElement.scrollHeight},location.origin);
+  new ResizeObserver(avisarAltura).observe(document.body);
+  window.addEventListener('load',avisarAltura);
+}
 const HORAS=['08:00','09:20','10:40','18:30','19:50'];
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
 const SENIA={barras:'R$ 100 / USD 30 / $30.000 ARS',proceso_cuerpos:'R$ 150 / USD 35 / $45.000 ARS'};
@@ -154,7 +166,7 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const hoyBR=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
 const sumarDias=(iso,n)=>{const d=new Date(iso+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+n);return d.toISOString().slice(0,10);};
 const fmt=(iso,o={weekday:'long',day:'numeric',month:'long'})=>new Date(iso+'T12:00:00Z').toLocaleDateString('es-AR',{timeZone:'UTC',...o});
-function toast(m){const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600);}
+function toast(m){if(EMBED){parent.postMessage({agendaToast:String(m)},location.origin);return;}const t=document.getElementById('toast');t.textContent=m;t.style.display='block';clearTimeout(t._h);t._h=setTimeout(()=>t.style.display='none',2600);}
 function waLink(cel,txt){return `https://wa.me/${esc(cel)}${txt?'?text='+encodeURIComponent(txt):''}`;}
 
 /* ── AUTH (misma sesión que el admin) ── */
