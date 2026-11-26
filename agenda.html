@@ -77,7 +77,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
 
 <div id="app" class="wrap" style="display:none">
   <header>
-    <h1>📅 Agenda de Turnos<small>juancruzconsciencia.lat · Búzios y alrededores · Lun a Vie 08:00 / 09:20 / 10:40 · 18:30 / 19:50 (1 h + 20 min de pausa)</small></h1>
+    <h1>📅 Agenda de Turnos<small id="subHoras">juancruzconsciencia.lat · Búzios y alrededores</small></h1>
     <div style="display:flex;gap:8px">
       <button class="btn" onclick="cargar()">↻ Actualizar</button>
       <a class="btn solo-suelta" href="index.html" style="text-decoration:none">← Admin</a>
@@ -92,6 +92,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
     <button class="tab" data-tab="clase" onclick="setTab('clase')">Clase de Barras</button>
     <button class="tab" data-tab="historial" onclick="setTab('historial')">Historial</button>
     <button class="tab" data-tab="comisiones" onclick="setTab('comisiones')">💸 Comisiones</button>
+    <button class="tab" data-tab="horarios" onclick="setTab('horarios')">⏰ Horarios</button>
   </div>
 
   <div id="tab-proximos">
@@ -100,7 +101,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
       <p class="det" style="margin:0 0 12px">Para cuando alguien te escribe por WhatsApp o en persona. El horario queda ocupado en la web al instante.</p>
       <div class="form">
         <label>Fecha<input type="date" id="mFecha"></label>
-        <label>Horario<select id="mHora"><option>08:00</option><option>09:20</option><option>10:40</option><option>18:30</option><option>19:50</option></select></label>
+        <label>Horario<select id="mHora"></select></label>
         <label>Sesión<select id="mServ"><option value="barras">Barras de Access</option><option value="proceso_cuerpos">Proceso de Cuerpos</option></select></label>
         <label style="flex:1;min-width:150px">Nombre<input id="mNombre" placeholder="Nombre y apellido"></label>
         <label>WhatsApp<input id="mCel" type="tel" placeholder="Con código de país" style="width:170px"></label>
@@ -120,7 +121,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
       <p class="det" style="margin:0 0 12px">Vacaciones, feriados, un compromiso. Lo bloqueado deja de aparecer en la web. Para liberarlo, tocá "Desbloquear".</p>
       <div class="form">
         <label>Fecha<input type="date" id="bFecha"></label>
-        <label>Horario<select id="bHora"><option value="todo">Todo el día</option><option>08:00</option><option>09:20</option><option>10:40</option><option>18:30</option><option>19:50</option></select></label>
+        <label>Horario<select id="bHora"></select></label>
         <label style="flex:1;min-width:160px">Motivo (solo lo ves vos)<input id="bMotivo" placeholder="Ej: viaje"></label>
         <button class="btn btn-p" onclick="bloquear()">Bloquear</button>
       </div>
@@ -145,6 +146,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
 
   <div id="tab-historial" style="display:none"></div>
   <div id="tab-comisiones" style="display:none"></div>
+  <div id="tab-horarios" style="display:none"></div>
 </div>
 
 <div id="toast"></div>
@@ -161,7 +163,12 @@ if(EMBED){
   new ResizeObserver(avisarAltura).observe(document.body);
   window.addEventListener('load',avisarAltura);
 }
-const HORAS=['08:00','09:20','10:40','18:30','19:50'];
+/* Horarios y días de la agenda: se editan en ⏰ Horarios y se guardan en configuracion 'cfg_agenda'
+   (los lee también la web con agenda_config() y los valida reservar_turno, SQL 57). */
+const HORAS_DEF=['08:00','09:20','10:40','18:30','19:50'],DIAS_DEF=[1,2,3,4,5];
+let HORAS=[...HORAS_DEF],DIAS=[...DIAS_DEF],_hEdit=null;
+const DIAS_N=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const ordenH=a=>[...new Set(a)].sort();
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
 const SENIA={barras:'R$ 100 / USD 30 / $30.000 ARS',proceso_cuerpos:'R$ 150 / USD 35 / $45.000 ARS'};
 let turnos=[], clases=[], _tab='proximos', _editClase=null, _editTurno=null;
@@ -266,11 +273,12 @@ async function cargar(){
   const [t,c,cfg]=await Promise.all([
     _sb.from('turnos').select('*').gte('fecha',desde).order('fecha').order('hora'),
     _sb.from('clase_fechas').select('*').order('fecha'),
-    _sb.from('configuracion').select('id,data').in('id',['cfg_aliados_ruta','cfg_vendedores','cfg_comisiones','cfg_recomendadores'])
+    _sb.from('configuracion').select('id,data').in('id',['cfg_aliados_ruta','cfg_vendedores','cfg_comisiones','cfg_recomendadores','cfg_agenda'])
   ]);
   const cf=id=>(cfg.data||[]).find(r=>r.id===id)?.data||{};
   aliados=cf('cfg_aliados_ruta').lugares||[];vendedores=cf('cfg_vendedores').lista||[];personas=cf('cfg_recomendadores').lista||[];_perTurnos=null;tasas={...TASAS_DEF,...(cf('cfg_comisiones').tasas||{})};
   _comTurnos=null;
+  {const ag=cf('cfg_agenda');HORAS=Array.isArray(ag.horas)&&ag.horas.length?ordenH(ag.horas):[...HORAS_DEF];DIAS=Array.isArray(ag.dias)&&ag.dias.length?ag.dias.map(Number):[...DIAS_DEF];}
   if(t.error||c.error){
     const e=t.error||c.error;console.warn(e);
     document.getElementById('listaProximos').innerHTML=`<div class="card">⚠️ No se pudo cargar la agenda: ${esc(e.message)}<div class="det">Si dice que la tabla no existe, falta correr <b>4_BASE_DE_DATOS/29_agenda_turnos.sql</b> en Supabase.</div></div>`;
@@ -442,8 +450,9 @@ async function toggleClase(id,activo){
 function setTab(t){
   _tab=t;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
-  ['proximos','bloqueos','clase','historial','comisiones'].forEach(k=>document.getElementById('tab-'+k).style.display=k===t?'':'none');
+  ['proximos','bloqueos','clase','historial','comisiones','horarios'].forEach(k=>document.getElementById('tab-'+k).style.display=k===t?'':'none');
   if(t==='comisiones')renderComisiones();
+  if(t==='horarios')renderHorarios();
 }
 function badge(e){
   return {pendiente_senia:'<span class="badge b-pend">Falta seña</span>',confirmado:'<span class="badge b-ok">Confirmado</span>',
@@ -479,6 +488,10 @@ function filaTurno(t,conAcciones=true){
 }
 function render(){
   const hoy=hoyBR();
+  {const m=mHora.value,b=bHora.value;mHora.innerHTML=HORAS.map(h=>`<option>${h}</option>`).join('');bHora.innerHTML='<option value="todo">Todo el día</option>'+HORAS.map(h=>`<option>${h}</option>`).join('');
+   if(HORAS.includes(m))mHora.value=m;if(b==='todo'||HORAS.includes(b))bHora.value=b;
+   subHoras.textContent='juancruzconsciencia.lat · Búzios y alrededores · '+[1,2,3,4,5,6,0].filter(d=>DIAS.includes(d)).map(d=>DIAS_N[d]).join(' ')+' · '+HORAS.join(' / ');}
+  if(_tab==='horarios')renderHorarios();
   {const a=mTrae.value,b=mEsp.value;mTrae.innerHTML=opcionesQuien(null);mEsp.innerHTML=opcionesQuien(null,false);mTrae.value=a;mEsp.value=b;}
   if(_tab==='comisiones')renderComisiones();
   const act=turnos.filter(t=>t.estado!=='cancelado');
@@ -488,8 +501,8 @@ function render(){
   const dow=new Date(hoy+'T12:00:00Z').getUTCDay();
   const lunes=sumarDias(hoy,dow===0?1:dow===6?2:1-dow);
   let libresSemana=0;
-  for(let i=0;i<5;i++){
-    const f=sumarDias(lunes,i);if(f<hoy)continue;
+  for(let i=0;i<7;i++){
+    const f=sumarDias(lunes,i);if(f<hoy||!DIAS.includes(new Date(f+'T12:00:00Z').getUTCDay()))continue;
     if(act.some(t=>t.fecha===f&&t.hora==='todo'))continue;
     HORAS.forEach(h=>{if(!act.some(t=>t.fecha===f&&t.hora===h))libresSemana++;});
   }
@@ -505,7 +518,7 @@ function render(){
     const f=sumarDias(hoy,i);
     const wd=new Date(f+'T12:00:00Z').getUTCDay();
     const delDia=act.filter(t=>t.fecha===f&&t.servicio!=='clase_barras');
-    if((wd===0||wd===6)&&!delDia.length)continue;
+    if(!DIAS.includes(wd)&&!delDia.length)continue;
     const diaEntero=delDia.find(t=>t.hora==='todo');
     html+=`<div class="dia"><div class="dia-h${i===0?' hoy':''}">${i===0?'Hoy · ':''}${fmt(f)}</div>`;
     if(diaEntero){
@@ -513,7 +526,7 @@ function render(){
       // Turnos que ya estaban reservados antes del bloqueo: siguen visibles para avisarle a la persona
       html+=delDia.filter(t=>t.servicio!=='bloqueo').map(t=>filaTurno(t)).join('');
     }
-    else HORAS.forEach(h=>{
+    else ordenH([...HORAS,...delDia.filter(x=>x.hora!=='todo').map(x=>x.hora)]).forEach(h=>{
       const t=delDia.find(x=>x.hora===h);
       if(!t)html+=`<div class="row libre"><div class="hora" style="color:var(--muted)">${h}</div>Libre<button class="btn" style="margin-left:auto" onclick="prepararManual('${f}','${h}')">+ Agendar</button></div>`;
       else if(t.servicio==='bloqueo')html+=`<div class="row libre"><div class="hora" style="color:var(--muted)">${h}</div>⛔ Bloqueado${t.data?.motivo?' · '+esc(t.data.motivo):''}<button class="btn" style="margin-left:auto" onclick="desbloquear('${t.id}')">Desbloquear</button></div>`;
@@ -777,6 +790,66 @@ function htmlPersonas(){
         <button class="btn" onclick="editarPersona('${p.id}')">✏️</button></div>
     </div>`;}).join(''):'<div class="vacio">Todavía no hay personas cargadas. Se agregan acá o desde «Lo trajo» al agendar o editar un turno.</div>'}
     <div class="det">Recomendación directa: elegís a la persona en «Lo trajo». Cobra ${tasas.per_ses}% de la sesión (${tasas.per_cla}% de la clase), o si prefiere, cada ${PER_META} personas que vinieron gana una sesión de regalo. Para el regalo cuentan solo las sesiones ya hechas (las clases no), y se juntan todas desde el principio.</div></div>`;
+}
+/* ── ⏰ HORARIOS: sumar, cambiar o sacar horarios y elegir los días de la web ── */
+function renderHorarios(){
+  const el=document.getElementById('tab-horarios'),hoy=hoyBR();
+  const fut=h=>turnos.filter(t=>t.hora===h&&t.fecha>=hoy&&t.estado!=='cancelado'&&t.servicio!=='clase_barras'&&t.servicio!=='bloqueo');
+  const viejos=ordenH(turnos.filter(t=>t.fecha>=hoy&&t.estado!=='cancelado'&&t.servicio!=='clase_barras'&&t.servicio!=='bloqueo'&&t.hora!=='todo'&&!HORAS.includes(t.hora)).map(t=>t.hora));
+  el.innerHTML=`<div class="card">
+      <h2>Horarios de los turnos</h2>
+      <p class="det" style="margin:0 0 14px">Son los horarios que ve la gente en la web y en las landings de los aliados, y los de esta agenda. Cada turno dura 1 hora: dejá al menos 1 h entre uno y otro (más la pausa que quieras).</p>
+      <div style="display:flex;flex-direction:column;gap:8px;max-width:560px">
+        ${HORAS.map(h=>{const n=fut(h).length;return _hEdit===h?`<div class="row" style="border-color:var(--gold)"><div class="form" style="width:100%">
+            <label>Cambiar ${h} por<input type="time" id="hNueva" value="${h}" step="300"></label>
+            <button class="btn btn-p" onclick="cambiarHora('${h}')">Guardar</button><button class="btn" onclick="_hEdit=null;renderHorarios()">Cancelar</button>
+            ${n?`<div class="det" style="width:100%">⚠️ Hay ${n} turno${n===1?'':'s'} próximo${n===1?'':'s'} a las ${h}: no se mueven solos (quedan a las ${h} y se siguen viendo). Si hace falta, cambialos con ✏️ Editar en cada uno.</div>`:''}</div></div>`
+          :`<div class="row" style="padding:10px 14px"><div class="hora">${h}</div><div class="info"><div class="s">${n?n+' turno'+(n===1?'':'s')+' próximo'+(n===1?'':'s'):'sin turnos próximos'}</div></div>
+            <div class="acc"><button class="btn" onclick="_hEdit='${h}';renderHorarios()">✏️ Cambiar</button><button class="btn btn-x" onclick="sacarHora('${h}')">🗑 Sacar</button></div></div>`;}).join('')}
+      </div>
+      <div class="form" style="margin-top:14px">
+        <label>Nuevo horario<input type="time" id="hAgregar" step="300"></label>
+        <button class="btn btn-p" onclick="agregarHora()">+ Sumar horario</button>
+      </div>
+      ${viejos.length?`<div class="det" style="margin-top:12px">Turnos próximos en horarios que ya no están en la lista: <b>${viejos.join(', ')}</b>. Se siguen viendo en Próximos turnos.</div>`:''}
+    </div>
+    <div class="card">
+      <h2>Días que se ofrecen en la web</h2>
+      <p class="det" style="margin:0 0 12px">La web general y las landings muestran estos días. Además, cada aliado puede tener días propios (Aliados → 🔗) aunque no estén acá.</p>
+      <div class="form">${[1,2,3,4,5,6,0].map(d=>`<label style="flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--text)"><input type="checkbox" class="hDia" value="${d}" ${DIAS.includes(d)?'checked':''}> ${DIAS_N[d]}</label>`).join('')}
+        <button class="btn btn-p" onclick="guardarDias()">Guardar días</button></div>
+    </div>
+    <div class="det">Para que la web tome estos cambios tiene que estar corrido <b>4_BASE_DE_DATOS/57_agenda_horarios.sql</b> en Supabase (una sola vez).</div>`;
+}
+async function guardarAgendaCfg(horas,dias,msg){
+  const {error}=await _sb.from('configuracion').upsert({id:'cfg_agenda',data:{horas,dias,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+  if(error){toast('Error: '+error.message);return false;}
+  HORAS=horas;DIAS=dias;_hEdit=null;toast(msg);render();return true;
+}
+const horaOk=h=>/^\d{2}:\d{2}$/.test(h||'');
+function agregarHora(){
+  const h=document.getElementById('hAgregar').value;
+  if(!horaOk(h)){toast('Elegí un horario');return;}
+  if(HORAS.includes(h)){toast('Ese horario ya está');return;}
+  guardarAgendaCfg(ordenH([...HORAS,h]),DIAS,'✓ Sumado '+h+' · ya aparece en la web');
+}
+function cambiarHora(vieja){
+  const h=document.getElementById('hNueva').value;
+  if(!horaOk(h)){toast('Elegí un horario');return;}
+  if(h===vieja){_hEdit=null;renderHorarios();return;}
+  if(HORAS.includes(h)){toast('Ese horario ya está en la lista');return;}
+  guardarAgendaCfg(ordenH(HORAS.map(x=>x===vieja?h:x)),DIAS,'✓ '+vieja+' → '+h);
+}
+function sacarHora(h){
+  if(HORAS.length<=1){toast('Tiene que quedar al menos un horario');return;}
+  const n=turnos.filter(t=>t.hora===h&&t.fecha>=hoyBR()&&t.estado!=='cancelado'&&t.servicio!=='clase_barras'&&t.servicio!=='bloqueo').length;
+  if(!confirm('¿Sacar el horario de las '+h+'? Deja de ofrecerse en la web.'+(n?'\n\nHay '+n+' turno'+(n===1?'':'s')+' próximo'+(n===1?'':'s')+' a esa hora: se mantienen y se siguen viendo.':'')))return;
+  guardarAgendaCfg(HORAS.filter(x=>x!==h),DIAS,'Horario '+h+' sacado');
+}
+function guardarDias(){
+  const d=[...document.querySelectorAll('.hDia:checked')].map(x=>+x.value);
+  if(!d.length){toast('Elegí al menos un día');return;}
+  guardarAgendaCfg(HORAS,d,'✓ Días guardados');
 }
 function copiar(txt){(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('🔗 Link copiado')).catch(()=>prompt('Copiá el link:',txt));}
 </script>

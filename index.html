@@ -8302,14 +8302,20 @@ function saveSes(){
 }
 // Ocupa en la agenda de la web (tabla turnos) los horarios que pisa una sesión de Juan Cruz.
 // Mismos horarios que AGENDA.horas de la landing y HORAS de agenda.html.
-const AGENDA_HORAS=['08:00','09:20','10:40','18:30','19:50'];
+let AGENDA_HORAS=['08:00','09:20','10:40','18:30','19:50'],AGENDA_DIAS=[1,2,3,4,5],_agHorasOk=false;  // se reemplazan con cfg_agenda (Agenda → ⏰ Horarios)
+async function _agendaHorasCargar(){
+  if(_agHorasOk)return;
+  try{const {data}=await _sb.from('configuracion').select('data').eq('id','cfg_agenda').maybeSingle();
+    const h=data?.data?.horas,d=data?.data?.dias;if(Array.isArray(h)&&h.length){AGENDA_HORAS=[...new Set(h)].sort();ALI_HORAS=AGENDA_HORAS;}if(Array.isArray(d)&&d.length)AGENDA_DIAS=d.map(Number);_agHorasOk=true;}catch(e){}
+}
 async function syncTurnoWeb(ses,borrar){
   try{
+    await _agendaHorasCargar();
     await _sb.from('turnos').delete().eq('estado','bloqueado').eq('data->>sesId',String(ses.id));
     if(borrar||!ses.hora||!ses.fecha||ses.estado==='Cancelado')return;
     if(ses.facilitador&&!/juan cruz/i.test(ses.facilitador))return;
     const dow=new Date(ses.fecha+'T12:00').getDay();
-    if(dow<1||dow>5||ses.fecha<new Date().toLocaleDateString('sv'))return;
+    if(!AGENDA_DIAS.includes(dow)||ses.fecha<new Date().toLocaleDateString('sv'))return;
     const min=h=>{const[a,b]=h.split(':').map(Number);return a*60+b;};
     const ini=min(ses.hora);
     for(const hora of AGENDA_HORAS.filter(h=>min(h)<ini+60&&ini<min(h)+60)){
@@ -15800,6 +15806,7 @@ function _aliIrVista(v){
 }
 let _ali=null,_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:'',zona:'',contacto:''},_aliOrden={k:'ciudad',d:1},_aliMap=null,_aliCapa=null,_aliUbicando=null;
 async function _aliCargar(){
+  await _agendaHorasCargar();
   if(_ali)return _ali;
   try{const {data}=await _sb.from('configuracion').select('data').eq('id',ALI_ID).maybeSingle();
     _ali=data?.data?.lugares?data.data.lugares:JSON.parse(JSON.stringify(ALI_DEF));}
@@ -15983,7 +15990,7 @@ async function _aliSet(id,campo,val){
    (para la comisión); las de WhatsApp llegan con el código entre paréntesis al final del mensaje. */
 const ALI_WEB='https://www.juancruzconsciencia.lat/';  // link del lugar: juancruzconsciencia.lat/CÓDIGO (vercel.json de JuanCruz-registro → aliado.html)
 const ALI_RESERVADOS=['api','img_v2','index','aliado','aliados','sesiones','explorar','comunidad','camino','tesoro','ruleta','regalos','registro','privacidad','terminos','vision','agenda','admin','www'];
-const ALI_HORAS=['08:00','09:20','10:40','18:30','19:50']; // mismos horarios que la agenda
+let ALI_HORAS=['08:00','09:20','10:40','18:30','19:50']; // se reemplaza con cfg_agenda (Agenda → ⏰ Horarios)
 let _aliLand=null,_aliLandStats={};
 const _aliSlug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&/g,' y ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
 let _qrLibP=null;
