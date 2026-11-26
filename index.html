@@ -15702,11 +15702,13 @@ async function renderMktEstrategia(){
       <button class="tab-btn ${_estSub==='flujo'?'active':''}" onclick="_estSub='flujo';renderMktEstrategia()">🔄 Flujo de trabajo</button>
       <button class="tab-btn ${_estSub==='piezas'?'active':''}" onclick="_estSub='piezas';renderMktEstrategia()">🔢 Plan en números</button>
       <button class="tab-btn ${_estSub==='aliados'?'active':''}" onclick="_estSub='aliados';renderMktEstrategia()">🏨 Aliados · ruta y mapa</button>
+      <button class="tab-btn ${_estSub==='activos'?'active':''}" onclick="_estSub='activos';renderMktEstrategia()">🟢 Aliados activos</button>
       <button class="tab-btn ${_estSub==='tesoro'?'active':''}" onclick="_estSub='tesoro';renderMktEstrategia()">🗺️ Búsqueda del tesoro</button>
     </div><div id="estVision"></div><div id="estFlujo"></div><div id="estPiezas"></div><div id="estAliados"></div>${_estSub==='tesoro'?'<div id="mktTesoro"></div>':''}`;
   if(_estSub==='tesoro'){renderMktTesoro();return;}
   if(_estSub==='piezas'){renderPlanNumeros();return;}
   if(_estSub==='aliados'){renderAliadosRuta();return;}
+  if(_estSub==='activos'){renderAliadosActivos();return;}
   if(_estSub==='flujo'){renderFlujoTrabajo();return;}
   const el=document.getElementById('estVision');
   if(!_est){
@@ -15971,6 +15973,7 @@ async function _aliSet(id,campo,val){
    datos públicos y solo si está activa. Las reservas online que llegan por la landing quedan con data.aliado = código
    (para la comisión); las de WhatsApp llegan con el código entre paréntesis al final del mensaje. */
 const ALI_WEB='https://www.juancruzconsciencia.lat/aliado.html?a=';
+const ALI_HORAS=['08:00','09:20','10:40','18:30','19:50']; // mismos horarios que la agenda
 let _aliLand=null,_aliLandStats={};
 const _aliSlug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&/g,' y ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
 let _qrLibP=null;
@@ -15989,6 +15992,94 @@ async function _qrDibujar(canvas,texto,px,margen=4,color='#1B1712'){
   c.fillStyle='#fff';c.fillRect(0,0,lado,lado);c.fillStyle=color;
   for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))c.fillRect((k+margen)*cel,(r+margen)*cel,cel,cel);
   return canvas;
+}
+/* ══════════ ALIADOS · 🟢 Activos: solo los lugares en estado «Aliado activo», con resumen arriba ══════════
+   Datos: lugares (cfg_aliados_ruta), visitas de sus landings (regalo_eventos pagina 'aliado', 30 días),
+   turnos de los últimos 120 días vinculados al aliado (data.aliado = código de su landing, data.trae aliado,
+   data.espacio, o espacio de la clase) y % de comisión de Agenda → 💸 Comisiones (cfg_comisiones). */
+const _ACT_TASAS={ses_trae:20,ses_esp:20,cla_trae:10,cla_esp:10};
+const _ACT_PRECIO={barras:['R$',200],proceso_cuerpos:['R$',300],clase_barras:['USD',330]};
+let _aliActDatos=null;
+async function _aliActCargar(){
+  const desde=new Date(Date.now()-120*864e5).toISOString().slice(0,10),desde30=new Date(Date.now()-30*864e5).toISOString();
+  const [t,c,cf,ev]=await Promise.all([
+    _sb.from('turnos').select('id,fecha,hora,servicio,estado,data').gte('fecha',desde).neq('estado','cancelado').neq('servicio','bloqueo'),
+    _sb.from('clase_fechas').select('id,data'),
+    _sb.from('configuracion').select('data').eq('id','cfg_comisiones').maybeSingle(),
+    _sb.from('regalo_eventos').select('data,created_at').filter('data->>pagina','eq','aliado').gte('created_at',desde30).limit(10000)
+  ]);
+  _aliActDatos={turnos:t.data||[],clases:c.data||[],tasas:{..._ACT_TASAS,...(cf.data?.data?.tasas||{})},eventos:ev.data||[],cargado:Date.now()};
+}
+function _aliActCalc(a){
+  const D=_aliActDatos,slug=a.landing?.slug||'',hoy=new Date().toISOString().slice(0,10),mes=hoy.slice(0,7);
+  const r={vis:0,wa:0,res:0,resMes:0,hechas:0,esp:0,pend:{},pagado:{},ult:''};
+  D.eventos.forEach(e=>{if(slug&&e.data?.aliado===slug){if(e.data.tipo==='page_view')r.vis++;else if(e.data.tipo==='click_wa')r.wa++;}});
+  const sum=(o,m,v)=>o[m]=(o[m]||0)+v;
+  D.turnos.forEach(t=>{
+    const d=t.data||{},clase=t.servicio==='clase_barras';
+    const trae='trae' in d?(d.trae?.tipo==='aliado'&&d.trae.id===a.id):(!!slug&&d.aliado===slug);
+    const espObj='espacio' in d?d.espacio:(clase?D.clases.find(c=>c.id===d.claseId)?.data?.espacio:null);
+    const esp=espObj?.id===a.id;
+    if(!trae&&!esp)return;
+    const hecho=t.estado==='realizado'||((t.estado==='confirmado'||t.estado==='inscripto')&&t.fecha<=hoy);
+    const [m,base]=d.precio!=null&&d.precio!==''?[d.moneda||(clase?'USD':'R$'),+d.precio]:(d.pack==='mes_energetico'?['R$',700]:(_ACT_PRECIO[t.servicio]||['R$',0]));
+    if(trae){r.res++;if((t.fecha||'').slice(0,7)===mes)r.resMes++;if(hecho)r.hechas++;
+      const v=base*(+(clase?D.tasas.cla_trae:D.tasas.ses_trae)||0)/100;if(hecho)sum(d.com_pag_trae?r.pagado:r.pend,m,v);}
+    if(esp){r.esp++;const v=base*(+(clase?D.tasas.cla_esp:D.tasas.ses_esp)||0)/100;if(hecho)sum(d.com_pag_esp?r.pagado:r.pend,m,v);}
+    if((t.fecha||'')>r.ult)r.ult=t.fecha;
+  });
+  return r;
+}
+async function renderAliadosActivos(forzar){
+  const el=document.getElementById('estAliados');if(!el)return;
+  await _aliCargar();
+  if(!_aliActDatos||forzar){el.innerHTML='<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Cargando aliados activos…</div>';
+    try{await _aliActCargar();}catch(e){el.innerHTML='<div class="kc">⚠️ No se pudieron cargar los datos: '+_estE(e.message||e)+'</div>';return;}}
+  const E=_estE,act=_ali.filter(a=>a.estado==='aliado').sort((x,y)=>x.nombre.localeCompare(y.nombre));
+  const fm=o=>Object.entries(o).map(([m,v])=>m+' '+Math.round(v).toLocaleString('es-AR')).join(' + ')||'—';
+  const tot={vis:0,res:0,resMes:0,hechas:0,pend:{},pagado:{}},calc={};
+  act.forEach(a=>{const r=calc[a.id]=_aliActCalc(a);tot.vis+=r.vis;tot.res+=r.res;tot.resMes+=r.resMes;tot.hechas+=r.hechas;
+    Object.entries(r.pend).forEach(([m,v])=>tot.pend[m]=(tot.pend[m]||0)+v);Object.entries(r.pagado).forEach(([m,v])=>tot.pagado[m]=(tot.pagado[m]||0)+v);});
+  const conLanding=act.filter(a=>a.landing?.slug&&a.landing.activa!==false).length;
+  const DIAS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const wa=t=>{const m=String(t||'').match(/\(?(\d{2})\)?\s*(9?\d{4})-?(\d{4})/);return m?'https://wa.me/55'+m[1]+m[2]+m[3]:'';};
+  const kpi=(i,l,v,s,cls)=>`<div class="kc ${cls||''}"><div class="ki">${i}</div><div class="kl">${l}</div><div class="kv" style="${String(v).length>10?'font-size:18px':''}">${v}</div><div class="ks">${s}</div></div>`;
+  el.innerHTML=`
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--muted)">Solo los lugares en <b style="color:#5DD89A">🟢 Aliado activo</b>. El estado se cambia en «🏨 Aliados · ruta y mapa». Movimientos de los últimos 120 días.</div>
+      <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="renderAliadosActivos(true)">↻ Actualizar</button>
+    </div>
+    <div class="kpi-grid">
+      ${kpi('🟢','Aliados activos',act.length,conLanding+' con landing publicada','gr')}
+      ${kpi('👀','Visitas a sus landings',tot.vis,'últimos 30 días','bl')}
+      ${kpi('📅','Reservas que trajeron',tot.res,tot.resMes+' este mes · '+tot.hechas+' ya realizadas','go')}
+      ${kpi('💸','Comisiones a pagar',fm(tot.pend),'pagado: '+fm(tot.pagado)+' · detalle en Agenda → 💸','pu')}
+    </div>
+    ${act.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,330px),1fr));gap:12px">${act.map(a=>{
+      const r=calc[a.id],L=a.landing||{},w=wa(a.tel);
+      const dias=L.disp?.dias?.length?[1,2,3,4,5,6,0].filter(d=>L.disp.dias.map(Number).includes(d)).map(d=>DIAS[d]).join(' · '):'Lun a Vie';
+      const horas=L.disp?.horas?.length?L.disp.horas.join(' · '):'todos los horarios';
+      const est=!L.slug?'<span style="color:var(--muted)">Sin landing</span>':L.activa===false?'<span style="color:#E8836A">Landing apagada</span>':'<span style="color:#5DD89A">Landing publicada</span>';
+      const st=(n,l)=>`<div style="flex:1;min-width:62px;text-align:center"><div style="font-size:17px;font-weight:800;color:var(--gl)">${n}</div><div style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">${l}</div></div>`;
+      return `<div style="background:var(--card2);border:1px solid rgba(61,170,106,.4);border-radius:12px;padding:14px">
+        <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
+          <div><div style="font-weight:800;font-size:14px">${E(a.nombre)}</div>
+            <div style="font-size:11.5px;color:var(--muted)">${E(a.ciudad)}${a.barrio?' · '+E(a.barrio):''} · ${E(ALI_NIVEL[a.nivel]?.l||a.nivel||'')}</div></div>
+          <div style="font-size:11px;font-weight:700;white-space:nowrap">${est}</div>
+        </div>
+        <div style="font-size:11.5px;margin:8px 0;color:var(--text)">📅 ${E(dias)} <span style="color:var(--muted)">· ${E(horas)}</span></div>
+        <div style="display:flex;gap:4px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:8px 0;margin:8px 0">
+          ${st(r.vis,'Visitas 30 d')}${st(r.res,'Reservas')}${st(r.esp,'En su espacio')}${st(fm(r.pend),'A pagar')}
+        </div>
+        ${a.notas?`<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">📝 ${E(a.notas)}</div>`:''}
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" onclick="_estSub='aliados';_aliLand=null;renderMktEstrategia();setTimeout(()=>_aliAbrirLanding('${a.id}'),400)">🔗 Landing y QR</button>
+          ${L.slug&&L.activa!==false?`<a class="btn btn-s btn-sm" href="${ALI_WEB+E(L.slug)}" target="_blank" style="text-decoration:none">↗ Ver página</a>`:''}
+          ${w?`<a class="btn btn-s btn-sm" href="${w}" target="_blank" style="text-decoration:none">💬 WhatsApp</a>`:''}
+        </div>
+        ${r.ult?`<div style="font-size:10.5px;color:var(--muted);margin-top:8px">Último turno: ${new Date(r.ult+'T12:00:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</div>`:''}
+      </div>`;}).join('')}</div>`
+    :'<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Todavía no hay aliados activos. Cuando un lugar pase a <b>🟢 Aliado activo</b> en «🏨 Aliados · ruta y mapa», aparece acá.</div>'}`;
 }
 function _aliAbrirLanding(id){
   _aliLand=_aliLand===id?null:id;_aliEdit=null;renderAliadosRuta();
@@ -16018,6 +16109,13 @@ function _aliLandingHtml(){
           ${fg('Foto del lugar (opcional)',`<input type="file" accept="image/*" onchange="_aliLandSubirFoto(this)" style="${_ALI_CTL};padding:6px 8px">`,'<span id="aliLFotoEst">Vacío = video de una sesión.</span>')}
         </div>
         <input id="aliLFoto" style="${_ALI_CTL}" value="${E(L.foto||'')}" placeholder="o pegá un link https:// de la foto">
+        ${(()=>{const dd=L.disp?.dias?.length?L.disp.dias.map(Number):[1,2,3,4,5],hh=L.disp?.horas?.length?L.disp.horas:ALI_HORAS;
+          const ck=(cls,v,l,on)=>`<label style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:5px 9px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--card)"><input type="checkbox" class="${cls}" value="${v}" ${on?'checked':''} style="width:auto;margin:0">${l}</label>`;
+          return `<div style="border:1px dashed rgba(61,170,106,.45);border-radius:10px;padding:10px 12px">
+            <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Días y horarios que recibe este lugar</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">${[[1,'Lun'],[2,'Mar'],[3,'Mié'],[4,'Jue'],[5,'Vie'],[6,'Sáb'],[0,'Dom']].map(([v,l])=>ck('aliLDia',v,l,dd.includes(v))).join('')}</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">${ALI_HORAS.map(h=>ck('aliLHora',h,h,hh.includes(h))).join('')}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:6px">En la página el huésped ve solo estos días y horarios, y solo los que están libres en tu agenda general. Reserva ahí mismo (queda «Falta seña» en la Agenda, a nombre de este aliado) y después te manda el comprobante por WhatsApp. Sábado y domingo solo se pueden reservar desde la landing del lugar que los tenga marcados (la web general sigue de lunes a viernes).</div></div>`;})()}
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <button class="btn btn-p btn-sm" onclick="_aliLandGuardar()">💾 Guardar landing</button>
           ${nueva?'<span style="font-size:11px;color:var(--gl)">Todavía no está guardada: guardá antes de probar el link o imprimir el QR.</span>':''}
@@ -16068,9 +16166,12 @@ async function _aliLandGuardar(){
   const otro=_ali.find(x=>x.id!==a.id&&x.landing?.slug===slug);if(otro){toast('⚠️ Ese código ya lo usa '+otro.nombre,'err');return;}
   const foto=v('aliLFoto');if(foto&&!/^https:\/\//.test(foto)){toast('⚠️ La foto tiene que ser un link que empiece con https://','err');return;}
   if(a.landing?.slug&&a.landing.slug!==slug&&!confirm('Cambiaste el código del link. Los QR que ya imprimiste con «'+a.landing.slug+'» van a dejar de funcionar. ¿Seguir?'))return;
+  const disp={dias:[...document.querySelectorAll('.aliLDia:checked')].map(x=>+x.value),horas:[...document.querySelectorAll('.aliLHora:checked')].map(x=>x.value)};
+  if(!disp.dias.length||!disp.horas.length){toast('⚠️ Elegí al menos un día y un horario','err');return;}
   const ahora=new Date().toISOString();
   a.landing={...(a.landing||{}),slug,activa:!!document.getElementById('aliLAct')?.checked,nombre:v('aliLNom'),beneficio:'',
-    bienvenida:v('aliLBie'),lugar:v('aliLLug'),idioma:v('aliLIdi')||'es',foto,actualizada:ahora,creada:a.landing?.creada||ahora};
+    bienvenida:v('aliLBie'),lugar:v('aliLLug'),idioma:v('aliLIdi')||'es',foto,actualizada:ahora,creada:a.landing?.creada||ahora,
+    disp};
   if(await _aliGuardar('✓ Landing guardada: '+a.nombre+(a.landing.activa?'':' (apagada)'))){renderAliadosRuta();_aliLandCargarStats(a.id);}
 }
 async function _aliLandSubirFoto(input){
