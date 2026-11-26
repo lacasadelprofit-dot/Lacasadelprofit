@@ -15701,14 +15701,13 @@ async function renderMktEstrategia(){
       <button class="tab-btn ${_estSub==='vision'?'active':''}" onclick="_estSub='vision';renderMktEstrategia()">🧭 Visión y metas</button>
       <button class="tab-btn ${_estSub==='flujo'?'active':''}" onclick="_estSub='flujo';renderMktEstrategia()">🔄 Flujo de trabajo</button>
       <button class="tab-btn ${_estSub==='piezas'?'active':''}" onclick="_estSub='piezas';renderMktEstrategia()">🔢 Plan en números</button>
-      <button class="tab-btn ${_estSub==='aliados'?'active':''}" onclick="_estSub='aliados';renderMktEstrategia()">🏨 Aliados · ruta y mapa</button>
-      <button class="tab-btn ${_estSub==='activos'?'active':''}" onclick="_estSub='activos';renderMktEstrategia()">🟢 Aliados activos</button>
+      <button class="tab-btn ${_estSub==='aliados'||_estSub==='activos'?'active':''}" onclick="_estSub='aliados';renderMktEstrategia()">🏨 Aliados</button>
       <button class="tab-btn ${_estSub==='tesoro'?'active':''}" onclick="_estSub='tesoro';renderMktEstrategia()">🗺️ Búsqueda del tesoro</button>
-    </div><div id="estVision"></div><div id="estFlujo"></div><div id="estPiezas"></div><div id="estAliados"></div>${_estSub==='tesoro'?'<div id="mktTesoro"></div>':''}`;
+    </div><div id="estVision"></div><div id="estFlujo"></div><div id="estPiezas"></div><div id="estAliTabs"></div><div id="estAliados"></div>${_estSub==='tesoro'?'<div id="mktTesoro"></div>':''}`;
   if(_estSub==='tesoro'){renderMktTesoro();return;}
   if(_estSub==='piezas'){renderPlanNumeros();return;}
-  if(_estSub==='aliados'){renderAliadosRuta();return;}
-  if(_estSub==='activos'){renderAliadosActivos();return;}
+  if(_estSub==='activos'){_estSub='aliados';_aliVista='activos';}
+  if(_estSub==='aliados'){_aliIrVista(_aliVista);return;}
   if(_estSub==='flujo'){renderFlujoTrabajo();return;}
   const el=document.getElementById('estVision');
   if(!_est){
@@ -15791,6 +15790,14 @@ const ALI_DEF=[{"id":"al01","ciudad":"Arraial do Cabo","estrellas":4,"nombre":"S
 const ALI_NIVEL={anfitrion:{l:'Anfitrión',c:'#C9A84C'},sede:{l:'Sede',c:'#9B82D4'},recomendador:{l:'Recomendador',c:'#5B9BD5'},intercambio:{l:'Intercambio',c:'#3DAA6A'}};
 const ALI_ESTADO={pendiente:{l:'Pendiente',c:'#7A7260',i:'⚪'},visitado:{l:'Visitado',c:'#5B9BD5',i:'🔵'},conversacion:{l:'En conversación',c:'#D4863A',i:'🟠'},aliado:{l:'Aliado activo',c:'#3DAA6A',i:'🟢'},descartado:{l:'Descartado',c:'#E05555',i:'🔴'}};
 let _aliEdit=null;
+/* Aliados en 3 pestañas: 📋 Lugares (tabla, filtros, alta/edición, 🔗 landing) · 🗺️ Mapa · 🟢 Activos */
+let _aliVista='lugares';
+function _aliIrVista(v){
+  _aliVista=v||'lugares';
+  const bar=document.getElementById('estAliTabs');
+  if(bar)bar.innerHTML=`<div class="tab-bar" style="margin-bottom:12px">${[['lugares','📋 Lugares'],['mapa','🗺️ Mapa'],['activos','🟢 Activos']].map(([k,l])=>`<button class="tab-btn ${_aliVista===k?'active':''}" onclick="_aliIrVista('${k}')">${l}</button>`).join('')}</div>`;
+  if(_aliVista==='activos')renderAliadosActivos();else renderAliadosRuta();
+}
 let _ali=null,_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:'',zona:'',contacto:''},_aliOrden={k:'ciudad',d:1},_aliMap=null,_aliCapa=null,_aliUbicando=null;
 async function _aliCargar(){
   if(_ali)return _ali;
@@ -15850,12 +15857,13 @@ async function renderAliadosRuta(){
     ${_aliEdit?_aliFormHtml():''}
     ${_aliLand?_aliLandingHtml():''}
     ${_aliUbicando?`<div style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.4);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12.5px">📍 Tocá en el mapa dónde está <b>${E(_ali.find(a=>a.id===_aliUbicando)?.nombre||'')}</b> · <a href="#" onclick="_aliUbicando=null;renderAliadosRuta();return false" style="color:var(--gold)">cancelar</a></div>`:''}
-    <div id="aliMapa" style="height:420px;border-radius:12px;border:1px solid var(--border);margin-bottom:6px;${_aliUbicando?'cursor:crosshair':''}"></div>
+    ${_aliVista!=='mapa'?'':`<div id="aliMapa" style="height:${Math.max(420,Math.round(window.innerHeight*0.62))}px;border-radius:12px;border:1px solid var(--border);margin-bottom:6px;${_aliUbicando?'cursor:crosshair':''}"></div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-bottom:14px">
       ${Object.entries(ALI_ESTADO).map(([k,v])=>`<span><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${v.c};vertical-align:middle"></span> ${v.l}</span>`).join('')}
       <span>· borde punteado = ubicación aproximada (centro del barrio)</span>
-    </div>
-    <div style="overflow-x:auto"><table>
+      <span>· tocá un punto para ver el lugar · para corregir una ubicación: 📍 en la pestaña Lugares</span>
+    </div>`}
+    ${_aliVista==='mapa'?'':`<div style="overflow-x:auto"><table>
       <thead><tr>${th('estrellas','★')}${th('nombre','Lugar')}${th('ciudad','Ciudad · barrio')}${th('nivel','Nivel')}<th>Contacto</th>${th('estado','Estado')}${th('notas','Notas')}<th></th></tr>
       <tr style="background:rgba(201,168,76,.04)">
         <th style="min-width:70px">${fs('est',f.est,[['5','★★★★★'],['4','★★★★'],['3','★★★'],['2','★★'],['1','★']],'Todas')}</th>
@@ -15875,11 +15883,11 @@ async function renderAliadosRuta(){
         <td style="font-size:11.5px;white-space:nowrap">${a.tel?E(a.tel).slice(0,32):'—'}<div style="display:flex;gap:6px;margin-top:3px">${w?`<a href="${w}" target="_blank" title="WhatsApp">💬</a>`:''}${ig?`<a href="${ig}" target="_blank" title="Instagram">📸</a>`:''}${a.web?`<a href="https://${E(a.web.replace(/\s.*$/,''))}" target="_blank" title="Web">🌐</a>`:''}<a href="${gm(a)}" target="_blank" title="Buscar en Google Maps">🗺️</a></div></td>
         <td style="background:${(ALI_ESTADO[a.estado]||ALI_ESTADO.pendiente).c}26;border-left:3px solid ${(ALI_ESTADO[a.estado]||ALI_ESTADO.pendiente).c}"><select onchange="_aliSet('${a.id}','estado',this.value)" style="padding:4px 6px;font-size:12px;width:auto;font-weight:700;background:var(--card);color:var(--text);border-color:${ALI_ESTADO[a.estado]?.c}">${Object.entries(ALI_ESTADO).map(([k,v])=>`<option value="${k}" ${a.estado===k?'selected':''}>${v.i} ${v.l}</option>`).join('')}</select></td>
         <td style="background:rgba(201,168,76,.10)"><input value="${E(a.notas||'')}" placeholder="📝 Notas de la visita…" onchange="_aliSet('${a.id}','notas',this.value)" style="padding:4px 6px;font-size:12px;min-width:170px;background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.35);color:var(--text)"></td>
-        <td style="white-space:nowrap"><button class="btn btn-s btn-sm" title="Ubicar en el mapa" onclick="_aliUbicando='${a.id}';renderAliadosRuta()">📍</button>
+        <td style="white-space:nowrap"><button class="btn btn-s btn-sm" title="Ubicar en el mapa" onclick="_aliUbicando='${a.id}';_aliIrVista('mapa')">📍</button>
           <button class="btn btn-s btn-sm" title="Landing y QR para sus huéspedes" onclick="_aliAbrirLanding('${a.id}')">🔗</button>
           <button class="btn btn-s btn-sm" title="Editar" onclick="_aliEdit='${a.id}';renderAliadosRuta();document.getElementById('aliForm')?.scrollIntoView({behavior:'smooth',block:'center'})">✏️</button>
           <button class="btn btn-s btn-sm" title="Eliminar" onclick="_aliBorrar('${a.id}')">🗑</button></td>
-      </tr>`;}).join('')}</tbody></table></div>`;
+      </tr>`;}).join('')}</tbody></table></div>`}`;
   setTimeout(()=>{_aliPintarMapa(L);if(_aliLand)_aliLandPintar();},0);
 }
 function _aliPintarMapa(L){
@@ -15955,6 +15963,7 @@ async function _aliBorrar(id){
   if(await _aliGuardar('🗑 Eliminado: '+a.nombre)){_estMetasAuto=null;renderAliadosRuta();}
 }
 function _aliCentrar(id){
+  if(_aliVista!=='mapa'){_aliIrVista('mapa');setTimeout(()=>_aliCentrar(id),250);return;}
   const a=_ali.find(x=>x.id===id);if(!a||!_aliMap)return;
   document.getElementById('aliMapa')?.scrollIntoView({behavior:'smooth',block:'center'});
   _aliMap.setView([a.lat,a.lng],16);
@@ -16073,7 +16082,7 @@ async function renderAliadosActivos(forzar){
         </div>
         ${a.notas?`<div style="font-size:11.5px;color:var(--muted);margin-bottom:8px">📝 ${E(a.notas)}</div>`:''}
         <div style="display:flex;gap:6px;flex-wrap:wrap">
-          <button class="btn btn-p btn-sm" onclick="_estSub='aliados';_aliLand=null;renderMktEstrategia();setTimeout(()=>_aliAbrirLanding('${a.id}'),400)">🔗 Landing y QR</button>
+          <button class="btn btn-p btn-sm" onclick="_aliLand=null;_aliIrVista('lugares');setTimeout(()=>_aliAbrirLanding('${a.id}'),300)">🔗 Landing y QR</button>
           ${L.slug&&L.activa!==false?`<a class="btn btn-s btn-sm" href="${ALI_WEB+E(L.slug)}" target="_blank" style="text-decoration:none">↗ Ver página</a>`:''}
           ${w?`<a class="btn btn-s btn-sm" href="${w}" target="_blank" style="text-decoration:none">💬 WhatsApp</a>`:''}
         </div>
