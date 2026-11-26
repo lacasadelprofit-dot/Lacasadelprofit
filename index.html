@@ -15981,7 +15981,8 @@ async function _aliSet(id,campo,val){
    la web la lee con la función aliado_landing (4_BASE_DE_DATOS/55_aliado_landing.sql), que devuelve solo los
    datos públicos y solo si está activa. Las reservas online que llegan por la landing quedan con data.aliado = código
    (para la comisión); las de WhatsApp llegan con el código entre paréntesis al final del mensaje. */
-const ALI_WEB='https://www.juancruzconsciencia.lat/aliado.html?a=';
+const ALI_WEB='https://www.juancruzconsciencia.lat/';  // link del lugar: juancruzconsciencia.lat/CÓDIGO (vercel.json de JuanCruz-registro → aliado.html)
+const ALI_RESERVADOS=['api','img_v2','index','aliado','aliados','sesiones','explorar','comunidad','camino','tesoro','ruleta','regalos','registro','privacidad','terminos','vision','agenda','admin','www'];
 const ALI_HORAS=['08:00','09:20','10:40','18:30','19:50']; // mismos horarios que la agenda
 let _aliLand=null,_aliLandStats={};
 const _aliSlug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&/g,' y ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
@@ -16172,6 +16173,7 @@ async function _aliLandGuardar(){
   const a=_ali.find(x=>x.id===_aliLand);if(!a)return;
   const v=id=>(document.getElementById(id)?.value||'').trim();
   const slug=_aliSlug(v('aliLSlug'));if(!slug){toast('⚠️ Poné un código para el link','err');return;}
+  if(ALI_RESERVADOS.includes(slug)){toast('⚠️ «'+slug+'» ya lo usa una página de la web: elegí otro código','err');return;}
   const otro=_ali.find(x=>x.id!==a.id&&x.landing?.slug===slug);if(otro){toast('⚠️ Ese código ya lo usa '+otro.nombre,'err');return;}
   const foto=v('aliLFoto');if(foto&&!/^https:\/\//.test(foto)){toast('⚠️ La foto tiene que ser un link que empiece con https://','err');return;}
   if(a.landing?.slug&&a.landing.slug!==slug&&!confirm('Cambiaste el código del link. Los QR que ya imprimiste con «'+a.landing.slug+'» van a dejar de funcionar. ¿Seguir?'))return;
