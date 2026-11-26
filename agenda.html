@@ -106,7 +106,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
         <label>WhatsApp<input id="mCel" type="tel" placeholder="Con código de país" style="width:170px"></label>
         <label>Seña<select id="mEstado"><option value="confirmado">Ya pagó la seña</option><option value="pendiente_senia">Falta la seña</option></select></label>
         <label style="flex:1;min-width:150px">Nota (opcional)<input id="mNota"></label>
-        <label>Lo trajo (comisión)<select id="mTrae"></select></label>
+        <label>Lo trajo (comisión)<select id="mTrae" onchange="quienNuevo(this)"></select></label>
         <label>Espacio de un aliado<select id="mEsp"></select></label>
         <button class="btn btn-p" onclick="agendarManual()">Agendar</button>
       </div>
@@ -168,15 +168,18 @@ let turnos=[], clases=[], _tab='proximos', _editClase=null, _editTurno=null;
 
 /* ── COMISIONES ──
    Aliado que TRAE al cliente: sesión 20% · clase 10%. Aliado que PRESTA EL ESPACIO: sesión 20% · clase 10% (se suman).
-   Vendedor que trae al cliente: sesión 20% · clase 10%. Los % se cambian en la pestaña 💸 Comisiones (configuracion 'cfg_comisiones').
+   Vendedor que trae al cliente: sesión 20% · clase 10%.
+   Persona que recomienda directo (configuracion 'cfg_recomendadores'): 10%, o si prefiere premio 'sesion': 1 sesión de regalo cada 5 personas recomendadas. Los % se cambian en la pestaña 💸 Comisiones (configuracion 'cfg_comisiones').
    En cada turno: data.trae {tipo:'aliado'|'vendedor',id,nombre} (null = nadie) · data.espacio {id,nombre} · data.precio + data.moneda
    · data.com_pag_trae / data.com_pag_esp = fecha en que se pagó. Si no se cargó «trae», se toma solo de la reserva web
    (data.aliado = código de la landing del aliado, data.vendedor = código del link del vendedor).
    Clases: el espacio se elige en la clase (clase_fechas.data.espacio) y vale para todos sus inscriptos. */
-const TASAS_DEF={ses_trae:20,ses_esp:20,cla_trae:10,cla_esp:10,ven_ses:20,ven_cla:10};
+const TASAS_DEF={ses_trae:20,ses_esp:20,cla_trae:10,cla_esp:10,ven_ses:20,ven_cla:10,per_ses:10,per_cla:10};
+const PER_META=5; // recomendaciones para ganar 1 sesión de regalo
+const ICOQ={aliado:'🏨',vendedor:'🧑‍💼',persona:'🙋'},LBLQ={aliado:'Aliado',vendedor:'Vendedor',persona:'Recomienda'},PFX={aliado:'a:',vendedor:'v:',persona:'p:'};
 const PRECIO={barras:{m:'R$',v:200},proceso_cuerpos:{m:'R$',v:300},clase_barras:{m:'USD',v:330}};
 const WEB='https://www.juancruzconsciencia.lat/';
-let aliados=[], vendedores=[], tasas={...TASAS_DEF}, _comMes=null, _comTurnos=null, _editVend=null;
+let aliados=[], vendedores=[], personas=[], _perTurnos=null, tasas={...TASAS_DEF}, _comMes=null, _comTurnos=null, _editVend=null;
 const fmtM=(m,v)=>m+' '+(Math.round(v*100)/100).toLocaleString('es-AR');
 function precioDe(t){
   const d=t.data||{};
@@ -201,8 +204,9 @@ function comisionesDe(t){
   if(t.estado==='cancelado'||t.servicio==='bloqueo')return [];
   const clase=t.servicio==='clase_barras',p=precioDe(t),d=t.data||{},out=[];
   const tr=traeDe(t);
-  if(tr&&tr.id){const pct=+(tr.tipo==='vendedor'?(clase?tasas.ven_cla:tasas.ven_ses):(clase?tasas.cla_trae:tasas.ses_trae))||0;
-    out.push({quien:tr,k:'trae',concepto:'trajo al cliente',pct,m:p.m,base:p.v,monto:p.v*pct/100,pagada:d.com_pag_trae||''});}
+  if(tr&&tr.id){const pct=+(tr.tipo==='vendedor'?(clase?tasas.ven_cla:tasas.ven_ses):tr.tipo==='persona'?(clase?tasas.per_cla:tasas.per_ses):(clase?tasas.cla_trae:tasas.ses_trae))||0;
+    const sesion=tr.tipo==='persona'&&personas.find(x=>x.id===tr.id)?.premio==='sesion';
+    out.push({quien:tr,k:'trae',concepto:tr.tipo==='persona'?'lo recomendó':'trajo al cliente',pct,m:p.m,base:p.v,monto:sesion?0:p.v*pct/100,sesion,pagada:d.com_pag_trae||''});}
   const es=espacioDe(t);
   if(es&&es.id){const pct=+(clase?tasas.cla_esp:tasas.ses_esp)||0;
     out.push({quien:{tipo:'aliado',id:es.id,nombre:es.nombre},k:'esp',concepto:'prestó el espacio',pct,m:p.m,base:p.v,monto:p.v*pct/100,pagada:d.com_pag_esp||''});}
@@ -210,11 +214,12 @@ function comisionesDe(t){
 }
 /* opciones de los selects: «a:ID» aliado · «v:ID» vendedor */
 function opcionesQuien(cur,conVend=true){
-  const sel=cur?.id?(cur.tipo==='vendedor'?'v:':'a:')+cur.id:'';
+  const sel=cur?.id?(PFX[cur.tipo]||'a:')+cur.id:'';
   const act=aliados.filter(a=>a.estado==='aliado'||a.landing?.slug||sel==='a:'+a.id).sort((x,y)=>x.nombre.localeCompare(y.nombre));
   const otros=aliados.filter(a=>!act.includes(a)).sort((x,y)=>x.nombre.localeCompare(y.nombre));
   const o=(v,l)=>`<option value="${esc(v)}"${v===sel?' selected':''}>${esc(l)}</option>`;
   return o('','— Nadie —')
+    +(conVend?`<optgroup label="Personas que recomiendan">${personas.map(x=>o('p:'+x.id,'🙋 '+x.nombre)).join('')}<option value="__nueva">+ Nueva persona que recomienda…</option></optgroup>`:'')
     +(conVend&&vendedores.length?`<optgroup label="Vendedores">${vendedores.filter(v=>v.activo!==false||sel==='v:'+v.id).map(v=>o('v:'+v.id,'🧑‍💼 '+v.nombre)).join('')}</optgroup>`:'')
     +(act.length?`<optgroup label="Aliados">${act.map(a=>o('a:'+a.id,'🏨 '+a.nombre)).join('')}</optgroup>`:'')
     +(otros.length?`<optgroup label="Otros lugares de la lista">${otros.map(a=>o('a:'+a.id,a.nombre)).join('')}</optgroup>`:'');
@@ -222,11 +227,12 @@ function opcionesQuien(cur,conVend=true){
 function leerQuien(val){
   if(!val)return null;const [k,id]=[val.slice(0,1),val.slice(2)];
   if(k==='v'){const v=vendedores.find(x=>x.id===id);return v?{tipo:'vendedor',id,nombre:v.nombre}:null;}
+  if(k==='p'){const p=personas.find(x=>x.id===id);return p?{tipo:'persona',id,nombre:p.nombre}:null;}
   const a=aliados.find(x=>x.id===id);return a?{tipo:'aliado',id,nombre:a.nombre}:null;
 }
 function lineaComision(t){
   const cs=comisionesDe(t);if(!cs.length)return '';
-  return `<div class="s" style="color:var(--gold)">💸 ${cs.map(c=>`${c.quien.tipo==='vendedor'?'🧑‍💼':'🏨'} ${esc(c.quien.nombre)} ${c.concepto}${c.quien.auto?' (web)':''}: ${c.pct}% = ${fmtM(c.m,c.monto)}${c.pagada?' ✓ pagado':''}`).join(' · ')}</div>`;
+  return `<div class="s" style="color:var(--gold)">💸 ${cs.map(c=>`${ICOQ[c.quien.tipo]||'🏨'} ${esc(c.quien.nombre)} ${c.concepto}${c.quien.auto?' (web)':''}: ${c.sesion?'suma 1 para su sesión de regalo':c.pct+'% = '+fmtM(c.m,c.monto)}${c.pagada?' ✓ pagado':''}`).join(' · ')}</div>`;
 }
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -260,10 +266,10 @@ async function cargar(){
   const [t,c,cfg]=await Promise.all([
     _sb.from('turnos').select('*').gte('fecha',desde).order('fecha').order('hora'),
     _sb.from('clase_fechas').select('*').order('fecha'),
-    _sb.from('configuracion').select('id,data').in('id',['cfg_aliados_ruta','cfg_vendedores','cfg_comisiones'])
+    _sb.from('configuracion').select('id,data').in('id',['cfg_aliados_ruta','cfg_vendedores','cfg_comisiones','cfg_recomendadores'])
   ]);
   const cf=id=>(cfg.data||[]).find(r=>r.id===id)?.data||{};
-  aliados=cf('cfg_aliados_ruta').lugares||[];vendedores=cf('cfg_vendedores').lista||[];tasas={...TASAS_DEF,...(cf('cfg_comisiones').tasas||{})};
+  aliados=cf('cfg_aliados_ruta').lugares||[];vendedores=cf('cfg_vendedores').lista||[];personas=cf('cfg_recomendadores').lista||[];_perTurnos=null;tasas={...TASAS_DEF,...(cf('cfg_comisiones').tasas||{})};
   _comTurnos=null;
   if(t.error||c.error){
     const e=t.error||c.error;console.warn(e);
@@ -304,7 +310,7 @@ function formEditarTurno(t){
     <label>WhatsApp<input id="tCel" type="tel" value="${esc(d.celular||'')}" style="width:170px"></label>
     <label style="flex:1;min-width:150px">Nota<input id="tNota" value="${esc(d.mensaje||'')}"></label>
     <label>Precio<span style="display:flex;gap:4px"><select id="tMon" style="width:74px">${['R$','USD','$'].map(m=>`<option${m===precioDe(t).m?' selected':''}>${m}</option>`).join('')}</select><input id="tPrecio" type="number" min="0" value="${precioDe(t).v}" style="width:90px"></span></label>
-    <label>Lo trajo (comisión)<select id="tTrae">${opcionesQuien(traeDe(t))}</select></label>
+    <label>Lo trajo (comisión)<select id="tTrae" onchange="quienNuevo(this)">${opcionesQuien(traeDe(t))}</select></label>
     <label>Espacio de un aliado<select id="tEsp">${opcionesQuien(espacioDe(t),false)}</select></label>
     <button class="btn btn-p" onclick="guardarTurno('${t.id}')">Guardar</button>
     <button class="btn" onclick="cancelarEdicionTurno()">Cancelar</button>
@@ -573,12 +579,13 @@ async function renderComisiones(){
   const el=document.getElementById('tab-comisiones');
   if(!_comMes)_comMes=mesHoy();
   if(!_comTurnos){el.innerHTML='<div class="card vacio">Cargando…</div>';await cargarMesCom();}
+  if(!_perTurnos)await cargarPerTurnos();
   const grupos={};
   _comTurnos.forEach(t=>comisionesDe(t).forEach(c=>{
     const k=c.quien.tipo+':'+c.quien.id;
     (grupos[k]||(grupos[k]={quien:c.quien,items:[]})).items.push({...c,t});
   }));
-  const suma=(items,f)=>{const r={};items.filter(f).forEach(i=>r[i.m]=(r[i.m]||0)+i.monto);return Object.entries(r).map(([m,v])=>fmtM(m,v)).join(' + ')||'—';};
+  const suma=(items,f)=>{const r={};items.filter(i=>!i.sesion).filter(f).forEach(i=>r[i.m]=(r[i.m]||0)+i.monto);return Object.entries(r).map(([m,v])=>fmtM(m,v)).join(' + ')||'—';};
   const lista=Object.values(grupos).sort((a,b)=>a.quien.nombre.localeCompare(b.quien.nombre));
   const todos=lista.flatMap(g=>g.items);
   const nomMes=new Date(_comMes+'-15T12:00:00Z').toLocaleDateString('es-AR',{month:'long',year:'numeric',timeZone:'UTC'});
@@ -592,15 +599,16 @@ async function renderComisiones(){
         <div class="kpi"><b style="font-size:18px">${suma(todos,i=>cumplido(i.t)&&!i.pagada)}</b><span>A pagar (sesiones ya hechas)</span></div>
         <div class="kpi"><b style="font-size:18px">${suma(todos,i=>!!i.pagada)}</b><span>Ya pagado</span></div>
         <div class="kpi"><b style="font-size:18px">${suma(todos,i=>!cumplido(i.t)&&!i.pagada)}</b><span>Próximas / sin confirmar (estimado)</span></div>
-        <div class="kpi"><b>${lista.length}</b><span>Aliados y vendedores con comisión</span></div>
+        <div class="kpi"><b>${lista.length}</b><span>Aliados, vendedores y personas con comisión</span></div>
       </div>
       <div class="det">Se calcula sobre el precio de cada turno (Barras R$ 200 · Proceso R$ 300 · Mes Energético R$ 700 · Clase USD 330; si cobraste otro precio, cambialo con ✏️ Editar). Para asignar quién trajo al cliente o en qué espacio fue: ✏️ Editar en el turno, o en la clase para el espacio.</div>
     </div>
     ${lista.length?lista.map(g=>{
-      const k=g.quien.tipo+':'+g.quien.id,pend=g.items.filter(i=>cumplido(i.t)&&!i.pagada);
+      const k=g.quien.tipo+':'+g.quien.id,pend=g.items.filter(i=>!i.sesion&&cumplido(i.t)&&!i.pagada);
+      const per=g.quien.tipo==='persona'?personas.find(x=>x.id===g.quien.id):null,esSes=per?.premio==='sesion';
       return `<div class="card">
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px">
-          <h2 style="margin:0">${g.quien.tipo==='vendedor'?'🧑‍💼':'🏨'} ${esc(g.quien.nombre)} <span class="badge b-ins">${g.quien.tipo==='vendedor'?'Vendedor':'Aliado'}</span></h2>
+          <h2 style="margin:0">${ICOQ[g.quien.tipo]||'🏨'} ${esc(g.quien.nombre)} <span class="badge b-ins">${LBLQ[g.quien.tipo]||'Aliado'}</span>${esSes?' <span class="badge b-ok">🎁 1 sesión cada '+PER_META+'</span>':''}</h2>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <a class="btn" style="text-decoration:none" target="_blank" href="${waResumen(g)}">WhatsApp con el detalle</a>
             ${pend.length?`<button class="btn btn-ok" onclick="pagarGrupo('${esc(k)}')">✓ Marcar pagado (${suma(pend,()=>true)})</button>`:''}
@@ -608,17 +616,19 @@ async function renderComisiones(){
         </div>
         ${g.items.map((i,n)=>`<div class="row" style="padding:9px 12px">
           <div class="info"><div class="n" style="font-weight:700">${fmt(i.t.fecha,{weekday:'short',day:'numeric',month:'short'})} · ${esc(i.t.data?.nombre||'—')} ${badge(i.t.estado)}</div>
-            <div class="s">${SERV[i.t.servicio]||esc(i.t.servicio)}${i.t.data?.pack==='mes_energetico'?' (Mes Energético)':''} · ${i.concepto} · ${i.pct}% de ${fmtM(i.m,i.base)}</div></div>
-          <div style="font-weight:800;color:${i.pagada?'var(--green)':cumplido(i.t)?'var(--gl)':'var(--muted)'};min-width:96px;text-align:right">${fmtM(i.m,i.monto)}</div>
-          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><input type="checkbox" ${i.pagada?'checked':''} onchange="pagarItem('${i.t.id}','${i.k}',this.checked)"> ${i.pagada?'pagado '+esc(i.pagada.slice(8,10)+'/'+i.pagada.slice(5,7)):'pagado'}</label>
+            <div class="s">${SERV[i.t.servicio]||esc(i.t.servicio)}${i.t.data?.pack==='mes_energetico'?' (Mes Energético)':''} · ${i.concepto}${i.sesion?(i.t.servicio==='clase_barras'?' · las clases no suman para la sesión de regalo':' · suma para su sesión de regalo'):' · '+i.pct+'% de '+fmtM(i.m,i.base)}</div></div>
+          ${i.sesion?`<div style="font-weight:800;color:${cumplido(i.t)&&i.t.servicio!=='clase_barras'?'var(--green)':'var(--muted)'};min-width:96px;text-align:right">${i.t.servicio==='clase_barras'?'—':cumplido(i.t)?'+1 🎁':'+1 (cuando venga)'}</div>`:`<div style="font-weight:800;color:${i.pagada?'var(--green)':cumplido(i.t)?'var(--gl)':'var(--muted)'};min-width:96px;text-align:right">${fmtM(i.m,i.monto)}</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><input type="checkbox" ${i.pagada?'checked':''} onchange="pagarItem('${i.t.id}','${i.k}',this.checked)"> ${i.pagada?'pagado '+esc(i.pagada.slice(8,10)+'/'+i.pagada.slice(5,7)):'pagado'}</label>`}
         </div>`).join('')}
-        <div class="det" style="text-align:right">A pagar: <b style="color:var(--gl)">${suma(g.items,i=>cumplido(i.t)&&!i.pagada)}</b> · Pagado: ${suma(g.items,i=>!!i.pagada)} · Próximas: ${suma(g.items,i=>!cumplido(i.t)&&!i.pagada)}</div>
+        ${esSes?`<div class="det" style="text-align:right">${progresoPersona(per)}</div>`:`<div class="det" style="text-align:right">A pagar: <b style="color:var(--gl)">${suma(g.items,i=>cumplido(i.t)&&!i.pagada)}</b> · Pagado: ${suma(g.items,i=>!!i.pagada)} · Próximas: ${suma(g.items,i=>!cumplido(i.t)&&!i.pagada)}</div>`}
       </div>`;}).join(''):'<div class="card vacio">No hay comisiones este mes. Se generan cuando un turno tiene «Lo trajo» o «Espacio de un aliado», o cuando la reserva llega por la landing de un aliado o el link de un vendedor.</div>'}
     ${htmlTasas()}
+    ${htmlPersonas()}
     ${htmlVendedores()}`;
 }
 function waResumen(g){
-  const cel=g.quien.tipo==='vendedor'?(vendedores.find(v=>v.id===g.quien.id)?.celular||''):String(aliados.find(a=>a.id===g.quien.id)?.tel||'').replace(/\D/g,'').replace(/^(\d{2})(9?\d{8})$/,'55$1$2');
+  if(g.quien.tipo==='persona'&&personas.find(x=>x.id===g.quien.id)?.premio==='sesion')return waPersona(personas.find(x=>x.id===g.quien.id));
+  const cel=g.quien.tipo==='vendedor'?(vendedores.find(v=>v.id===g.quien.id)?.celular||''):g.quien.tipo==='persona'?(personas.find(x=>x.id===g.quien.id)?.celular||''):String(aliados.find(a=>a.id===g.quien.id)?.tel||'').replace(/\D/g,'').replace(/^(\d{2})(9?\d{8})$/,'55$1$2');
   const mes=new Date(_comMes+'-15T12:00:00Z').toLocaleDateString('es-AR',{month:'long',timeZone:'UTC'});
   const lineas=g.items.filter(i=>cumplido(i.t)).map(i=>`• ${fmt(i.t.fecha,{day:'numeric',month:'numeric'})} ${(SERV[i.t.servicio]||'').replace(/^\S+ /,'')} · ${i.concepto} · ${i.pct}% = ${fmtM(i.m,i.monto)}${i.pagada?' (pagado)':''}`);
   const tot={};g.items.filter(i=>cumplido(i.t)&&!i.pagada).forEach(i=>tot[i.m]=(tot[i.m]||0)+i.monto);
@@ -652,6 +662,7 @@ function htmlTasas(){
       ${f('ses_trae','Aliado trae · sesión')}${f('ses_esp','Aliado presta espacio · sesión')}
       ${f('cla_trae','Aliado trae · clase')}${f('cla_esp','Aliado presta espacio · clase')}
       ${f('ven_ses','Vendedor · sesión')}${f('ven_cla','Vendedor · clase')}
+      ${f('per_ses','Persona recomienda · sesión')}${f('per_cla','Persona recomienda · clase')}
       <button class="btn btn-p" onclick="guardarTasas()">Guardar</button>
     </div>
     <div class="det">Si el mismo aliado trae al cliente y además presta el espacio, cobra las dos partes. Un cambio de % recalcula también lo que todavía no marcaste como pagado.</div></div>`;
@@ -701,6 +712,71 @@ async function guardarVendedores(lista){
   const {error}=await _sb.from('configuracion').upsert({id:'cfg_vendedores',data:{lista,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
   if(error){toast('Error: '+error.message);return false;}
   vendedores=lista;return true;
+}
+/* personas que recomiendan directo: 10% en plata, o 1 sesión de regalo cada ${PER_META} recomendados (premio 'sesion') */
+async function cargarPerTurnos(){
+  const {data,error}=await _sb.from('turnos').select('id,fecha,estado,servicio,data').filter('data->trae->>tipo','eq','persona');
+  _perTurnos=error?[]:(data||[]);
+}
+function cuentaPersona(p){
+  const hechos=(_perTurnos||[]).filter(t=>t.data?.trae?.id===p.id&&t.servicio!=='clase_barras'&&t.estado!=='cancelado'&&cumplido(t)).length;
+  const ganadas=Math.floor(hechos/PER_META),disp=Math.max(0,ganadas-(+p.canjeadas||0));
+  return {hechos,disp,resto:hechos%PER_META,canjeadas:+p.canjeadas||0};
+}
+function progresoPersona(p){
+  if(!p)return '';const c=cuentaPersona(p);
+  return `🎁 ${c.resto} de ${PER_META} para la próxima sesión de regalo · ${c.hechos} recomendado${c.hechos===1?'':'s'} en total${c.canjeadas?' · '+c.canjeadas+' ya canjeada'+(c.canjeadas===1?'':'s'):''}`
+    +(c.disp?` · <b style="color:var(--green)">${c.disp} sesión${c.disp===1?'':'es'} para usar</b> <button class="btn btn-ok" style="padding:3px 10px" onclick="canjearPersona('${p.id}')">Usó su sesión</button>`:'');
+}
+function waPersona(p){
+  const c=cuentaPersona(p);
+  const txt=c.disp?`¡Hola ${p.nombre}! Gracias por recomendarme 🙏 Ya sumaste ${c.hechos} personas: tenés ${c.disp===1?'una sesión de regalo':c.disp+' sesiones de regalo'} para usar cuando quieras. ¿Cuándo te queda bien?`
+    :`¡Hola ${p.nombre}! Gracias por recomendarme 🙏 Ya llevás ${c.resto} de ${PER_META}: con ${PER_META-c.resto} más te ganás una sesión de regalo.`;
+  return 'https://wa.me/'+(p.celular||'')+'?text='+encodeURIComponent(txt);
+}
+async function canjearPersona(id){
+  const p=personas.find(x=>x.id===id);if(!p||!confirm('¿'+p.nombre+' ya usó (o agendó) su sesión de regalo?'))return;
+  if(await guardarPersonas(personas.map(x=>x.id===id?{...x,canjeadas:(+x.canjeadas||0)+1}:x))){toast('🎁 Sesión de regalo registrada');renderComisiones();}
+}
+async function quienNuevo(sel){
+  if(sel.value!=='__nueva')return;
+  const p=await nuevaPersona();
+  sel.innerHTML=opcionesQuien(p?{tipo:'persona',id:p.id}:null);sel.value=p?'p:'+p.id:'';
+}
+async function nuevaPersona(){
+  const nombre=(prompt('Nombre de la persona que recomendó:')||'').trim();if(nombre.length<2)return null;
+  const celular=(prompt('Su WhatsApp, con código de país (opcional):')||'').replace(/\D/g,'');
+  const premio=confirm('¿Qué prefiere '+nombre+'?\n\nAceptar = 🎁 1 sesión de regalo cada '+PER_META+' personas recomendadas\nCancelar = 💵 '+tasas.per_ses+'% en plata')?'sesion':'plata';
+  const p={id:'pr'+Date.now().toString(36),nombre,celular,premio,canjeadas:0,creado:new Date().toISOString()};
+  if(!await guardarPersonas([...personas,p]))return null;
+  toast('✓ '+nombre+' agregada');return p;
+}
+async function guardarPersonas(lista){
+  const {error}=await _sb.from('configuracion').upsert({id:'cfg_recomendadores',data:{lista,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+  if(error){toast('Error: '+error.message);return false;}
+  personas=lista;return true;
+}
+async function cambiarPremio(id,premio){
+  if(await guardarPersonas(personas.map(x=>x.id===id?{...x,premio}:x))){toast(premio==='sesion'?'🎁 Ahora suma para sesiones de regalo':'💵 Ahora cobra '+tasas.per_ses+'%');render();renderComisiones();}
+}
+async function editarPersona(id){
+  const p=personas.find(x=>x.id===id);if(!p)return;
+  const nombre=(prompt('Nombre:',p.nombre)||'').trim();if(nombre.length<2)return;
+  const celular=(prompt('WhatsApp (con código de país):',p.celular||'')??p.celular).replace(/\D/g,'');
+  if(await guardarPersonas(personas.map(x=>x.id===id?{...x,nombre,celular}:x))){toast('✓ Guardado');render();renderComisiones();}
+}
+function htmlPersonas(){
+  return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <h2 style="margin:0">🙋 Personas que recomiendan</h2><button class="btn btn-p" onclick="nuevaPersona().then(p=>{if(p){render();renderComisiones();}})">+ Nueva persona</button></div>
+    ${personas.length?personas.map(p=>{const c=cuentaPersona(p);return `<div class="row" style="padding:9px 12px">
+      <div class="info"><div class="n">${esc(p.nombre)}</div>
+        <div class="s">${p.celular?'+'+esc(p.celular)+' · ':''}${c.hechos} recomendado${c.hechos===1?'':'s'}${p.premio==='sesion'?' · '+c.resto+' de '+PER_META+' para la próxima sesión'+(c.disp?' · 🎁 '+c.disp+' para usar':''):''}</div></div>
+      <div class="acc"><select onchange="cambiarPremio('${p.id}',this.value)" style="padding:6px 10px"><option value="plata"${p.premio!=='sesion'?' selected':''}>💵 ${tasas.per_ses}% en plata</option><option value="sesion"${p.premio==='sesion'?' selected':''}>🎁 1 sesión cada ${PER_META}</option></select>
+        ${c.disp?`<button class="btn btn-ok" onclick="canjearPersona('${p.id}')">Usó su sesión</button>`:''}
+        <a class="btn" style="text-decoration:none" target="_blank" href="${waPersona(p)}">WhatsApp</a>
+        <button class="btn" onclick="editarPersona('${p.id}')">✏️</button></div>
+    </div>`;}).join(''):'<div class="vacio">Todavía no hay personas cargadas. Se agregan acá o desde «Lo trajo» al agendar o editar un turno.</div>'}
+    <div class="det">Recomendación directa: elegís a la persona en «Lo trajo». Cobra ${tasas.per_ses}% de la sesión (${tasas.per_cla}% de la clase), o si prefiere, cada ${PER_META} personas que vinieron gana una sesión de regalo. Para el regalo cuentan solo las sesiones ya hechas (las clases no), y se juntan todas desde el principio.</div></div>`;
 }
 function copiar(txt){(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('🔗 Link copiado')).catch(()=>prompt('Copiá el link:',txt));}
 </script>
