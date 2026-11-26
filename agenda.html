@@ -91,6 +91,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
     <button class="tab" data-tab="bloqueos" onclick="setTab('bloqueos')">Bloquear horarios</button>
     <button class="tab" data-tab="clase" onclick="setTab('clase')">Clase de Barras</button>
     <button class="tab" data-tab="historial" onclick="setTab('historial')">Historial</button>
+    <button class="tab" data-tab="comisiones" onclick="setTab('comisiones')">💸 Comisiones</button>
   </div>
 
   <div id="tab-proximos">
@@ -105,6 +106,8 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
         <label>WhatsApp<input id="mCel" type="tel" placeholder="Con código de país" style="width:170px"></label>
         <label>Seña<select id="mEstado"><option value="confirmado">Ya pagó la seña</option><option value="pendiente_senia">Falta la seña</option></select></label>
         <label style="flex:1;min-width:150px">Nota (opcional)<input id="mNota"></label>
+        <label>Lo trajo (comisión)<select id="mTrae"></select></label>
+        <label>Espacio de un aliado<select id="mEsp"></select></label>
         <button class="btn btn-p" onclick="agendarManual()">Agendar</button>
       </div>
     </div>
@@ -141,6 +144,7 @@ body.embed header{margin-bottom:12px;justify-content:flex-end;}
   </div>
 
   <div id="tab-historial" style="display:none"></div>
+  <div id="tab-comisiones" style="display:none"></div>
 </div>
 
 <div id="toast"></div>
@@ -161,6 +165,69 @@ const HORAS=['08:00','09:20','10:40','18:30','19:50'];
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
 const SENIA={barras:'R$ 100 / USD 30 / $30.000 ARS',proceso_cuerpos:'R$ 150 / USD 35 / $45.000 ARS'};
 let turnos=[], clases=[], _tab='proximos', _editClase=null, _editTurno=null;
+
+/* ── COMISIONES ──
+   Aliado que TRAE al cliente: sesión 20% · clase 10%. Aliado que PRESTA EL ESPACIO: sesión 20% · clase 10% (se suman).
+   Vendedor que trae al cliente: sesión 20% · clase 10%. Los % se cambian en la pestaña 💸 Comisiones (configuracion 'cfg_comisiones').
+   En cada turno: data.trae {tipo:'aliado'|'vendedor',id,nombre} (null = nadie) · data.espacio {id,nombre} · data.precio + data.moneda
+   · data.com_pag_trae / data.com_pag_esp = fecha en que se pagó. Si no se cargó «trae», se toma solo de la reserva web
+   (data.aliado = código de la landing del aliado, data.vendedor = código del link del vendedor).
+   Clases: el espacio se elige en la clase (clase_fechas.data.espacio) y vale para todos sus inscriptos. */
+const TASAS_DEF={ses_trae:20,ses_esp:20,cla_trae:10,cla_esp:10,ven_ses:20,ven_cla:10};
+const PRECIO={barras:{m:'R$',v:200},proceso_cuerpos:{m:'R$',v:300},clase_barras:{m:'USD',v:330}};
+const WEB='https://www.juancruzconsciencia.lat/';
+let aliados=[], vendedores=[], tasas={...TASAS_DEF}, _comMes=null, _comTurnos=null, _editVend=null;
+const fmtM=(m,v)=>m+' '+(Math.round(v*100)/100).toLocaleString('es-AR');
+function precioDe(t){
+  const d=t.data||{};
+  if(d.precio!=null&&d.precio!=='')return {m:d.moneda||(t.servicio==='clase_barras'?'USD':'R$'),v:+d.precio||0};
+  if(d.pack==='mes_energetico')return {m:'R$',v:700};
+  return PRECIO[t.servicio]||{m:'R$',v:0};
+}
+function traeDe(t){
+  const d=t.data||{};
+  if('trae' in d)return d.trae;
+  if(d.aliado){const a=aliados.find(x=>x.landing?.slug===d.aliado);return {tipo:'aliado',id:a?.id||d.aliado,nombre:a?.nombre||d.aliado_nombre||d.aliado,auto:true};}
+  if(d.vendedor){const v=vendedores.find(x=>x.codigo===d.vendedor);return {tipo:'vendedor',id:v?.id||d.vendedor,nombre:v?.nombre||d.vendedor,auto:true};}
+  return null;
+}
+function espacioDe(t){
+  const d=t.data||{};
+  if('espacio' in d)return d.espacio||null;   // cargado en el turno / inscripto (null = nadie)
+  if(t.servicio==='clase_barras'){const c=clases.find(x=>x.id===d.claseId);return c?.data?.espacio||null;}  // clase: lo de la clase, si no se cambió en el inscripto
+  return null;
+}
+function comisionesDe(t){
+  if(t.estado==='cancelado'||t.servicio==='bloqueo')return [];
+  const clase=t.servicio==='clase_barras',p=precioDe(t),d=t.data||{},out=[];
+  const tr=traeDe(t);
+  if(tr&&tr.id){const pct=+(tr.tipo==='vendedor'?(clase?tasas.ven_cla:tasas.ven_ses):(clase?tasas.cla_trae:tasas.ses_trae))||0;
+    out.push({quien:tr,k:'trae',concepto:'trajo al cliente',pct,m:p.m,base:p.v,monto:p.v*pct/100,pagada:d.com_pag_trae||''});}
+  const es=espacioDe(t);
+  if(es&&es.id){const pct=+(clase?tasas.cla_esp:tasas.ses_esp)||0;
+    out.push({quien:{tipo:'aliado',id:es.id,nombre:es.nombre},k:'esp',concepto:'prestó el espacio',pct,m:p.m,base:p.v,monto:p.v*pct/100,pagada:d.com_pag_esp||''});}
+  return out;
+}
+/* opciones de los selects: «a:ID» aliado · «v:ID» vendedor */
+function opcionesQuien(cur,conVend=true){
+  const sel=cur?.id?(cur.tipo==='vendedor'?'v:':'a:')+cur.id:'';
+  const act=aliados.filter(a=>a.estado==='aliado'||a.landing?.slug||sel==='a:'+a.id).sort((x,y)=>x.nombre.localeCompare(y.nombre));
+  const otros=aliados.filter(a=>!act.includes(a)).sort((x,y)=>x.nombre.localeCompare(y.nombre));
+  const o=(v,l)=>`<option value="${esc(v)}"${v===sel?' selected':''}>${esc(l)}</option>`;
+  return o('','— Nadie —')
+    +(conVend&&vendedores.length?`<optgroup label="Vendedores">${vendedores.filter(v=>v.activo!==false||sel==='v:'+v.id).map(v=>o('v:'+v.id,'🧑‍💼 '+v.nombre)).join('')}</optgroup>`:'')
+    +(act.length?`<optgroup label="Aliados">${act.map(a=>o('a:'+a.id,'🏨 '+a.nombre)).join('')}</optgroup>`:'')
+    +(otros.length?`<optgroup label="Otros lugares de la lista">${otros.map(a=>o('a:'+a.id,a.nombre)).join('')}</optgroup>`:'');
+}
+function leerQuien(val){
+  if(!val)return null;const [k,id]=[val.slice(0,1),val.slice(2)];
+  if(k==='v'){const v=vendedores.find(x=>x.id===id);return v?{tipo:'vendedor',id,nombre:v.nombre}:null;}
+  const a=aliados.find(x=>x.id===id);return a?{tipo:'aliado',id,nombre:a.nombre}:null;
+}
+function lineaComision(t){
+  const cs=comisionesDe(t);if(!cs.length)return '';
+  return `<div class="s" style="color:var(--gold)">💸 ${cs.map(c=>`${c.quien.tipo==='vendedor'?'🧑‍💼':'🏨'} ${esc(c.quien.nombre)} ${c.concepto}${c.quien.auto?' (web)':''}: ${c.pct}% = ${fmtM(c.m,c.monto)}${c.pagada?' ✓ pagado':''}`).join(' · ')}</div>`;
+}
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const hoyBR=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'America/Sao_Paulo'}).format(new Date());
@@ -190,10 +257,14 @@ async function iniciar(){
 /* ── DATOS ── */
 async function cargar(){
   const desde=sumarDias(hoyBR(),-60);
-  const [t,c]=await Promise.all([
+  const [t,c,cfg]=await Promise.all([
     _sb.from('turnos').select('*').gte('fecha',desde).order('fecha').order('hora'),
-    _sb.from('clase_fechas').select('*').order('fecha')
+    _sb.from('clase_fechas').select('*').order('fecha'),
+    _sb.from('configuracion').select('id,data').in('id',['cfg_aliados_ruta','cfg_vendedores','cfg_comisiones'])
   ]);
+  const cf=id=>(cfg.data||[]).find(r=>r.id===id)?.data||{};
+  aliados=cf('cfg_aliados_ruta').lugares||[];vendedores=cf('cfg_vendedores').lista||[];tasas={...TASAS_DEF,...(cf('cfg_comisiones').tasas||{})};
+  _comTurnos=null;
   if(t.error||c.error){
     const e=t.error||c.error;console.warn(e);
     document.getElementById('listaProximos').innerHTML=`<div class="card">⚠️ No se pudo cargar la agenda: ${esc(e.message)}<div class="det">Si dice que la tabla no existe, falta correr <b>4_BASE_DE_DATOS/29_agenda_turnos.sql</b> en Supabase.</div></div>`;
@@ -232,6 +303,9 @@ function formEditarTurno(t){
     <label style="flex:1;min-width:150px">Nombre<input id="tNombre" value="${esc(d.nombre||'')}"></label>
     <label>WhatsApp<input id="tCel" type="tel" value="${esc(d.celular||'')}" style="width:170px"></label>
     <label style="flex:1;min-width:150px">Nota<input id="tNota" value="${esc(d.mensaje||'')}"></label>
+    <label>Precio<span style="display:flex;gap:4px"><select id="tMon" style="width:74px">${['R$','USD','$'].map(m=>`<option${m===precioDe(t).m?' selected':''}>${m}</option>`).join('')}</select><input id="tPrecio" type="number" min="0" value="${precioDe(t).v}" style="width:90px"></span></label>
+    <label>Lo trajo (comisión)<select id="tTrae">${opcionesQuien(traeDe(t))}</select></label>
+    <label>Espacio de un aliado<select id="tEsp">${opcionesQuien(espacioDe(t),false)}</select></label>
     <button class="btn btn-p" onclick="guardarTurno('${t.id}')">Guardar</button>
     <button class="btn" onclick="cancelarEdicionTurno()">Cancelar</button>
   </div></div>`;
@@ -241,6 +315,20 @@ async function guardarTurno(id){
   const nombre=document.getElementById('tNombre').value.trim(),celular=document.getElementById('tCel').value.replace(/\D/g,'');
   if(nombre.length<2){toast('Poné el nombre');return;}
   const upd={data:{...(t.data||{}),nombre,celular,mensaje:document.getElementById('tNota').value.trim()}};
+  /* comisión: precio, quién lo trajo y espacio */
+  const pv=document.getElementById('tPrecio').value,mon=document.getElementById('tMon').value,pd=precioDe(t);
+  if(pv!==''&&(+pv!==pd.v||mon!==pd.m)){upd.data.precio=+pv;upd.data.moneda=mon;}
+  const tr=leerQuien(document.getElementById('tTrae').value),trAnt=traeDe(t);
+  if((tr?.tipo+':'+tr?.id)!==(trAnt?.tipo+':'+trAnt?.id))upd.data.trae=tr;
+  const te=document.getElementById('tEsp');
+  if(te){
+    const es=leerQuien(te.value),esp=es?{id:es.id,nombre:es.nombre}:null;
+    if(t.servicio==='clase_barras'){
+      /* inscripto: si coincide con el espacio de la clase, sigue a la clase; si no, queda propio (o «nadie») */
+      const def=clases.find(x=>x.id===t.data?.claseId)?.data?.espacio||null;
+      if((esp?.id||'')===(def?.id||''))delete upd.data.espacio;else upd.data.espacio=esp;
+    }else if(esp)upd.data.espacio=esp;else delete upd.data.espacio;
+  }
   if(t.servicio!=='clase_barras'){
     const fecha=document.getElementById('tFecha').value,hora=document.getElementById('tHora').value;
     if(!fecha){toast('Elegí una fecha');return;}
@@ -257,9 +345,11 @@ async function agendarManual(){
   if(nombre.length<2){toast('Poné el nombre');return;}
   if(turnos.some(t=>t.fecha===fecha&&t.hora==='todo'&&t.estado!=='cancelado')){toast('Ese día está bloqueado. Desbloquealo primero.');return;}
   const {error}=await _sb.from('turnos').insert({id:crypto.randomUUID(),fecha,hora,servicio:mServ.value,estado:mEstado.value,
-    data:{nombre,celular,mensaje:mNota.value.trim(),origen:'manual',ts:new Date().toISOString()}});
+    data:{nombre,celular,mensaje:mNota.value.trim(),origen:'manual',ts:new Date().toISOString(),
+      ...(leerQuien(mTrae.value)?{trae:leerQuien(mTrae.value)}:{}),
+      ...(leerQuien(mEsp.value)?{espacio:(({id,nombre})=>({id,nombre}))(leerQuien(mEsp.value))}:{})}});
   if(error){toast(error.code==='23505'?'Ese horario ya está ocupado':'Error: '+error.message);return;}
-  mNombre.value='';mCel.value='';mNota.value='';
+  mNombre.value='';mCel.value='';mNota.value='';mTrae.value='';mEsp.value='';
   toast(`✓ Agendado: ${nombre} · ${fmt(fecha,{weekday:'short',day:'numeric',month:'short'})} ${hora}`);cargar();
 }
 
@@ -308,6 +398,8 @@ async function guardarClase(id){
   const tipo=document.getElementById('eTipo').value;
   if(!fecha){toast('Elegí una fecha');return;}
   const upd={fecha,hora,lugar,data:{...(c.data||{}),tipo}};
+  const es=leerQuien(document.getElementById('eEsp').value);
+  if(es)upd.data.espacio={id:es.id,nombre:es.nombre};else delete upd.data.espacio;
   // Al cambiar el tipo: grande se publica, particular se oculta
   if(tipo!==((c.data?.tipo)||'grande'))upd.activo=tipo==='grande';
   const {error}=await _sb.from('clase_fechas').update(upd).eq('id',id);
@@ -344,7 +436,8 @@ async function toggleClase(id,activo){
 function setTab(t){
   _tab=t;
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));
-  ['proximos','bloqueos','clase','historial'].forEach(k=>document.getElementById('tab-'+k).style.display=k===t?'':'none');
+  ['proximos','bloqueos','clase','historial','comisiones'].forEach(k=>document.getElementById('tab-'+k).style.display=k===t?'':'none');
+  if(t==='comisiones')renderComisiones();
 }
 function badge(e){
   return {pendiente_senia:'<span class="badge b-pend">Falta seña</span>',confirmado:'<span class="badge b-ok">Confirmado</span>',
@@ -371,7 +464,8 @@ function filaTurno(t,conAcciones=true){
     <div class="hora">${esc(t.hora)}</div>
     <div class="info">
       <div class="n">${esc(d.nombre||'—')}${badge(t.estado)}</div>
-      <div class="s">${d.pack==='mes_energetico'?'✨ Mes Energético (1ª sesión) · ':''}${SERV[t.servicio]||esc(t.servicio)}${SENIA[t.servicio]&&t.estado==='pendiente_senia'?' · seña '+SENIA[t.servicio]:''}${d.celular?' · +'+esc(d.celular):''}</div>
+      <div class="s">${d.pack==='mes_energetico'?'✨ Mes Energético (1ª sesión) · ':''}${d.aliado?'🤝 '+esc(d.aliado_nombre||d.aliado)+' · ':''}${SERV[t.servicio]||esc(t.servicio)}${SENIA[t.servicio]&&t.estado==='pendiente_senia'?' · seña '+SENIA[t.servicio]:''}${d.celular?' · +'+esc(d.celular):''}</div>
+      ${lineaComision(t)}
       ${detalle?`<div class="det">${esc(detalle)}</div>`:''}
     </div>
     <div class="acc">${acc}</div>
@@ -379,6 +473,8 @@ function filaTurno(t,conAcciones=true){
 }
 function render(){
   const hoy=hoyBR();
+  {const a=mTrae.value,b=mEsp.value;mTrae.innerHTML=opcionesQuien(null);mEsp.innerHTML=opcionesQuien(null,false);mTrae.value=a;mEsp.value=b;}
+  if(_tab==='comisiones')renderComisiones();
   const act=turnos.filter(t=>t.estado!=='cancelado');
   const futuros=act.filter(t=>t.fecha>=hoy&&t.servicio!=='clase_barras');
   const sesiones=futuros.filter(t=>t.servicio!=='bloqueo');
@@ -441,9 +537,10 @@ function render(){
         <label>Fecha<input type="date" id="eFecha" value="${esc(c.fecha)}"></label>
         <label>Hora<input type="time" id="eHora" value="${esc(c.hora)}"></label>
         <label style="flex:1;min-width:200px">Lugar<input id="eLugar" value="${esc(c.lugar)}"></label>
+        <label>Espacio de un aliado (opcional · se puede cambiar en cada inscripto)<select id="eEsp">${opcionesQuien(c.data?.espacio,false)}</select></label>
         <button class="btn btn-p" onclick="guardarClase('${c.id}')">Guardar</button>
         <button class="btn" onclick="cancelarEdicionClase()">Cancelar</button></div>`:''}
-      <div class="det" style="margin:0 0 10px">📍 ${esc(c.lugar)} · ${ins.length} inscripto${ins.length===1?'':'s'}</div>
+      <div class="det" style="margin:0 0 10px">📍 ${esc(c.lugar)} · ${ins.length} inscripto${ins.length===1?'':'s'}${c.data?.espacio?.id?` · 🏨 espacio de ${esc(c.data.espacio.nombre)} (${tasas.cla_esp}% por cada inscripto que no tenga otro espacio cargado)`:''} · <span style="opacity:.75">quién trajo a cada alumno y el espacio se pueden cargar por separado con ✏️ Editar en cada inscripto</span></div>
       <div class="det" style="margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">🎓 Alumnos que la hicieron:
         <input type="number" min="0" value="${alu??''}" placeholder="${ins.length}" style="width:70px" onchange="guardarAlumnos('${c.id}',this.value)">
         <span style="opacity:.7">${alu!=null?'cargado a mano':'si lo dejás vacío se cuentan los '+ins.length+' inscriptos'} · suma a la meta de alumnos</span></div>
@@ -461,6 +558,151 @@ function render(){
   document.getElementById('tab-historial').innerHTML=`<div class="card"><h2>Últimos 60 días</h2>${pas.length?pas.map(t=>
     `<div class="dia-h" style="margin:10px 0 6px">${fmt(t.fecha)}</div>`+filaTurno(t,false)).join(''):'<div class="vacio">Sin turnos pasados todavía.</div>'}</div>`;
 }
+
+/* ── 💸 COMISIONES: resumen del mes por aliado / vendedor, % y vendedores ── */
+const mesHoy=()=>hoyBR().slice(0,7);
+const cumplido=t=>t.estado==='realizado'||((t.estado==='confirmado'||t.estado==='inscripto')&&t.fecha<=hoyBR());
+async function cargarMesCom(){
+  const ym=_comMes||mesHoy(),[y,m]=ym.split('-').map(Number);
+  const fin=new Date(Date.UTC(y,m,0)).toISOString().slice(0,10);
+  const {data,error}=await _sb.from('turnos').select('*').gte('fecha',ym+'-01').lte('fecha',fin).neq('servicio','bloqueo').order('fecha').order('hora');
+  if(error){toast('Error: '+error.message);_comTurnos=[];return;}
+  _comTurnos=data||[];
+}
+async function renderComisiones(){
+  const el=document.getElementById('tab-comisiones');
+  if(!_comMes)_comMes=mesHoy();
+  if(!_comTurnos){el.innerHTML='<div class="card vacio">Cargando…</div>';await cargarMesCom();}
+  const grupos={};
+  _comTurnos.forEach(t=>comisionesDe(t).forEach(c=>{
+    const k=c.quien.tipo+':'+c.quien.id;
+    (grupos[k]||(grupos[k]={quien:c.quien,items:[]})).items.push({...c,t});
+  }));
+  const suma=(items,f)=>{const r={};items.filter(f).forEach(i=>r[i.m]=(r[i.m]||0)+i.monto);return Object.entries(r).map(([m,v])=>fmtM(m,v)).join(' + ')||'—';};
+  const lista=Object.values(grupos).sort((a,b)=>a.quien.nombre.localeCompare(b.quien.nombre));
+  const todos=lista.flatMap(g=>g.items);
+  const nomMes=new Date(_comMes+'-15T12:00:00Z').toLocaleDateString('es-AR',{month:'long',year:'numeric',timeZone:'UTC'});
+  el.innerHTML=`
+    <div class="card">
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between">
+        <h2 style="margin:0">💸 Comisiones de ${esc(nomMes)}</h2>
+        <label class="form" style="flex-direction:row;align-items:center;gap:8px">Mes <input type="month" value="${_comMes}" onchange="_comMes=this.value||mesHoy();_comTurnos=null;renderComisiones()"></label>
+      </div>
+      <div class="kpis" style="margin:14px 0 0">
+        <div class="kpi"><b style="font-size:18px">${suma(todos,i=>cumplido(i.t)&&!i.pagada)}</b><span>A pagar (sesiones ya hechas)</span></div>
+        <div class="kpi"><b style="font-size:18px">${suma(todos,i=>!!i.pagada)}</b><span>Ya pagado</span></div>
+        <div class="kpi"><b style="font-size:18px">${suma(todos,i=>!cumplido(i.t)&&!i.pagada)}</b><span>Próximas / sin confirmar (estimado)</span></div>
+        <div class="kpi"><b>${lista.length}</b><span>Aliados y vendedores con comisión</span></div>
+      </div>
+      <div class="det">Se calcula sobre el precio de cada turno (Barras R$ 200 · Proceso R$ 300 · Mes Energético R$ 700 · Clase USD 330; si cobraste otro precio, cambialo con ✏️ Editar). Para asignar quién trajo al cliente o en qué espacio fue: ✏️ Editar en el turno, o en la clase para el espacio.</div>
+    </div>
+    ${lista.length?lista.map(g=>{
+      const k=g.quien.tipo+':'+g.quien.id,pend=g.items.filter(i=>cumplido(i.t)&&!i.pagada);
+      return `<div class="card">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:space-between;margin-bottom:10px">
+          <h2 style="margin:0">${g.quien.tipo==='vendedor'?'🧑‍💼':'🏨'} ${esc(g.quien.nombre)} <span class="badge b-ins">${g.quien.tipo==='vendedor'?'Vendedor':'Aliado'}</span></h2>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <a class="btn" style="text-decoration:none" target="_blank" href="${waResumen(g)}">WhatsApp con el detalle</a>
+            ${pend.length?`<button class="btn btn-ok" onclick="pagarGrupo('${esc(k)}')">✓ Marcar pagado (${suma(pend,()=>true)})</button>`:''}
+          </div>
+        </div>
+        ${g.items.map((i,n)=>`<div class="row" style="padding:9px 12px">
+          <div class="info"><div class="n" style="font-weight:700">${fmt(i.t.fecha,{weekday:'short',day:'numeric',month:'short'})} · ${esc(i.t.data?.nombre||'—')} ${badge(i.t.estado)}</div>
+            <div class="s">${SERV[i.t.servicio]||esc(i.t.servicio)}${i.t.data?.pack==='mes_energetico'?' (Mes Energético)':''} · ${i.concepto} · ${i.pct}% de ${fmtM(i.m,i.base)}</div></div>
+          <div style="font-weight:800;color:${i.pagada?'var(--green)':cumplido(i.t)?'var(--gl)':'var(--muted)'};min-width:96px;text-align:right">${fmtM(i.m,i.monto)}</div>
+          <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)"><input type="checkbox" ${i.pagada?'checked':''} onchange="pagarItem('${i.t.id}','${i.k}',this.checked)"> ${i.pagada?'pagado '+esc(i.pagada.slice(8,10)+'/'+i.pagada.slice(5,7)):'pagado'}</label>
+        </div>`).join('')}
+        <div class="det" style="text-align:right">A pagar: <b style="color:var(--gl)">${suma(g.items,i=>cumplido(i.t)&&!i.pagada)}</b> · Pagado: ${suma(g.items,i=>!!i.pagada)} · Próximas: ${suma(g.items,i=>!cumplido(i.t)&&!i.pagada)}</div>
+      </div>`;}).join(''):'<div class="card vacio">No hay comisiones este mes. Se generan cuando un turno tiene «Lo trajo» o «Espacio de un aliado», o cuando la reserva llega por la landing de un aliado o el link de un vendedor.</div>'}
+    ${htmlTasas()}
+    ${htmlVendedores()}`;
+}
+function waResumen(g){
+  const cel=g.quien.tipo==='vendedor'?(vendedores.find(v=>v.id===g.quien.id)?.celular||''):String(aliados.find(a=>a.id===g.quien.id)?.tel||'').replace(/\D/g,'').replace(/^(\d{2})(9?\d{8})$/,'55$1$2');
+  const mes=new Date(_comMes+'-15T12:00:00Z').toLocaleDateString('es-AR',{month:'long',timeZone:'UTC'});
+  const lineas=g.items.filter(i=>cumplido(i.t)).map(i=>`• ${fmt(i.t.fecha,{day:'numeric',month:'numeric'})} ${(SERV[i.t.servicio]||'').replace(/^\S+ /,'')} · ${i.concepto} · ${i.pct}% = ${fmtM(i.m,i.monto)}${i.pagada?' (pagado)':''}`);
+  const tot={};g.items.filter(i=>cumplido(i.t)&&!i.pagada).forEach(i=>tot[i.m]=(tot[i.m]||0)+i.monto);
+  const txt=`¡Hola ${g.quien.nombre}! Te paso el detalle de tus comisiones de ${mes}:\n\n${lineas.join('\n')||'Todavía no hay sesiones realizadas.'}\n\nTotal a cobrar: ${Object.entries(tot).map(([m,v])=>fmtM(m,v)).join(' + ')||'—'}\n\n¡Gracias por recomendar! 🙏`;
+  return 'https://wa.me/'+(cel||'')+'?text='+encodeURIComponent(txt);
+}
+async function pagarItem(id,k,pagado){
+  const t=_comTurnos.find(x=>x.id===id);if(!t)return;
+  const data={...(t.data||{})};if(pagado)data['com_pag_'+k]=hoyBR();else delete data['com_pag_'+k];
+  const {error}=await _sb.from('turnos').update({data}).eq('id',id);
+  if(error){toast('Error: '+error.message);return;}
+  t.data=data;const tt=turnos.find(x=>x.id===id);if(tt)tt.data=data;
+  toast(pagado?'✓ Marcado como pagado':'Marcado como pendiente');renderComisiones();
+}
+async function pagarGrupo(key){
+  const items=[];_comTurnos.forEach(t=>comisionesDe(t).forEach(c=>{if(c.quien.tipo+':'+c.quien.id===key&&cumplido(t)&&!c.pagada)items.push({t,k:c.k});}));
+  if(!items.length||!confirm('¿Marcar como pagadas '+items.length+' comisión'+(items.length===1?'':'es')+'?'))return;
+  for(const {t,k} of items){
+    const data={...(t.data||{}),['com_pag_'+k]:hoyBR()};
+    const {error}=await _sb.from('turnos').update({data}).eq('id',t.id);
+    if(error){toast('Error: '+error.message);break;}
+    t.data=data;const tt=turnos.find(x=>x.id===t.id);if(tt)tt.data=data;
+  }
+  toast('✓ Comisiones marcadas como pagadas');renderComisiones();
+}
+/* porcentajes */
+function htmlTasas(){
+  const f=(k,l)=>`<label>${l}<span style="display:flex;align-items:center;gap:4px"><input type="number" min="0" max="100" step="1" id="tx_${k}" value="${esc(tasas[k])}" style="width:70px"> %</span></label>`;
+  return `<div class="card"><h2>Porcentajes</h2>
+    <div class="form">
+      ${f('ses_trae','Aliado trae · sesión')}${f('ses_esp','Aliado presta espacio · sesión')}
+      ${f('cla_trae','Aliado trae · clase')}${f('cla_esp','Aliado presta espacio · clase')}
+      ${f('ven_ses','Vendedor · sesión')}${f('ven_cla','Vendedor · clase')}
+      <button class="btn btn-p" onclick="guardarTasas()">Guardar</button>
+    </div>
+    <div class="det">Si el mismo aliado trae al cliente y además presta el espacio, cobra las dos partes. Un cambio de % recalcula también lo que todavía no marcaste como pagado.</div></div>`;
+}
+async function guardarTasas(){
+  const n={};Object.keys(TASAS_DEF).forEach(k=>{const v=document.getElementById('tx_'+k).value;n[k]=Math.min(100,Math.max(0,+v||0));});
+  const {error}=await _sb.from('configuracion').upsert({id:'cfg_comisiones',data:{tasas:n,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+  if(error){toast('Error: '+error.message);return;}
+  tasas={...TASAS_DEF,...n};toast('✓ Porcentajes guardados');render();
+}
+/* vendedores: link propio sesiones.html?ref=CÓDIGO → la reserva queda marcada con su nombre */
+const slugV=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+function htmlVendedores(){
+  const ed=_editVend?(_editVend==='nuevo'?{}:vendedores.find(v=>v.id===_editVend)||{}):null;
+  return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+      <h2 style="margin:0">🧑‍💼 Vendedores</h2><button class="btn btn-p" onclick="_editVend='nuevo';renderComisiones()">+ Nuevo vendedor</button></div>
+    ${ed?`<div class="form" style="padding:12px;border:1px solid var(--gold);border-radius:12px;margin-bottom:10px">
+      <label style="flex:1;min-width:160px">Nombre<input id="vNom" value="${esc(ed.nombre||'')}" oninput="if(!vCod.dataset.tocado)vCod.value=slugV(this.value)"></label>
+      <label>WhatsApp<input id="vCel" type="tel" value="${esc(ed.celular||'')}" placeholder="Con código de país" style="width:170px"></label>
+      <label>Código del link<input id="vCod" value="${esc(ed.codigo||'')}" ${ed.codigo?'data-tocado="1"':''} oninput="this.dataset.tocado=1" style="width:150px"></label>
+      <button class="btn btn-p" onclick="guardarVendedor()">Guardar</button><button class="btn" onclick="_editVend=null;renderComisiones()">Cancelar</button></div>`:''}
+    ${vendedores.length?vendedores.map(v=>`<div class="row" style="padding:9px 12px${v.activo===false?';opacity:.55':''}">
+      <div class="info"><div class="n">${esc(v.nombre)}${v.activo===false?' <span class="badge b-blq">Inactivo</span>':''}</div>
+        <div class="s">${v.celular?'+'+esc(v.celular)+' · ':''}${esc((WEB+'sesiones.html?ref='+v.codigo).replace('https://',''))}</div></div>
+      <div class="acc"><button class="btn" onclick="copiar('${esc(WEB+'sesiones.html?ref='+v.codigo)}')">🔗 Copiar link</button>
+        <button class="btn" onclick="_editVend='${v.id}';renderComisiones()">✏️</button>
+        <button class="btn" onclick="activarVendedor('${v.id}',${v.activo===false})">${v.activo===false?'Activar':'Pausar'}</button></div>
+    </div>`).join(''):'<div class="vacio">Todavía no cargaste vendedores.</div>'}
+    <div class="det">Cada vendedor comparte su link: las reservas online que entren por ahí quedan a su nombre solas. Si te escriben por WhatsApp, elegilo en «Lo trajo» al agendar o editar el turno.</div></div>`;
+}
+async function guardarVendedor(){
+  const nombre=vNom.value.trim(),codigo=slugV(vCod.value||nombre),celular=vCel.value.replace(/\D/g,'');
+  if(nombre.length<2){toast('Poné el nombre');return;}
+  if(!codigo){toast('Poné un código');return;}
+  if(vendedores.some(v=>v.codigo===codigo&&v.id!==_editVend)){toast('Ese código ya lo usa otro vendedor');return;}
+  const lista=vendedores.map(v=>({...v}));
+  if(_editVend==='nuevo')lista.push({id:'vd'+Date.now().toString(36),nombre,celular,codigo,activo:true,creado:new Date().toISOString()});
+  else{const v=lista.find(x=>x.id===_editVend);if(!v)return;
+    if(v.codigo!==codigo&&!confirm('Cambiaste el código: el link viejo deja de marcar las reservas. ¿Seguir?'))return;Object.assign(v,{nombre,celular,codigo});}
+  if(await guardarVendedores(lista)){_editVend=null;toast('✓ Vendedor guardado');render();renderComisiones();}
+}
+async function activarVendedor(id,activo){
+  const lista=vendedores.map(v=>v.id===id?{...v,activo}:v);
+  if(await guardarVendedores(lista)){toast(activo?'Vendedor activo':'Vendedor pausado');render();renderComisiones();}
+}
+async function guardarVendedores(lista){
+  const {error}=await _sb.from('configuracion').upsert({id:'cfg_vendedores',data:{lista,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+  if(error){toast('Error: '+error.message);return false;}
+  vendedores=lista;return true;
+}
+function copiar(txt){(navigator.clipboard?navigator.clipboard.writeText(txt):Promise.reject()).then(()=>toast('🔗 Link copiado')).catch(()=>prompt('Copiá el link:',txt));}
 </script>
 </body>
 </html>

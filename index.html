@@ -15846,6 +15846,7 @@ async function renderAliadosRuta(){
       </div>
     </div>
     ${_aliEdit?_aliFormHtml():''}
+    ${_aliLand?_aliLandingHtml():''}
     ${_aliUbicando?`<div style="background:rgba(201,168,76,.12);border:1px solid rgba(201,168,76,.4);border-radius:8px;padding:8px 12px;margin-bottom:8px;font-size:12.5px">📍 Tocá en el mapa dónde está <b>${E(_ali.find(a=>a.id===_aliUbicando)?.nombre||'')}</b> · <a href="#" onclick="_aliUbicando=null;renderAliadosRuta();return false" style="color:var(--gold)">cancelar</a></div>`:''}
     <div id="aliMapa" style="height:420px;border-radius:12px;border:1px solid var(--border);margin-bottom:6px;${_aliUbicando?'cursor:crosshair':''}"></div>
     <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:11px;color:var(--muted);margin-bottom:14px">
@@ -15866,17 +15867,18 @@ async function renderAliadosRuta(){
       </tr></thead>
       <tbody>${L.map(a=>{const w=wa(a.tel),ig=igUrl(a.ig);return`<tr>
         <td style="white-space:nowrap;color:var(--gold)">${'★'.repeat(a.estrellas)}</td>
-        <td style="min-width:180px"><b style="cursor:pointer" onclick="_aliCentrar('${a.id}')">${E(a.nombre)}</b>${a.ruta?`<div style="font-size:10.5px;color:var(--gl)">🚶 Ruta 19/11: ${E(a.ruta)}</div>`:''}${a.nota?`<div style="font-size:10.5px;color:var(--muted)">${E(a.nota)}</div>`:''}</td>
+        <td style="min-width:180px"><b style="cursor:pointer" onclick="_aliCentrar('${a.id}')">${E(a.nombre)}</b>${a.landing?.slug?` <span title="${a.landing.activa?'Landing publicada':'Landing apagada'}" style="font-size:10px;padding:1px 7px;border-radius:9px;cursor:pointer;border:1px solid ${a.landing.activa?'#3DAA6A':'var(--border)'};color:${a.landing.activa?'#5DD89A':'var(--muted)'}" onclick="_aliAbrirLanding('${a.id}')">🔗 landing${a.landing.activa?'':' · apagada'}</span>`:''}${a.ruta?`<div style="font-size:10.5px;color:var(--gl)">🚶 Ruta 19/11: ${E(a.ruta)}</div>`:''}${a.nota?`<div style="font-size:10.5px;color:var(--muted)">${E(a.nota)}</div>`:''}</td>
         <td style="font-size:12px">${E(a.ciudad)}<div style="font-size:11px;color:var(--muted)">${E(a.barrio||'—')}${a.aprox?' · 📍 aprox.':''}</div></td>
         <td><span style="font-size:11px;padding:2px 8px;border-radius:10px;border:1px solid ${ALI_NIVEL[a.nivel]?.c};color:${ALI_NIVEL[a.nivel]?.c}">${ALI_NIVEL[a.nivel]?.l||a.nivel}</span></td>
         <td style="font-size:11.5px;white-space:nowrap">${a.tel?E(a.tel).slice(0,32):'—'}<div style="display:flex;gap:6px;margin-top:3px">${w?`<a href="${w}" target="_blank" title="WhatsApp">💬</a>`:''}${ig?`<a href="${ig}" target="_blank" title="Instagram">📸</a>`:''}${a.web?`<a href="https://${E(a.web.replace(/\s.*$/,''))}" target="_blank" title="Web">🌐</a>`:''}<a href="${gm(a)}" target="_blank" title="Buscar en Google Maps">🗺️</a></div></td>
         <td style="background:${(ALI_ESTADO[a.estado]||ALI_ESTADO.pendiente).c}26;border-left:3px solid ${(ALI_ESTADO[a.estado]||ALI_ESTADO.pendiente).c}"><select onchange="_aliSet('${a.id}','estado',this.value)" style="padding:4px 6px;font-size:12px;width:auto;font-weight:700;background:var(--card);color:var(--text);border-color:${ALI_ESTADO[a.estado]?.c}">${Object.entries(ALI_ESTADO).map(([k,v])=>`<option value="${k}" ${a.estado===k?'selected':''}>${v.i} ${v.l}</option>`).join('')}</select></td>
         <td style="background:rgba(201,168,76,.10)"><input value="${E(a.notas||'')}" placeholder="📝 Notas de la visita…" onchange="_aliSet('${a.id}','notas',this.value)" style="padding:4px 6px;font-size:12px;min-width:170px;background:rgba(201,168,76,.06);border-color:rgba(201,168,76,.35);color:var(--text)"></td>
         <td style="white-space:nowrap"><button class="btn btn-s btn-sm" title="Ubicar en el mapa" onclick="_aliUbicando='${a.id}';renderAliadosRuta()">📍</button>
+          <button class="btn btn-s btn-sm" title="Landing y QR para sus huéspedes" onclick="_aliAbrirLanding('${a.id}')">🔗</button>
           <button class="btn btn-s btn-sm" title="Editar" onclick="_aliEdit='${a.id}';renderAliadosRuta();document.getElementById('aliForm')?.scrollIntoView({behavior:'smooth',block:'center'})">✏️</button>
           <button class="btn btn-s btn-sm" title="Eliminar" onclick="_aliBorrar('${a.id}')">🗑</button></td>
       </tr>`;}).join('')}</tbody></table></div>`;
-  setTimeout(()=>_aliPintarMapa(L),0);
+  setTimeout(()=>{_aliPintarMapa(L);if(_aliLand)_aliLandPintar();},0);
 }
 function _aliPintarMapa(L){
   const box=document.getElementById('aliMapa');if(!box||typeof window.L==='undefined')return;
@@ -15961,6 +15963,168 @@ async function _aliSet(id,campo,val){
   a[campo]=val;if(campo==='estado')a.estado_fecha=new Date().toISOString().slice(0,10);
   await _aliGuardar(campo==='estado'?`${ALI_ESTADO[val]?.i} ${a.nombre}: ${ALI_ESTADO[val]?.l}`:'✓ Nota guardada');
   if(campo==='estado'){renderAliadosRuta();_estMetasAuto=null;}
+}
+
+/* ══════════ ALIADOS · 🔗 Landing propia + QR (aliado.html?a=CÓDIGO) ══════════
+   Cada lugar puede tener su landing para huéspedes. Se guarda dentro del lugar (a.landing) en cfg_aliados_ruta;
+   la web la lee con la función aliado_landing (4_BASE_DE_DATOS/55_aliado_landing.sql), que devuelve solo los
+   datos públicos y solo si está activa. Las reservas online que llegan por la landing quedan con data.aliado = código
+   (para la comisión); las de WhatsApp llegan con el código entre paréntesis al final del mensaje. */
+const ALI_WEB='https://www.juancruzconsciencia.lat/aliado.html?a=';
+let _aliLand=null,_aliLandStats={};
+const _aliSlug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&/g,' y ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
+let _qrLibP=null;
+function _qrLib(){
+  return _qrLibP||(_qrLibP=new Promise((res,rej)=>{
+    if(window.qrcode)return res(window.qrcode);
+    const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js';
+    s.onload=()=>res(window.qrcode);s.onerror=()=>{_qrLibP=null;rej(new Error('No se pudo cargar el generador de QR (¿sin internet?)'));};
+    document.head.appendChild(s);
+  }));
+}
+async function _qrDibujar(canvas,texto,px,margen=4,color='#1B1712'){
+  const qrcode=await _qrLib();const q=qrcode(0,'M');q.addData(texto);q.make();
+  const n=q.getModuleCount(),tot=n+margen*2,cel=Math.max(1,Math.floor(px/tot)),lado=cel*tot;
+  canvas.width=canvas.height=lado;const c=canvas.getContext('2d');
+  c.fillStyle='#fff';c.fillRect(0,0,lado,lado);c.fillStyle=color;
+  for(let r=0;r<n;r++)for(let k=0;k<n;k++)if(q.isDark(r,k))c.fillRect((k+margen)*cel,(r+margen)*cel,cel,cel);
+  return canvas;
+}
+function _aliAbrirLanding(id){
+  _aliLand=_aliLand===id?null:id;_aliEdit=null;renderAliadosRuta();
+  if(_aliLand){setTimeout(()=>document.getElementById('aliLand')?.scrollIntoView({behavior:'smooth',block:'center'}),80);_aliLandCargarStats(id);}
+}
+function _aliLandingHtml(){
+  const E=_estE,a=_ali.find(x=>x.id===_aliLand);if(!a)return '';
+  const L=a.landing||{},slug=L.slug||_aliSlug(a.nombre),nueva=!L.slug;
+  const fg=(l,h,ayuda)=>`<label style="display:flex;flex-direction:column;gap:4px;font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px">${l}${h}${ayuda?`<span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:11px">${ayuda}</span>`:''}</label>`;
+  const op=(v,l)=>`<option value="${v}" ${(L.idioma||'es')===v?'selected':''}>${l}</option>`;
+  const st=_aliLandStats[a.id];
+  return `<div id="aliLand" style="background:var(--card2);border:1px solid rgba(61,170,106,.55);border-radius:12px;padding:14px 16px;margin-bottom:12px">
+    <div style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+      <div style="font-size:13px;font-weight:800;color:#5DD89A">🔗 Landing para huéspedes · ${E(a.nombre)}</div>
+      <div style="font-size:11.5px;color:var(--muted)">Una página propia para sus huéspedes, con su QR. Los huéspedes no tienen descuento: la comisión es para el aliado (Agenda → 💸 Comisiones). Lo que escribas acá aparece tal cual (no se traduce).</div>
+      <button class="btn btn-s btn-sm" style="margin-left:auto" onclick="_aliLand=null;renderAliadosRuta()">✕ Cerrar</button>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:18px;align-items:start">
+      <div style="display:grid;gap:10px">
+        <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;cursor:pointer"><input type="checkbox" id="aliLAct" ${L.activa!==false?'checked':''} style="width:auto"> Landing publicada</label>
+        ${fg('Código del link',`<input id="aliLSlug" style="${_ALI_CTL}" value="${E(slug)}" maxlength="40" oninput="_aliLandPintar()">`,'Solo letras, números y guiones. Si lo cambiás después, el QR impreso deja de funcionar.')}
+        ${fg('Nombre que se muestra',`<input id="aliLNom" style="${_ALI_CTL}" value="${E(L.nombre||'')}" maxlength="60" placeholder="${E(a.nombre)}">`,'Vacío = el nombre de la lista.')}
+        ${fg('Frase de bienvenida (opcional)',`<input id="aliLBie" style="${_ALI_CTL}" value="${E(L.bienvenida||'')}" maxlength="160" placeholder="ej. Un regalo para tu descanso en la pousada">`)}
+        ${fg('Dónde es la sesión (opcional)',`<input id="aliLLug" style="${_ALI_CTL}" value="${E(L.lugar||'')}" maxlength="140" placeholder="ej. En el deck de la pousada, frente a la piscina">`,'Vacío = «Te confirmo el lugar por WhatsApp.»')}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          ${fg('Idioma de la página',`<select id="aliLIdi" style="${_ALI_CTL}">${op('es','Español')}${op('pt','Português')}${op('en','English')}</select>`,'El huésped lo puede cambiar.')}
+          ${fg('Foto del lugar (opcional)',`<input type="file" accept="image/*" onchange="_aliLandSubirFoto(this)" style="${_ALI_CTL};padding:6px 8px">`,'<span id="aliLFotoEst">Vacío = video de una sesión.</span>')}
+        </div>
+        <input id="aliLFoto" style="${_ALI_CTL}" value="${E(L.foto||'')}" placeholder="o pegá un link https:// de la foto">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn btn-p btn-sm" onclick="_aliLandGuardar()">💾 Guardar landing</button>
+          ${nueva?'<span style="font-size:11px;color:var(--gl)">Todavía no está guardada: guardá antes de probar el link o imprimir el QR.</span>':''}
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px">
+        <canvas id="aliQR" width="220" height="220" style="width:220px;height:220px;border-radius:8px;background:#fff"></canvas>
+        <div id="aliLUrl" style="font-size:11.5px;color:var(--gl);word-break:break-all;text-align:center"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center">
+          <button class="btn btn-s btn-sm" onclick="_aliLandCopiar()">🔗 Copiar link</button>
+          <button class="btn btn-s btn-sm" onclick="window.open(_aliLandUrl(),'_blank')">↗ Abrir</button>
+          <button class="btn btn-s btn-sm" onclick="_aliLandBajarQR()">⬇ QR</button>
+          <button class="btn btn-p btn-sm" onclick="_aliLandBajarTarjeta()">⬇ Tarjeta para recepción</button>
+        </div>
+        <div id="aliLStats" style="width:100%">${_aliLandStatsHtml(st)}</div>
+      </div>
+    </div></div>`;
+}
+function _aliLandUrl(){return ALI_WEB+(_aliSlug(document.getElementById('aliLSlug')?.value)||'');}
+async function _aliLandPintar(){
+  const cv=document.getElementById('aliQR'),u=document.getElementById('aliLUrl');if(!cv)return;
+  const url=_aliLandUrl();if(u)u.textContent=url.replace('https://','');
+  try{await _qrDibujar(cv,url,220,3);cv.style.width=cv.style.height='220px';}catch(e){if(u)u.textContent='⚠️ '+e.message;}
+}
+function _aliLandStatsHtml(r){
+  if(r===undefined)return '<div style="font-size:11px;color:var(--muted);text-align:center">Cargando visitas…</div>';
+  if(!r)return '<div style="font-size:11px;color:var(--muted);text-align:center">Las visitas aparecen acá cuando la landing esté guardada.</div>';
+  const k=(n,l)=>`<div style="flex:1;min-width:60px;text-align:center"><div style="font-size:18px;font-weight:800;color:var(--gl)">${n}</div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px">${l}</div></div>`;
+  return `<div style="display:flex;gap:6px;border-top:1px solid var(--border);padding-top:10px">${k(r.vis,'Visitas')}${k(r.wa,'WhatsApp')}${k(r.ag,'Agenda')}${k(r.res,'Reservas')}</div>
+    <div style="font-size:10.5px;color:var(--muted);text-align:center;margin-top:6px">${r.ult?'Última visita: '+new Date(r.ult).toLocaleDateString('es-AR',{day:'numeric',month:'short'})+' · ':''}Reservas = turnos online con este aliado (comisión 20%). Por WhatsApp el mensaje trae el código al final.</div>`;
+}
+async function _aliLandCargarStats(id){
+  const a=_ali.find(x=>x.id===id),slug=a?.landing?.slug;
+  if(!slug){_aliLandStats[id]=null;}
+  else{
+    const r={vis:0,wa:0,ag:0,res:0,ult:''};
+    try{const {data}=await _sb.from('regalo_eventos').select('data,created_at').filter('data->>pagina','eq','aliado').filter('data->>aliado','eq',slug).limit(5000);
+      (data||[]).forEach(e=>{const t=e.data?.tipo;if(t==='page_view')r.vis++;else if(t==='click_wa')r.wa++;else if(t==='click_agenda')r.ag++;if((e.created_at||'')>r.ult)r.ult=e.created_at;});}catch(e){console.warn('aliado stats:',e);}
+    try{const {data}=await _sb.from('turnos').select('id,estado').filter('data->>aliado','eq',slug);r.res=(data||[]).filter(t=>t.estado!=='cancelado').length;}catch(e){console.warn('aliado turnos:',e);}
+    _aliLandStats[id]=r;
+  }
+  const el=document.getElementById('aliLStats');if(el&&_aliLand===id)el.innerHTML=_aliLandStatsHtml(_aliLandStats[id]);
+}
+async function _aliLandGuardar(){
+  const a=_ali.find(x=>x.id===_aliLand);if(!a)return;
+  const v=id=>(document.getElementById(id)?.value||'').trim();
+  const slug=_aliSlug(v('aliLSlug'));if(!slug){toast('⚠️ Poné un código para el link','err');return;}
+  const otro=_ali.find(x=>x.id!==a.id&&x.landing?.slug===slug);if(otro){toast('⚠️ Ese código ya lo usa '+otro.nombre,'err');return;}
+  const foto=v('aliLFoto');if(foto&&!/^https:\/\//.test(foto)){toast('⚠️ La foto tiene que ser un link que empiece con https://','err');return;}
+  if(a.landing?.slug&&a.landing.slug!==slug&&!confirm('Cambiaste el código del link. Los QR que ya imprimiste con «'+a.landing.slug+'» van a dejar de funcionar. ¿Seguir?'))return;
+  const ahora=new Date().toISOString();
+  a.landing={...(a.landing||{}),slug,activa:!!document.getElementById('aliLAct')?.checked,nombre:v('aliLNom'),beneficio:'',
+    bienvenida:v('aliLBie'),lugar:v('aliLLug'),idioma:v('aliLIdi')||'es',foto,actualizada:ahora,creada:a.landing?.creada||ahora};
+  if(await _aliGuardar('✓ Landing guardada: '+a.nombre+(a.landing.activa?'':' (apagada)'))){renderAliadosRuta();_aliLandCargarStats(a.id);}
+}
+async function _aliLandSubirFoto(input){
+  const f=input.files?.[0];if(!f)return;
+  const est=document.getElementById('aliLFotoEst');if(est)est.textContent='Subiendo…';
+  try{
+    const blob=await _encAchicar(f),slug=_aliSlug(document.getElementById('aliLSlug')?.value)||'aliado';
+    const path=`aliados/${slug}-${Date.now()}.jpg`;
+    const {error}=await _sb.storage.from('encuentros').upload(path,blob,{contentType:'image/jpeg',cacheControl:'31536000'});if(error)throw error;
+    const {data:pub}=_sb.storage.from('encuentros').getPublicUrl(path);
+    document.getElementById('aliLFoto').value=pub.publicUrl;if(est)est.textContent='✓ Foto subida. Tocá Guardar.';
+  }catch(e){if(est)est.textContent='';toast('⚠️ '+(e.message||e),'err');}
+  input.value='';
+}
+function _aliLandCopiar(){
+  const url=_aliLandUrl();
+  (navigator.clipboard?navigator.clipboard.writeText(url):Promise.reject()).then(()=>toast('🔗 Link copiado')).catch(()=>prompt('Copiá el link:',url));
+}
+function _aliBajar(canvas,nombre){const a=document.createElement('a');a.download=nombre;a.href=canvas.toDataURL('image/png');document.body.appendChild(a);a.click();a.remove();}
+async function _aliLandBajarQR(){
+  try{const slug=_aliSlug(document.getElementById('aliLSlug')?.value);if(!slug)return;
+    _aliBajar(await _qrDibujar(document.createElement('canvas'),_aliLandUrl(),1200,4),'qr_'+slug+'.png');}
+  catch(e){toast('⚠️ '+e.message,'err');}
+}
+/* Tarjeta 10,5 × 14,8 cm (A6) a 300 dpi, en español y portugués, para dejar en recepción */
+async function _aliLandBajarTarjeta(){
+  const a=_ali.find(x=>x.id===_aliLand);if(!a)return;
+  const slug=_aliSlug(document.getElementById('aliLSlug')?.value);if(!slug)return;
+  const nombre=(document.getElementById('aliLNom')?.value||'').trim()||a.nombre,ben='';
+  try{
+    const W=1240,H=1748,cv=document.createElement('canvas');cv.width=W;cv.height=H;const c=cv.getContext('2d');
+    const TERRA='#9A5C30',TXT='#2B2520',MUT='#7A6E62',SER='Georgia, "Times New Roman", serif',SAN='"Segoe UI", Arial, sans-serif';
+    c.fillStyle='#FBF7F1';c.fillRect(0,0,W,H);
+    c.strokeStyle='#C17A48';c.lineWidth=4;c.strokeRect(40,40,W-80,H-80);
+    c.textAlign='center';c.textBaseline='alphabetic';
+    const lineas=(txt,font,max)=>{c.font=font;const out=[];let l='';String(txt).split(/\s+/).forEach(w=>{const p=l?l+' '+w:w;if(c.measureText(p).width>max&&l){out.push(l);l=w;}else l=p;});if(l)out.push(l);return out;};
+    let y=170;
+    c.fillStyle=TERRA;c.font='600 34px '+SAN;
+    c.fillText('PARA HUÉSPEDES · PARA HÓSPEDES',W/2,y);
+    y+=125;c.fillStyle=TXT;
+    let tam=86;let ls;do{ls=lineas(nombre,'600 '+tam+'px '+SER,W-220);tam-=6;}while(ls.length>2&&tam>50);
+    ls.slice(0,3).forEach(l=>{c.font='600 '+(tam+6)+'px '+SER;c.fillText(l,W/2,y);y+=tam+12;});
+    y+=18;c.fillStyle=TERRA;c.font='italic 44px '+SER;c.fillText('Una hora para soltar todo, durante tu estadía.',W/2,y,W-200);
+    y+=54;c.fillStyle=MUT;c.font='italic 36px '+SER;c.fillText('Uma hora para soltar tudo, durante a sua estadia.',W/2,y,W-200);
+    const qr=await _qrDibujar(document.createElement('canvas'),ALI_WEB+slug,600,2);
+    y+=50;const qx=(W-qr.width)/2;
+    c.fillStyle='#fff';c.fillRect(qx-16,y-16,qr.width+32,qr.height+32);
+    c.drawImage(qr,qx,y);y+=qr.height+80;
+    c.fillStyle=TXT;c.font='700 44px '+SAN;c.fillText('Escaneá y reservá tu sesión de Barras',W/2,y,W-200);
+    y+=52;c.fillStyle=MUT;c.font='36px '+SAN;c.fillText('Escaneie e reserve sua sessão de Barras',W/2,y,W-200);
+    if(ben){y+=74;c.fillStyle='#5E7356';lineas(ben,'700 38px '+SAN,W-240).slice(0,2).forEach(l=>{c.font='700 38px '+SAN;c.fillText(l,W/2,y);y+=48;});}
+    c.fillStyle=MUT;c.font='32px '+SAN;c.fillText('Barras de Access® · 60 min · Juan Cruz Consciencia · ★ 5,0 en Google',W/2,H-110,W-160);
+    _aliBajar(cv,'tarjeta_'+slug+'.png');
+  }catch(e){toast('⚠️ '+e.message,'err');}
 }
 
 /* ══════════ ESTRATEGIA · 🔄 Flujo de trabajo ══════════
