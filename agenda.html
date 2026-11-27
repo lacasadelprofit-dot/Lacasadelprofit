@@ -721,7 +721,20 @@ async function activarVendedor(id,activo){
   const lista=vendedores.map(v=>v.id===id?{...v,activo}:v);
   if(await guardarVendedores(lista)){toast(activo?'Vendedor activo':'Vendedor pausado');render();renderComisiones();}
 }
+/* Guardado seguro de listas (para que no se pisen entre dispositivos): toma la versión más nueva de la base y le aplica
+   solo los ítems que cambiaron acá (agregados, editados o borrados) respecto de cómo estaban al cargar. */
+function mezclarLista(base,local,remota){
+  const J=x=>JSON.stringify(x),mB=new Map((base||[]).map(x=>[x.id,J(x)])),mL=new Map((local||[]).map(x=>[x.id,x]));
+  const out=(remota||[]).filter(x=>!(mB.has(x.id)&&!mL.has(x.id)));          // borrados acá
+  for(const x of local||[]){
+    if(mB.get(x.id)===J(x))continue;                                           // sin cambios acá: queda lo de la base
+    const i=out.findIndex(y=>y.id===x.id);if(i>=0)out[i]=x;else out.push(x);   // editados o nuevos acá
+  }
+  return out;
+}
 async function guardarVendedores(lista){
+  try{const {data}=await _sb.from('configuracion').select('data').eq('id','cfg_vendedores').maybeSingle();
+    if(Array.isArray(data?.data?.lista))lista=mezclarLista(vendedores,lista,data.data.lista);}catch(e){}
   const {error}=await _sb.from('configuracion').upsert({id:'cfg_vendedores',data:{lista,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
   if(error){toast('Error: '+error.message);return false;}
   vendedores=lista;return true;
@@ -765,6 +778,8 @@ async function nuevaPersona(){
   toast('✓ '+nombre+' agregada');return p;
 }
 async function guardarPersonas(lista){
+  try{const {data}=await _sb.from('configuracion').select('data').eq('id','cfg_recomendadores').maybeSingle();
+    if(Array.isArray(data?.data?.lista))lista=mezclarLista(personas,lista,data.data.lista);}catch(e){}
   const {error}=await _sb.from('configuracion').upsert({id:'cfg_recomendadores',data:{lista,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
   if(error){toast('Error: '+error.message);return false;}
   personas=lista;return true;

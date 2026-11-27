@@ -15872,17 +15872,34 @@ function _aliIrVista(v){
   if(_aliVista==='activos')renderAliadosActivos();else renderAliadosRuta();
 }
 let _ali=null,_aliF={ciudad:'',nivel:'',estado:'',q:'',est:'',notas:'',zona:'',contacto:''},_aliOrden={k:'ciudad',d:1},_aliMap=null,_aliCapa=null,_aliUbicando=null;
+/* Guardado seguro de listas (para que no se pisen entre dispositivos): toma la versión más nueva de la base y le aplica
+   solo los ítems que cambiaron acá (agregados, editados o borrados) respecto de cómo estaban al cargar. */
+function mezclarLista(base,local,remota){
+  const J=x=>JSON.stringify(x),mB=new Map((base||[]).map(x=>[x.id,J(x)])),mL=new Map((local||[]).map(x=>[x.id,x]));
+  const out=(remota||[]).filter(x=>!(mB.has(x.id)&&!mL.has(x.id)));          // borrados acá
+  for(const x of local||[]){
+    if(mB.get(x.id)===J(x))continue;                                           // sin cambios acá: queda lo de la base
+    const i=out.findIndex(y=>y.id===x.id);if(i>=0)out[i]=x;else out.push(x);   // editados o nuevos acá
+  }
+  return out;
+}
+let _aliBase=null;  // cómo estaba la lista al cargarla (para el guardado seguro)
 async function _aliCargar(){
   await _agendaHorasCargar();
   if(_ali)return _ali;
   try{const {data}=await _sb.from('configuracion').select('data').eq('id',ALI_ID).maybeSingle();
     _ali=data?.data?.lugares?data.data.lugares:JSON.parse(JSON.stringify(ALI_DEF));}
   catch(e){_ali=JSON.parse(JSON.stringify(ALI_DEF));}
+  _aliBase=JSON.parse(JSON.stringify(_ali));
   return _ali;
 }
 async function _aliGuardar(msg){
-  const {error}=await _sb.from('configuracion').upsert({id:ALI_ID,data:{lugares:_ali,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+  let lista=_ali;
+  try{const {data}=await _sb.from('configuracion').select('data').eq('id',ALI_ID).maybeSingle();
+    if(Array.isArray(data?.data?.lugares))lista=mezclarLista(_aliBase,_ali,data.data.lugares);}catch(e){}
+  const {error}=await _sb.from('configuracion').upsert({id:ALI_ID,data:{lugares:lista,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
   if(error){toast('⚠️ No se pudo guardar: '+error.message,'err');return false;}
+  _ali.splice(0,_ali.length,...lista);_aliBase=JSON.parse(JSON.stringify(lista));
   if(msg)toast(msg);return true;
 }
 async function renderAliadosRuta(){
