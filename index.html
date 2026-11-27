@@ -10125,7 +10125,7 @@ function _renderContInsights(publicados,mes){
 }
 
 /* ── ESTADÍSTICAS DE CLICKS ── */
-let _mktStatsPeriod=30,_statsSubTab='resumen',_statsPagina='jcc';
+let _mktStatsPeriod=30,_statsSubTab='resumen',_statsPagina='resumen';
 
 function _fmtDur(s){if(!s||s<=0)return'—';if(s<60)return s+'s';const m=Math.floor(s/60);const r=s%60;return r>0?m+'m '+r+'s':m+'m';}
 
@@ -10231,8 +10231,8 @@ function _renderStatsPorMes(all){
 }
 
 function _paginaStatsBar(){
-  return `<div style="display:flex;gap:8px;margin-bottom:16px">
-    ${[['jcc','🌿 Juan Cruz Consciencia'],['lcp','🏠 LA CASA DEL PROFIT']].map(([p,l])=>`<button onclick="_statsPagina='${p}';renderMktStats()"
+  return `<div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+    ${[['resumen','📊 Resumen'],['jcc','🌿 Juan Cruz Consciencia'],['lcp','🏠 LA CASA DEL PROFIT'],['google','🔎 Google']].map(([p,l])=>`<button onclick="_statsPagina='${p}';renderMktStats()"
       style="padding:7px 18px;border-radius:20px;border:1.5px solid ${p===_statsPagina?'var(--gl)':'var(--border)'};
       background:${p===_statsPagina?'rgba(201,168,76,.15)':'none'};
       color:${p===_statsPagina?'var(--gl)':'var(--muted)'};font-size:12.5px;font-weight:800;cursor:pointer">${l}</button>`).join('')}
@@ -10335,6 +10335,63 @@ async function _renderStatsGoogle(cont){
   graf('gscChClics','bar','clics','#4A8FE7','clics');
   graf('gscChImp','line','impresiones','#C27A2C','impresiones');
 }
+/* ══════════ STATS · 📊 Resumen de las páginas web (todas juntas) ══════════
+   Solo datos de las webs (tabla regalo_eventos): visitas, clics a WhatsApp, reservas, guías y de dónde vienen. */
+let _webDias=30;
+const WEB_PAG={landing_jcc:'🌿 Juan Cruz Consciencia',sesiones_jcc:'🌿 Sesiones (página anterior)',vision_lcp:'🏠 La Casa del Profit',aliado:'🏨 Landings de aliados',ruleta:'🎡 Ruleta (flyers)',tesoro:'🗺️ Búsqueda del tesoro'};
+async function _renderStatsWeb(el){
+  const desde=new Date(Date.now()-_webDias*864e5).toISOString().slice(0,10),antes=new Date(Date.now()-2*_webDias*864e5).toISOString().slice(0,10);
+  const evs=[];
+  try{for(let i=0;i<40000;i+=1000){
+    const {data,error}=await _sb.from('regalo_eventos').select('data').gte('data->>fecha',antes).range(i,i+999);
+    if(error)throw error;(data||[]).forEach(r=>evs.push(r.data||{}));if(!data||data.length<1000)break;}}
+  catch(e){el.innerHTML=_paginaStatsBar()+'<div class="es"><div class="ei">⚠️</div><p>No se pudieron cargar los datos: '+_estE(e.message||e)+'</p></div>';return;}
+  const act=evs.filter(e=>(e.fecha||'')>=desde),prev=evs.filter(e=>(e.fecha||'')<desde);
+  const esVis=e=>e.tipo==='page_view',esRes=e=>e.tipo==='turno_reservado'||e.tipo==='reserva_ok',
+        esWa=e=>e.tipo==='click_wa'||e.tipo==='agendar_whatsapp'||e.tipo==='guia_whatsapp'||(e.tipo==='click_btn'&&/wa|whatsapp/i.test(e.boton||'')),
+        esGuia=e=>e.tipo==='descarga'||e.tipo==='guia_pedida'||e.tipo==='guia_whatsapp';
+  const c=(a,fn)=>a.filter(fn).length;
+  const pct=(a,b)=>b?Math.round((a-b)/b*100):null;
+  const N=n=>Math.round(n||0).toLocaleString('es-AR');
+  const kpi=(ico,l,a,b,cls)=>{const p=pct(a,b);return `<div class="kc ${cls}"><div class="ki">${ico}</div><div class="kl">${l}</div><div class="kv">${N(a)}</div>
+    <div class="ks">${p==null?'sin período anterior':`<span style="color:${p>=0?'var(--green)':'var(--red)'};font-weight:700">${p>=0?'↑':'↓'} ${Math.abs(p)}%</span> vs ${_webDias} días anteriores`}</div></div>`;};
+  const vis=c(act,esVis),res=c(act,esRes);
+  // por página
+  const pags={};act.forEach(e=>{const k=e.pagina||'landing_jcc';const p=pags[k]||(pags[k]={vis:0,wa:0,res:0,otros:0});
+    if(esVis(e))p.vis++;else if(esRes(e))p.res++;else if(esWa(e))p.wa++;else p.otros++;});
+  const filasPag=Object.entries(pags).sort((a,b)=>b[1].vis-a[1].vis);
+  // de dónde vienen
+  const org={};act.filter(esVis).forEach(e=>{const k=e.origen||'directo';org[k]=(org[k]||0)+1;});
+  const filasOrg=Object.entries(org).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const idi={};act.filter(esVis).forEach(e=>{const k=(e.idioma||'es').slice(0,2);idi[k]=(idi[k]||0)+1;});
+  // aliados
+  const ali={};act.filter(e=>e.pagina==='aliado').forEach(e=>{const k=e.aliado_nombre||e.aliado||'—';const a=ali[k]||(ali[k]={vis:0,res:0,wa:0});if(esVis(e))a.vis++;else if(esRes(e))a.res++;else if(esWa(e))a.wa++;});
+  // por día
+  const dias=[];for(let i=_webDias-1;i>=0;i--)dias.push(new Date(Date.now()-i*864e5).toISOString().slice(0,10));
+  const porDia=dias.map(d=>act.filter(e=>e.fecha===d&&esVis(e)).length),mx=Math.max(1,...porDia);
+  const bar=(v,m)=>`<div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${Math.round(v/Math.max(1,m)*100)}%;background:var(--gold)"></div></div>`;
+  const caja=(t,h)=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:14px;padding:14px 16px"><div style="font-size:12px;font-weight:800;color:var(--gl);margin-bottom:10px">${t}</div>${h}</div>`;
+  const IDI={es:'🇦🇷 Español',pt:'🇧🇷 Portugués',en:'🇺🇸 Inglés'};
+  el.innerHTML=_paginaStatsBar()+`
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px">${[[7,'7 días'],[30,'30 días'],[90,'90 días']].map(([d,l])=>`<button onclick="_webDias=${d};renderMktStats()" style="padding:5px 14px;border-radius:20px;border:1.5px solid ${d===_webDias?'var(--gl)':'var(--border)'};background:${d===_webDias?'rgba(201,168,76,.15)':'none'};color:${d===_webDias?'var(--gl)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer">${l}</button>`).join('')}
+      <span style="font-size:11.5px;color:var(--muted);align-self:center;margin-left:6px">Solo las páginas web: juancruzconsciencia.lat, La Casa del Profit, landings de aliados, ruleta y tesoro.</span></div>
+    <div class="kpi-grid">
+      ${kpi('👀','Visitas',vis,c(prev,esVis),'go')}
+      ${kpi('📅','Reservas online',res,c(prev,esRes),'gr')}
+      ${kpi('💬','Clics a WhatsApp',c(act,esWa),c(prev,esWa),'bl')}
+      ${kpi('🎁','Guías pedidas',c(act,esGuia),c(prev,esGuia),'pu')}
+    </div>
+    <div style="font-size:11.5px;color:var(--muted);margin:-6px 0 16px">Conversión: <b style="color:var(--gl)">${vis?(res/vis*100).toFixed(1):'0'}%</b> de las visitas terminan en una reserva online.</div>
+    ${caja('📈 Visitas por día',`<div style="display:flex;align-items:flex-end;gap:2px;height:110px">${porDia.map((v,i)=>`<div title="${dias[i]}: ${v} visitas" style="flex:1;background:var(--gold);opacity:${v?.85:.15};height:${Math.max(3,Math.round(v/mx*100))}%;border-radius:3px 3px 0 0"></div>`).join('')}</div>
+      <div style="display:flex;justify-content:space-between;font-size:10.5px;color:var(--muted);margin-top:4px"><span>${new Date(dias[0]+'T12:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'})}</span><span>hoy</span></div>`)}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px;margin-top:14px">
+      ${caja('🌐 Por página',filasPag.length?`<table><thead><tr><th>Página</th><th style="text-align:right">Visitas</th><th style="text-align:right">WhatsApp</th><th style="text-align:right">Reservas</th></tr></thead><tbody>${filasPag.map(([k,p])=>`<tr><td>${_estE(WEB_PAG[k]||k)}</td><td style="text-align:right">${N(p.vis)}</td><td style="text-align:right">${N(p.wa)}</td><td style="text-align:right;color:var(--gl);font-weight:700">${N(p.res)}</td></tr>`).join('')}</tbody></table>`:'<div style="color:var(--muted);font-size:12.5px">Sin visitas en este período.</div>')}
+      ${caja('🧭 De dónde vienen',filasOrg.length?filasOrg.map(([k,v])=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${_estE(k==='directo'?'Directo (escribieron la dirección o guardado)':k)}</span><b>${N(v)}</b></div>${bar(v,filasOrg[0][1])}</div>`).join(''):'<div style="color:var(--muted);font-size:12.5px">Sin datos.</div>')}
+      ${caja('🗣️ Idioma de quien visita',Object.entries(idi).sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:12.5px"><span>${IDI[k]||k}</span><b>${N(v)} · ${vis?Math.round(v/vis*100):0}%</b></div>${bar(v,vis)}</div>`).join('')||'<div style="color:var(--muted);font-size:12.5px">Sin datos.</div>')}
+      ${caja('🏨 Landings de aliados',Object.keys(ali).length?`<table><thead><tr><th>Lugar</th><th style="text-align:right">Visitas</th><th style="text-align:right">Reservas</th></tr></thead><tbody>${Object.entries(ali).filter(([k,a])=>a.vis||a.res).sort((a,b)=>b[1].vis-a[1].vis).map(([k,a])=>`<tr><td>${_estE(k)}</td><td style="text-align:right">${N(a.vis)}</td><td style="text-align:right;color:var(--gl);font-weight:700">${N(a.res)}</td></tr>`).join('')}</tbody></table>`:'<div style="color:var(--muted);font-size:12.5px">Todavía no hay visitas a las landings de aliados.</div>')}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:12px">Para el detalle de cada sitio: 🌿 Juan Cruz Consciencia o 🏠 La Casa del Profit. Para las búsquedas en Google: 🔎 Google.</div>`;
+}
 async function renderMktStats(){
   const el=document.getElementById('mktStats');
   if(!el)return;
@@ -10344,13 +10401,23 @@ async function renderMktStats(){
     await _renderStatsLCP(el);
     return;
   }
+  if(_statsPagina==='google'){
+    el.innerHTML=_paginaStatsBar()+'<div id="gscCont"></div>';
+    await _renderStatsGoogle(document.getElementById('gscCont'));
+    return;
+  }
+  if(_statsPagina==='resumen'){
+    await _renderStatsWeb(el);
+    return;
+  }
+  if(_statsSubTab==='google')_statsSubTab='resumen';
 
   try{
     const{data}=await _sb.from('regalo_eventos').select('data');
     const all=(data||[]).map(r=>r.data||{}).filter(e=>!e.pagina||e.pagina==='landing_jcc');
 
     const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px">
-      ${[['resumen','📊 Resumen'],['mes','📅 Por mes'],['google','🔎 Google']].map(([t,l])=>`<button onclick="_statsSubTab='${t}';renderMktStats()"
+      ${[['resumen','📊 Resumen'],['mes','📅 Por mes']].map(([t,l])=>`<button onclick="_statsSubTab='${t}';renderMktStats()"
         style="padding:6px 16px;border-radius:20px;border:1.5px solid ${t===_statsSubTab?'var(--gl)':'var(--border)'};
         background:${t===_statsSubTab?'rgba(201,168,76,.15)':'none'};
         color:${t===_statsSubTab?'var(--gl)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer">${l}</button>`).join('')}
