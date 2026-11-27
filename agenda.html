@@ -166,7 +166,7 @@ if(EMBED){
 /* Horarios y días de la agenda: se editan en ⏰ Horarios y se guardan en configuracion 'cfg_agenda'
    (los lee también la web con agenda_config() y los valida reservar_turno, SQL 57). */
 const HORAS_DEF=['08:00','09:20','10:40','18:30','19:50'],DIAS_DEF=[1,2,3,4,5];
-let HORAS=[...HORAS_DEF],DIAS=[...DIAS_DEF],_hEdit=null;
+let HORAS=[...HORAS_DEF],DIAS=[...DIAS_DEF],ANTICIP=2,_hEdit=null;
 const DIAS_N=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const ordenH=a=>[...new Set(a)].sort();
 const SERV={barras:'🌀 Barras de Access',proceso_cuerpos:'🌿 Proceso de Cuerpos',clase_barras:'📚 Clase de Barras',bloqueo:'⛔ Bloqueado'};
@@ -278,7 +278,7 @@ async function cargar(){
   const cf=id=>(cfg.data||[]).find(r=>r.id===id)?.data||{};
   aliados=cf('cfg_aliados_ruta').lugares||[];vendedores=cf('cfg_vendedores').lista||[];personas=cf('cfg_recomendadores').lista||[];_perTurnos=null;tasas={...TASAS_DEF,...(cf('cfg_comisiones').tasas||{})};
   _comTurnos=null;
-  {const ag=cf('cfg_agenda');HORAS=Array.isArray(ag.horas)&&ag.horas.length?ordenH(ag.horas):[...HORAS_DEF];DIAS=Array.isArray(ag.dias)&&ag.dias.length?ag.dias.map(Number):[...DIAS_DEF];}
+  {const ag=cf('cfg_agenda');HORAS=Array.isArray(ag.horas)&&ag.horas.length?ordenH(ag.horas):[...HORAS_DEF];DIAS=Array.isArray(ag.dias)&&ag.dias.length?ag.dias.map(Number):[...DIAS_DEF];ANTICIP=Number.isFinite(+ag.anticipacion)&&ag.anticipacion!==''&&ag.anticipacion!=null?+ag.anticipacion:2;}
   if(t.error||c.error){
     const e=t.error||c.error;console.warn(e);
     document.getElementById('listaProximos').innerHTML=`<div class="card">⚠️ No se pudo cargar la agenda: ${esc(e.message)}<div class="det">Si dice que la tabla no existe, falta correr <b>4_BASE_DE_DATOS/29_agenda_turnos.sql</b> en Supabase.</div></div>`;
@@ -461,7 +461,7 @@ function badge(e){
 }
 function filaTurno(t,conAcciones=true){
   const d=t.data||{};
-  const detalle=[d.mensaje&&('💬 '+d.mensaje),d.patron&&('🔁 '+d.patron),d.sintomas?.length&&('🌀 '+d.sintomas.join(', '))].filter(Boolean).join('\n');
+  const detalle=[d.mensaje&&('💬 '+d.mensaje),d.patron&&('🔁 '+d.patron),d.sintomas?.length&&('🌀 '+d.sintomas.join(', ')),d.posible?.length&&('✨ Que sea posible: '+d.posible.join(', '))].filter(Boolean).join('\n');
   const fechaTxt=fmt(t.fecha);
   const msgRecordatorio=`¡Hola ${d.nombre||''}! Te escribo por tu turno de ${(SERV[t.servicio]||'').replace(/^\S+ /,'')} el ${fechaTxt} a las ${t.hora}.`;
   let acc='';
@@ -814,17 +814,26 @@ function renderHorarios(){
       ${viejos.length?`<div class="det" style="margin-top:12px">Turnos próximos en horarios que ya no están en la lista: <b>${viejos.join(', ')}</b>. Se siguen viendo en Próximos turnos.</div>`:''}
     </div>
     <div class="card">
+      <h2>Anticipación mínima para reservar</h2>
+      <p class="det" style="margin:0 0 12px">Cuántas horas antes de un turno se puede reservar online, para que tengas tiempo de organizarte y trasladarte. Vale para la web y para las landings de los aliados. Los turnos que cargás vos en esta agenda no tienen límite.</p>
+      <div class="form">
+        <label>Reservar con al menos<select id="hAnticip">${[2,4,6,8,12,24,48,72].map(n=>`<option value="${n}"${n===ANTICIP?' selected':''}>${n<24?n+' horas':n/24+(n===24?' día':' días')} de anticipación</option>`).join('')}${[2,4,6,8,12,24,48,72].includes(ANTICIP)?'':`<option value="${ANTICIP}" selected>${ANTICIP} horas</option>`}</select></label>
+        <button class="btn btn-p" onclick="guardarAnticip()">Guardar</button>
+      </div>
+      <div class="det">Hoy: <b>${ANTICIP<24?ANTICIP+' horas':ANTICIP/24+(ANTICIP===24?' día':' días')}</b>. Ejemplo: con 12 horas, a las 20:00 ya no se puede reservar el turno de las 08:00 del día siguiente.</div>
+    </div>
+    <div class="card">
       <h2>Días que se ofrecen en la web</h2>
       <p class="det" style="margin:0 0 12px">La web general y las landings muestran estos días. Además, cada aliado puede tener días propios (Aliados → 🔗) aunque no estén acá.</p>
       <div class="form">${[1,2,3,4,5,6,0].map(d=>`<label style="flex-direction:row;align-items:center;gap:6px;font-size:13px;color:var(--text)"><input type="checkbox" class="hDia" value="${d}" ${DIAS.includes(d)?'checked':''}> ${DIAS_N[d]}</label>`).join('')}
         <button class="btn btn-p" onclick="guardarDias()">Guardar días</button></div>
     </div>
-    <div class="det">Para que la web tome estos cambios tiene que estar corrido <b>4_BASE_DE_DATOS/57_agenda_horarios.sql</b> en Supabase (una sola vez).</div>`;
+    <div class="det">Para que la web tome estos cambios tiene que estar corrido <b>4_BASE_DE_DATOS/58_agenda_anticipacion.sql</b> en Supabase (una sola vez).</div>`;
 }
-async function guardarAgendaCfg(horas,dias,msg){
-  const {error}=await _sb.from('configuracion').upsert({id:'cfg_agenda',data:{horas,dias,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+async function guardarAgendaCfg(horas,dias,msg,anticip=ANTICIP){
+  const {error}=await _sb.from('configuracion').upsert({id:'cfg_agenda',data:{horas,dias,anticipacion:anticip,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
   if(error){toast('Error: '+error.message);return false;}
-  HORAS=horas;DIAS=dias;_hEdit=null;toast(msg);render();return true;
+  HORAS=horas;DIAS=dias;ANTICIP=anticip;_hEdit=null;toast(msg);render();return true;
 }
 const horaOk=h=>/^\d{2}:\d{2}$/.test(h||'');
 function agregarHora(){
@@ -845,6 +854,11 @@ function sacarHora(h){
   const n=turnos.filter(t=>t.hora===h&&t.fecha>=hoyBR()&&t.estado!=='cancelado'&&t.servicio!=='clase_barras'&&t.servicio!=='bloqueo').length;
   if(!confirm('¿Sacar el horario de las '+h+'? Deja de ofrecerse en la web.'+(n?'\n\nHay '+n+' turno'+(n===1?'':'s')+' próximo'+(n===1?'':'s')+' a esa hora: se mantienen y se siguen viendo.':'')))return;
   guardarAgendaCfg(HORAS.filter(x=>x!==h),DIAS,'Horario '+h+' sacado');
+}
+function guardarAnticip(){
+  const n=+document.getElementById('hAnticip').value;
+  if(!Number.isFinite(n)||n<0){toast('Elegí una opción');return;}
+  guardarAgendaCfg(HORAS,DIAS,'✓ Anticipación: '+(n<24?n+' horas':n/24+(n===24?' día':' días')),n);
 }
 function guardarDias(){
   const d=[...document.querySelectorAll('.hDia:checked')].map(x=>+x.value);
