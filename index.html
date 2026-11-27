@@ -777,6 +777,7 @@ th{background:rgba(28,26,46,.88)!important;}
         <button class="tab-btn"        id="contTabTiktok"    onclick="setContSection('tiktok')">🎵 TikTok</button>
         <button class="tab-btn"        id="contTabRedes"     onclick="setContSection('redes')">🗓 Planificador</button>
         <button class="tab-btn"        id="contTabManual"    onclick="setContSection('manual')">📖 Manual de Marca</button>
+        <button class="tab-btn"        id="contTabGrabacion" onclick="setContSection('grabacion')">🎬 Guía de grabación</button>
         <button class="tab-btn"        id="contTabGenerador" onclick="setContSection('generador')">✨ Generador IA</button>
       </div>
       <!-- Sub-tab: Resumen -->
@@ -789,6 +790,7 @@ th{background:rgba(28,26,46,.88)!important;}
       <div id="contRedes" style="display:none"></div>
       <!-- Sub-tab: Manual de Marca -->
       <div id="contManual" style="display:none"></div>
+      <div id="contGrabacion" style="display:none"></div>
       <!-- Sub-tab: Generador IA -->
       <div id="contGenerador" style="display:none"></div>
     </div>
@@ -12227,9 +12229,73 @@ async function delComunidad(id){
 
 /* ── CONTENIDO (sección principal) ── */
 let _contSection='resumen';
+/* ══════════ CONTENIDO · 🎬 Guía de grabación (drone, tomas, videos explicados) ══════════
+   Lista de tomas recomendadas para las sesiones. Las tildes «ya la tengo» y las notas se guardan en configuracion 'cfg_guia_grabacion'. */
+const GUIA_GRAB=[
+  {id:'drone',ico:'🚁',t:'Con el drone',s:'3 o 4 tomas de 10 a 15 segundos · horizontal',items:[
+    ['d1','Acercamiento desde el mar o la bahía hasta el deck, terminando en la camilla con la persona acostada','Apertura de reels y arriba de la web'],
+    ['d2','Toma cenital (desde arriba, quieta) de la camilla con las manos en la cabeza','Transmite calma'],
+    ['d3','Alejamiento desde la camilla hacia el paisaje','Para cerrar un video'],
+    ['d4','La misma toma al amanecer o al atardecer (luz dorada)','Combina con los colores de la marca']]},
+  {id:'piso',ico:'🎥',t:'Desde el piso',s:'la mayoría del contenido · vertical 9:16',items:[
+    ['p1','Primer plano de las manos tocando suavemente la cabeza','Muestra qué es Barras sin explicar'],
+    ['p2','La cara de la persona relajada, con los ojos cerrados','Siempre con su permiso por escrito'],
+    ['p3','Antes y después: llegando apurada / levantándose tranquila + una frase suya («¿cómo te sentís?»)','Testimonio real'],
+    ['p4','Vista desde la camilla (como los videos del deck y la pileta)','Lo que más funciona: el que mira se imagina ahí'],
+    ['p5','Detalles: la camilla lista, el almohadón, la manta, la vista','Fotos para la web y para los aliados']]},
+  {id:'habla',ico:'🗣️',t:'Videos explicados',s:'vos hablando a cámara · 30 a 60 segundos cada uno',items:[
+    ['h1','¿Qué son las Barras? Mostrando los puntos en una persona','También para el folleto «Español ▶ / Português ▶»'],
+    ['h2','¿Qué se siente? Y que no hace falta hablar de tus problemas',''],
+    ['h3','La diferencia entre Barras, Proceso de Cuerpos y la Clase',''],
+    ['h4','Una pregunta frecuente de la web por video (seña, reprogramar, dónde es, qué llevar)','Serie de varios videos']]},
+  {id:'tips',ico:'✅',t:'Antes de grabar',s:'para que el día rinda',items:[
+    ['c1','Grabar vertical (9:16) desde el piso y horizontal con el drone','Así sirve para reels, web y portadas'],
+    ['c2','Autorización por escrito de quien aparezca y aviso al lugar',''],
+    ['c3','Revisar dónde se permite volar el drone en Arraial / Búzios',''],
+    ['c4','Grabar aparte audio del ambiente (mar, pájaros) para usar de fondo',''],
+    ['c5','Armar un solo día de grabación con todo: rinde contenido para semanas','Después dejar el material en FOTOS_WEB']]}
+];
+let _guiaGrab=null;
+async function renderGuiaGrabacion(){
+  const el=document.getElementById('contGrabacion');if(!el)return;
+  if(!_guiaGrab){
+    try{const {data}=await _sb.from('configuracion').select('data').eq('id','cfg_guia_grabacion').maybeSingle();_guiaGrab=data?.data||{};}catch(e){_guiaGrab={};}
+    _guiaGrab.hechas=_guiaGrab.hechas||[];_guiaGrab.notas=_guiaGrab.notas||'';
+  }
+  const E=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const tot=GUIA_GRAB.reduce((a,g)=>a+g.items.length,0),ok=_guiaGrab.hechas.length;
+  el.innerHTML=`<div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+      <div style="font-size:15px;font-weight:800;color:var(--gl)">🎬 Guía de grabación de las sesiones</div>
+      <div style="font-size:12.5px;color:var(--muted)">Tildá las tomas que ya tenés · <b style="color:var(--gl)">${ok} de ${tot}</b></div></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:14px">
+    ${GUIA_GRAB.map(g=>`<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px">
+        <div style="font-size:14px;font-weight:800;color:var(--gl)">${g.ico} ${g.t}</div>
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px">${g.s}</div>
+        ${g.items.map(([id,txt,nota])=>{const h=_guiaGrab.hechas.includes(id);return `<label style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-top:1px solid var(--border);cursor:pointer">
+          <input type="checkbox" ${h?'checked':''} onchange="guiaGrabTilde('${id}',this.checked)" style="width:auto;margin-top:3px">
+          <span style="font-size:13px;line-height:1.45;${h?'text-decoration:line-through;opacity:.6':''}">${E(txt)}${nota?`<span style="display:block;font-size:11.5px;color:var(--muted)">${E(nota)}</span>`:''}</span></label>`;}).join('')}
+      </div>`).join('')}
+    </div>
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--gold);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">📝 Notas para el día de grabación</div>
+      <textarea id="guiaGrabNotas" rows="4" placeholder="Fecha, lugar, quién viene, qué falta…" style="width:100%;box-sizing:border-box;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;font:13px inherit">${E(_guiaGrab.notas)}</textarea>
+      <button class="btn btn-p btn-sm" style="margin-top:8px" onclick="guiaGrabGuardar('📝 Notas guardadas')">💾 Guardar notas</button>
+    </div>`;
+}
+async function guiaGrabGuardar(msg){
+  if(!_guiaGrab)return;
+  const n=document.getElementById('guiaGrabNotas');if(n)_guiaGrab.notas=n.value;
+  const {error}=await _sb.from('configuracion').upsert({id:'cfg_guia_grabacion',data:{..._guiaGrab,actualizado:new Date().toISOString()},updated_at:new Date().toISOString()});
+  if(error){toast('⚠️ No se pudo guardar: '+error.message,'err');return;}
+  if(msg)toast(msg);
+}
+async function guiaGrabTilde(id,on){
+  const h=new Set(_guiaGrab.hechas);if(on)h.add(id);else h.delete(id);_guiaGrab.hechas=[...h];
+  await guiaGrabGuardar();renderGuiaGrabacion();
+}
 function setContSection(tab){
   _contSection=tab;
-  ['resumen','instagram','tiktok','redes','manual','comunidad','generador'].forEach(t=>{
+  ['resumen','instagram','tiktok','redes','manual','grabacion','comunidad','generador'].forEach(t=>{
     const tabEl=document.getElementById('contTab'+t.charAt(0).toUpperCase()+t.slice(1));
     const contEl=document.getElementById('cont'+t.charAt(0).toUpperCase()+t.slice(1));
     if(tabEl)tabEl.classList.toggle('active',t===tab);
@@ -12240,6 +12306,7 @@ function setContSection(tab){
   if(tab==='instagram')renderContInstagram();
   if(tab==='tiktok')renderContTiktok();
   if(tab==='manual')renderContManual();
+  if(tab==='grabacion')renderGuiaGrabacion();
   if(tab==='comunidad')renderComunidad();
   if(tab==='generador')renderContGenerador();
 }
@@ -16098,8 +16165,41 @@ async function renderAliadosActivos(forzar){
       </div>`;}).join('')}</div>`
     :'<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px">Todavía no hay aliados activos. Cuando un lugar pase a <b>🟢 Aliado activo</b> en «🏨 Aliados · ruta y mapa», aparece acá.</div>'}`;
 }
+let _aliGal=[];  // galería del lugar mientras el panel 🔗 está abierto: [{url,tipo}]
+const _galSrc=u=>/^https:\/\//.test(u)?u:'https://www.juancruzconsciencia.lat/'+u;
+function _aliGalHtml(){
+  return _aliGal.length?_aliGal.map((g,i)=>`<div style="position:relative;width:78px;height:104px;border-radius:8px;overflow:hidden;border:1px solid var(--border);background:var(--card)">
+      ${g.tipo==='video'?`<video src="${_estE(_galSrc(g.url))}" muted playsinline style="width:100%;height:100%;object-fit:cover"></video><span style="position:absolute;left:4px;bottom:3px;font-size:10px">🎬</span>`:`<img src="${_estE(_galSrc(g.url))}" style="width:100%;height:100%;object-fit:cover">`}
+      <button onclick="_aliGal.splice(${i},1);document.getElementById('aliGal').innerHTML=_aliGalHtml()" title="Sacar" style="position:absolute;top:3px;right:3px;width:20px;height:20px;border-radius:50%;border:none;background:rgba(0,0,0,.65);color:#fff;font-size:11px;cursor:pointer">✕</button></div>`).join('')
+    :'<span style="font-size:11.5px;color:var(--muted)">Sin fotos ni videos todavía.</span>';
+}
+function _aliGalLink(){
+  const x=document.getElementById('aliGalUrl'),u=(x.value||'').trim();if(!u)return;
+  if(!/^https:\/\//.test(u)&&!/^img_v2\/[\w.-]+$/.test(u)){toast('⚠️ Pegá un link https:// o una ruta de la web tipo img_v2/foto.jpg','err');return;}
+  if(_aliGal.length>=8){toast('⚠️ Máximo 8 en la galería','err');return;}
+  _aliGal.push({url:u,tipo:/\.mp4(\?|$)/i.test(u)?'video':'foto'});x.value='';document.getElementById('aliGal').innerHTML=_aliGalHtml();
+}
+async function _aliGalSubir(input){
+  const files=[...input.files];if(!files.length)return;
+  const est=document.getElementById('aliGalEst'),slug=_aliSlug(document.getElementById('aliLSlug')?.value)||'aliado';
+  for(const [i,f] of files.entries()){
+    if(_aliGal.length>=8){toast('⚠️ Máximo 8 en la galería','err');break;}
+    est.textContent=`Subiendo ${i+1} de ${files.length}…`;
+    try{
+      const video=/^video\//.test(f.type);
+      if(video&&f.size>15e6)throw new Error(f.name+': el video pesa más de 15 MB (mandámelo y lo achico)');
+      const blob=video?f:await _encAchicar(f),ext=video?'mp4':'jpg';
+      const path=`aliados/${slug}-galeria-${Date.now()}-${i}.${ext}`;
+      const {error}=await _sb.storage.from('encuentros').upload(path,blob,{contentType:video?(f.type||'video/mp4'):'image/jpeg',cacheControl:'31536000'});if(error)throw error;
+      _aliGal.push({url:_sb.storage.from('encuentros').getPublicUrl(path).data.publicUrl,tipo:video?'video':'foto'});
+      document.getElementById('aliGal').innerHTML=_aliGalHtml();
+    }catch(e){toast('⚠️ '+(e.message||e),'err');}
+  }
+  est.textContent='Listo. Tocá 💾 Guardar landing.';input.value='';
+}
 function _aliAbrirLanding(id){
-  _aliLand=_aliLand===id?null:id;_aliEdit=null;renderAliadosRuta();
+  _aliLand=_aliLand===id?null:id;
+  if(_aliLand){const a=_ali.find(x=>x.id===_aliLand);_aliGal=JSON.parse(JSON.stringify(a?.landing?.galeria||[]));}_aliEdit=null;renderAliadosRuta();
   if(_aliLand){setTimeout(()=>document.getElementById('aliLand')?.scrollIntoView({behavior:'smooth',block:'center'}),80);_aliLandCargarStats(id);}
 }
 function _aliLandingHtml(){
@@ -16126,6 +16226,16 @@ function _aliLandingHtml(){
           ${fg('Foto del lugar (opcional)',`<input type="file" accept="image/*" onchange="_aliLandSubirFoto(this)" style="${_ALI_CTL};padding:6px 8px">`,'<span id="aliLFotoEst">Vacío = video de una sesión.</span>')}
         </div>
         <input id="aliLFoto" style="${_ALI_CTL}" value="${E(L.foto||'')}" placeholder="o pegá un link https:// de la foto">
+        <div style="border:1px dashed rgba(201,168,76,.45);border-radius:10px;padding:10px 12px">
+          <div style="font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">Galería del lugar (fotos y videos · hasta 8)</div>
+          <div id="aliGal" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">${_aliGalHtml()}</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <input type="file" accept="image/*,video/mp4" multiple onchange="_aliGalSubir(this)" style="${_ALI_CTL};width:auto;padding:6px 8px">
+            <input id="aliGalUrl" placeholder="o pegá un link (https://… o img_v2/foto.jpg)" style="${_ALI_CTL};flex:1;min-width:180px">
+            <button class="btn btn-s btn-sm" onclick="_aliGalLink()">+ Agregar</button>
+          </div>
+          <div id="aliGalEst" style="font-size:11px;color:var(--muted);margin-top:6px">Aparece en la landing como «El lugar», debajo del inicio. Videos .mp4 de hasta 15 MB.</div>
+        </div>
         ${(()=>{const dd=L.disp?.dias?.length?L.disp.dias.map(Number):[1,2,3,4,5],hh=L.disp?.horas?.length?L.disp.horas:ALI_HORAS;
           const ck=(cls,v,l,on)=>`<label style="display:inline-flex;align-items:center;gap:5px;font-size:12.5px;padding:5px 9px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--card)"><input type="checkbox" class="${cls}" value="${v}" ${on?'checked':''} style="width:auto;margin:0">${l}</label>`;
           return `<div style="border:1px dashed rgba(61,170,106,.45);border-radius:10px;padding:10px 12px">
@@ -16189,7 +16299,7 @@ async function _aliLandGuardar(){
   const ahora=new Date().toISOString();
   a.landing={...(a.landing||{}),slug,activa:!!document.getElementById('aliLAct')?.checked,nombre:v('aliLNom'),beneficio:'',
     bienvenida:v('aliLBie'),lugar:v('aliLLug'),idioma:v('aliLIdi')||'es',foto,actualizada:ahora,creada:a.landing?.creada||ahora,
-    disp};
+    disp,galeria:_aliGal.slice(0,8)};
   if(await _aliGuardar('✓ Landing guardada: '+a.nombre+(a.landing.activa?'':' (apagada)'))){renderAliadosRuta();_aliLandCargarStats(a.id);}
 }
 async function _aliLandSubirFoto(input){
