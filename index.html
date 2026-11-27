@@ -4771,7 +4771,7 @@ async function showSer(id,tab){
   _showSerTab=tab||'resumen';
   document.getElementById('serDetEditBtn').onclick=()=>{closeModal('moSerDet');openModal('ser',String(id));};
   // Siempre recargar eventos de regalos para tener datos frescos
-  try{const {data}=await _sb.from('regalo_eventos').select('data');_rgEvs=(data||[]).map(r=>r.data||{});}catch(e){}
+  try{_rgEvs=await _eventosWeb();}catch(e){}
   _renderSerDet(s);
   openModal('serDet');
 }
@@ -9160,8 +9160,7 @@ async function renderMktResumen(){
   // Cargar eventos de la landing
   let evs=[];
   try{
-    const{data}=await _sb.from('regalo_eventos').select('data');
-    evs=(data||[]).map(r=>r.data||{});
+    evs=await _eventosWeb();
   }catch(e){console.warn('regalo_eventos:',e);}
 
   const mesActual=new Date().toISOString().slice(0,7);
@@ -10392,6 +10391,19 @@ async function _renderStatsWeb(el){
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:12px">Para el detalle de cada sitio: 🌿 Juan Cruz Consciencia o 🏠 La Casa del Profit. Para las búsquedas en Google: 🔎 Google.</div>`;
 }
+/* Eventos de las webs (tabla regalo_eventos). La base entrega 1000 filas por consulta: sin paginar,
+   el admin veía solo las 1000 MÁS VIEJAS. Esto trae todas, de la más nueva a la más vieja. */
+async function _eventosWeb(filtro,max=40000){
+  const out=[];
+  for(let i=0;i<max;i+=1000){
+    let q=_sb.from('regalo_eventos').select('data').order('created_at',{ascending:false}).range(i,i+999);
+    if(filtro)q=filtro(q);
+    const {data,error}=await q;if(error)throw error;
+    (data||[]).forEach(r=>out.push(r.data||{}));
+    if(!data||data.length<1000)break;
+  }
+  return out;
+}
 async function renderMktStats(){
   const el=document.getElementById('mktStats');
   if(!el)return;
@@ -10413,8 +10425,7 @@ async function renderMktStats(){
   if(_statsSubTab==='google')_statsSubTab='resumen';
 
   try{
-    const{data}=await _sb.from('regalo_eventos').select('data');
-    const all=(data||[]).map(r=>r.data||{}).filter(e=>!e.pagina||e.pagina==='landing_jcc');
+    const all=await _eventosWeb(q=>q.or('data->>pagina.is.null,data->>pagina.eq.landing_jcc'));
 
     const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px">
       ${[['resumen','📊 Resumen'],['mes','📅 Por mes']].map(([t,l])=>`<button onclick="_statsSubTab='${t}';renderMktStats()"
@@ -10440,22 +10451,23 @@ async function renderMktStats(){
     const evs=all.filter(e=>!e.fecha||e.fecha>=cutoffStr);
 
     const views=evs.filter(e=>e.tipo==='page_view').length;
-    const modalOpens=evs.filter(e=>e.tipo==='modal_open').length;
-    const registros=evs.filter(e=>e.tipo==='registro').length;
+    const QUIERE=/^(reservar_|hero_agendar|cta_final|flotante_agendar|como_agendar|ruleta_agendar)/;
+    const modalOpens=evs.filter(e=>e.tipo==='modal_open'||(e.tipo==='click_btn'&&QUIERE.test(e.boton||''))).length;  // «quisieron reservar»
+    const registros=evs.filter(e=>e.tipo==='turno_reservado').length;                                                   // reservas online
     const clickEvs=evs.filter(e=>e.tipo==='click_btn'&&e.boton);
     const totalClicks=clickEvs.length;
     const convRate=views>0?Math.round(registros/views*100):0;
     const exitEvs=evs.filter(e=>e.tipo==='page_exit'&&e.duracion>0);
     const avgDur=exitEvs.length?Math.round(exitEvs.reduce((s,e)=>s+(e.duracion||0),0)/exitEvs.length):0;
 
-    const SES_INFO={barras:{l:'Barras de Access',col:'#C17A48'},proceso_cuerpos:{l:'Proceso de Cuerpos',col:'#7B9E87'},clase_barras:{l:'Clase de Barras',col:'#4A7FA5'},no_se:{l:'Sin definir',col:'#9B82D4'}};
+    const SES_INFO={barras:{l:'Barras de Access',col:'#C17A48'},proceso_cuerpos:{l:'Proceso de Cuerpos',col:'#7B9E87'},mes_energetico:{l:'Mes Energético',col:'#C9A84C'},clase_barras:{l:'Clase de Barras',col:'#4A7FA5'},no_se:{l:'Sin definir',col:'#9B82D4'}};
     const sesCounts={};
     clickEvs.filter(e=>e.boton?.startsWith('reservar_')).forEach(e=>{
       const k=e.boton.replace('reservar_','').replace('_det','');
       sesCounts[k]=(sesCounts[k]||0)+1;
     });
-    evs.filter(e=>e.tipo==='registro').forEach(e=>{
-      const map={'Barras de Access':'barras','Proceso de Cuerpos':'proceso_cuerpos','Clase de Barras de Access®':'clase_barras','Sin definir':'no_se'};
+    evs.filter(e=>e.tipo==='turno_reservado').forEach(e=>{
+      const map={'Barras de Access':'barras','Proceso de Cuerpos':'proceso_cuerpos','Mes Energético':'mes_energetico','Clase de Barras de Access®':'clase_barras','Sin definir':'no_se'};
       const k=map[e.sesion]||e.sesion;
       if(k)sesCounts[k]=(sesCounts[k]||0)+1;
     });
@@ -10472,7 +10484,7 @@ async function renderMktStats(){
     const fechas=days.map(d=>[d,byDate[d]]);
     const maxN=Math.max(...fechas.map(([,n])=>n),1);
 
-    const funnelSteps=[{l:'Visitas',n:views,ico:'👁'},{l:'Abrieron modal',n:modalOpens,ico:'🔔'},{l:'Enviaron formulario',n:registros,ico:'✅'}];
+    const funnelSteps=[{l:'Visitas',n:views,ico:'👁'},{l:'Quisieron reservar (tocaron Reservar / Elegir día)',n:modalOpens,ico:'👆'},{l:'Reservaron un turno',n:registros,ico:'✅'}];
     const funnelMax=Math.max(...funnelSteps.map(s=>s.n),1);
 
     el.innerHTML=_paginaStatsBar()+subTabBar+`
@@ -10486,7 +10498,7 @@ async function renderMktStats(){
       <div class="kpi-grid" style="margin-bottom:20px">
         <div class="kpi-card"><div class="kv">${views}</div><div class="kl">Visitas</div></div>
         <div class="kpi-card"><div class="kv">${totalClicks}</div><div class="kl">Clicks totales</div></div>
-        <div class="kpi-card"><div class="kv">${registros}</div><div class="kl">Formularios</div></div>
+        <div class="kpi-card"><div class="kv">${registros}</div><div class="kl">Reservas online</div></div>
         <div class="kpi-card"><div class="kv">${convRate}%</div><div class="kl">Conversión</div></div>
         <div class="kpi-card"><div class="kv">${_fmtDur(avgDur)}</div><div class="kl">Tiempo promedio</div></div>
       </div>
@@ -10592,8 +10604,7 @@ function _renderStatsPorMesLCP(all){
 
 async function _renderStatsLCP(el){
   try{
-    const{data}=await _sb.from('regalo_eventos').select('data');
-    const all=(data||[]).map(r=>r.data||{}).filter(e=>e.pagina==='vision_lcp');
+    const all=await _eventosWeb(q=>q.filter('data->>pagina','eq','vision_lcp'));
 
     const subTabBar=`<div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:12px">
       ${[['resumen','📊 Resumen'],['mes','📅 Por mes']].map(([t,l])=>`<button onclick="_statsSubTab='${t}';renderMktStats()"
@@ -10737,8 +10748,7 @@ async function renderMktRegalos(){
   const el=document.getElementById('mktRegalos');
   if(!el)return;
   try{
-    const {data}=await _sb.from('regalo_eventos').select('data');
-    _rgEvs=(data||[]).map(r=>r.data||{});
+    _rgEvs=await _eventosWeb();
   }catch(e){console.warn('regalo_eventos:',e);}
   _renderRgTab();
 }
@@ -16247,7 +16257,7 @@ async function _aliSet(id,campo,val){
    datos públicos y solo si está activa. Las reservas online que llegan por la landing quedan con data.aliado = código
    (para la comisión); las de WhatsApp llegan con el código entre paréntesis al final del mensaje. */
 const ALI_WEB='https://www.juancruzconsciencia.lat/';  // link del lugar: juancruzconsciencia.lat/CÓDIGO (vercel.json de JuanCruz-registro → aliado.html)
-const ALI_RESERVADOS=['api','img_v2','index','aliado','aliados','sesiones','explorar','comunidad','camino','tesoro','ruleta','regalos','registro','privacidad','terminos','vision','agenda','admin','www'];
+const ALI_RESERVADOS=['consciencia','comunidad-consciencia','api','img_v2','index','aliado','aliados','sesiones','explorar','comunidad','camino','tesoro','ruleta','regalos','registro','privacidad','terminos','vision','agenda','admin','www'];
 let ALI_HORAS=['08:00','09:20','10:40','18:30','19:50']; // se reemplaza con cfg_agenda (Agenda → ⏰ Horarios)
 let _aliLand=null,_aliLandStats={};
 const _aliSlug=s=>String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/&/g,' y ').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'').slice(0,40);
