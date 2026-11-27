@@ -2203,10 +2203,10 @@ th{background:rgba(28,26,46,.88)!important;}
    <div class="fg" style="flex:0 0 90px"><label>Ícono</label><input id="rgIcono" placeholder="🎁" style="text-align:center;font-size:20px"></div>
    <div class="fg"><label>Descripción breve</label><input id="rgDesc" placeholder="Una frase que describa el regalo"></div>
   </div>
-  <div class="fg"><label>URL del PDF (español) *</label><input id="rgPdf" placeholder="https://drive.google.com/... o link de Supabase Storage"></div>
+  <div class="fg"><label>PDF en español *</label><input id="rgPdf" placeholder="Subí el archivo o pegá un link"><label class="btn btn-s btn-sm" style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;cursor:pointer">📎 Subir PDF (ES)<input type="file" accept="application/pdf" style="display:none" onchange="rgSubirPdf(this,'rgPdf')"></label> <span id="rgPdfEst" style="font-size:11px;color:var(--muted)"></span></div>
   <div class="fg-row">
-   <div class="fg"><label>PDF en portugués (opcional)</label><input id="rgPdfPt" placeholder="https://..."></div>
-   <div class="fg"><label>PDF en inglés (opcional)</label><input id="rgPdfEn" placeholder="https://..."></div>
+   <div class="fg"><label>PDF en portugués (opcional)</label><input id="rgPdfPt" placeholder="Subí el archivo o pegá un link"><label class="btn btn-s btn-sm" style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;cursor:pointer">📎 Subir PDF (PT)<input type="file" accept="application/pdf" style="display:none" onchange="rgSubirPdf(this,'rgPdfPt')"></label> <span id="rgPdfPtEst" style="font-size:11px;color:var(--muted)"></span></div>
+   <div class="fg"><label>PDF en inglés (opcional)</label><input id="rgPdfEn" placeholder="Subí el archivo o pegá un link"><label class="btn btn-s btn-sm" style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;cursor:pointer">📎 Subir PDF (EN)<input type="file" accept="application/pdf" style="display:none" onchange="rgSubirPdf(this,'rgPdfEn')"></label> <span id="rgPdfEnEst" style="font-size:11px;color:var(--muted)"></span></div>
   </div>
   <div class="fg"><label>Guía de 20 preguntas · área</label>
    <select id="rgArea"><option value="">— No es una guía de 20 preguntas —</option><option value="Ser Infinito">Ser Infinito</option><option value="Propósito">Propósito</option><option value="Vínculos">Vínculos</option><option value="Cuerpo">Cuerpo</option><option value="Emprender">Emprender</option><option value="Viajes">Viajes</option></select>
@@ -13168,16 +13168,16 @@ let _resCharts=[];
 /* ══════════ CONTENIDO · Resumen → 📊 Panel de redes (estilo tablero: tarjetas con mini-gráfico + crecimiento de seguidores) ══════════
    Datos: _ig / _tt (tabla redes_metricas). Las métricas de cada publicación se cuentan en el día en que se publicó;
    los seguidores salen de la foto diaria de la cuenta (cuenta-AAAA-MM-DD / tt-cuenta-AAAA-MM-DD). */
-let _prRed='ig',_prDias=30,_prChart=null;
+let _prRed='ambas',_prDias=30,_prChart=null;
 function _prSpark(vals,col){
   const v=vals.length>1?vals:[0,...vals,0];const mx=Math.max(...v),mn=Math.min(...v),W=120,H=34;
   const pts=v.map((x,i)=>[i*(W/(v.length-1)),H-3-(mx===mn?H/2:(x-mn)/(mx-mn)*(H-8))]);
   const d=pts.map((p,i)=>(i?'L':'M')+p[0].toFixed(1)+' '+p[1].toFixed(1)).join(' ');
-  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:34px;display:block"><path d="${d} L${W} ${H} L0 ${H} Z" fill="${col}" opacity=".12"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="width:100%;height:34px;display:block"><path d="${d} L${W} ${H} L0 ${H} Z" fill="${col}" opacity=".12"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" style="filter:drop-shadow(0 0 3px ${col})"/></svg>`;
 }
 function renderPanelRedes(){
   const el=document.getElementById('panelRedes');if(!el)return;
-  const NEON='#C6F432',dias=_prDias,hoy=new Date();
+  const NEON='#FFD23F',dias=_prDias,hoy=new Date();
   const iso=d=>d.toISOString().slice(0,10);
   const fechas=[];for(let i=dias-1;i>=0;i--){const d=new Date(hoy);d.setDate(d.getDate()-i);fechas.push(iso(d));}
   const desde=fechas[0],antDesde=(()=>{const d=new Date(desde+'T12:00');d.setDate(d.getDate()-dias);return iso(d);})();
@@ -13198,55 +13198,60 @@ function renderPanelRedes(){
   const interSerie=fechas.map(f=>{const a=act.filter(p=>p.d===f);return inter(a);});
   const K=n=>Math.abs(n)>=1e6?(n/1e6).toFixed(1).replace('.0','')+' M':Math.abs(n)>=1e4?(n/1e3).toFixed(1).replace('.0','')+' K':Math.round(n).toLocaleString('es-AR');
   const pct=(a,b)=>b?Math.round((a-b)/b*100):null;
-  const T=(l,v,vPrev,ser,fmt=K,suf='')=>{const p=pct(v,vPrev);return `<div style="background:#141826;border:1px solid ${'#2A3350'};border-radius:12px;padding:12px 14px">
-      <div style="font-size:11px;color:#9AA3BF">${l}</div>
-      <div style="display:flex;align-items:baseline;gap:6px;margin:2px 0 4px"><b style="font-size:21px;color:#fff">${fmt(v)}${suf}</b>${p==null?'':`<span style="font-size:11px;font-weight:700;color:${p>=0?NEON:'#FF7A7A'}">${p>=0?'↑':'↓'} ${Math.abs(p)}%</span>`}</div>
+  const T=(l,v,vPrev,ser,fmt=K,suf='')=>{const p=pct(v,vPrev);return `<div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+      <div style="font-size:11px;color:var(--muted)">${l}</div>
+      <div style="display:flex;align-items:baseline;gap:6px;margin:2px 0 4px"><b style="font-size:21px;color:var(--text)">${fmt(v)}${suf}</b>${p==null?'':`<span style="font-size:11px;font-weight:700;color:${p>=0?NEON:'#E8836A'}">${p>=0?'↑':'↓'} ${Math.abs(p)}%</span>`}</div>
       ${_prSpark(ser,NEON)}</div>`;};
   const esIG=_prRed==='ig',esTT=_prRed==='tt';
   const tiles=[
     T('Seguidores',segHoy,segAntes,segSerie),
-    T(esTT?'Vistas':'Alcance',sum(act,'alc'),sum(prev,'alc'),serie('alc')),
+    T(esTT?'Vistas':esIG?'Alcance':'Alcance + vistas',sum(act,'alc'),sum(prev,'alc'),serie('alc')),
     T('Tasa de interacción',inter(act),inter(prev),interSerie,v=>v.toFixed(1),'%'),
     T('Nuevos seguidores',nuevos,nuevosPrev,segSerie.map((v,i)=>i?v-segSerie[i-1]:0),v=>(v>0?'+':'')+K(v)),
     T('Compartidos',sum(act,'comp'),sum(prev,'comp'),serie('comp')),
-    esTT?T('Me gusta',sum(act,'lik'),sum(prev,'lik'),serie('lik')):T('Guardados',sum(act,'guard'),sum(prev,'guard'),serie('guard')),
+    esIG?T('Guardados',sum(act,'guard'),sum(prev,'guard'),serie('guard')):T('Me gusta',sum(act,'lik'),sum(prev,'lik'),serie('lik')),
     T('Comentarios',sum(act,'com'),sum(prev,'com'),serie('com')),
     T('Publicaciones',act.length,prev.length,fechas.map(f=>act.filter(p=>p.d===f).length))
   ];
   const top=[...act].sort((a,b)=>b.alc-a.alc).slice(0,3);
   const fF=f=>new Date(f+'T12:00').toLocaleDateString('es-AR',{day:'numeric',month:'short'});
-  const bt=(on,txt,fn)=>`<button onclick="${fn}" style="padding:6px 12px;border-radius:8px;border:1px solid ${on?NEON:'#2A3350'};background:${on?'rgba(198,244,50,.12)':'transparent'};color:${on?NEON:'#9AA3BF'};font-size:12px;font-weight:700;cursor:pointer">${txt}</button>`;
-  el.innerHTML=`<div style="background:#0B0E18;border:1px solid #2A3350;border-radius:16px;padding:16px 18px">
+  const bt=(on,txt,fn)=>`<button onclick="${fn}" style="padding:6px 12px;border-radius:8px;border:1px solid ${on?NEON:'var(--border)'};background:${on?'rgba(255,210,63,.12)':'transparent'};${on?'box-shadow:0 0 10px rgba(255,210,63,.35);':''};color:${on?NEON:'#9AA3BF'};font-size:12px;font-weight:700;cursor:pointer">${txt}</button>`;
+  el.innerHTML=`<div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 18px">
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px">
-      <div style="font-size:15px;font-weight:800;color:#fff;margin-right:auto">📊 Panel de redes <span style="font-size:11.5px;font-weight:500;color:#9AA3BF">· ${fF(desde)} – ${fF(fechas[fechas.length-1])}</span></div>
-      ${bt(_prRed==='ig','📸 Instagram',"_prRed='ig';renderPanelRedes()")}${bt(_prRed==='tt','🎵 TikTok',"_prRed='tt';renderPanelRedes()")}${bt(_prRed==='ambas','Las dos',"_prRed='ambas';renderPanelRedes()")}
+      <div style="font-size:15px;font-weight:800;color:var(--text);margin-right:auto">📊 Panel de redes <span style="font-size:11.5px;font-weight:500;color:var(--muted)">· ${fF(desde)} – ${fF(fechas[fechas.length-1])}</span></div>
+      ${bt(_prRed==='ambas','📸+🎵 Las dos juntas',"_prRed='ambas';renderPanelRedes()")}${bt(_prRed==='ig','📸 Instagram',"_prRed='ig';renderPanelRedes()")}${bt(_prRed==='tt','🎵 TikTok',"_prRed='tt';renderPanelRedes()")}
       <span style="width:8px"></span>
       ${[7,30,90].map(d=>bt(_prDias===d,d+' días',`_prDias=${d};renderPanelRedes()`)).join('')}
     </div>
     <div style="display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:14px" class="pr-grid">
       <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">${tiles.join('')}</div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div style="background:#141826;border:1px solid #2A3350;border-radius:12px;padding:12px 14px;flex:1;min-height:240px;display:flex;flex-direction:column">
-          <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:6px">Crecimiento de seguidores</div>
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;flex:1;min-height:240px;display:flex;flex-direction:column">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">Crecimiento de seguidores${_prRed==='ambas'?' · <span style="color:var(--gl)">total</span> · <span style="color:#D03E8C">Instagram</span> · <span style="color:#21A0B8">TikTok</span>':''}</div>
           <div style="position:relative;flex:1;min-height:200px"><canvas id="prChart"></canvas></div>
         </div>
-        <div style="background:#141826;border:1px solid #2A3350;border-radius:12px;padding:12px 14px">
-          <div style="font-size:12px;font-weight:700;color:#fff;margin-bottom:6px">🏆 Lo que mejor funcionó</div>
-          ${top.length?top.map((p,i)=>`<a href="${p.link||'#'}" target="_blank" style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:${i?'1px solid #2A3350':'none'};text-decoration:none">
-            <b style="color:${NEON};width:16px">${i+1}</b><span style="flex:1;min-width:0;font-size:12px;color:#D8DDEE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.red==='ig'?'📸':'🎵'} ${_estE((p.texto||p.tipo).slice(0,80))}</span>
-            <span style="font-size:12px;font-weight:700;color:#fff;white-space:nowrap">${K(p.alc)} ${p.red==='tt'?'vistas':'alcance'}</span></a>`).join(''):'<div style="font-size:12px;color:#9AA3BF">Sin publicaciones en este período.</div>'}
+        <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:12px 14px">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px">🏆 Lo que mejor funcionó</div>
+          ${top.length?top.map((p,i)=>`<a href="${p.link||'#'}" target="_blank" style="display:flex;gap:10px;align-items:center;padding:6px 0;border-top:${i?'1px solid var(--border)':'none'};text-decoration:none">
+            <b style="color:${NEON};width:16px">${i+1}</b><span style="flex:1;min-width:0;font-size:12px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.red==='ig'?'📸':'🎵'} ${_estE((p.texto||p.tipo).slice(0,80))}</span>
+            <span style="font-size:12px;font-weight:700;color:var(--text);white-space:nowrap">${K(p.alc)} ${p.red==='tt'?'vistas':'alcance'}</span></a>`).join(''):'<div style="font-size:12px;color:var(--muted)">Sin publicaciones en este período.</div>'}
         </div>
       </div>
     </div>
-    <div style="font-size:10.5px;color:#6F7896;margin-top:10px">El % compara con los ${dias} días anteriores. Las métricas de cada publicación cuentan el día en que se publicó. Se actualiza solo cada hora.</div>
+    <div style="font-size:10.5px;color:var(--muted);margin-top:10px">El % compara con los ${dias} días anteriores. Las métricas de cada publicación cuentan el día en que se publicó. Se actualiza solo cada hora.</div>
   </div>
   <style>@media(max-width:820px){.pr-grid{grid-template-columns:1fr!important}}</style>`;
   if(_prChart){try{_prChart.destroy();}catch(e){}_prChart=null;}
   const cv=document.getElementById('prChart');if(!cv||typeof Chart==='undefined')return;
-  const ctx=cv.getContext('2d'),g=ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,'rgba(198,244,50,.35)');g.addColorStop(1,'rgba(198,244,50,0)');
-  _prChart=new Chart(cv,{type:'line',data:{labels:fechas.map(fF),datasets:[{data:segSerie,borderColor:NEON,backgroundColor:g,fill:true,tension:.35,pointRadius:0,borderWidth:2.5}]},
-    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.parsed.y.toLocaleString('es-AR')+' seguidores'}}},
-      scales:{x:{ticks:{color:'#6F7896',maxTicksLimit:6,font:{size:10}},grid:{display:false}},y:{ticks:{color:'#6F7896',font:{size:10},callback:v=>K(v)},grid:{color:'rgba(255,255,255,.05)'}}}}});
+  const ctx=cv.getContext('2d'),g=ctx.createLinearGradient(0,0,0,220);g.addColorStop(0,'rgba(255,210,63,.38)');g.addColorStop(1,'rgba(255,210,63,0)');
+  const porRed=c=>fechas.map(f=>{const x=(c||[]).filter(r=>r.fecha<=f);return x.length?+x[x.length-1].seguidores||0:0;});
+  const sets=[{data:segSerie,borderColor:NEON,backgroundColor:g,fill:true,tension:.35,pointRadius:0,borderWidth:2.5,label:_prRed==='ambas'?'Total':'Seguidores'}];
+  if(_prRed==='ambas')sets.push({data:porRed(_ig.cuenta),borderColor:'#D03E8C',fill:false,tension:.35,pointRadius:0,borderWidth:1.8,label:'Instagram'},
+                                {data:porRed(_tt.cuenta),borderColor:'#21A0B8',fill:false,tension:.35,pointRadius:0,borderWidth:1.8,label:'TikTok'});
+  const brillo={id:'brillo',beforeDatasetDraw(ch,a){if(a.index!==0)return;const c=ch.ctx;c.save();c.shadowColor='rgba(255,210,63,.85)';c.shadowBlur=14;},afterDatasetDraw(ch,a){if(a.index===0)ch.ctx.restore();}};
+  _prChart=new Chart(cv,{type:'line',plugins:[brillo],data:{labels:fechas.map(fF),datasets:sets},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>' '+c.dataset.label+': '+c.parsed.y.toLocaleString('es-AR')}}},
+      scales:{x:{ticks:{color:'#6F7896',maxTicksLimit:6,font:{size:10}},grid:{display:false}},y:{ticks:{color:'#6F7896',font:{size:10},callback:v=>K(v)},grid:{color:'rgba(201,168,76,.08)'}}}}});
 }
 function _resDibujarGraficos({meses12,porMes,metaPosts}){
   if(typeof Chart==='undefined')return;
@@ -14573,6 +14578,24 @@ function _encPintarFotos(gal){
 function _encMoverFoto(i,gal){const a=gal?_encGalFotos:_encFotos;a.unshift(a.splice(i,1)[0]);_encPintarFotos(gal);}
 function _encQuitarFoto(i,gal){const a=gal?_encGalFotos:_encFotos;a.splice(i,1);_encPintarFotos(gal);}
 
+/* Regalos: subir el PDF (ES/PT/EN) al almacenamiento público y completar el link solo */
+async function rgSubirPdf(input,id){
+  const file=input.files?.[0];if(!file)return;
+  const est=document.getElementById(id+'Est');
+  if(!/pdf$/i.test(file.type)&&!/\.pdf$/i.test(file.name)){toast('⚠️ Tiene que ser un archivo PDF','err');input.value='';return;}
+  if(file.size>45e6){toast('⚠️ El PDF pesa más de 45 MB','err');input.value='';return;}
+  est.textContent='Subiendo…';
+  try{
+    const limpio=(document.getElementById('rgNombre').value||file.name).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,50)||'guia';
+    const lang={rgPdf:'es',rgPdfPt:'pt',rgPdfEn:'en'}[id]||'es';
+    const path='guias/'+limpio+'-'+lang+'-'+Date.now()+'.pdf';
+    const {error}=await _sb.storage.from('encuentros').upload(path,file,{contentType:'application/pdf',cacheControl:'31536000'});
+    if(error)throw error;
+    document.getElementById(id).value=_sb.storage.from('encuentros').getPublicUrl(path).data.publicUrl;
+    est.textContent='✓ Subido. Tocá Guardar.';
+  }catch(e){est.textContent='';toast('⚠️ '+(e.message||e),'err');}
+  input.value='';
+}
 function _encAchicar(file){
   return new Promise((res,rej)=>{
     const img=new Image(),u=URL.createObjectURL(file);
